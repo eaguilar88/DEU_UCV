@@ -1,0 +1,43 @@
+version: '3'
+
+services:
+  vuejs:
+    container_name: "deu-vuejs"
+    image: "deu_vuejs"
+    build:
+      context: "frontend"
+      dockerfile: "Dockerfile"
+    depends_on:
+      - "go-deu"
+      - "postgres16"
+
+  go-deu:
+    container_name: "deu-golang"
+    image: "deu_golang"
+    build:
+      context: "backend"
+      dockerfile: "./Dockerfile"
+    ports:
+      - "8085"
+    environment:
+    links:
+      - "postgres16"
+  postgres16:
+    image: postgres:16-alpine
+    build:
+      context: "postgresql"
+      dockerfile: ""
+    restart: "always"
+    ports:
+      - 5432:5432
+    environment:
+      TIMEZONE: "GMT-4"
+      POSTGRES_DB: "${POSTGRES_DBNAME}"
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+    volumes:
+      - "./sql-scripts:/docker-entrypoint-initdb.d"
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data
