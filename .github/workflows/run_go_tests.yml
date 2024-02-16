@@ -3,8 +3,8 @@ run-name: ${{github.actor}} is running Go app tests
 on:
   push:
     branches:
+      - 'feature/*'
       - development
-      - main
 
 jobs:
   run-with-coverage:
@@ -22,3 +22,11 @@ jobs:
 
     - name: Run tests
       run: go test backend/... -race -short -cover -count=1
+
+    - name: Set status
+      if: ${{ github.ref == 'refs/heads/development' }}
+      uses: marocchino/sticky-pull-request-comment@v2
+      with:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        message: |
+          Go tests status: ${{ job.status }}
