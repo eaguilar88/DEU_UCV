@@ -1,0 +1,29 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Swagger UI</title>
+    <link rel="stylesheet" type="text/css" href="./swagger-ui.css">
+    <script src="./swagger-ui-bundle.js"></script>
+    <script src="./swagger-ui-standalone-preset.js"></script>
+</head>
+
+<body>
+    <div id="swagger-ui"></div>
+    <script>
+        window.onload = function () {
+            const ui = SwaggerUIBundle({
+                url: "./service.yaml", // Change this to your Swagger file URL
+                dom_id: '#swagger-ui',
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                layout: "StandaloneLayout"
+            });
+        }
+    </script>
+</body>
+
+</html>

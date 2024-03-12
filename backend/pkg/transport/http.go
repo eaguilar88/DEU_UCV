@@ -18,6 +18,12 @@ func LoginHandler(ctx context.Context, service *auth.AuthService) http.HandlerFu
 	}
 }
 
+type swaggerVariables struct {
+	Version     string
+	Name        string
+	GitCommitID string
+}
+
 // AddDocsEndpoint provides docs endpoint which is used for api documentation
 // func AddDocsEndpoint(rtr router.Router, logger log.Logger, docsSource string, middlewares ...router.Middleware) {
 // 	rtr.Handle(http.MethodGet, docsURL, func(rw http.ResponseWriter, r *http.Request) {

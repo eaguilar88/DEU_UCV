@@ -2,13 +2,10 @@ openapi: 3.0.0
 info:
   title: DEU UCV API
   description: API del proyecto DEU UCV
-  contact: { }
-  version: "{{ .AppVersion }}"
+  version: 1.0.0
 paths:
-  /:
+  /health:
     get:
-      tags:
-        - "sasa"
       summary: Foo
       responses:
         200:
