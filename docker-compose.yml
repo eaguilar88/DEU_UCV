@@ -11,18 +11,20 @@ services:
   #     - "go-deu"
   #     - "postgres16"
 
-  go-deu:
-    container_name: "backend"
-    image: "deu_golang"
-    build:
-      context: "backend"
-      dockerfile: "./Dockerfile"
-    env_file:
-      - ${PWD}/.env
-    ports:
-      - 8085:8085
-    links:
-      - "postgres16"
+  # go-deu:
+  #   container_name: "backend"
+  #   image: "deu_golang"
+  #   build:
+  #     context: "backend"
+  #     dockerfile: "./Dockerfile"
+  #   env_file:
+  #     - ${PWD}/.env
+  #   ports:
+  #     - 8085:8085
+  #   links:
+  #     - "postgres16"
+  #   volumes:
+  #     - ./backend/:/app
   postgres16:
     container_name: "postgres16"
     image: postgres:16-alpine
