@@ -12,6 +12,7 @@ import (
 type Server struct {
 	HTTPPort         int    `env:"HTTP_SERVE_PORT" envDefault:"80" envWhitelisted:"true"`
 	JWTEncryptionKey string `env:"JWT_SIGNING_KEY,required"`
+	FilePath         string `env:"FILE_PATH,required"`
 	Database         DatabaseConfig
 	Email            EmailConfig
 }

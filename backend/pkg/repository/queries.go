@@ -1,8 +1,10 @@
 package repository
 
-const getUserQuery = `SELECT ` +
-	`%s ` +
-	`FROM users u ` +
-	`WHERE u.ud = ?`
+import sq "github.com/Masterminds/squirrel"
 
-const userCommon = `u.first_name, u.last_name, u.date_of_birth, u.gender, u.education_level, u.address`
+func getUserByID(userID int) sq.SelectBuilder {
+	return sq.Select("u.id", "u.first_name", "u.last_name", "u.date_of_birth", "u.gender", "u.education", "u.address").
+		From("deu.users u").
+		Where(sq.Eq{"u.id": userID}).
+		PlaceholderFormat(sq.Dollar)
+}

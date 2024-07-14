@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/eaguilar88/deu/pkg/auth"
+	"github.com/eaguilar88/deu/pkg/entities"
 )
 
 func HealthHandler(w http.ResponseWriter, r *http.Request) {
@@ -16,6 +18,20 @@ func LoginHandler(ctx context.Context, service *auth.AuthService) http.HandlerFu
 	return func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Login Completed")
 	}
+}
+
+func NewQueryScopeFromURL(url *url.URL) (entities.PageScope, error) {
+	scope := entities.PageScope{}
+	vars := url.Query()
+	if err := scope.GetPageFromVars(vars.Get(PageParam)); err != nil {
+		return scope, fmt.Errorf("error getting page from query string: %v", err)
+	}
+
+	if err := scope.GetPerPageFromVars(vars.Get(PerPageParam)); err != nil {
+		return scope, fmt.Errorf("error getting per page from query string: %v", err)
+	}
+
+	return scope, nil
 }
 
 type swaggerVariables struct {
