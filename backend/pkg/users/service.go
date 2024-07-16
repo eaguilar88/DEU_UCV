@@ -40,15 +40,29 @@ func (s *UserService) GetUser(ctx context.Context, userID string) (entities.User
 	return user, nil
 }
 func (s *UserService) GetUsers(ctx context.Context, pageScope entities.PageScope) ([]entities.User, entities.PageScope, error) {
-
-	return nil, entities.PageScope{}, nil
+	users, page, err := s.repo.GetUsers(ctx, pageScope)
+	if err != nil {
+		return nil, entities.PageScope{}, err
+	}
+	return users, page, nil
 }
+
 func (s *UserService) CreateUser(ctx context.Context, user entities.User) (int, error) {
-	return -1, nil
+	id, err := s.repo.CreateUser(ctx, user)
+	if err != nil {
+		return -1, err
+	}
+	return id, nil
 }
 func (s *UserService) UpdateUser(ctx context.Context, userID int, user entities.User) error {
+	if err := s.repo.UpdateUser(ctx, userID, user); err != nil {
+		return err
+	}
 	return nil
 }
 func (s *UserService) DeleteUser(ctx context.Context, userID int) error {
+	if err := s.repo.DeleteUser(ctx, userID); err != nil {
+		return err
+	}
 	return nil
 }

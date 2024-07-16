@@ -99,25 +99,25 @@ func addAuthRoutes(ctx context.Context, service *auth.AuthService, r *mux.Router
 
 func addUserRoutes(r *mux.Router, endpoints users.Endpoints, options []kitHTTP.ServerOption) {
 	//Get User Endpoint
-	getUserHandler := users.GetUserHandleHTTP(endpoints.GetUser, options)
+	getUserHandler := transport.GetUserHandleHTTP(endpoints.GetUser, options)
 	path := fmt.Sprintf(transport.FormatUsers, transport.ParamUserID)
 	r.Methods(http.MethodGet).Path(path).Handler(getUserHandler)
 
 	//Get Users Endpoint
-	getUsersHandler := users.GetUsersHandleHTTP(endpoints.GetUsers, options)
+	getUsersHandler := transport.GetUsersHandleHTTP(endpoints.GetUsers, options)
 	r.Methods(http.MethodGet).Path(transport.PathUsers).Handler(getUsersHandler)
 
 	//Create User Endpoint
-	createUserHandler := users.CreateUserHandleHTTP(endpoints.GetUsers, options)
+	createUserHandler := transport.CreateUserHandleHTTP(endpoints.GetUsers, options)
 	r.Methods(http.MethodPost).Path(transport.PathUsers).Handler(createUserHandler)
 
 	//Update User Endpoint
-	updateUserHandler := users.UpdateUserHandleHTTP(endpoints.GetUsers, options)
+	updateUserHandler := transport.UpdateUserHandleHTTP(endpoints.GetUsers, options)
 	path = fmt.Sprintf(transport.FormatUsers, transport.ParamUserID)
 	r.Methods(http.MethodGet).Path(path).Handler(updateUserHandler)
 
 	//Delete User Endpoint
-	deleteUserHandler := users.DeleteUserHandleHTTP(endpoints.GetUsers, options)
+	deleteUserHandler := transport.DeleteUserHandleHTTP(endpoints.GetUsers, options)
 	path = fmt.Sprintf(transport.FormatUsers, transport.ParamUserID)
 	r.Methods(http.MethodGet).Path(path).Handler(deleteUserHandler)
 }

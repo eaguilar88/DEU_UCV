@@ -14,3 +14,7 @@ type GetUsersResponse struct {
 type CreateUsersResponse struct {
 	ID string `json:"id,omitempty"`
 }
+
+type UpdateUserResponse struct{}
+
+type DeleteUserResponse struct{}

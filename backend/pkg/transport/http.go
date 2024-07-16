@@ -8,6 +8,8 @@ import (
 
 	"github.com/eaguilar88/deu/pkg/auth"
 	"github.com/eaguilar88/deu/pkg/entities"
+	"github.com/go-kit/kit/endpoint"
+	kitHTTP "github.com/go-kit/kit/transport/http"
 )
 
 func HealthHandler(w http.ResponseWriter, r *http.Request) {
@@ -40,64 +42,48 @@ type swaggerVariables struct {
 	GitCommitID string
 }
 
-// AddDocsEndpoint provides docs endpoint which is used for api documentation
-// func AddDocsEndpoint(rtr router.Router, logger log.Logger, docsSource string, middlewares ...router.Middleware) {
-// 	rtr.Handle(http.MethodGet, docsURL, func(rw http.ResponseWriter, r *http.Request) {
+// User Endpoints
+func GetUserHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
+	return kitHTTP.NewServer(
+		ep,
+		decodeGetUserRequestHTTP,
+		encodeGetUserResponseHTTP,
+		options...,
+	)
+}
 
-// 		variables := swaggerVariables{
-// 			AppVersion:      constants.AppVersion,
-// 			AppName:         constants.AppName,
-// 			AppCreationTime: constants.AppCreationTime,
-// 			GitBranchName:   constants.GitBranchName,
-// 			GitCommitID:     constants.GitCommitID,
-// 			GitCommitTime:   constants.GitCommitTime,
-// 			GitTags:         constants.GitTags,
-// 			BaseURL:         fmt.Sprintf("https://%s", r.Host),
-// 		}
+func GetUsersHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
+	return kitHTTP.NewServer(
+		ep,
+		decodeGetUsersRequestHTTP,
+		encodeGetUsersResponseHTTP,
+		options...,
+	)
+}
 
-// 		if strings.Contains(r.Header.Get("Accept"), "text/yaml") {
-// 			rw.Header().Set("Content-Type", docsContentTypeHeader)
-// 			rw.Header().Set("Access-Control-Allow-Origin", "*")
+func CreateUserHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
+	return kitHTTP.NewServer(
+		ep,
+		decodeCreateUserRequestHTTP,
+		encodeCreateUserResponseHTTP,
+		options...,
+	)
+}
 
-// 			tmpl, err := template.ParseFiles(docsSource)
-// 			if err != nil {
-// 				errors.Handle(logger, err, "failed reading docs")
-// 				rw.WriteHeader(http.StatusInternalServerError)
-// 				return
-// 			}
+func UpdateUserHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
+	return kitHTTP.NewServer(
+		ep,
+		decodeUpdateUserRequestHTTP,
+		encodeUpdateUserResponseHTTP,
+		options...,
+	)
+}
 
-// 			err = tmpl.Execute(rw, variables)
-// 			if err != nil {
-// 				errors.Handle(logger, err, "failed writing the data to HTTP response")
-// 				rw.WriteHeader(http.StatusInternalServerError)
-// 				return
-// 			}
-
-// 			rw.WriteHeader(http.StatusOK)
-// 			return
-// 		}
-
-// 		tmpl, err := template.ParseFS(swaggerFS, "swagger/*.html")
-// 		rw.Header().Set("Content-Type", docsHttpTypeHeader)
-
-// 		if err != nil {
-// 			errors.Handle(logger, err, "failed reading from index file")
-// 			rw.WriteHeader(http.StatusInternalServerError)
-// 			return
-// 		}
-
-// 		err = tmpl.ExecuteTemplate(rw, "index.html", variables)
-// 		if err != nil {
-// 			errors.Handle(logger, err, "failed writing the data to HTTP response")
-// 			rw.WriteHeader(http.StatusInternalServerError)
-// 			return
-// 		}
-
-// 		rw.WriteHeader(http.StatusOK)
-// 	}, middlewares...)
-
-// 	rtr.HandlePrefix(http.MethodGet, swaggerURL, func(rw http.ResponseWriter, r *http.Request) {
-// 		http.StripPrefix(docsURL, http.FileServer(http.FS(swaggerFS))).ServeHTTP(rw, r)
-// 	}, middlewares...)
-
-// }
+func DeleteUserHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
+	return kitHTTP.NewServer(
+		ep,
+		decodeDeleteUserRequestHTTP,
+		encodeDeleteUserResponseHTTP,
+		options...,
+	)
+}

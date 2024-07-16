@@ -51,7 +51,7 @@ func makeGetUser(svc Service, log log.Logger) endpoint.Endpoint {
 			level.Error(log).Log("message", "could not decode", "request", request)
 			return nil, errors.New("could not decode")
 		}
-		user, err := svc.GetUser(ctx, req.UserID)
+		user, err := svc.GetUser(ctx, req.ID)
 		if err != nil {
 			level.Error(log).Log("message", "could not decode", "error", err)
 			return nil, err
@@ -92,10 +92,7 @@ func makeCreateUser(svc Service, log log.Logger) endpoint.Endpoint {
 			level.Error(log).Log("message", "could not decode", "request", request)
 			return nil, errors.New("could not decode")
 		}
-		newUser := entities.User{
-			Username: req.Username,
-			Password: req.Password,
-		}
+		newUser := httpRequestToCreateUserRequest(req)
 		userID, err := svc.CreateUser(ctx, newUser)
 		if err != nil {
 			level.Error(log).Log("message", "could not decode", "error", err)
