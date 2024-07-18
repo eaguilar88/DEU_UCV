@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/eaguilar88/deu/pkg/entities"
@@ -37,13 +38,14 @@ func newUserFromEntity(user entities.User, isUpdate bool) models.User {
 func newUserFromModel(user models.User) entities.User {
 	entity := entities.User{
 		ID:             user.ID,
+		CI:             fmt.Sprintf("%s-%d", user.IDType, user.CI),
 		Username:       user.Username,
 		FirstName:      user.FirstName,
 		LastName:       user.LastName,
 		DateOfBirth:    user.DateOfBirth,
 		EducationLevel: user.EducationLevel,
 		Password:       user.Password,
-		CreatedAt:      time.Now().String(),
+		CreatedAt:      user.CreatedAt,
 	}
 
 	if user.Gender.Valid {

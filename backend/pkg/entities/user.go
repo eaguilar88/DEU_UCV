@@ -4,6 +4,7 @@ import "time"
 
 type User struct {
 	ID             int    `json:"id"`
+	CI             string `json:"ci"`
 	Username       string `json:"username"`
 	FirstName      string `json:"first_name"`
 	LastName       string `json:"last_name"`
@@ -17,7 +18,7 @@ type User struct {
 }
 
 func (u *User) SetAge() {
-	dob, err := time.Parse("2006-01-02", u.DateOfBirth)
+	dob, err := time.Parse(time.RFC3339, u.DateOfBirth)
 	if err != nil {
 		return
 	}

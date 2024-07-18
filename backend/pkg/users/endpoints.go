@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/eaguilar88/deu/pkg/entities"
 	"github.com/go-kit/kit/endpoint"
@@ -14,7 +15,7 @@ import (
 type Service interface {
 	GetUser(ctx context.Context, userID string) (entities.User, error)
 	GetUsers(ctx context.Context, pageScope entities.PageScope) ([]entities.User, entities.PageScope, error)
-	CreateUser(ctx context.Context, user entities.User) (int, error)
+	CreateUser(ctx context.Context, user entities.User) (int64, error)
 	UpdateUser(ctx context.Context, userID int, user entities.User) error
 	DeleteUser(ctx context.Context, userID int) error
 }
@@ -57,10 +58,7 @@ func makeGetUser(svc Service, log log.Logger) endpoint.Endpoint {
 			return nil, err
 		}
 
-		response := GetUserResponse{
-			User: user,
-		}
-		return response, nil
+		return entitiesUserToGetUserResponse(user), nil
 	}
 }
 
@@ -92,7 +90,7 @@ func makeCreateUser(svc Service, log log.Logger) endpoint.Endpoint {
 			level.Error(log).Log("message", "could not decode", "request", request)
 			return nil, errors.New("could not decode")
 		}
-		newUser := httpRequestToCreateUserRequest(req)
+		newUser := createUserRequestToEntitiesUser(req)
 		userID, err := svc.CreateUser(ctx, newUser)
 		if err != nil {
 			level.Error(log).Log("message", "could not decode", "error", err)
@@ -108,14 +106,49 @@ func makeCreateUser(svc Service, log log.Logger) endpoint.Endpoint {
 
 func makeUpdateUser(svc Service, log log.Logger) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		// req, ok := request
-		return nil, nil
+		req, ok := request.(UpdateUserRequest)
+		if !ok {
+			level.Error(log).Log("message", "could not decode", "request", request)
+			return nil, errors.New("could not decode")
+		}
+
+		intID, err := strconv.Atoi(req.ID)
+		if err != nil {
+			level.Error(log).Log("message", "could not decode", "request", request)
+			return nil, errors.New("could not decode")
+		}
+
+		newUser := updateUserRequestToEntitiesUser(req, intID)
+		err = svc.UpdateUser(ctx, intID, newUser)
+		if err != nil {
+			level.Error(log).Log("message", "could not decode", "error", err)
+			return nil, err
+		}
+
+		return UpdateUserResponse{}, nil
 	}
 }
 
 func makeDeleteUser(svc Service, log log.Logger) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		// req, ok := request
-		return nil, nil
+		req, ok := request.(DeleteUserRequest)
+		if !ok {
+			level.Error(log).Log("message", "could not decode", "request", request)
+			return nil, errors.New("could not decode")
+		}
+
+		intID, err := strconv.Atoi(req.ID)
+		if err != nil {
+			level.Error(log).Log("message", "could not decode", "request", request)
+			return nil, errors.New("could not decode")
+		}
+
+		err = svc.DeleteUser(ctx, intID)
+		if err != nil {
+			level.Error(log).Log("message", "could not decode", "error", err)
+			return nil, err
+		}
+
+		return DeleteUserResponse{}, nil
 	}
 }

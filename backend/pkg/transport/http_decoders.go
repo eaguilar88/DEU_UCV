@@ -47,13 +47,12 @@ func decodeUpdateUserRequestHTTP(ctx context.Context, r *http.Request) (interfac
 		return nil, fmt.Errorf("missing required param: %s", ParamUserID)
 	}
 
-	req := users.UpdateUserRequest{
-		ID: userID,
-	}
+	req := users.UpdateUserRequest{}
 	defer r.Body.Close()
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, fmt.Errorf("error decoding request: %v", err)
 	}
+	req.ID = userID
 	return req, nil
 }
 

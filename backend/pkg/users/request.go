@@ -11,6 +11,7 @@ type GetUserRequest struct {
 }
 
 type CreateUserRequest struct {
+	Document       string `json:"ci"`
 	Username       string `json:"username"`
 	FirstName      string `json:"first_name"`
 	LastName       string `json:"last_name"`
@@ -27,6 +28,7 @@ type DeleteUserRequest struct {
 
 type UpdateUserRequest struct {
 	ID             string
+	Document       string `json:"ci"`
 	Username       string `json:"username"`
 	FirstName      string `json:"first_name"`
 	LastName       string `json:"last_name"`

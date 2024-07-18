@@ -8,8 +8,9 @@ const (
 )
 
 type PageScope struct {
-	Page    int
-	PerPage int
+	Page    int `json:"page,omitempty"`
+	PerPage int `json:"per_page,omitempty"`
+	Count   int `json:"count,omitempty"`
 }
 
 func (p PageScope) Offset() int {

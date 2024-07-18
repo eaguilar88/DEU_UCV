@@ -30,8 +30,8 @@ const (
 )
 
 func main() {
-	// ctx := context.Background()
 	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
+	logger = log.With(logger, "ts", log.DefaultTimestampUTC, "caller", log.DefaultCaller)
 
 	var g group.Group
 
@@ -59,6 +59,7 @@ func main() {
 
 	commonHTTPOptions := []kitHTTP.ServerOption{
 		kitHTTP.ServerBefore(kitJWT.HTTPToContext()),
+		kitHTTP.ServerErrorEncoder(transport.MakeHTTPErrorEncoder(logger)),
 	}
 	addUserRoutes(r, userEndpoints, commonHTTPOptions)
 	srv := &http.Server{
@@ -108,16 +109,16 @@ func addUserRoutes(r *mux.Router, endpoints users.Endpoints, options []kitHTTP.S
 	r.Methods(http.MethodGet).Path(transport.PathUsers).Handler(getUsersHandler)
 
 	//Create User Endpoint
-	createUserHandler := transport.CreateUserHandleHTTP(endpoints.GetUsers, options)
+	createUserHandler := transport.CreateUserHandleHTTP(endpoints.CreateUser, options)
 	r.Methods(http.MethodPost).Path(transport.PathUsers).Handler(createUserHandler)
 
 	//Update User Endpoint
-	updateUserHandler := transport.UpdateUserHandleHTTP(endpoints.GetUsers, options)
+	updateUserHandler := transport.UpdateUserHandleHTTP(endpoints.UpdateUser, options)
 	path = fmt.Sprintf(transport.FormatUsers, transport.ParamUserID)
-	r.Methods(http.MethodGet).Path(path).Handler(updateUserHandler)
+	r.Methods(http.MethodPut).Path(path).Handler(updateUserHandler)
 
 	//Delete User Endpoint
-	deleteUserHandler := transport.DeleteUserHandleHTTP(endpoints.GetUsers, options)
+	deleteUserHandler := transport.DeleteUserHandleHTTP(endpoints.DeleteUser, options)
 	path = fmt.Sprintf(transport.FormatUsers, transport.ParamUserID)
-	r.Methods(http.MethodGet).Path(path).Handler(deleteUserHandler)
+	r.Methods(http.MethodDelete).Path(path).Handler(deleteUserHandler)
 }

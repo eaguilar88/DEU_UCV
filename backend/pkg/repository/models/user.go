@@ -4,6 +4,8 @@ import "database/sql"
 
 type User struct {
 	ID             int
+	IDType         string
+	CI             int
 	Username       string
 	FirstName      string
 	LastName       string

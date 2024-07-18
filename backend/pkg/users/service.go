@@ -11,7 +11,7 @@ import (
 type Repository interface {
 	GetUser(ctx context.Context, userID int) (entities.User, error)
 	GetUsers(ctx context.Context, pageScope entities.PageScope) ([]entities.User, entities.PageScope, error)
-	CreateUser(ctx context.Context, user entities.User) (int, error)
+	CreateUser(ctx context.Context, user entities.User) (int64, error)
 	UpdateUser(ctx context.Context, userID int, user entities.User) error
 	DeleteUser(ctx context.Context, userID int) error
 }
@@ -47,7 +47,7 @@ func (s *UserService) GetUsers(ctx context.Context, pageScope entities.PageScope
 	return users, page, nil
 }
 
-func (s *UserService) CreateUser(ctx context.Context, user entities.User) (int, error) {
+func (s *UserService) CreateUser(ctx context.Context, user entities.User) (int64, error) {
 	id, err := s.repo.CreateUser(ctx, user)
 	if err != nil {
 		return -1, err
