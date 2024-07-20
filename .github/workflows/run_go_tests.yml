@@ -1,0 +1,34 @@
+name: Run Go Tests
+run-name: ${{github.actor}} is running Go app tests
+on:
+  push:
+    branches:
+      - 'feature/*'
+      - development
+
+jobs:
+  run-with-coverage:
+    name: Run Go Tests with Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.17
+
+    - name: Run tests
+      run: |
+        cd backend
+        go test ./... -race -short -cover -count=1
+
+    - name: Set status
+      if: ${{ github.ref == 'refs/heads/development' }}
+      uses: marocchino/sticky-pull-request-comment@v2
+      with:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        message: |
+          Go tests status: ${{ job.status }}
