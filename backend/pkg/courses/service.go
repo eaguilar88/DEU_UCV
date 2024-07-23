@@ -1,4 +1,4 @@
-package endorsments
+package courses
 
 import (
 	"context"

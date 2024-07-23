@@ -1,7 +1,9 @@
 package transport
 
 const (
-	ParamUserID  = "userID"
-	PageParam    = "page"
-	PerPageParam = "perPage"
+	ParamUserID       = "userID"
+	ParamEndorsmentID = "endorsmentID"
+	ParamCourseID     = "courseID"
+	PageParam         = "page"
+	PerPageParam      = "perPage"
 )

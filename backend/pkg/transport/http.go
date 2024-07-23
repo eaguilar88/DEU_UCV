@@ -42,48 +42,94 @@ type swaggerVariables struct {
 	GitCommitID string
 }
 
-// User Endpoints
-func GetUserHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
+// // User Endpoints
+// func GetUserHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
+// 	return kitHTTP.NewServer(
+// 		ep,
+// 		decodeGetUserRequestHTTP,
+// 		encodeGetUserResponseHTTP,
+// 		options...,
+// 	)
+// }
+
+// func GetUsersHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
+// 	return kitHTTP.NewServer(
+// 		ep,
+// 		decodeGetUsersRequestHTTP,
+// 		encodeGetUsersResponseHTTP,
+// 		options...,
+// 	)
+// }
+
+// func CreateUserHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
+// 	return kitHTTP.NewServer(
+// 		ep,
+// 		decodeCreateUserRequestHTTP,
+// 		encodeCreateUserResponseHTTP,
+// 		options...,
+// 	)
+// }
+
+// func UpdateUserHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
+// 	return kitHTTP.NewServer(
+// 		ep,
+// 		decodeUpdateUserRequestHTTP,
+// 		encodeUpdateUserResponseHTTP,
+// 		options...,
+// 	)
+// }
+
+// func DeleteUserHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
+// 	return kitHTTP.NewServer(
+// 		ep,
+// 		decodeDeleteUserRequestHTTP,
+// 		encodeDeleteUserResponseHTTP,
+// 		options...,
+// 	)
+// }
+
+// Endorsment Endpoints
+func GetEndorsmentHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
 	return kitHTTP.NewServer(
 		ep,
-		decodeGetUserRequestHTTP,
-		encodeGetUserResponseHTTP,
+		decodeGetEndorsmentRequestHTTP,
+		encodeGetEndorsmentResponseHTTP,
 		options...,
 	)
 }
 
-func GetUsersHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
+func GetEndorsmentsHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
 	return kitHTTP.NewServer(
 		ep,
-		decodeGetUsersRequestHTTP,
-		encodeGetUsersResponseHTTP,
+		decodeGetEndorsmentsRequestHTTP,
+		encodeGetEndorsmentsResponseHTTP,
 		options...,
 	)
 }
 
-func CreateUserHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
+func CreateEndorsmentHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
 	return kitHTTP.NewServer(
 		ep,
-		decodeCreateUserRequestHTTP,
-		encodeCreateUserResponseHTTP,
+		decodeCreateEndorsmentRequestHTTP,
+		encodeCreateEndorsmentResponseHTTP,
 		options...,
 	)
 }
 
-func UpdateUserHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
+func UpdateEndorsmentHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
 	return kitHTTP.NewServer(
 		ep,
-		decodeUpdateUserRequestHTTP,
-		encodeUpdateUserResponseHTTP,
+		decodeUpdateEndorsmentRequestHTTP,
+		encodeUpdateEndorsmentResponseHTTP,
 		options...,
 	)
 }
 
-func DeleteUserHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
+func DeleteEndorsmentHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
 	return kitHTTP.NewServer(
 		ep,
-		decodeDeleteUserRequestHTTP,
-		encodeDeleteUserResponseHTTP,
+		decodeDeleteEndorsmentRequestHTTP,
+		encodeDeleteEndorsmentResponseHTTP,
 		options...,
 	)
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/eaguilar88/deu/docs"
 	"github.com/eaguilar88/deu/pkg/auth"
 	"github.com/eaguilar88/deu/pkg/config"
+	"github.com/eaguilar88/deu/pkg/endorsments"
 	"github.com/eaguilar88/deu/pkg/repository"
 	"github.com/eaguilar88/deu/pkg/transport"
 	"github.com/eaguilar88/deu/pkg/users"
@@ -100,25 +101,50 @@ func addAuthRoutes(ctx context.Context, service *auth.AuthService, r *mux.Router
 
 func addUserRoutes(r *mux.Router, endpoints users.Endpoints, options []kitHTTP.ServerOption) {
 	//Get User Endpoint
-	getUserHandler := transport.GetUserHandleHTTP(endpoints.GetUser, options)
+	getUserHandler := users.GetUserHandleHTTP(endpoints.GetUser, options)
 	path := fmt.Sprintf(transport.FormatUsers, transport.ParamUserID)
 	r.Methods(http.MethodGet).Path(path).Handler(getUserHandler)
 
 	//Get Users Endpoint
-	getUsersHandler := transport.GetUsersHandleHTTP(endpoints.GetUsers, options)
+	getUsersHandler := users.GetUsersHandleHTTP(endpoints.GetUsers, options)
 	r.Methods(http.MethodGet).Path(transport.PathUsers).Handler(getUsersHandler)
 
 	//Create User Endpoint
-	createUserHandler := transport.CreateUserHandleHTTP(endpoints.CreateUser, options)
+	createUserHandler := users.CreateUserHandleHTTP(endpoints.CreateUser, options)
 	r.Methods(http.MethodPost).Path(transport.PathUsers).Handler(createUserHandler)
 
 	//Update User Endpoint
-	updateUserHandler := transport.UpdateUserHandleHTTP(endpoints.UpdateUser, options)
+	updateUserHandler := users.UpdateUserHandleHTTP(endpoints.UpdateUser, options)
 	path = fmt.Sprintf(transport.FormatUsers, transport.ParamUserID)
 	r.Methods(http.MethodPut).Path(path).Handler(updateUserHandler)
 
 	//Delete User Endpoint
-	deleteUserHandler := transport.DeleteUserHandleHTTP(endpoints.DeleteUser, options)
+	deleteUserHandler := users.DeleteUserHandleHTTP(endpoints.DeleteUser, options)
 	path = fmt.Sprintf(transport.FormatUsers, transport.ParamUserID)
 	r.Methods(http.MethodDelete).Path(path).Handler(deleteUserHandler)
+}
+
+func addEndorsmentRoutes(r *mux.Router, endpoints endorsments.Endpoints, options []kitHTTP.ServerOption) {
+	//Get Endorsment Endpoint
+	getEndorsmentHandler := transport.GetEndorsmentHandleHTTP(endpoints.GetEndorsment, options)
+	path := fmt.Sprintf(transport.FormatEndorsments, transport.ParamEndorsmentID)
+	r.Methods(http.MethodGet).Path(path).Handler(getEndorsmentHandler)
+
+	//Get Endorsments Endpoint
+	getEndorsmentsHandler := transport.GetEndorsmentsHandleHTTP(endpoints.GetEndorsments, options)
+	r.Methods(http.MethodGet).Path(transport.PathEndorsments).Handler(getEndorsmentsHandler)
+
+	//Create Endorsment Endpoint
+	createEndorsmentHandler := transport.CreateEndorsmentHandleHTTP(endpoints.CreateEndorsment, options)
+	r.Methods(http.MethodPost).Path(transport.PathEndorsments).Handler(createEndorsmentHandler)
+
+	//Update Endorsment Endpoint
+	updateEndorsmentHandler := transport.UpdateEndorsmentHandleHTTP(endpoints.UpdateEndorsment, options)
+	path = fmt.Sprintf(transport.FormatEndorsments, transport.ParamEndorsmentID)
+	r.Methods(http.MethodPut).Path(path).Handler(updateEndorsmentHandler)
+
+	//Delete Endorsment Endpoint
+	deleteEndorsmentHandler := transport.DeleteEndorsmentHandleHTTP(endpoints.DeleteEndorsment, options)
+	path = fmt.Sprintf(transport.FormatEndorsments, transport.ParamEndorsmentID)
+	r.Methods(http.MethodDelete).Path(path).Handler(deleteEndorsmentHandler)
 }
