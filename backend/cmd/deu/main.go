@@ -11,7 +11,7 @@ import (
 	"github.com/eaguilar88/deu/docs"
 	"github.com/eaguilar88/deu/pkg/auth"
 	"github.com/eaguilar88/deu/pkg/config"
-	"github.com/eaguilar88/deu/pkg/endorsments"
+	"github.com/eaguilar88/deu/pkg/endorsements"
 	"github.com/eaguilar88/deu/pkg/repository"
 	"github.com/eaguilar88/deu/pkg/transport"
 	"github.com/eaguilar88/deu/pkg/users"
@@ -58,11 +58,16 @@ func main() {
 	userSvc := users.NewUsersService(repository, logger)
 	userEndpoints := users.MakeEndpoints(userSvc, logger, nil)
 
+	endorsementSvc := endorsements.NewEndorsementsService(repository, logger)
+	endorsementEndpoints := endorsements.MakeEndpoints(endorsementSvc, logger, nil)
+
 	commonHTTPOptions := []kitHTTP.ServerOption{
 		kitHTTP.ServerBefore(kitJWT.HTTPToContext()),
 		kitHTTP.ServerErrorEncoder(transport.MakeHTTPErrorEncoder(logger)),
 	}
 	addUserRoutes(r, userEndpoints, commonHTTPOptions)
+	addEndorsementRoutes(r, endorsementEndpoints, commonHTTPOptions)
+
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", config.HTTPPort),
 		Handler: r,
@@ -124,27 +129,27 @@ func addUserRoutes(r *mux.Router, endpoints users.Endpoints, options []kitHTTP.S
 	r.Methods(http.MethodDelete).Path(path).Handler(deleteUserHandler)
 }
 
-func addEndorsmentRoutes(r *mux.Router, endpoints endorsments.Endpoints, options []kitHTTP.ServerOption) {
-	//Get Endorsment Endpoint
-	getEndorsmentHandler := transport.GetEndorsmentHandleHTTP(endpoints.GetEndorsment, options)
-	path := fmt.Sprintf(transport.FormatEndorsments, transport.ParamEndorsmentID)
-	r.Methods(http.MethodGet).Path(path).Handler(getEndorsmentHandler)
+func addEndorsementRoutes(r *mux.Router, endpoints endorsements.Endpoints, options []kitHTTP.ServerOption) {
+	//Get Endorsement Endpoint
+	getEndorsementHandler := transport.GetEndorsementHandleHTTP(endpoints.GetEndorsement, options)
+	path := fmt.Sprintf(transport.FormatEndorsements, transport.ParamEndorsementID)
+	r.Methods(http.MethodGet).Path(path).Handler(getEndorsementHandler)
 
-	//Get Endorsments Endpoint
-	getEndorsmentsHandler := transport.GetEndorsmentsHandleHTTP(endpoints.GetEndorsments, options)
-	r.Methods(http.MethodGet).Path(transport.PathEndorsments).Handler(getEndorsmentsHandler)
+	//Get Endorsements Endpoint
+	getEndorsementsHandler := transport.GetEndorsementsHandleHTTP(endpoints.GetEndorsements, options)
+	r.Methods(http.MethodGet).Path(transport.PathEndorsements).Handler(getEndorsementsHandler)
 
-	//Create Endorsment Endpoint
-	createEndorsmentHandler := transport.CreateEndorsmentHandleHTTP(endpoints.CreateEndorsment, options)
-	r.Methods(http.MethodPost).Path(transport.PathEndorsments).Handler(createEndorsmentHandler)
+	//Create Endorsement Endpoint
+	createEndorsementHandler := transport.CreateEndorsementHandleHTTP(endpoints.CreateEndorsement, options)
+	r.Methods(http.MethodPost).Path(transport.PathEndorsements).Handler(createEndorsementHandler)
 
-	//Update Endorsment Endpoint
-	updateEndorsmentHandler := transport.UpdateEndorsmentHandleHTTP(endpoints.UpdateEndorsment, options)
-	path = fmt.Sprintf(transport.FormatEndorsments, transport.ParamEndorsmentID)
-	r.Methods(http.MethodPut).Path(path).Handler(updateEndorsmentHandler)
+	//Update Endorsement Endpoint
+	updateEndorsementHandler := transport.UpdateEndorsementHandleHTTP(endpoints.UpdateEndorsement, options)
+	path = fmt.Sprintf(transport.FormatEndorsements, transport.ParamEndorsementID)
+	r.Methods(http.MethodPut).Path(path).Handler(updateEndorsementHandler)
 
-	//Delete Endorsment Endpoint
-	deleteEndorsmentHandler := transport.DeleteEndorsmentHandleHTTP(endpoints.DeleteEndorsment, options)
-	path = fmt.Sprintf(transport.FormatEndorsments, transport.ParamEndorsmentID)
-	r.Methods(http.MethodDelete).Path(path).Handler(deleteEndorsmentHandler)
+	//Delete Endorsement Endpoint
+	deleteEndorsementHandler := transport.DeleteEndorsementHandleHTTP(endpoints.DeleteEndorsement, options)
+	path = fmt.Sprintf(transport.FormatEndorsements, transport.ParamEndorsementID)
+	r.Methods(http.MethodDelete).Path(path).Handler(deleteEndorsementHandler)
 }

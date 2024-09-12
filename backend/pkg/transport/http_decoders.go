@@ -6,35 +6,35 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/eaguilar88/deu/pkg/endorsments"
+	"github.com/eaguilar88/deu/pkg/endorsements"
 	"github.com/gorilla/mux"
 )
 
-// Endorsment Decoders
-func decodeGetEndorsmentRequestHTTP(ctx context.Context, r *http.Request) (interface{}, error) {
-	EndorsmentID, exists := mux.Vars(r)[ParamEndorsmentID]
+// Endorsement Decoders
+func decodeGetEndorsementRequestHTTP(ctx context.Context, r *http.Request) (interface{}, error) {
+	EndorsementID, exists := mux.Vars(r)[ParamEndorsementID]
 	if !exists {
-		return nil, fmt.Errorf("missing required param: %s", ParamEndorsmentID)
+		return nil, fmt.Errorf("missing required param: %s", ParamEndorsementID)
 	}
 
-	return endorsments.GetEndorsmentRequest{
-		ID: EndorsmentID,
+	return endorsements.GetEndorsementRequest{
+		ID: EndorsementID,
 	}, nil
 }
 
-func decodeGetEndorsmentsRequestHTTP(ctx context.Context, r *http.Request) (interface{}, error) {
+func decodeGetEndorsementsRequestHTTP(ctx context.Context, r *http.Request) (interface{}, error) {
 	queryScope, err := NewQueryScopeFromURL(r.URL)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding query query string: %v", err)
 	}
 
-	return endorsments.GetEndorsmentsRequest{
+	return endorsements.GetEndorsementsRequest{
 		PageScope: queryScope,
 	}, nil
 }
 
-func decodeCreateEndorsmentRequestHTTP(ctx context.Context, r *http.Request) (interface{}, error) {
-	req := endorsments.CreateEndorsmentRequest{}
+func decodeCreateEndorsementRequestHTTP(ctx context.Context, r *http.Request) (interface{}, error) {
+	req := endorsements.CreateEndorsementRequest{}
 	defer r.Body.Close()
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, fmt.Errorf("error decoding request: %v", err)
@@ -42,28 +42,28 @@ func decodeCreateEndorsmentRequestHTTP(ctx context.Context, r *http.Request) (in
 	return req, nil
 }
 
-func decodeUpdateEndorsmentRequestHTTP(ctx context.Context, r *http.Request) (interface{}, error) {
-	EndorsmentID, exists := mux.Vars(r)[ParamEndorsmentID]
+func decodeUpdateEndorsementRequestHTTP(ctx context.Context, r *http.Request) (interface{}, error) {
+	EndorsementID, exists := mux.Vars(r)[ParamEndorsementID]
 	if !exists {
-		return nil, fmt.Errorf("missing required param: %s", ParamEndorsmentID)
+		return nil, fmt.Errorf("missing required param: %s", ParamEndorsementID)
 	}
 
-	req := endorsments.UpdateEndorsmentRequest{}
+	req := endorsements.UpdateEndorsementRequest{}
 	defer r.Body.Close()
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, fmt.Errorf("error decoding request: %v", err)
 	}
-	req.ID = EndorsmentID
+	req.ID = EndorsementID
 	return req, nil
 }
 
-func decodeDeleteEndorsmentRequestHTTP(ctx context.Context, r *http.Request) (interface{}, error) {
-	EndorsmentID, exists := mux.Vars(r)[ParamEndorsmentID]
+func decodeDeleteEndorsementRequestHTTP(ctx context.Context, r *http.Request) (interface{}, error) {
+	EndorsementID, exists := mux.Vars(r)[ParamEndorsementID]
 	if !exists {
-		return nil, fmt.Errorf("missing required param: %s", ParamEndorsmentID)
+		return nil, fmt.Errorf("missing required param: %s", ParamEndorsementID)
 	}
 
-	return endorsments.DeleteEndorsmentRequest{
-		ID: EndorsmentID,
+	return endorsements.DeleteEndorsementRequest{
+		ID: EndorsementID,
 	}, nil
 }

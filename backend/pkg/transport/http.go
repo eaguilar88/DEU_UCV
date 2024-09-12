@@ -88,48 +88,48 @@ type swaggerVariables struct {
 // 	)
 // }
 
-// Endorsment Endpoints
-func GetEndorsmentHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
+// Endorsement Endpoints
+func GetEndorsementHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
 	return kitHTTP.NewServer(
 		ep,
-		decodeGetEndorsmentRequestHTTP,
-		encodeGetEndorsmentResponseHTTP,
+		decodeGetEndorsementRequestHTTP,
+		encodeGetEndorsementResponseHTTP,
 		options...,
 	)
 }
 
-func GetEndorsmentsHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
+func GetEndorsementsHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
 	return kitHTTP.NewServer(
 		ep,
-		decodeGetEndorsmentsRequestHTTP,
-		encodeGetEndorsmentsResponseHTTP,
+		decodeGetEndorsementsRequestHTTP,
+		encodeGetEndorsementsResponseHTTP,
 		options...,
 	)
 }
 
-func CreateEndorsmentHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
+func CreateEndorsementHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
 	return kitHTTP.NewServer(
 		ep,
-		decodeCreateEndorsmentRequestHTTP,
-		encodeCreateEndorsmentResponseHTTP,
+		decodeCreateEndorsementRequestHTTP,
+		encodeCreateEndorsementResponseHTTP,
 		options...,
 	)
 }
 
-func UpdateEndorsmentHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
+func UpdateEndorsementHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
 	return kitHTTP.NewServer(
 		ep,
-		decodeUpdateEndorsmentRequestHTTP,
-		encodeUpdateEndorsmentResponseHTTP,
+		decodeUpdateEndorsementRequestHTTP,
+		encodeUpdateEndorsementResponseHTTP,
 		options...,
 	)
 }
 
-func DeleteEndorsmentHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
+func DeleteEndorsementHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
 	return kitHTTP.NewServer(
 		ep,
-		decodeDeleteEndorsmentRequestHTTP,
-		encodeDeleteEndorsmentResponseHTTP,
+		decodeDeleteEndorsementRequestHTTP,
+		encodeDeleteEndorsementResponseHTTP,
 		options...,
 	)
 }

@@ -1,4 +1,4 @@
-package endorsments
+package endorsements
 
 import (
 	"context"
@@ -13,28 +13,28 @@ import (
 )
 
 type Service interface {
-	GetEndorsment(ctx context.Context, endorsmentID string) (entities.Endorsments, error)
-	GetEndorsments(ctx context.Context, pageScope entities.PageScope) ([]entities.Endorsments, entities.PageScope, error)
-	CreateEndorsment(ctx context.Context, Endorsment entities.Endorsments) (int64, error)
-	UpdateEndorsment(ctx context.Context, endorsmentID int, Endorsment entities.Endorsments) error
-	DeleteEndorsment(ctx context.Context, endorsmentID int) error
+	GetEndorsement(ctx context.Context, endorsementID string) (entities.Endorsements, error)
+	GetEndorsements(ctx context.Context, pageScope entities.PageScope) ([]entities.Endorsements, entities.PageScope, error)
+	CreateEndorsement(ctx context.Context, endorsement entities.Endorsements) (int64, error)
+	UpdateEndorsement(ctx context.Context, endorsementID int, Endorsement entities.Endorsements) error
+	DeleteEndorsement(ctx context.Context, endorsementID int) error
 }
 
 type Endpoints struct {
-	GetEndorsment    endpoint.Endpoint
-	GetEndorsments   endpoint.Endpoint
-	CreateEndorsment endpoint.Endpoint
-	UpdateEndorsment endpoint.Endpoint
-	DeleteEndorsment endpoint.Endpoint
+	GetEndorsement    endpoint.Endpoint
+	GetEndorsements   endpoint.Endpoint
+	CreateEndorsement endpoint.Endpoint
+	UpdateEndorsement endpoint.Endpoint
+	DeleteEndorsement endpoint.Endpoint
 }
 
 func MakeEndpoints(svc Service, log log.Logger, middlewares ...endpoint.Middleware) Endpoints {
 	return Endpoints{
-		GetEndorsment:    makeGetEndorsment(svc, log),
-		GetEndorsments:   makeGetEndorsments(svc, log),
-		CreateEndorsment: makeCreateEndorsment(svc, log),
-		UpdateEndorsment: makeUpdateEndorsment(svc, log),
-		DeleteEndorsment: makeDeleteEndorsment(svc, log),
+		GetEndorsement:    makeGetEndorsement(svc, log),
+		GetEndorsements:   makeGetEndorsements(svc, log),
+		CreateEndorsement: makeCreateEndorsement(svc, log),
+		UpdateEndorsement: makeUpdateEndorsement(svc, log),
+		DeleteEndorsement: makeDeleteEndorsement(svc, log),
 	}
 }
 
@@ -45,68 +45,68 @@ func wrapEndpoint(e endpoint.Endpoint, middlewares []endpoint.Middleware) endpoi
 	return e
 }
 
-func makeGetEndorsment(svc Service, log log.Logger) endpoint.Endpoint {
+func makeGetEndorsement(svc Service, log log.Logger) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(GetEndorsmentRequest)
+		req, ok := request.(GetEndorsementRequest)
 		if !ok {
 			level.Error(log).Log("message", "could not decode", "request", request)
 			return nil, errors.New("could not decode")
 		}
-		endorsment, err := svc.GetEndorsment(ctx, req.ID)
+		endorsement, err := svc.GetEndorsement(ctx, req.ID)
 		if err != nil {
 			level.Error(log).Log("message", "could not decode", "error", err)
 			return nil, err
 		}
 
-		return entitiesEndorsmentToGetEndorsmentResponse(endorsment), nil
+		return entitiesEndorsementToGetEndorsementResponse(endorsement), nil
 	}
 }
 
-func makeGetEndorsments(svc Service, log log.Logger) endpoint.Endpoint {
+func makeGetEndorsements(svc Service, log log.Logger) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(GetEndorsmentsRequest)
+		req, ok := request.(GetEndorsementsRequest)
 		if !ok {
 			level.Error(log).Log("message", "could not decode", "request", request)
 			return nil, errors.New("could not decode")
 		}
-		users, pages, err := svc.GetEndorsments(ctx, req.PageScope)
+		users, pages, err := svc.GetEndorsements(ctx, req.PageScope)
 		if err != nil {
 			level.Error(log).Log("message", "could not decode", "error", err)
 			return nil, err
 		}
 
-		response := GetEndorsmentsResponse{
-			Endorsments: users,
-			Pages:       pages,
+		response := GetEndorsementsResponse{
+			Endorsements: users,
+			Pages:        pages,
 		}
 		return response, nil
 	}
 }
 
-func makeCreateEndorsment(svc Service, log log.Logger) endpoint.Endpoint {
+func makeCreateEndorsement(svc Service, log log.Logger) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(CreateEndorsmentRequest)
+		req, ok := request.(CreateEndorsementRequest)
 		if !ok {
 			level.Error(log).Log("message", "could not decode", "request", request)
 			return nil, errors.New("could not decode")
 		}
-		newUser := createEndorsmentRequestToEntitiesEndorsment(req)
-		userID, err := svc.CreateEndorsment(ctx, newUser)
+		newUser := createEndorsementRequestToEntitiesEndorsement(req)
+		userID, err := svc.CreateEndorsement(ctx, newUser)
 		if err != nil {
 			level.Error(log).Log("message", "could not decode", "error", err)
 			return nil, err
 		}
 
-		response := CreateEndorsmentResponse{
+		response := CreateEndorsementResponse{
 			ID: fmt.Sprintf("%d", userID),
 		}
 		return response, nil
 	}
 }
 
-func makeUpdateEndorsment(svc Service, log log.Logger) endpoint.Endpoint {
+func makeUpdateEndorsement(svc Service, log log.Logger) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(UpdateEndorsmentRequest)
+		req, ok := request.(UpdateEndorsementRequest)
 		if !ok {
 			level.Error(log).Log("message", "could not decode", "request", request)
 			return nil, errors.New("could not decode")
@@ -118,20 +118,20 @@ func makeUpdateEndorsment(svc Service, log log.Logger) endpoint.Endpoint {
 			return nil, errors.New("could not decode")
 		}
 
-		newUser := updateEndorsmentRequestToEntitiesEndorsment(req, intID)
-		err = svc.UpdateEndorsment(ctx, intID, newUser)
+		newUser := updateEndorsementRequestToEntitiesEndorsement(req, intID)
+		err = svc.UpdateEndorsement(ctx, intID, newUser)
 		if err != nil {
 			level.Error(log).Log("message", "could not decode", "error", err)
 			return nil, err
 		}
 
-		return UpdateEndorsmentResponse{}, nil
+		return UpdateEndorsementResponse{}, nil
 	}
 }
 
-func makeDeleteEndorsment(svc Service, log log.Logger) endpoint.Endpoint {
+func makeDeleteEndorsement(svc Service, log log.Logger) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(DeleteEndorsmentRequest)
+		req, ok := request.(DeleteEndorsementRequest)
 		if !ok {
 			level.Error(log).Log("message", "could not decode", "request", request)
 			return nil, errors.New("could not decode")
@@ -143,12 +143,12 @@ func makeDeleteEndorsment(svc Service, log log.Logger) endpoint.Endpoint {
 			return nil, errors.New("could not decode")
 		}
 
-		err = svc.DeleteEndorsment(ctx, intID)
+		err = svc.DeleteEndorsement(ctx, intID)
 		if err != nil {
 			level.Error(log).Log("message", "could not decode", "error", err)
 			return nil, err
 		}
 
-		return DeleteEndorsmentResponse{}, nil
+		return DeleteEndorsementResponse{}, nil
 	}
 }

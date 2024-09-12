@@ -2,38 +2,15 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/eaguilar88/deu/pkg/entities"
 	"github.com/eaguilar88/deu/pkg/repository/models"
-	"github.com/go-kit/log"
+	"github.com/eaguilar88/deu/pkg/repository/queries"
 	"github.com/lib/pq"
 )
 
-const (
-	pgErrorCodeUniqueViolation = "23505"
-)
-
-type scannable interface {
-	Scan(dest ...interface{}) error
-}
-
-type PostgresRepository struct {
-	db           *sql.DB
-	documentsDir string
-	logger       log.Logger
-}
-
-func NewRepository(connection *sql.DB, directory string, logger log.Logger) *PostgresRepository {
-	return &PostgresRepository{
-		db:           connection,
-		documentsDir: directory,
-		logger:       logger,
-	}
-}
-
 func (r *PostgresRepository) GetUser(ctx context.Context, userID int) (entities.User, error) {
-	query := getUserByID(userID)
+	query := queries.GetUserByID(userID)
 	sql, args, err := query.ToSql()
 	if err != nil {
 		return entities.User{}, err
@@ -63,7 +40,7 @@ func (r *PostgresRepository) GetUser(ctx context.Context, userID int) (entities.
 }
 
 func (r *PostgresRepository) GetUsers(ctx context.Context, pageScope entities.PageScope) ([]entities.User, entities.PageScope, error) {
-	sql, args, err := getUsers(pageScope).ToSql()
+	sql, args, err := queries.GetUsers(pageScope).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
@@ -93,7 +70,7 @@ func (r *PostgresRepository) GetUsers(ctx context.Context, pageScope entities.Pa
 }
 
 func (r *PostgresRepository) CreateUser(ctx context.Context, user entities.User) (int64, error) {
-	sql, args, err := insertUser(user).ToSql()
+	sql, args, err := queries.InsertUser(user).ToSql()
 	if err != nil {
 		return -1, err
 	}
@@ -117,7 +94,7 @@ func (r *PostgresRepository) CreateUser(ctx context.Context, user entities.User)
 }
 
 func (r *PostgresRepository) UpdateUser(ctx context.Context, userID int, user entities.User) error {
-	sql, args, err := updateUserInfo(user, userID).ToSql()
+	sql, args, err := queries.UpdateUserInfo(user, userID).ToSql()
 	if err != nil {
 		return NewQueryError(errBadQuery, err)
 	}
@@ -141,7 +118,7 @@ func (r *PostgresRepository) UpdateUser(ctx context.Context, userID int, user en
 }
 
 func (r *PostgresRepository) DeleteUser(ctx context.Context, userID int) error {
-	sql, args, err := deleteUser(userID).ToSql()
+	sql, args, err := queries.DeleteUser(userID).ToSql()
 	if err != nil {
 		return NewQueryError(errBadQuery, err)
 	}

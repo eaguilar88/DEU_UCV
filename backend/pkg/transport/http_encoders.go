@@ -6,12 +6,12 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/eaguilar88/deu/pkg/endorsments"
+	"github.com/eaguilar88/deu/pkg/endorsements"
 )
 
-// Endorsments Encoders
-func encodeGetEndorsmentResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
-	resp, ok := untypedResp.(endorsments.GetEndorsmentResponse)
+// Endorsements Encoders
+func encodeGetEndorsementResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
+	resp, ok := untypedResp.(endorsements.GetEndorsementResponse)
 	if !ok {
 		return errors.New("dang bang")
 	}
@@ -25,8 +25,8 @@ func encodeGetEndorsmentResponseHTTP(_ context.Context, w http.ResponseWriter, u
 	return nil
 }
 
-func encodeGetEndorsmentsResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
-	resp, ok := untypedResp.(endorsments.GetEndorsmentsResponse)
+func encodeGetEndorsementsResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
+	resp, ok := untypedResp.(endorsements.GetEndorsementsResponse)
 	if !ok {
 		return errors.New("dang bang")
 	}
@@ -40,8 +40,8 @@ func encodeGetEndorsmentsResponseHTTP(_ context.Context, w http.ResponseWriter, 
 	return nil
 }
 
-func encodeCreateEndorsmentResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
-	resp, ok := untypedResp.(endorsments.CreateEndorsmentResponse)
+func encodeCreateEndorsementResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
+	resp, ok := untypedResp.(endorsements.CreateEndorsementResponse)
 	if !ok {
 		return errors.New("dang bang")
 	}
@@ -55,8 +55,8 @@ func encodeCreateEndorsmentResponseHTTP(_ context.Context, w http.ResponseWriter
 	return nil
 }
 
-func encodeUpdateEndorsmentResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
-	resp, ok := untypedResp.(endorsments.UpdateEndorsmentResponse)
+func encodeUpdateEndorsementResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
+	resp, ok := untypedResp.(endorsements.UpdateEndorsementResponse)
 	if !ok {
 		return errors.New("dang bang")
 	}
@@ -70,8 +70,8 @@ func encodeUpdateEndorsmentResponseHTTP(_ context.Context, w http.ResponseWriter
 	return nil
 }
 
-func encodeDeleteEndorsmentResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
-	resp, ok := untypedResp.(endorsments.DeleteEndorsmentResponse)
+func encodeDeleteEndorsementResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
+	resp, ok := untypedResp.(endorsements.DeleteEndorsementResponse)
 	if !ok {
 		return errors.New("dang bang")
 	}
@@ -85,9 +85,9 @@ func encodeDeleteEndorsmentResponseHTTP(_ context.Context, w http.ResponseWriter
 	return nil
 }
 
-// Endorsments Courses
+// Endorsements Courses
 func encodeGetCourseResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
-	resp, ok := untypedResp.(endorsments.GetEndorsmentResponse)
+	resp, ok := untypedResp.(endorsements.GetEndorsementResponse)
 	if !ok {
 		return errors.New("dang bang")
 	}
@@ -102,7 +102,7 @@ func encodeGetCourseResponseHTTP(_ context.Context, w http.ResponseWriter, untyp
 }
 
 func encodeGetCoursesResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
-	resp, ok := untypedResp.(endorsments.GetEndorsmentsResponse)
+	resp, ok := untypedResp.(endorsements.GetEndorsementsResponse)
 	if !ok {
 		return errors.New("dang bang")
 	}
@@ -117,7 +117,7 @@ func encodeGetCoursesResponseHTTP(_ context.Context, w http.ResponseWriter, unty
 }
 
 func encodeCreateCourseResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
-	resp, ok := untypedResp.(endorsments.CreateEndorsmentResponse)
+	resp, ok := untypedResp.(endorsements.CreateEndorsementResponse)
 	if !ok {
 		return errors.New("dang bang")
 	}
@@ -132,7 +132,7 @@ func encodeCreateCourseResponseHTTP(_ context.Context, w http.ResponseWriter, un
 }
 
 func encodeUpdateCourseResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
-	resp, ok := untypedResp.(endorsments.UpdateEndorsmentResponse)
+	resp, ok := untypedResp.(endorsements.UpdateEndorsementResponse)
 	if !ok {
 		return errors.New("dang bang")
 	}
@@ -147,7 +147,7 @@ func encodeUpdateCourseResponseHTTP(_ context.Context, w http.ResponseWriter, un
 }
 
 func encodeDeleteCourseResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
-	resp, ok := untypedResp.(endorsments.DeleteEndorsmentResponse)
+	resp, ok := untypedResp.(endorsements.DeleteEndorsementResponse)
 	if !ok {
 		return errors.New("dang bang")
 	}
