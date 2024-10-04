@@ -9,6 +9,6 @@ ENV POSTGRES_USERNAME=deu_admin
 ENV POSTGRES_PASSWORD=nolodire
 
 # Copy initialization scripts into the container
-COPY init-db.sh /docker-entrypoint-initdb.d/
+COPY ./init.sql /docker-entrypoint-initdb.d/
 
 EXPOSE 5432

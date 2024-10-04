@@ -1,0 +1,17 @@
+# Build context
+.git
+.vscode
+node_modules
+vendor
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+.env.staging
+.env.example
+.env.local.example
+.env.development.example
+.env.production.example
+.env.test.example
+.env.staging.example

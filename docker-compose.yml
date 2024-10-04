@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   # vuejs:
   #   container_name: "deu-vuejs"
@@ -29,18 +27,15 @@ services:
     container_name: "postgres16"
     image: postgres:16-alpine
     build:
-      context: "postgresql"
+      context: "./postgresql"
       dockerfile: Dockerfile
     restart: "unless-stopped"
     ports:
-      - 5432:5432
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
     environment:
       TIMEZONE: "GMT-4"
       POSTGRES_DB: "${POSTGRES_DB}"
       POSTGRES_USER: "${POSTGRES_USERNAME}"
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
-    volumes:
-      - ./postgresql/sql-scripts:/docker-entrypoint-initdb.d
-      - postgres_data:/var/lib/postgresql/data
 volumes:
   postgres_data:
