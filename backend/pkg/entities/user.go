@@ -6,6 +6,7 @@ type User struct {
 	ID             int    `json:"id"`
 	CI             string `json:"ci"`
 	Username       string `json:"username"`
+	Role           Role   `json:"role"`
 	FirstName      string `json:"first_name"`
 	LastName       string `json:"last_name"`
 	DateOfBirth    string `json:"date_of_birth"`
@@ -28,4 +29,9 @@ func (u *User) SetAge() {
 		age--
 	}
 	u.Age = age
+}
+
+type Role struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
 }

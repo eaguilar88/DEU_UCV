@@ -16,6 +16,7 @@ var (
 	errBadLastInsertID      = fmt.Errorf("%w: bad lastID", errDatabase)
 	errUniqueIndexViolation = fmt.Errorf("%w: duplicated entry", errDatabase)
 	errRowsNotFound         = fmt.Errorf("%w: rows not found", errDatabase)
+	errInvalidPassword      = fmt.Errorf("%w: invalid password", errDatabase)
 )
 
 type ErrQuery struct {

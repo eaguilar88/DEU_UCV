@@ -6,6 +6,7 @@ type User struct {
 	ID             int
 	IDType         string
 	CI             int
+	Role           Role
 	Username       string
 	FirstName      string
 	LastName       string
@@ -16,4 +17,9 @@ type User struct {
 	Password       string
 	CreatedAt      string
 	UpdatedAt      string
+}
+
+type Role struct {
+	ID   int
+	Name string
 }

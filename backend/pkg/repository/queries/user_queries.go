@@ -20,9 +20,15 @@ var (
 	}
 )
 
-func GetUserByID(userID int) sq.SelectBuilder {
-	return psql.Select(userQuerySelectCommon...).
-		From(fmt.Sprintf("%s AS u", userTableName)).
+func getUserByUsername(username string) sq.SelectBuilder {
+	return psql.Select(querySelectCommon...).
+		From(fmt.Sprintf("%s AS u", table)).
+		Where(sq.Eq{"u.username": username})
+}
+
+func getUserByID(userID int) sq.SelectBuilder {
+	return psql.Select(querySelectCommon...).
+		From(fmt.Sprintf("%s AS u", table)).
 		Where(sq.Eq{"u.id": userID})
 }
 

@@ -3,11 +3,85 @@ package repository
 import (
 	"context"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/eaguilar88/deu/pkg/entities"
 	"github.com/eaguilar88/deu/pkg/repository/models"
 	"github.com/eaguilar88/deu/pkg/repository/queries"
 	"github.com/lib/pq"
 )
+
+const (
+	pgErrorCodeUniqueViolation = "23505"
+	pgErrorCodeNoData          = "02000"
+)
+
+type scannable interface {
+	Scan(dest ...interface{}) error
+}
+
+type PostgresRepository struct {
+	db           *sql.DB
+	documentsDir string
+	logger       log.Logger
+}
+
+func NewRepository(connection *sql.DB, directory string, logger log.Logger) *PostgresRepository {
+	return &PostgresRepository{
+		db:           connection,
+		documentsDir: directory,
+		logger:       logger,
+	}
+}
+
+func (r *PostgresRepository) ValidateUser(ctx context.Context, username, password string) (entities.User, error) {
+	query := getUserByUsername(username)
+	sql, args, err := query.ToSql()
+	if err != nil {
+		return entities.User{}, err
+	}
+
+	stmt, err := r.db.PrepareContext(ctx, sql)
+	if err != nil {
+		return entities.User{}, err
+	}
+	defer stmt.Close()
+
+	var user models.User
+	err = stmt.QueryRowContext(ctx, args...).Scan(
+		&user.ID,
+		&user.IDType,
+		&user.CI,
+		&user.Username,
+		&user.FirstName,
+		&user.LastName,
+		&user.DateOfBirth,
+		&user.Gender,
+		&user.EducationLevel,
+		&user.Address,
+		&user.CreatedAt,
+		&user.Password,
+	)
+	if err != nil {
+		if pgErr, ok := err.(*pq.Error); ok {
+			switch pgErr.Code {
+			case pgErrorCodeNoData:
+				return entities.User{}, NewQueryError(errRowsNotFound, err)
+			default:
+				return entities.User{}, NewQueryError(errBadQuery, err)
+			}
+		}
+		return entities.User{}, NewQueryError(errScan, err)
+	}
+
+	// Compare the provided password with the stored hash
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if err != nil {
+		return entities.User{}, NewQueryError(errInvalidPassword, err)
+	}
+
+	return newUserFromModel(user), nil
+}
 
 func (r *PostgresRepository) GetUser(ctx context.Context, userID int) (entities.User, error) {
 	query := queries.GetUserByID(userID)
