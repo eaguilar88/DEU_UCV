@@ -11,6 +11,7 @@ import (
 	"github.com/eaguilar88/deu/docs"
 	"github.com/eaguilar88/deu/pkg/auth"
 	"github.com/eaguilar88/deu/pkg/config"
+	"github.com/eaguilar88/deu/pkg/endorsements"
 	"github.com/eaguilar88/deu/pkg/repository"
 	"github.com/eaguilar88/deu/pkg/transport"
 	"github.com/eaguilar88/deu/pkg/users"
@@ -57,11 +58,16 @@ func main() {
 	userSvc := users.NewUsersService(repository, logger)
 	userEndpoints := users.MakeEndpoints(userSvc, logger, nil)
 
+	endorsementSvc := endorsements.NewEndorsementsService(repository, logger)
+	endorsementEndpoints := endorsements.MakeEndpoints(endorsementSvc, logger, nil)
+
 	commonHTTPOptions := []kitHTTP.ServerOption{
 		kitHTTP.ServerBefore(kitJWT.HTTPToContext()),
 		kitHTTP.ServerErrorEncoder(transport.MakeHTTPErrorEncoder(logger)),
 	}
 	addUserRoutes(r, userEndpoints, commonHTTPOptions)
+	addEndorsementRoutes(r, endorsementEndpoints, commonHTTPOptions)
+
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", config.HTTPPort),
 		Handler: r,
@@ -100,25 +106,50 @@ func addAuthRoutes(ctx context.Context, service *auth.AuthService, r *mux.Router
 
 func addUserRoutes(r *mux.Router, endpoints users.Endpoints, options []kitHTTP.ServerOption) {
 	//Get User Endpoint
-	getUserHandler := transport.GetUserHandleHTTP(endpoints.GetUser, options)
+	getUserHandler := users.GetUserHandleHTTP(endpoints.GetUser, options)
 	path := fmt.Sprintf(transport.FormatUsers, transport.ParamUserID)
 	r.Methods(http.MethodGet).Path(path).Handler(getUserHandler)
 
 	//Get Users Endpoint
-	getUsersHandler := transport.GetUsersHandleHTTP(endpoints.GetUsers, options)
+	getUsersHandler := users.GetUsersHandleHTTP(endpoints.GetUsers, options)
 	r.Methods(http.MethodGet).Path(transport.PathUsers).Handler(getUsersHandler)
 
 	//Create User Endpoint
-	createUserHandler := transport.CreateUserHandleHTTP(endpoints.CreateUser, options)
+	createUserHandler := users.CreateUserHandleHTTP(endpoints.CreateUser, options)
 	r.Methods(http.MethodPost).Path(transport.PathUsers).Handler(createUserHandler)
 
 	//Update User Endpoint
-	updateUserHandler := transport.UpdateUserHandleHTTP(endpoints.UpdateUser, options)
+	updateUserHandler := users.UpdateUserHandleHTTP(endpoints.UpdateUser, options)
 	path = fmt.Sprintf(transport.FormatUsers, transport.ParamUserID)
 	r.Methods(http.MethodPut).Path(path).Handler(updateUserHandler)
 
 	//Delete User Endpoint
-	deleteUserHandler := transport.DeleteUserHandleHTTP(endpoints.DeleteUser, options)
+	deleteUserHandler := users.DeleteUserHandleHTTP(endpoints.DeleteUser, options)
 	path = fmt.Sprintf(transport.FormatUsers, transport.ParamUserID)
 	r.Methods(http.MethodDelete).Path(path).Handler(deleteUserHandler)
+}
+
+func addEndorsementRoutes(r *mux.Router, endpoints endorsements.Endpoints, options []kitHTTP.ServerOption) {
+	//Get Endorsement Endpoint
+	getEndorsementHandler := transport.GetEndorsementHandleHTTP(endpoints.GetEndorsement, options)
+	path := fmt.Sprintf(transport.FormatEndorsements, transport.ParamEndorsementID)
+	r.Methods(http.MethodGet).Path(path).Handler(getEndorsementHandler)
+
+	//Get Endorsements Endpoint
+	getEndorsementsHandler := transport.GetEndorsementsHandleHTTP(endpoints.GetEndorsements, options)
+	r.Methods(http.MethodGet).Path(transport.PathEndorsements).Handler(getEndorsementsHandler)
+
+	//Create Endorsement Endpoint
+	createEndorsementHandler := transport.CreateEndorsementHandleHTTP(endpoints.CreateEndorsement, options)
+	r.Methods(http.MethodPost).Path(transport.PathEndorsements).Handler(createEndorsementHandler)
+
+	//Update Endorsement Endpoint
+	updateEndorsementHandler := transport.UpdateEndorsementHandleHTTP(endpoints.UpdateEndorsement, options)
+	path = fmt.Sprintf(transport.FormatEndorsements, transport.ParamEndorsementID)
+	r.Methods(http.MethodPut).Path(path).Handler(updateEndorsementHandler)
+
+	//Delete Endorsement Endpoint
+	deleteEndorsementHandler := transport.DeleteEndorsementHandleHTTP(endpoints.DeleteEndorsement, options)
+	path = fmt.Sprintf(transport.FormatEndorsements, transport.ParamEndorsementID)
+	r.Methods(http.MethodDelete).Path(path).Handler(deleteEndorsementHandler)
 }

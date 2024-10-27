@@ -6,11 +6,12 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/eaguilar88/deu/pkg/users"
+	"github.com/eaguilar88/deu/pkg/endorsements"
 )
 
-func encodeGetUserResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
-	resp, ok := untypedResp.(users.GetUserResponse)
+// Endorsements Encoders
+func encodeGetEndorsementResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
+	resp, ok := untypedResp.(endorsements.GetEndorsementResponse)
 	if !ok {
 		return errors.New("dang bang")
 	}
@@ -24,8 +25,8 @@ func encodeGetUserResponseHTTP(_ context.Context, w http.ResponseWriter, untyped
 	return nil
 }
 
-func encodeGetUsersResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
-	resp, ok := untypedResp.(users.GetUsersResponse)
+func encodeGetEndorsementsResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
+	resp, ok := untypedResp.(endorsements.GetEndorsementsResponse)
 	if !ok {
 		return errors.New("dang bang")
 	}
@@ -39,8 +40,8 @@ func encodeGetUsersResponseHTTP(_ context.Context, w http.ResponseWriter, untype
 	return nil
 }
 
-func encodeCreateUserResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
-	resp, ok := untypedResp.(users.CreateUsersResponse)
+func encodeCreateEndorsementResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
+	resp, ok := untypedResp.(endorsements.CreateEndorsementResponse)
 	if !ok {
 		return errors.New("dang bang")
 	}
@@ -54,8 +55,8 @@ func encodeCreateUserResponseHTTP(_ context.Context, w http.ResponseWriter, unty
 	return nil
 }
 
-func encodeUpdateUserResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
-	resp, ok := untypedResp.(users.UpdateUserResponse)
+func encodeUpdateEndorsementResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
+	resp, ok := untypedResp.(endorsements.UpdateEndorsementResponse)
 	if !ok {
 		return errors.New("dang bang")
 	}
@@ -69,8 +70,84 @@ func encodeUpdateUserResponseHTTP(_ context.Context, w http.ResponseWriter, unty
 	return nil
 }
 
-func encodeDeleteUserResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
-	resp, ok := untypedResp.(users.DeleteUserResponse)
+func encodeDeleteEndorsementResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
+	resp, ok := untypedResp.(endorsements.DeleteEndorsementResponse)
+	if !ok {
+		return errors.New("dang bang")
+	}
+	b, err := json.Marshal(resp)
+	if err != nil {
+		return errors.New("fail again")
+	}
+	w.Header().Set("Content-Type", "application/jjson")
+	w.WriteHeader(http.StatusAccepted)
+	w.Write(b)
+	return nil
+}
+
+// Endorsements Courses
+func encodeGetCourseResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
+	resp, ok := untypedResp.(endorsements.GetEndorsementResponse)
+	if !ok {
+		return errors.New("dang bang")
+	}
+	b, err := json.Marshal(resp)
+	if err != nil {
+		return errors.New("fail again")
+	}
+	w.Header().Set("Content-Type", "application/jjson")
+	w.WriteHeader(http.StatusOK)
+	w.Write(b)
+	return nil
+}
+
+func encodeGetCoursesResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
+	resp, ok := untypedResp.(endorsements.GetEndorsementsResponse)
+	if !ok {
+		return errors.New("dang bang")
+	}
+	b, err := json.Marshal(resp)
+	if err != nil {
+		return errors.New("fail again")
+	}
+	w.Header().Set("Content-Type", "application/jjson")
+	w.WriteHeader(http.StatusOK)
+	w.Write(b)
+	return nil
+}
+
+func encodeCreateCourseResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
+	resp, ok := untypedResp.(endorsements.CreateEndorsementResponse)
+	if !ok {
+		return errors.New("dang bang")
+	}
+	b, err := json.Marshal(resp)
+	if err != nil {
+		return errors.New("fail again")
+	}
+	w.Header().Set("Content-Type", "application/jjson")
+	w.WriteHeader(http.StatusCreated)
+	w.Write(b)
+	return nil
+}
+
+func encodeUpdateCourseResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
+	resp, ok := untypedResp.(endorsements.UpdateEndorsementResponse)
+	if !ok {
+		return errors.New("dang bang")
+	}
+	b, err := json.Marshal(resp)
+	if err != nil {
+		return errors.New("fail again")
+	}
+	w.Header().Set("Content-Type", "application/jjson")
+	w.WriteHeader(http.StatusAccepted)
+	w.Write(b)
+	return nil
+}
+
+func encodeDeleteCourseResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
+	resp, ok := untypedResp.(endorsements.DeleteEndorsementResponse)
 	if !ok {
 		return errors.New("dang bang")
 	}

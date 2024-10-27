@@ -57,3 +57,16 @@ func newUserFromModel(user models.User) entities.User {
 	entity.SetAge()
 	return entity
 }
+
+func newEndorsmentFromModel(endorsement models.Endorsement) entities.Endorsements {
+	return entities.Endorsements{
+		ID: endorsement.ID,
+		User: entities.User{
+			ID: endorsement.ID,
+		},
+		Status:      entities.EndorsementStatus(endorsement.Status),
+		Path:        endorsement.Path,
+		CreatedAt:   endorsement.CreatedAt,
+		UpdatedAtAt: endorsement.UpdatedAt,
+	}
+}
