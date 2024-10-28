@@ -8,6 +8,7 @@ import (
 
 const (
 	pgErrorCodeUniqueViolation = "23505"
+	pgErrorCodeNoData          = "02000"
 )
 
 type scannable interface {

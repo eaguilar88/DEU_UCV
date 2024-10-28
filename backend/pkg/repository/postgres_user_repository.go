@@ -11,31 +11,8 @@ import (
 	"github.com/lib/pq"
 )
 
-const (
-	pgErrorCodeUniqueViolation = "23505"
-	pgErrorCodeNoData          = "02000"
-)
-
-type scannable interface {
-	Scan(dest ...interface{}) error
-}
-
-type PostgresRepository struct {
-	db           *sql.DB
-	documentsDir string
-	logger       log.Logger
-}
-
-func NewRepository(connection *sql.DB, directory string, logger log.Logger) *PostgresRepository {
-	return &PostgresRepository{
-		db:           connection,
-		documentsDir: directory,
-		logger:       logger,
-	}
-}
-
 func (r *PostgresRepository) ValidateUser(ctx context.Context, username, password string) (entities.User, error) {
-	query := getUserByUsername(username)
+	query := queries.GetUserByUsername(username)
 	sql, args, err := query.ToSql()
 	if err != nil {
 		return entities.User{}, err

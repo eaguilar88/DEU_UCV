@@ -13,6 +13,7 @@ type Server struct {
 	HTTPPort         int    `env:"HTTP_SERVE_PORT" envDefault:"80" envWhitelisted:"true"`
 	JWTEncryptionKey string `env:"JWT_SIGNING_KEY,required"`
 	FilePath         string `env:"FILE_PATH,required"`
+	TTL              uint32 `env:"TOKEN_TTL" envDefault:"3600"`
 	Database         DatabaseConfig
 	Email            EmailConfig
 }
@@ -42,7 +43,7 @@ func (cfg DatabaseConfig) String() string {
 func Read(logger log.Logger) (Server, error) {
 	var config Server
 	// Loading the environment variables from '.env' file.
-	err := godotenv.Load("./.env")
+	err := godotenv.Load()
 	if err != nil {
 		_ = level.Error(logger).Log("msg", "failed to load env file", "error", err)
 	}

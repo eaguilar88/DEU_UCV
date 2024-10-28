@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -50,11 +49,12 @@ func main() {
 	defer postgres.Close()
 
 	r := mux.NewRouter()
-	// authService := auth.NewAuthService()
-	// addDocsRoute(r, docsSource, logger)
-	// addAuthRoutes(ctx, authService, r)
 
 	repository := repository.NewRepository(postgres, config.FilePath, logger)
+	authService := auth.NewAuthService(config.JWTEncryptionKey, config.TTL, repository, logger)
+	authEndpoints := auth.MakeEndpoints(authService, logger, nil)
+
+	addDocsRoute(r, docsSource, logger)
 	userSvc := users.NewUsersService(repository, logger)
 	userEndpoints := users.MakeEndpoints(userSvc, logger, nil)
 
@@ -65,6 +65,7 @@ func main() {
 		kitHTTP.ServerBefore(kitJWT.HTTPToContext()),
 		kitHTTP.ServerErrorEncoder(transport.MakeHTTPErrorEncoder(logger)),
 	}
+	addAuthRoutes(r, authEndpoints, commonHTTPOptions)
 	addUserRoutes(r, userEndpoints, commonHTTPOptions)
 	addEndorsementRoutes(r, endorsementEndpoints, commonHTTPOptions)
 
@@ -99,9 +100,9 @@ func mustConnectToDB(conf config.DatabaseConfig) (*sql.DB, error) {
 	return db, nil
 }
 
-func addAuthRoutes(ctx context.Context, service *auth.AuthService, r *mux.Router) {
-	r.HandleFunc("/health", transport.HealthHandler).Methods("GET")
-	r.HandleFunc("/login", transport.LoginHandler(ctx, service)).Methods("POST")
+func addAuthRoutes(r *mux.Router, endpoints auth.Endpoints, options []kitHTTP.ServerOption) {
+	path := fmt.Sprintf(transport.PathAuth, "login")
+	r.Methods(http.MethodPost).Path(path).Handler(auth.LoginHandleHTTP(endpoints.Login, options))
 }
 
 func addUserRoutes(r *mux.Router, endpoints users.Endpoints, options []kitHTTP.ServerOption) {
