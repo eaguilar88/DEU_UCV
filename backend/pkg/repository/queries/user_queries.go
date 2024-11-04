@@ -16,12 +16,12 @@ var (
 	psql                  = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 	userTableName         = fmt.Sprintf("%s.users", schema)
 	userQuerySelectCommon = []string{
-		"u.id", "u.ci_type", "u.ci", "u.username", "u.first_name", "u.last_name", "u.date_of_birth", "u.gender", "u.education", "u.address", "u.created_at",
+		"u.id", "u.ci", "u.username", "u.first_name", "u.last_name", "u.date_of_birth", "u.gender", "u.education", "u.address", "u.created_at",
 	}
 )
 
 func GetUserByUsername(username string) sq.SelectBuilder {
-	return psql.Select(userQuerySelectCommon...).
+	return psql.Select("u.id", "u.username", "u.first_name", "u.last_name", "u.password").
 		From(fmt.Sprintf("%s AS u", userTableName)).
 		Where(sq.Eq{"u.username": username})
 }
@@ -40,12 +40,11 @@ func GetUsers(page entities.PageScope) sq.SelectBuilder {
 }
 
 func InsertUser(user entities.User) sq.InsertBuilder {
-	ciType, ciNumber := splitUserCI(user)
+	// _, ciNumber := splitUserCI(user)
 
 	return psql.Insert(userTableName).
 		Columns(
 			"ci",
-			"ci_type",
 			"username",
 			"first_name",
 			"last_name",
@@ -58,8 +57,7 @@ func InsertUser(user entities.User) sq.InsertBuilder {
 			"updated_at",
 		).
 		Values(
-			ciNumber,
-			ciType,
+			user.CI,
 			user.Username,
 			user.FirstName,
 			user.LastName,

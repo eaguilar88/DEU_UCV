@@ -21,7 +21,7 @@ type Server struct {
 type DatabaseConfig struct {
 	Hostname string `env:"POSTGRES_HOST" envDefault:"localhost" envWhitelisted:"true"`
 	Name     string `env:"POSTGRES_DB" envDefault:"deu" envWhitelisted:"true"`
-	User     string `env:"POSTGRES_USERNAME" envDefault:"root" envWhitelisted:"true"`
+	User     string `env:"POSTGRES_USER" envDefault:"root" envWhitelisted:"true"`
 	Password string `env:"POSTGRES_PASSWORD" envDefault:"root" envWhitelisted:"true"`
 	Port     int    `env:"POSTGRES_PORT" envDefault:"3306" envWhitelisted:"true"`
 }

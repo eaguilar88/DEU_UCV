@@ -10,7 +10,7 @@ import (
 var (
 	courseTableName         = fmt.Sprintf("%s.endorsement_requests", schema)
 	courseQuerySelectCommon = []string{
-		"u.id", "u.ci_type", "u.ci", "u.username", "u.first_name", "u.last_name", "u.date_of_birth", "u.gender", "u.education", "u.address", "u.created_at",
+		"u.id", "u.ci", "u.username", "u.first_name", "u.last_name", "u.date_of_birth", "u.gender", "u.education", "u.address", "u.created_at",
 	}
 )
 
@@ -33,7 +33,6 @@ func InsertCourse(user entities.User) sq.InsertBuilder {
 	return psql.Insert(courseTableName).
 		Columns(
 			"ci",
-			"ci_type",
 			"username",
 			"first_name",
 			"last_name",

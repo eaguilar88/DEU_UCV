@@ -90,7 +90,12 @@ func makeCreateUser(svc Service, log log.Logger) endpoint.Endpoint {
 			level.Error(log).Log("message", "could not decode", "request", request)
 			return nil, errors.New("could not decode")
 		}
-		newUser := createUserRequestToEntitiesUser(req)
+		newUser, err := createUserRequestToEntitiesUser(req)
+		if err != nil {
+			level.Error(log).Log("message", "errors creating request", "error", err)
+			return nil, err
+		}
+
 		userID, err := svc.CreateUser(ctx, newUser)
 		if err != nil {
 			level.Error(log).Log("message", "could not decode", "error", err)

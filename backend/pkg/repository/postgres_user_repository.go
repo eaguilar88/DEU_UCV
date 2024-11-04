@@ -27,16 +27,9 @@ func (r *PostgresRepository) ValidateUser(ctx context.Context, username, passwor
 	var user models.User
 	err = stmt.QueryRowContext(ctx, args...).Scan(
 		&user.ID,
-		&user.IDType,
-		&user.CI,
 		&user.Username,
 		&user.FirstName,
 		&user.LastName,
-		&user.DateOfBirth,
-		&user.Gender,
-		&user.EducationLevel,
-		&user.Address,
-		&user.CreatedAt,
 		&user.Password,
 	)
 	if err != nil {

@@ -15,6 +15,7 @@ type CreateUserRequest struct {
 	Username       string `json:"username"`
 	FirstName      string `json:"first_name"`
 	LastName       string `json:"last_name"`
+	Role           string `json:"role"`
 	DateOfBirth    string `json:"date_of_birth"`
 	Gender         string `json:"gender"`
 	EducationLevel string `json:"education_level"`
