@@ -7,18 +7,21 @@ import (
 
 	"github.com/eaguilar88/deu/pkg/entities"
 	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	"github.com/golang-jwt/jwt/v4"
+	"golang.org/x/crypto/bcrypt"
 )
 
 const tokenIssuer = "deu"
 
 type Repository interface {
-	ValidateUser(ctx context.Context, username, password string) (entities.User, error)
+	GetUserByUsername(ctx context.Context, username string) (entities.User, error)
+	GetUserRoles(ctx context.Context, userID int) ([]string, error)
 }
 
 // /generate service `AuthService` with `repository` field
 
-func NewAuthService(key string, ttl uint32, repo Repository, logger log.Logger) *AuthService {
+func NewAuthService(key string, ttl uint32, repo Repository, logger log.Logger) Service {
 	return &AuthService{
 		SigningKey: key,
 		TTL:        ttl,
@@ -34,12 +37,26 @@ type AuthService struct {
 	logger     log.Logger
 }
 
-func (s *AuthService) Login(ctx context.Context, username, password string) (string, error) {
+func (s *AuthService) Login(ctx context.Context, username, password string) (string, *entities.User, error) {
 
-	user, err := s.repository.ValidateUser(ctx, username, password)
+	user, err := s.repository.GetUserByUsername(ctx, username)
 	if err != nil {
-		return "", err // Return an error if validation fails
+		return "", nil, err
 	}
+
+	// Compare the provided password with the stored hash
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if err != nil {
+		level.Error(s.logger).Log("message", "invalid password", "error", err)
+		return "", nil, err
+	}
+
+	roles, err := s.repository.GetUserRoles(ctx, user.ID)
+	if err != nil {
+		return "", nil, err
+	}
+
+	user.Roles = roles
 
 	// Create JWT claims
 	claims := jwt.MapClaims{
@@ -47,7 +64,7 @@ func (s *AuthService) Login(ctx context.Context, username, password string) (str
 		"exp": time.Now().Add(time.Second * time.Duration(s.TTL)).Unix(), // Set expiration using s.TTL
 		"iat": time.Now().Unix(),
 		"v1": map[string]interface{}{
-			"role":   user.Role.ID,
+			"roles":  roles,
 			"userID": user.ID,
 		},
 	}
@@ -58,8 +75,8 @@ func (s *AuthService) Login(ctx context.Context, username, password string) (str
 	// Sign and get the complete encoded token as a string
 	tokenString, err := token.SignedString([]byte(s.SigningKey))
 	if err != nil {
-		return "", fmt.Errorf("error signing token: %w", err)
+		return "", nil, fmt.Errorf("error signing token: %w", err)
 	}
 
-	return tokenString, nil
+	return tokenString, &user, nil
 }

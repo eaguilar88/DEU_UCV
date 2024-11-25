@@ -2,18 +2,22 @@ package users
 
 import (
 	"context"
+	"slices"
 	"strconv"
 
 	"github.com/eaguilar88/deu/pkg/entities"
 	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 )
 
 type Repository interface {
 	GetUser(ctx context.Context, userID int) (entities.User, error)
+	GetUserByUsername(ctx context.Context, username string) (entities.User, error)
 	GetUsers(ctx context.Context, pageScope entities.PageScope) ([]entities.User, entities.PageScope, error)
 	CreateUser(ctx context.Context, user entities.User) (int64, error)
 	UpdateUser(ctx context.Context, userID int, user entities.User) error
 	DeleteUser(ctx context.Context, userID int) error
+	AddRoleToUser(ctx context.Context, userID, role int) error
 }
 
 type UserService struct {
@@ -21,7 +25,7 @@ type UserService struct {
 	log  log.Logger
 }
 
-func NewUsersService(repository Repository, logger log.Logger) *UserService {
+func NewUsersService(repository Repository, logger log.Logger) Service {
 	return &UserService{
 		repo: repository,
 		log:  logger,
@@ -49,6 +53,20 @@ func (s *UserService) GetUsers(ctx context.Context, pageScope entities.PageScope
 }
 
 func (s *UserService) CreateUser(ctx context.Context, user entities.User) (int64, error) {
+	existingUser, err := s.repo.GetUserByUsername(ctx, user.Username)
+	if err != nil {
+		return -1, err
+	}
+
+	if slices.Contains(existingUser.Roles, user.Roles[0]) {
+		err = s.repo.AddRoleToUser(ctx, existingUser.ID, entities.RoleIDFromName(user.Roles[0]))
+		if err != nil {
+			level.Error(s.log).Log("message", "error adding role to user", "error", err)
+			return -1, err
+		}
+		return int64(user.ID), nil
+	}
+
 	id, err := s.repo.CreateUser(ctx, user)
 	if err != nil {
 		return -1, err

@@ -63,6 +63,6 @@ func Read(logger log.Logger) (Server, error) {
 		return config, err
 	}
 
-	logger.Log("msg", "Config successfully loaded")
+	level.Info(logger).Log("msg", "config successfully loaded")
 	return config, nil
 }

@@ -3,15 +3,13 @@ package repository
 import (
 	"context"
 
-	"golang.org/x/crypto/bcrypt"
-
 	"github.com/eaguilar88/deu/pkg/entities"
 	"github.com/eaguilar88/deu/pkg/repository/models"
 	"github.com/eaguilar88/deu/pkg/repository/queries"
 	"github.com/lib/pq"
 )
 
-func (r *PostgresRepository) ValidateUser(ctx context.Context, username, password string) (entities.User, error) {
+func (r *PostgresRepository) GetUserByUsername(ctx context.Context, username string) (entities.User, error) {
 	query := queries.GetUserByUsername(username)
 	sql, args, err := query.ToSql()
 	if err != nil {
@@ -42,12 +40,6 @@ func (r *PostgresRepository) ValidateUser(ctx context.Context, username, passwor
 			}
 		}
 		return entities.User{}, NewQueryError(errScan, err)
-	}
-
-	// Compare the provided password with the stored hash
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
-	if err != nil {
-		return entities.User{}, NewQueryError(errInvalidPassword, err)
 	}
 
 	return newUserFromModel(user), nil
@@ -185,11 +177,62 @@ func (r *PostgresRepository) DeleteUser(ctx context.Context, userID int) error {
 	return nil
 }
 
+func (r *PostgresRepository) GetUserRoles(ctx context.Context, userID int) ([]string, error) {
+	sql, args, err := queries.GetRolesByUserID(userID).ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	stmt, err := r.db.PrepareContext(ctx, sql)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.QueryContext(ctx, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var roles = make([]string, 0)
+	var role string
+	for rows.Next() {
+		err = rows.Scan(&role)
+		if err != nil {
+			return nil, err
+		}
+		roles = append(roles, role)
+	}
+	return roles, nil
+}
+
+func (r *PostgresRepository) AddRoleToUser(ctx context.Context, userID, role int) error {
+	sql, args, err := queries.AddRoleToUser(userID, role).ToSql()
+	if err != nil {
+		return err
+	}
+
+	stmt, err := r.db.PrepareContext(ctx, sql)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	err = stmt.QueryRowContext(ctx, args...).Err()
+	if err != nil {
+		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == pgErrorCodeUniqueViolation {
+			return NewQueryError(errUniqueIndexViolation, err)
+		}
+		return NewQueryError(errBadLastInsertID, err)
+	}
+	return nil
+}
+
 func scanUser(row scannable) (models.User, error) {
 	result := models.User{}
 	err := row.Scan(
 		&result.ID,
-		&result.IDType,
 		&result.CI,
 		&result.Username,
 		&result.FirstName,

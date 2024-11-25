@@ -6,7 +6,6 @@ type User struct {
 	ID             int
 	IDType         string
 	CI             int
-	Role           Role
 	Username       string
 	FirstName      string
 	LastName       string

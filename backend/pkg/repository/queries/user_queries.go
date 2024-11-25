@@ -15,10 +15,19 @@ const (
 var (
 	psql                  = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 	userTableName         = fmt.Sprintf("%s.users", schema)
+	roleTableName         = fmt.Sprintf("%s.roles", schema)
+	pivotTableName        = fmt.Sprintf("%s.user_roles", schema)
 	userQuerySelectCommon = []string{
 		"u.id", "u.ci", "u.username", "u.first_name", "u.last_name", "u.date_of_birth", "u.gender", "u.education", "u.address", "u.created_at",
 	}
 )
+
+func GetRolesByUserID(userID int) sq.SelectBuilder {
+	return psql.Select("r.name").
+		From(fmt.Sprintf("%s AS r", roleTableName)).
+		LeftJoin(fmt.Sprintf("%s AS pr ON pr.role_id = r.id", pivotTableName)).
+		Where(sq.Eq{"pr.user_id": userID})
+}
 
 func GetUserByUsername(username string) sq.SelectBuilder {
 	return psql.Select("u.id", "u.username", "u.first_name", "u.last_name", "u.password").
@@ -69,6 +78,13 @@ func InsertUser(user entities.User) sq.InsertBuilder {
 			sq.Expr("NOW()"),
 			sq.Expr("NOW()"),
 		).Suffix("RETURNING id")
+}
+
+func AddRoleToUser(userID, role int) sq.InsertBuilder {
+	return psql.Insert(pivotTableName).
+		Columns("user_id", "role_id").
+		Values(userID, role).
+		Suffix("RETURNING id")
 }
 
 func UpdateUserInfo(user entities.User, userID int) sq.UpdateBuilder {

@@ -21,8 +21,8 @@ func createUserRequestToEntitiesUser(req CreateUserRequest) (entities.User, erro
 		EducationLevel: req.EducationLevel,
 		Address:        req.Address,
 		Password:       password,
-		Role: entities.Role{
-			Name: req.Role,
+		Roles: []string{
+			req.Role,
 		},
 	}, nil
 }
