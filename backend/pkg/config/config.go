@@ -6,7 +6,6 @@ import (
 	"github.com/caarlos0/env/v10"
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
-	"github.com/joho/godotenv"
 )
 
 type Server struct {
@@ -42,11 +41,6 @@ func (cfg DatabaseConfig) String() string {
 // Read current server config - specific for each application
 func Read(logger log.Logger) (Server, error) {
 	var config Server
-	// Loading the environment variables from '.env' file.
-	err := godotenv.Load()
-	if err != nil {
-		_ = level.Error(logger).Log("msg", "failed to load env file", "error", err)
-	}
 
 	if err := env.Parse(&config); err != nil {
 		_ = level.Error(logger).Log("msg", "failed to parse configuration", "error", err)
@@ -63,6 +57,5 @@ func Read(logger log.Logger) (Server, error) {
 		return config, err
 	}
 
-	level.Info(logger).Log("msg", "config successfully loaded")
 	return config, nil
 }
