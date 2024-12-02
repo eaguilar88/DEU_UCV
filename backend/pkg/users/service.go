@@ -2,18 +2,28 @@ package users
 
 import (
 	"context"
+	"database/sql"
+	"errors"
+	"fmt"
+
+	"slices"
 	"strconv"
 
 	"github.com/eaguilar88/deu/pkg/entities"
+	errs "github.com/eaguilar88/deu/pkg/errors"
 	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 )
 
 type Repository interface {
 	GetUser(ctx context.Context, userID int) (entities.User, error)
+	GetUserByUsername(ctx context.Context, username string) (entities.User, error)
 	GetUsers(ctx context.Context, pageScope entities.PageScope) ([]entities.User, entities.PageScope, error)
 	CreateUser(ctx context.Context, user entities.User) (int64, error)
 	UpdateUser(ctx context.Context, userID int, user entities.User) error
 	DeleteUser(ctx context.Context, userID int) error
+	AddRoleToUser(ctx context.Context, tx *sql.Tx, userID, role int) error
+	GetUserRoles(ctx context.Context, userID int) ([]string, error)
 }
 
 type UserService struct {
@@ -21,7 +31,7 @@ type UserService struct {
 	log  log.Logger
 }
 
-func NewUsersService(repository Repository, logger log.Logger) *UserService {
+func NewUsersService(repository Repository, logger log.Logger) Service {
 	return &UserService{
 		repo: repository,
 		log:  logger,
@@ -49,11 +59,38 @@ func (s *UserService) GetUsers(ctx context.Context, pageScope entities.PageScope
 }
 
 func (s *UserService) CreateUser(ctx context.Context, user entities.User) (int64, error) {
-	id, err := s.repo.CreateUser(ctx, user)
+	existingUser, err := s.repo.GetUserByUsername(ctx, user.Username)
 	if err != nil {
+		if !errs.IsNotFoundError(err) {
+			return -1, err
+		}
+		id, err := s.repo.CreateUser(ctx, user)
+		if err != nil {
+			return -1, err
+		}
+
+		return id, nil
+	}
+
+	// User exists, now handle roles
+	roles, err := s.repo.GetUserRoles(ctx, existingUser.ID)
+	if err != nil {
+		level.Error(s.log).Log("message", "error getting user roles", "error", err)
 		return -1, err
 	}
-	return id, nil
+
+	if slices.Contains(roles, user.Roles[0]) {
+		level.Warn(s.log).Log("message", fmt.Sprintf("user %s already has the role %s", existingUser.Username, user.Roles[0]))
+		return -1, errs.NewDuplicateEntryError(errors.New("user already exist"))
+	}
+
+	err = s.repo.AddRoleToUser(ctx, nil, existingUser.ID, entities.RoleIDFromName(user.Roles[0]))
+	if err != nil {
+		level.Error(s.log).Log("message", "error adding role to user", "error", err)
+		return -1, err
+	}
+
+	return int64(existingUser.ID), nil // Return the existing user's ID
 }
 
 func (s *UserService) UpdateUser(ctx context.Context, userID int, user entities.User) error {

@@ -4,7 +4,6 @@ import "database/sql"
 
 type User struct {
 	ID             int
-	IDType         string
 	CI             int
 	Username       string
 	FirstName      string
@@ -16,4 +15,9 @@ type User struct {
 	Password       string
 	CreatedAt      string
 	UpdatedAt      string
+}
+
+type Role struct {
+	ID   int
+	Name string
 }

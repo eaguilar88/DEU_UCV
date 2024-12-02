@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/eaguilar88/deu/pkg/entities"
@@ -10,8 +11,13 @@ import (
 )
 
 func newUserFromEntity(user entities.User, isUpdate bool) models.User {
+	ci, err := strconv.Atoi(user.CI)
+	if err != nil {
+		ci = 0
+	}
 	model := models.User{
 		ID:          user.ID,
+		CI:          ci,
 		Username:    user.Username,
 		FirstName:   user.FirstName,
 		LastName:    user.LastName,
@@ -38,7 +44,7 @@ func newUserFromEntity(user entities.User, isUpdate bool) models.User {
 func newUserFromModel(user models.User) entities.User {
 	entity := entities.User{
 		ID:             user.ID,
-		CI:             fmt.Sprintf("%s-%d", user.IDType, user.CI),
+		CI:             fmt.Sprintf("%d", user.CI),
 		Username:       user.Username,
 		FirstName:      user.FirstName,
 		LastName:       user.LastName,

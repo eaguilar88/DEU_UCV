@@ -13,7 +13,7 @@ type GetUserResponse struct {
 	Gender         string `json:"gender,omitempty"`
 	EducationLevel string `json:"education_level,omitempty"`
 	Address        string `json:"address,omitempty"`
-	Password       string `json:"-"`
+	Password       string `json:"-,omitempty"`
 	CreatedAt      string `json:"created_at"`
 }
 

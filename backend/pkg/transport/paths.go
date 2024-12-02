@@ -1,10 +1,12 @@
 package transport
 
 const (
-	PathUsers          = "/usuarios"
-	FormatUsers        = "/usuarios/{%s}"
-	PathEndorsements   = "/avales"
-	FormatEndorsements = "/avales/{%s}"
-	PathCoursess       = "/cursos"
-	FormatCoursess     = "/cursos/{%s}"
+	PathAuth           = "/auth/{%s}"
+	PathHealth         = "/health"
+	PathUsers          = "/users"
+	FormatUsers        = "/users/{%s}"
+	PathEndorsements   = "/approvals"
+	FormatEndorsements = "/approvals/{%s}"
+	PathCoursess       = "/courses"
+	FormatCoursess     = "/courses/{%s}"
 )

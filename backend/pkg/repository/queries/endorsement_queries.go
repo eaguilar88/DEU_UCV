@@ -10,7 +10,7 @@ import (
 var (
 	endorsementTableName         = fmt.Sprintf("%s.endorsement_requests", schema)
 	endorsementQuerySelectCommon = []string{
-		"u.id", "u.ci_type", "u.ci", "u.username", "u.first_name", "u.last_name", "u.date_of_birth", "u.gender", "u.education", "u.address", "u.created_at",
+		"u.id", "u.ci", "u.username", "u.first_name", "u.last_name", "u.date_of_birth", "u.gender", "u.education", "u.address", "u.created_at",
 	}
 )
 
@@ -33,7 +33,6 @@ func InsertEndorsement(user entities.User) sq.InsertBuilder {
 	return psql.Insert(endorsementTableName).
 		Columns(
 			"ci",
-			"ci_type",
 			"username",
 			"first_name",
 			"last_name",

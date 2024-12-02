@@ -2,67 +2,47 @@ package courses
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/eaguilar88/deu/pkg/entities"
 	"github.com/go-kit/log"
 )
 
 type Repository interface {
-	GetUser(ctx context.Context, userID int) (entities.User, error)
-	GetUsers(ctx context.Context, pageScope entities.PageScope) ([]entities.User, entities.PageScope, error)
-	CreateUser(ctx context.Context, user entities.User) (int64, error)
-	UpdateUser(ctx context.Context, userID int, user entities.User) error
-	DeleteUser(ctx context.Context, userID int) error
+	GetCourse(ctx context.Context, userID int) (entities.Course, error)
+	GetCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error)
+	CreateCourse(ctx context.Context, user entities.Course) (int64, error)
+	UpdateCourse(ctx context.Context, userID int, user entities.Course) error
+	DeleteCourse(ctx context.Context, userID int) error
 }
 
-type UserService struct {
+type CourseService struct {
 	repo Repository
 	log  log.Logger
 }
 
-func NewUsersService(repository Repository, logger log.Logger) *UserService {
-	return &UserService{
+func NewCoursesService(repository Repository, logger log.Logger) Service {
+	return &CourseService{
 		repo: repository,
 		log:  logger,
 	}
 }
 
-func (s *UserService) GetUser(ctx context.Context, userID string) (entities.User, error) {
-	intID, err := strconv.Atoi(userID)
-	if err != nil {
-		return entities.User{}, err
-	}
-	user, err := s.repo.GetUser(ctx, intID)
-	if err != nil {
-		return entities.User{}, err
-	}
-	return user, nil
-}
-func (s *UserService) GetUsers(ctx context.Context, pageScope entities.PageScope) ([]entities.User, entities.PageScope, error) {
-	users, page, err := s.repo.GetUsers(ctx, pageScope)
-	if err != nil {
-		return nil, entities.PageScope{}, err
-	}
-	return users, page, nil
+func (s *CourseService) GetCourse(ctx context.Context, courseID string) (entities.Course, error) {
+	panic("unimplemented")
 }
 
-func (s *UserService) CreateUser(ctx context.Context, user entities.User) (int64, error) {
-	id, err := s.repo.CreateUser(ctx, user)
-	if err != nil {
-		return -1, err
-	}
-	return id, nil
+func (s *CourseService) GetCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error) {
+	panic("unimplemented")
 }
-func (s *UserService) UpdateUser(ctx context.Context, userID int, user entities.User) error {
-	if err := s.repo.UpdateUser(ctx, userID, user); err != nil {
-		return err
-	}
-	return nil
+
+func (s *CourseService) CreateCourse(ctx context.Context, user entities.Course) (int64, error) {
+	panic("unimplemented")
 }
-func (s *UserService) DeleteUser(ctx context.Context, userID int) error {
-	if err := s.repo.DeleteUser(ctx, userID); err != nil {
-		return err
-	}
-	return nil
+
+func (s *CourseService) UpdateCourse(ctx context.Context, courseID int, user entities.Course) error {
+	panic("unimplemented")
+}
+
+func (s *CourseService) DeleteCourse(ctx context.Context, courseID int) error {
+	panic("unimplemented")
 }

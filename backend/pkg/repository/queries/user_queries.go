@@ -6,6 +6,7 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/eaguilar88/deu/pkg/entities"
+	"github.com/eaguilar88/deu/pkg/repository/models"
 )
 
 const (
@@ -15,10 +16,25 @@ const (
 var (
 	psql                  = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 	userTableName         = fmt.Sprintf("%s.users", schema)
+	roleTableName         = fmt.Sprintf("%s.roles", schema)
+	pivotTableName        = fmt.Sprintf("%s.user_roles", schema)
 	userQuerySelectCommon = []string{
-		"u.id", "u.ci_type", "u.ci", "u.username", "u.first_name", "u.last_name", "u.date_of_birth", "u.gender", "u.education", "u.address", "u.created_at",
+		"u.id", "u.ci", "u.username", "u.first_name", "u.last_name", "u.date_of_birth", "u.gender", "u.education", "u.address", "u.created_at",
 	}
 )
+
+func GetRolesByUserID(userID int) sq.SelectBuilder {
+	return psql.Select("r.name").
+		From(fmt.Sprintf("%s AS r", roleTableName)).
+		LeftJoin(fmt.Sprintf("%s AS pr ON pr.role_id = r.id", pivotTableName)).
+		Where(sq.Eq{"pr.user_id": userID})
+}
+
+func GetUserByUsername(username string) sq.SelectBuilder {
+	return psql.Select("u.id", "u.username", "u.first_name", "u.last_name", "u.password").
+		From(fmt.Sprintf("%s AS u", userTableName)).
+		Where(sq.Eq{"u.username": username})
+}
 
 func GetUserByID(userID int) sq.SelectBuilder {
 	return psql.Select(userQuerySelectCommon...).
@@ -33,13 +49,12 @@ func GetUsers(page entities.PageScope) sq.SelectBuilder {
 		Offset(uint64(page.Offset()))
 }
 
-func InsertUser(user entities.User) sq.InsertBuilder {
-	ciType, ciNumber := splitUserCI(user)
+func InsertUser(user models.User) sq.InsertBuilder {
+	// _, ciNumber := splitUserCI(user)
 
 	return psql.Insert(userTableName).
 		Columns(
 			"ci",
-			"ci_type",
 			"username",
 			"first_name",
 			"last_name",
@@ -52,8 +67,7 @@ func InsertUser(user entities.User) sq.InsertBuilder {
 			"updated_at",
 		).
 		Values(
-			ciNumber,
-			ciType,
+			user.CI,
 			user.Username,
 			user.FirstName,
 			user.LastName,
@@ -65,6 +79,13 @@ func InsertUser(user entities.User) sq.InsertBuilder {
 			sq.Expr("NOW()"),
 			sq.Expr("NOW()"),
 		).Suffix("RETURNING id")
+}
+
+func AddRoleToUser(userID, role int) sq.InsertBuilder {
+	return psql.Insert(pivotTableName).
+		Columns("user_id", "role_id").
+		Values(userID, role).
+		Suffix("RETURNING id")
 }
 
 func UpdateUserInfo(user entities.User, userID int) sq.UpdateBuilder {
