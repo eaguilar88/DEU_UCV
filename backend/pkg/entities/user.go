@@ -75,7 +75,7 @@ func RoleNameFromID(id int) string {
 
 // RoleIDFromName returns the role ID for a given name.
 func RoleIDFromName(name string) int {
-	if id, ok := roleIDs[name]; !ok {
+	if id, ok := roleIDs[name]; ok {
 		return id
 	}
 	return 0

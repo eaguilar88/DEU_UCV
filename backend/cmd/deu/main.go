@@ -11,6 +11,7 @@ import (
 	"github.com/eaguilar88/deu/pkg/auth"
 	"github.com/eaguilar88/deu/pkg/config"
 	"github.com/eaguilar88/deu/pkg/endorsements"
+	errs "github.com/eaguilar88/deu/pkg/errors"
 	"github.com/eaguilar88/deu/pkg/repository"
 	"github.com/eaguilar88/deu/pkg/transport"
 	"github.com/eaguilar88/deu/pkg/users"
@@ -63,7 +64,7 @@ func main() {
 
 	commonHTTPOptions := []kitHTTP.ServerOption{
 		kitHTTP.ServerBefore(kitJWT.HTTPToContext()),
-		kitHTTP.ServerErrorEncoder(transport.MakeHTTPErrorEncoder(logger)),
+		kitHTTP.ServerErrorEncoder(errs.MakeHTTPErrorEncoder(logger)),
 	}
 	addAuthRoutes(r, authEndpoints, commonHTTPOptions)
 	addUserRoutes(r, userEndpoints, commonHTTPOptions)

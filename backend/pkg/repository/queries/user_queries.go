@@ -6,6 +6,7 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/eaguilar88/deu/pkg/entities"
+	"github.com/eaguilar88/deu/pkg/repository/models"
 )
 
 const (
@@ -48,7 +49,7 @@ func GetUsers(page entities.PageScope) sq.SelectBuilder {
 		Offset(uint64(page.Offset()))
 }
 
-func InsertUser(user entities.User) sq.InsertBuilder {
+func InsertUser(user models.User) sq.InsertBuilder {
 	// _, ciNumber := splitUserCI(user)
 
 	return psql.Insert(userTableName).

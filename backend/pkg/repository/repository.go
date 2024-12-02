@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/go-kit/log"
@@ -13,6 +14,10 @@ const (
 
 type scannable interface {
 	Scan(dest ...interface{}) error
+}
+
+type preparer interface {
+	PrepareContext(ctx context.Context, query string) (*sql.Stmt, error)
 }
 
 type PostgresRepository struct {
