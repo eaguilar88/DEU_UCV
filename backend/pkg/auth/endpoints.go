@@ -18,9 +18,16 @@ type Endpoints struct {
 	Login endpoint.Endpoint
 }
 
-func MakeEndpoints(svc Service, log log.Logger, middlewares ...endpoint.Middleware) Endpoints {
+func wrapEndpoint(e endpoint.Endpoint, middlewares []endpoint.Middleware) endpoint.Endpoint {
+	for _, m := range middlewares {
+		e = m(e)
+	}
+	return e
+}
+
+func MakeEndpoints(svc Service, log log.Logger, middlewares []endpoint.Middleware) Endpoints {
 	return Endpoints{
-		Login: makeLogin(svc, log),
+		Login: wrapEndpoint(makeLogin(svc, log), middlewares),
 	}
 }
 

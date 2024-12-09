@@ -28,13 +28,13 @@ type Endpoints struct {
 	DeleteUser endpoint.Endpoint
 }
 
-func MakeEndpoints(svc Service, log log.Logger, middlewares ...endpoint.Middleware) Endpoints {
+func MakeEndpoints(svc Service, log log.Logger, middlewares []endpoint.Middleware) Endpoints {
 	return Endpoints{
-		GetUser:    makeGetUser(svc, log),
-		GetUsers:   makeGetUsers(svc, log),
-		CreateUser: makeCreateUser(svc, log),
-		UpdateUser: makeUpdateUser(svc, log),
-		DeleteUser: makeDeleteUser(svc, log),
+		GetUser:    wrapEndpoint(makeGetUser(svc, log), middlewares),
+		GetUsers:   wrapEndpoint(makeGetUsers(svc, log), middlewares),
+		CreateUser: wrapEndpoint(makeCreateUser(svc, log), middlewares),
+		UpdateUser: wrapEndpoint(makeUpdateUser(svc, log), middlewares),
+		DeleteUser: wrapEndpoint(makeDeleteUser(svc, log), middlewares),
 	}
 }
 

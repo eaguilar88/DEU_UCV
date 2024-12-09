@@ -12,10 +12,12 @@ import (
 	"github.com/eaguilar88/deu/pkg/config"
 	"github.com/eaguilar88/deu/pkg/endorsements"
 	errs "github.com/eaguilar88/deu/pkg/errors"
+	"github.com/eaguilar88/deu/pkg/jwt"
 	"github.com/eaguilar88/deu/pkg/repository"
 	"github.com/eaguilar88/deu/pkg/transport"
 	"github.com/eaguilar88/deu/pkg/users"
 	kitJWT "github.com/go-kit/kit/auth/jwt"
+	"github.com/go-kit/kit/endpoint"
 	kitHTTP "github.com/go-kit/kit/transport/http"
 	"github.com/oklog/oklog/pkg/group"
 
@@ -49,18 +51,23 @@ func main() {
 	}
 	defer postgres.Close()
 
+	signer := jwt.NewJWTSigner(config.JWTEncryptionKey, config.TTL, &logger)
+
 	r := mux.NewRouter()
 
 	repository := repository.NewRepository(postgres, config.FilePath, logger)
-	authService := auth.NewAuthService(config.JWTEncryptionKey, config.TTL, repository, logger)
+	authService := auth.NewAuthService(repository, signer, logger)
+	endpointMiddlewares := []endpoint.Middleware{
+		jwt.JWTMiddleware(signer, logger),
+	}
 	authEndpoints := auth.MakeEndpoints(authService, logger, nil)
 
 	addDocsRoute(r, docsSource, logger)
 	userSvc := users.NewUsersService(repository, logger)
-	userEndpoints := users.MakeEndpoints(userSvc, logger, nil)
+	userEndpoints := users.MakeEndpoints(userSvc, logger, endpointMiddlewares)
 
 	endorsementSvc := endorsements.NewEndorsementsService(repository, logger)
-	endorsementEndpoints := endorsements.MakeEndpoints(endorsementSvc, logger, nil)
+	endorsementEndpoints := endorsements.MakeEndpoints(endorsementSvc, logger, endpointMiddlewares)
 
 	commonHTTPOptions := []kitHTTP.ServerOption{
 		kitHTTP.ServerBefore(kitJWT.HTTPToContext()),

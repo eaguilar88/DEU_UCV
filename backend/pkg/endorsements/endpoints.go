@@ -28,7 +28,7 @@ type Endpoints struct {
 	DeleteEndorsement endpoint.Endpoint
 }
 
-func MakeEndpoints(svc Service, log log.Logger, middlewares ...endpoint.Middleware) Endpoints {
+func MakeEndpoints(svc Service, log log.Logger, middlewares []endpoint.Middleware) Endpoints {
 	return Endpoints{
 		GetEndorsement:    makeGetEndorsement(svc, log),
 		GetEndorsements:   makeGetEndorsements(svc, log),
