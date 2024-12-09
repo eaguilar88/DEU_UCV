@@ -10,6 +10,7 @@ import (
 	"github.com/eaguilar88/deu/docs"
 	"github.com/eaguilar88/deu/pkg/auth"
 	"github.com/eaguilar88/deu/pkg/config"
+	"github.com/eaguilar88/deu/pkg/courses"
 	"github.com/eaguilar88/deu/pkg/endorsements"
 	errs "github.com/eaguilar88/deu/pkg/errors"
 	"github.com/eaguilar88/deu/pkg/jwt"
@@ -69,6 +70,9 @@ func main() {
 	endorsementSvc := endorsements.NewEndorsementsService(repository, logger)
 	endorsementEndpoints := endorsements.MakeEndpoints(endorsementSvc, logger, endpointMiddlewares)
 
+	courseSvc := courses.NewCoursesService(repository, logger)
+	courseEndpoints := courses.MakeEndpoints(courseSvc, logger, endpointMiddlewares)
+
 	commonHTTPOptions := []kitHTTP.ServerOption{
 		kitHTTP.ServerBefore(kitJWT.HTTPToContext()),
 		kitHTTP.ServerErrorEncoder(errs.MakeHTTPErrorEncoder(logger)),
@@ -76,6 +80,7 @@ func main() {
 	addAuthRoutes(r, authEndpoints, commonHTTPOptions)
 	addUserRoutes(r, userEndpoints, commonHTTPOptions)
 	addEndorsementRoutes(r, endorsementEndpoints, commonHTTPOptions)
+	addCourseRoutes(r, courseEndpoints, commonHTTPOptions)
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", config.HTTPPort),
@@ -161,4 +166,29 @@ func addEndorsementRoutes(r *mux.Router, endpoints endorsements.Endpoints, optio
 	deleteEndorsementHandler := transport.DeleteEndorsementHandleHTTP(endpoints.DeleteEndorsement, options)
 	path = fmt.Sprintf(transport.FormatEndorsements, transport.ParamEndorsementID)
 	r.Methods(http.MethodDelete).Path(path).Handler(deleteEndorsementHandler)
+}
+
+func addCourseRoutes(r *mux.Router, endpoints courses.Endpoints, options []kitHTTP.ServerOption) {
+	//Get Course Endpoint
+	getCourseHandler := courses.GetCourseHandleHTTP(endpoints.GetCourse, options)
+	path := fmt.Sprintf(transport.FormatCourses, transport.ParamCourseID)
+	r.Methods(http.MethodGet).Path(path).Handler(getCourseHandler)
+
+	//Get Courses Endpoint
+	getCoursesHandler := courses.GetCoursesHandleHTTP(endpoints.GetCourses, options)
+	r.Methods(http.MethodGet).Path(transport.PathCourses).Handler(getCoursesHandler)
+
+	//Create Course Endpoint
+	createCourseHandler := courses.CreateCourseHandleHTTP(endpoints.CreateCourse, options)
+	r.Methods(http.MethodPost).Path(transport.PathCourses).Handler(createCourseHandler)
+
+	//Update Course Endpoint
+	updateCourseHandler := courses.UpdateCourseHandleHTTP(endpoints.UpdateCourse, options)
+	path = fmt.Sprintf(transport.FormatCourses, transport.ParamCourseID)
+	r.Methods(http.MethodPut).Path(path).Handler(updateCourseHandler)
+
+	//Delete Course Endpoint
+	deleteCourseHandler := courses.DeleteCourseHandleHTTP(endpoints.DeleteCourse, options)
+	path = fmt.Sprintf(transport.FormatCourses, transport.ParamCourseID)
+	r.Methods(http.MethodDelete).Path(path).Handler(deleteCourseHandler)
 }
