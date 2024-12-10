@@ -3,72 +3,81 @@ package courses
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"net/http"
-	"strconv"
-
-	"github.com/eaguilar88/deu/pkg/transport"
-	"github.com/gorilla/mux"
 )
 
-func decodeGetCourseRequestHTTP(ctx context.Context, r *http.Request) (interface{}, error) {
-	vars := mux.Vars(r)
-	courseID, ok := vars[transport.ParamCourseID]
+func encodeGetCourseResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
+	resp, ok := untypedResp.(GetCourseResponse)
 	if !ok {
-		return nil, fmt.Errorf("missing required param: %s", transport.ParamCourseID)
+		return errors.New("dang bang")
 	}
-
-	return GetCourseRequest{ID: courseID}, nil
-}
-
-func decodeGetCoursesRequestHTTP(ctx context.Context, r *http.Request) (interface{}, error) {
-	queryScope, err := transport.NewQueryScopeFromURL(r.URL)
+	b, err := json.Marshal(resp)
 	if err != nil {
-		return nil, fmt.Errorf("error decoding query string: %w", err) // Wrap error
+		return errors.New("fail again")
 	}
-
-	return GetCoursesRequest{PageScope: queryScope}, nil
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(b)
+	return nil
 }
 
-func decodeCreateCourseRequestHTTP(ctx context.Context, r *http.Request) (interface{}, error) {
-	var req CreateCourseRequest
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		return nil, fmt.Errorf("error decoding request body: %w", err) // Wrap error
-	}
-	defer r.Body.Close() // Close request body
-
-	return req, nil
-}
-
-func decodeUpdateCourseRequestHTTP(ctx context.Context, r *http.Request) (interface{}, error) {
-	vars := mux.Vars(r)
-	courseIDStr, ok := vars[transport.ParamCourseID]
+func encodeGetCoursesResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
+	resp, ok := untypedResp.(GetCoursesResponse)
 	if !ok {
-		return nil, fmt.Errorf("missing required param: %s", transport.ParamCourseID)
+		return errors.New("dang bang")
 	}
-
-	_, err := strconv.Atoi(courseIDStr)
+	b, err := json.Marshal(resp)
 	if err != nil {
-		return nil, fmt.Errorf("invalid course ID: %w", err) // Wrap error
+		return errors.New("fail again")
 	}
-
-	var req UpdateCourseRequest
-	err = json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		return nil, fmt.Errorf("error decoding request body: %w", err) // Wrap error
-	}
-	defer r.Body.Close() // Close request body
-	req.ID = courseIDStr //or courseID
-
-	return req, nil
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(b)
+	return nil
 }
 
-func decodeDeleteCourseRequestHTTP(ctx context.Context, r *http.Request) (interface{}, error) {
-	vars := mux.Vars(r)
-	courseID, ok := vars[transport.ParamCourseID]
+func encodeCreateCourseResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
+	resp, ok := untypedResp.(CreateCoursesResponse)
 	if !ok {
-		return nil, fmt.Errorf("missing required param: %s", transport.ParamCourseID)
+		return errors.New("dang bang")
 	}
-	return DeleteCourseRequest{ID: courseID}, nil
+	b, err := json.Marshal(resp)
+	if err != nil {
+		return errors.New("fail again")
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	w.Write(b)
+	return nil
+}
+
+func encodeUpdateCourseResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
+	resp, ok := untypedResp.(UpdateCourseResponse)
+	if !ok {
+		return errors.New("dang bang")
+	}
+	b, err := json.Marshal(resp)
+	if err != nil {
+		return errors.New("fail again")
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	w.Write(b)
+	return nil
+}
+
+func encodeDeleteCourseResponseHTTP(_ context.Context, w http.ResponseWriter, untypedResp interface{}) error {
+	resp, ok := untypedResp.(DeleteCourseResponse)
+	if !ok {
+		return errors.New("dang bang")
+	}
+	b, err := json.Marshal(resp)
+	if err != nil {
+		return errors.New("fail again")
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	w.Write(b)
+	return nil
 }

@@ -19,7 +19,7 @@ func encodeGetEndorsementResponseHTTP(_ context.Context, w http.ResponseWriter, 
 	if err != nil {
 		return errors.New("fail again")
 	}
-	w.Header().Set("Content-Type", "application/jjson")
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(b)
 	return nil
@@ -34,7 +34,7 @@ func encodeGetEndorsementsResponseHTTP(_ context.Context, w http.ResponseWriter,
 	if err != nil {
 		return errors.New("fail again")
 	}
-	w.Header().Set("Content-Type", "application/jjson")
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(b)
 	return nil
@@ -49,7 +49,7 @@ func encodeCreateEndorsementResponseHTTP(_ context.Context, w http.ResponseWrite
 	if err != nil {
 		return errors.New("fail again")
 	}
-	w.Header().Set("Content-Type", "application/jjson")
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	w.Write(b)
 	return nil
@@ -64,7 +64,7 @@ func encodeUpdateEndorsementResponseHTTP(_ context.Context, w http.ResponseWrite
 	if err != nil {
 		return errors.New("fail again")
 	}
-	w.Header().Set("Content-Type", "application/jjson")
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	w.Write(b)
 	return nil
@@ -79,7 +79,7 @@ func encodeDeleteEndorsementResponseHTTP(_ context.Context, w http.ResponseWrite
 	if err != nil {
 		return errors.New("fail again")
 	}
-	w.Header().Set("Content-Type", "application/jjson")
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	w.Write(b)
 	return nil
@@ -95,7 +95,7 @@ func encodeGetCourseResponseHTTP(_ context.Context, w http.ResponseWriter, untyp
 	if err != nil {
 		return errors.New("fail again")
 	}
-	w.Header().Set("Content-Type", "application/jjson")
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(b)
 	return nil
@@ -110,7 +110,7 @@ func encodeGetCoursesResponseHTTP(_ context.Context, w http.ResponseWriter, unty
 	if err != nil {
 		return errors.New("fail again")
 	}
-	w.Header().Set("Content-Type", "application/jjson")
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(b)
 	return nil
@@ -125,7 +125,7 @@ func encodeCreateCourseResponseHTTP(_ context.Context, w http.ResponseWriter, un
 	if err != nil {
 		return errors.New("fail again")
 	}
-	w.Header().Set("Content-Type", "application/jjson")
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	w.Write(b)
 	return nil
@@ -140,7 +140,7 @@ func encodeUpdateCourseResponseHTTP(_ context.Context, w http.ResponseWriter, un
 	if err != nil {
 		return errors.New("fail again")
 	}
-	w.Header().Set("Content-Type", "application/jjson")
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	w.Write(b)
 	return nil
@@ -155,7 +155,7 @@ func encodeDeleteCourseResponseHTTP(_ context.Context, w http.ResponseWriter, un
 	if err != nil {
 		return errors.New("fail again")
 	}
-	w.Header().Set("Content-Type", "application/jjson")
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	w.Write(b)
 	return nil
