@@ -9,23 +9,25 @@ services:
   #     - "go-deu"
   #     - "postgres16"
 
-  go-deu:
-    container_name: "boh-go"
-    build:
-      context: "./backend"
-      dockerfile: "Dockerfile"
-    env_file:
-      - .env
-    ports:
-      - ${HTTP_SERVE_PORT}:${HTTP_SERVE_PORT}
-    links:
-      - "db"
+  # go-deu:
+  #   container_name: "boh-go"
+  #   build:
+  #     context: "./backend"
+  #     dockerfile: "Dockerfile"
+  #   env_file:
+  #     - .env
+  #   ports:
+  #     - ${HTTP_SERVE_PORT}:${HTTP_SERVE_PORT}
+  #   links:
+  #     - "db"
   db:
     container_name: "pg16"
     image: postgres:16-alpine
     restart: "unless-stopped"
     volumes:
       - ./postgresql:/docker-entrypoint-initdb.d
+    ports:
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
     env_file:
       - .env
 volumes:

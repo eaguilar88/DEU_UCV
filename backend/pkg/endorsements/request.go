@@ -11,10 +11,14 @@ type GetEndorsementRequest struct {
 }
 
 type CreateEndorsementRequest struct {
-	ID     int                        `json:"id,omitempty"`
-	User   entities.User              `json:"user,omitempty"`
-	Status entities.EndorsementStatus `json:"status,omitempty"`
-	Path   string                     `json:"path,omitempty"`
+	UserID      int    `json:"user_id,omitempty"`
+	Type        string `json:"type,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
+	Status      string `json:"status,omitempty"`
+	Comments    string `json:"comments,omitempty"`
+	CreatedAt   string `json:"created_at,omitempty"`
+	UpdatedAtAt string `json:"updated_at_at,omitempty"`
 }
 
 type DeleteEndorsementRequest struct {
@@ -22,8 +26,11 @@ type DeleteEndorsementRequest struct {
 }
 
 type UpdateEndorsementRequest struct {
-	ID     string
-	User   entities.User              `json:"user,omitempty"`
-	Status entities.EndorsementStatus `json:"status,omitempty"`
-	Path   string                     `json:"path,omitempty"`
+	ID          string `json:"id,omitempty"`
+	UserID      int    `json:"user_id,omitempty"`
+	Type        string `json:"type,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
+	Status      string `json:"status,omitempty"`
+	Comments    string `json:"comments,omitempty"`
 }

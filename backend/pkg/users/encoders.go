@@ -13,8 +13,8 @@ func entitiesUserToGetUserResponse(user entities.User) GetUserResponse {
 		Age:            user.Age,
 		Gender:         user.Gender,
 		EducationLevel: user.EducationLevel,
+		Code:           user.ProviderCode,
 		Address:        user.Address,
-		Password:       user.Password,
 		CreatedAt:      user.CreatedAt,
 	}
 }

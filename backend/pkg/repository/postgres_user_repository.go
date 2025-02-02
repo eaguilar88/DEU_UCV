@@ -256,6 +256,7 @@ func scanUser(row scannable) (models.User, error) {
 		&result.DateOfBirth,
 		&result.Gender,
 		&result.EducationLevel,
+		&result.ProviderCode,
 		&result.Address,
 		&result.CreatedAt,
 	)

@@ -1,12 +1,15 @@
 package entities
 
 type Endorsements struct {
-	ID          int               `json:"id,omitempty"`
-	User        User              `json:"user,omitempty"`
-	Status      EndorsementStatus `json:"status,omitempty"`
-	Path        string            `json:"path,omitempty"`
-	CreatedAt   string            `json:"created_at,omitempty"`
-	UpdatedAtAt string            `json:"updated_at_at,omitempty"`
+	ID          int
+	User        User
+	Status      EndorsementStatus
+	Type        string
+	Name        string
+	Description string
+	Comments    string
+	CreatedAt   string
+	UpdatedAtAt string
 }
 
 type EndorsementStatus string

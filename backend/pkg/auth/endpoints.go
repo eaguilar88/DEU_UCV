@@ -40,7 +40,7 @@ func makeLogin(svc Service, log log.Logger) endpoint.Endpoint {
 		}
 		token, user, err := svc.Login(ctx, req.Username, req.Password)
 		if err != nil {
-			level.Error(log).Log("message", "could not decode", "error", err)
+			level.Error(log).Log("message", "error logging user", "error", err)
 			return nil, err
 		}
 

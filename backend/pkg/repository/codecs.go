@@ -16,12 +16,15 @@ func newUserFromEntity(user entities.User, isUpdate bool) models.User {
 		ci = 0
 	}
 	model := models.User{
-		ID:          user.ID,
-		CI:          ci,
-		Username:    user.Username,
-		FirstName:   user.FirstName,
-		LastName:    user.LastName,
-		DateOfBirth: user.DateOfBirth,
+		ID:        user.ID,
+		CI:        ci,
+		Username:  user.Username,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		DateOfBirth: sql.NullString{
+			String: user.DateOfBirth,
+			Valid:  true,
+		},
 		Gender: sql.NullString{
 			String: user.Gender,
 			Valid:  true,
@@ -48,7 +51,6 @@ func newUserFromModel(user models.User) entities.User {
 		Username:       user.Username,
 		FirstName:      user.FirstName,
 		LastName:       user.LastName,
-		DateOfBirth:    user.DateOfBirth,
 		EducationLevel: user.EducationLevel,
 		Password:       user.Password,
 		CreatedAt:      user.CreatedAt,
@@ -60,19 +62,42 @@ func newUserFromModel(user models.User) entities.User {
 	if user.Address.Valid {
 		entity.Address = user.Address.String
 	}
+
+	if user.DateOfBirth.Valid {
+		entity.DateOfBirth = user.DateOfBirth.String
+	}
+
+	if user.ProviderCode.Valid {
+		entity.ProviderCode = user.ProviderCode.String
+	}
+
 	entity.SetAge()
 	return entity
 }
 
 func newEndorsmentFromModel(endorsement models.Endorsement) entities.Endorsements {
-	return entities.Endorsements{
+	result := entities.Endorsements{
 		ID: endorsement.ID,
 		User: entities.User{
 			ID: endorsement.ID,
 		},
-		Status:      entities.EndorsementStatus(endorsement.Status),
-		Path:        endorsement.Path,
+		Status: entities.EndorsementStatus(endorsement.Status),
+
 		CreatedAt:   endorsement.CreatedAt,
 		UpdatedAtAt: endorsement.UpdatedAt,
 	}
+
+	if endorsement.Name.Valid {
+		result.Name = endorsement.Name.String
+	}
+
+	if endorsement.Description.Valid {
+		result.Description = endorsement.Description.String
+	}
+
+	if endorsement.Comments.Valid {
+		result.Comments = endorsement.Comments.String
+	}
+
+	return result
 }

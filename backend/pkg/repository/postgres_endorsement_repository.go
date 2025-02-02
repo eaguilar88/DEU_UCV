@@ -35,8 +35,35 @@ func (r *PostgresRepository) GetEndorsement(ctx context.Context, endorsementID i
 	return newEndorsmentFromModel(endorsement), nil
 }
 func (r *PostgresRepository) GetEndorsements(ctx context.Context, pageScope entities.PageScope) ([]entities.Endorsements, entities.PageScope, error) {
-	panic("")
+	sql, args, err := queries.GetEndorsements(pageScope).ToSql()
+	if err != nil {
+		return nil, entities.PageScope{}, err
+	}
+
+	stmt, err := r.db.PrepareContext(ctx, sql)
+	if err != nil {
+		return nil, entities.PageScope{}, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.QueryContext(ctx, args...)
+	if err != nil {
+		return nil, entities.PageScope{}, err
+	}
+	defer rows.Close()
+
+	var endorsements []entities.Endorsements
+	for rows.Next() {
+		endorsement, err := scanEndorsment(rows)
+		if err != nil {
+			return nil, entities.PageScope{}, err
+		}
+		endorsements = append(endorsements, newEndorsmentFromModel(endorsement))
+	}
+	pageScope.Count = len(endorsements)
+	return endorsements, pageScope, nil
 }
+
 func (r *PostgresRepository) CreateEndorsement(ctx context.Context, endorsement entities.Endorsements) (int64, error) {
 	panic("")
 }
@@ -52,8 +79,11 @@ func scanEndorsment(row scannable) (models.Endorsement, error) {
 	err := row.Scan(
 		&result.ID,
 		&result.UserID,
+		&result.Type,
+		&result.Name,
+		&result.Description,
 		&result.Status,
-		&result.Path,
+		&result.Comments,
 		&result.CreatedAt,
 		&result.UpdatedAt,
 	)

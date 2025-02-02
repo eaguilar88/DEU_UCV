@@ -5,19 +5,20 @@ import (
 )
 
 type User struct {
-	ID             int      `json:"id"`
-	CI             string   `json:"ci"`
-	Username       string   `json:"username"`
-	Roles          []string `json:"roles"`
-	FirstName      string   `json:"first_name"`
-	LastName       string   `json:"last_name"`
-	DateOfBirth    string   `json:"date_of_birth"`
-	Age            int      `json:"age"`
-	Gender         string   `json:"gender"`
-	EducationLevel string   `json:"education_level"`
-	Address        string   `json:"address"`
-	Password       string   `json:"password"`
-	CreatedAt      string   `json:"created_at"`
+	ID             int
+	CI             string
+	Username       string
+	Roles          []string
+	FirstName      string
+	LastName       string
+	DateOfBirth    string
+	Age            int
+	Gender         string
+	EducationLevel string
+	ProviderCode   string
+	Address        string
+	Password       string
+	CreatedAt      string
 }
 
 func (u *User) SetAge() {
@@ -34,8 +35,8 @@ func (u *User) SetAge() {
 }
 
 type Role struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
+	ID   int
+	Name string
 }
 
 const (
