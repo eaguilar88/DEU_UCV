@@ -215,6 +215,7 @@ INSERT INTO deu.roles (name, description) VALUES
   ('estudiante', 'Participante inscrito en cursos.'),
   ('grupo', 'Grupo o departamento de extensión.');
 
+-- contraseña: nolodire
 INSERT INTO deu.users (ci, username, first_name, last_name, date_of_birth, gender, education, address, password) VALUES
   (183245415, 'eaguilar@email.com', 'Ellery', 'Aguilar', '1988-09-03', 'masculino', 'universitaria_incompleta', 'caracas', '$2a$10$rFfAKJJIvbGaQCay8zC9bulGQ/kOYDOwwVBGr0WyWA1sUTLZsuXpa');
 
