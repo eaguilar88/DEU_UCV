@@ -6,8 +6,11 @@ func entitiesEndorsementToGetEndorsementResponse(endorsement entities.Endorsemen
 	return GetEndorsementResponse{
 		ID:          endorsement.ID,
 		User:        endorsement.User,
-		Status:      "",
-		Path:        endorsement.Path,
+		Status:      endorsement.Status,
+		Type:        endorsement.Type,
+		Name:        endorsement.Name,
+		Description: endorsement.Description,
+		Comments:    endorsement.Comments,
 		CreatedAt:   endorsement.CreatedAt,
 		UpdatedAtAt: endorsement.UpdatedAtAt,
 	}

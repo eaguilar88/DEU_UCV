@@ -10,12 +10,15 @@ import (
 	"github.com/eaguilar88/deu/docs"
 	"github.com/eaguilar88/deu/pkg/auth"
 	"github.com/eaguilar88/deu/pkg/config"
+	"github.com/eaguilar88/deu/pkg/courses"
 	"github.com/eaguilar88/deu/pkg/endorsements"
 	errs "github.com/eaguilar88/deu/pkg/errors"
+	"github.com/eaguilar88/deu/pkg/jwt"
 	"github.com/eaguilar88/deu/pkg/repository"
 	"github.com/eaguilar88/deu/pkg/transport"
 	"github.com/eaguilar88/deu/pkg/users"
 	kitJWT "github.com/go-kit/kit/auth/jwt"
+	"github.com/go-kit/kit/endpoint"
 	kitHTTP "github.com/go-kit/kit/transport/http"
 	"github.com/oklog/oklog/pkg/group"
 
@@ -49,18 +52,26 @@ func main() {
 	}
 	defer postgres.Close()
 
+	signer := jwt.NewJWTSigner(config.JWTEncryptionKey, config.TTL, &logger)
+
 	r := mux.NewRouter()
 
 	repository := repository.NewRepository(postgres, config.FilePath, logger)
-	authService := auth.NewAuthService(config.JWTEncryptionKey, config.TTL, repository, logger)
+	authService := auth.NewAuthService(repository, signer, logger)
+	endpointMiddlewares := []endpoint.Middleware{
+		jwt.JWTMiddleware(signer, logger),
+	}
 	authEndpoints := auth.MakeEndpoints(authService, logger, nil)
 
 	addDocsRoute(r, docsSource, logger)
 	userSvc := users.NewUsersService(repository, logger)
-	userEndpoints := users.MakeEndpoints(userSvc, logger, nil)
+	userEndpoints := users.MakeEndpoints(userSvc, logger, endpointMiddlewares)
 
 	endorsementSvc := endorsements.NewEndorsementsService(repository, logger)
-	endorsementEndpoints := endorsements.MakeEndpoints(endorsementSvc, logger, nil)
+	endorsementEndpoints := endorsements.MakeEndpoints(endorsementSvc, logger, endpointMiddlewares)
+
+	courseSvc := courses.NewCoursesService(repository, logger)
+	courseEndpoints := courses.MakeEndpoints(courseSvc, logger, endpointMiddlewares)
 
 	commonHTTPOptions := []kitHTTP.ServerOption{
 		kitHTTP.ServerBefore(kitJWT.HTTPToContext()),
@@ -69,6 +80,7 @@ func main() {
 	addAuthRoutes(r, authEndpoints, commonHTTPOptions)
 	addUserRoutes(r, userEndpoints, commonHTTPOptions)
 	addEndorsementRoutes(r, endorsementEndpoints, commonHTTPOptions)
+	addCourseRoutes(r, courseEndpoints, commonHTTPOptions)
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", config.HTTPPort),
@@ -154,4 +166,29 @@ func addEndorsementRoutes(r *mux.Router, endpoints endorsements.Endpoints, optio
 	deleteEndorsementHandler := transport.DeleteEndorsementHandleHTTP(endpoints.DeleteEndorsement, options)
 	path = fmt.Sprintf(transport.FormatEndorsements, transport.ParamEndorsementID)
 	r.Methods(http.MethodDelete).Path(path).Handler(deleteEndorsementHandler)
+}
+
+func addCourseRoutes(r *mux.Router, endpoints courses.Endpoints, options []kitHTTP.ServerOption) {
+	//Get Course Endpoint
+	getCourseHandler := courses.GetCourseHandleHTTP(endpoints.GetCourse, options)
+	path := fmt.Sprintf(transport.FormatCourses, transport.ParamCourseID)
+	r.Methods(http.MethodGet).Path(path).Handler(getCourseHandler)
+
+	//Get Courses Endpoint
+	getCoursesHandler := courses.GetCoursesHandleHTTP(endpoints.GetCourses, options)
+	r.Methods(http.MethodGet).Path(transport.PathCourses).Handler(getCoursesHandler)
+
+	//Create Course Endpoint
+	createCourseHandler := courses.CreateCourseHandleHTTP(endpoints.CreateCourse, options)
+	r.Methods(http.MethodPost).Path(transport.PathCourses).Handler(createCourseHandler)
+
+	//Update Course Endpoint
+	updateCourseHandler := courses.UpdateCourseHandleHTTP(endpoints.UpdateCourse, options)
+	path = fmt.Sprintf(transport.FormatCourses, transport.ParamCourseID)
+	r.Methods(http.MethodPut).Path(path).Handler(updateCourseHandler)
+
+	//Delete Course Endpoint
+	deleteCourseHandler := courses.DeleteCourseHandleHTTP(endpoints.DeleteCourse, options)
+	path = fmt.Sprintf(transport.FormatCourses, transport.ParamCourseID)
+	r.Methods(http.MethodDelete).Path(path).Handler(deleteCourseHandler)
 }

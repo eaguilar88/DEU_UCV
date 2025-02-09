@@ -3,16 +3,13 @@ package auth
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/eaguilar88/deu/pkg/entities"
+	"github.com/eaguilar88/deu/pkg/jwt"
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
-	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/crypto/bcrypt"
 )
-
-const tokenIssuer = "deu"
 
 type Repository interface {
 	GetUserByUsername(ctx context.Context, username string) (entities.User, error)
@@ -21,19 +18,17 @@ type Repository interface {
 
 // /generate service `AuthService` with `repository` field
 
-func NewAuthService(key string, ttl uint32, repo Repository, logger log.Logger) Service {
+func NewAuthService(repo Repository, signer jwt.Signer, logger log.Logger) Service {
 	return &AuthService{
-		SigningKey: key,
-		TTL:        ttl,
 		repository: repo,
+		signer:     signer,
 		logger:     logger,
 	}
 }
 
 type AuthService struct {
-	SigningKey string
-	TTL        uint32
 	repository Repository
+	signer     jwt.Signer
 	logger     log.Logger
 }
 
@@ -58,24 +53,9 @@ func (s *AuthService) Login(ctx context.Context, username, password string) (str
 
 	user.Roles = roles
 
-	// Create JWT claims
-	claims := jwt.MapClaims{
-		"iss": tokenIssuer,
-		"exp": time.Now().Add(time.Second * time.Duration(s.TTL)).Unix(), // Set expiration using s.TTL
-		"iat": time.Now().Unix(),
-		"v1": map[string]interface{}{
-			"roles":  roles,
-			"userID": user.ID,
-		},
-	}
-
-	// Create the token
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	// Sign and get the complete encoded token as a string
-	tokenString, err := token.SignedString([]byte(s.SigningKey))
+	tokenString, err := s.signer.GenerateJWT(fmt.Sprintf("%d", user.ID), roles)
 	if err != nil {
-		return "", nil, fmt.Errorf("error signing token: %w", err)
+		return "", nil, err
 	}
 
 	return tokenString, &user, nil

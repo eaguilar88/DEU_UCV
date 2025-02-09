@@ -5,56 +5,50 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/eaguilar88/deu/pkg/entities"
+	"github.com/eaguilar88/deu/pkg/repository/models"
 )
 
 var (
-	courseTableName         = fmt.Sprintf("%s.endorsement_requests", schema)
+	courseTableName         = fmt.Sprintf("%s.courses", schema)
 	courseQuerySelectCommon = []string{
-		"u.id", "u.ci", "u.username", "u.first_name", "u.last_name", "u.date_of_birth", "u.gender", "u.education", "u.address", "u.created_at",
+		"c.id", "c.user_id", "c.endorsement_id", "c.endorsed_by", "c.objectives", "c.content", "c.cost", "c.location", "c.created_at",
 	}
 )
 
 func GetCourseByID(userID int) sq.SelectBuilder {
 	return psql.Select(courseQuerySelectCommon...).
-		From(fmt.Sprintf("%s AS u", courseTableName)).
-		Where(sq.Eq{"u.id": userID})
+		From(courseTableName).
+		Where(sq.Eq{"id": userID})
 }
 
 func GetCourses(page entities.PageScope) sq.SelectBuilder {
 	return psql.Select(courseQuerySelectCommon...).
-		From(fmt.Sprintf("%s AS u", courseTableName)).
+		From(courseTableName).
 		Limit(uint64(page.PerPage)).
 		Offset(uint64(page.Offset()))
 }
 
-func InsertCourse(user entities.User) sq.InsertBuilder {
-	ciType, ciNumber := splitUserCI(user)
-
+func InsertCourse(course models.Course) sq.InsertBuilder {
 	return psql.Insert(courseTableName).
 		Columns(
-			"ci",
-			"username",
-			"first_name",
-			"last_name",
-			"date_of_birth",
-			"gender",
-			"education",
-			"address",
-			"password",
+			"user_id",
+			"endorsement_id",
+			"endorsed_by",
+			"objectives",
+			"content",
+			"cost",
+			"location",
 			"created_at",
 			"updated_at",
 		).
 		Values(
-			ciNumber,
-			ciType,
-			user.Username,
-			user.FirstName,
-			user.LastName,
-			user.DateOfBirth,
-			user.Gender,
-			user.EducationLevel,
-			user.Address,
-			user.Password,
+			course.UserID,
+			course.EndorsementID,
+			course.EndorsedBy,
+			course.Objectives,
+			course.Content,
+			course.Cost,
+			course.Location,
 			sq.Expr("NOW()"),
 			sq.Expr("NOW()"),
 		).Suffix("RETURNING id")

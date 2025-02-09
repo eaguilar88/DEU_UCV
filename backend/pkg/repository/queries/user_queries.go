@@ -19,7 +19,7 @@ var (
 	roleTableName         = fmt.Sprintf("%s.roles", schema)
 	pivotTableName        = fmt.Sprintf("%s.user_roles", schema)
 	userQuerySelectCommon = []string{
-		"u.id", "u.ci", "u.username", "u.first_name", "u.last_name", "u.date_of_birth", "u.gender", "u.education", "u.address", "u.created_at",
+		"u.id", "u.ci", "u.username", "u.first_name", "u.last_name", "u.date_of_birth", "u.gender", "u.education", "u.provider_code", "u.address", "u.created_at",
 	}
 )
 
@@ -50,8 +50,6 @@ func GetUsers(page entities.PageScope) sq.SelectBuilder {
 }
 
 func InsertUser(user models.User) sq.InsertBuilder {
-	// _, ciNumber := splitUserCI(user)
-
 	return psql.Insert(userTableName).
 		Columns(
 			"ci",

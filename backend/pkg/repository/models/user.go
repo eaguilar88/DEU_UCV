@@ -8,10 +8,11 @@ type User struct {
 	Username       string
 	FirstName      string
 	LastName       string
-	DateOfBirth    string
+	DateOfBirth    sql.NullString
 	Gender         sql.NullString
 	EducationLevel string
 	Address        sql.NullString
+	ProviderCode   sql.NullString
 	Password       string
 	CreatedAt      string
 	UpdatedAt      string

@@ -16,7 +16,7 @@ func encodeGetUserResponseHTTP(_ context.Context, w http.ResponseWriter, untyped
 	if err != nil {
 		return errors.New("fail again")
 	}
-	w.Header().Set("Content-Type", "application/jjson")
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(b)
 	return nil
@@ -31,7 +31,7 @@ func encodeGetUsersResponseHTTP(_ context.Context, w http.ResponseWriter, untype
 	if err != nil {
 		return errors.New("fail again")
 	}
-	w.Header().Set("Content-Type", "application/jjson")
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(b)
 	return nil
@@ -46,7 +46,7 @@ func encodeCreateUserResponseHTTP(_ context.Context, w http.ResponseWriter, unty
 	if err != nil {
 		return errors.New("fail again")
 	}
-	w.Header().Set("Content-Type", "application/jjson")
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	w.Write(b)
 	return nil
@@ -61,7 +61,7 @@ func encodeUpdateUserResponseHTTP(_ context.Context, w http.ResponseWriter, unty
 	if err != nil {
 		return errors.New("fail again")
 	}
-	w.Header().Set("Content-Type", "application/jjson")
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	w.Write(b)
 	return nil
@@ -76,7 +76,7 @@ func encodeDeleteUserResponseHTTP(_ context.Context, w http.ResponseWriter, unty
 	if err != nil {
 		return errors.New("fail again")
 	}
-	w.Header().Set("Content-Type", "application/jjson")
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	w.Write(b)
 	return nil

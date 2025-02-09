@@ -18,9 +18,16 @@ type Endpoints struct {
 	Login endpoint.Endpoint
 }
 
-func MakeEndpoints(svc Service, log log.Logger, middlewares ...endpoint.Middleware) Endpoints {
+func wrapEndpoint(e endpoint.Endpoint, middlewares []endpoint.Middleware) endpoint.Endpoint {
+	for _, m := range middlewares {
+		e = m(e)
+	}
+	return e
+}
+
+func MakeEndpoints(svc Service, log log.Logger, middlewares []endpoint.Middleware) Endpoints {
 	return Endpoints{
-		Login: makeLogin(svc, log),
+		Login: wrapEndpoint(makeLogin(svc, log), middlewares),
 	}
 }
 
@@ -33,7 +40,7 @@ func makeLogin(svc Service, log log.Logger) endpoint.Endpoint {
 		}
 		token, user, err := svc.Login(ctx, req.Username, req.Password)
 		if err != nil {
-			level.Error(log).Log("message", "could not decode", "error", err)
+			level.Error(log).Log("message", "error logging user", "error", err)
 			return nil, err
 		}
 

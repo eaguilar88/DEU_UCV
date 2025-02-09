@@ -28,9 +28,9 @@ type Endpoints struct {
 	DeleteCourse endpoint.Endpoint
 }
 
-func MakeEndpoints(svc Service, log log.Logger, middlewares ...endpoint.Middleware) Endpoints {
+func MakeEndpoints(svc Service, log log.Logger, middlewares []endpoint.Middleware) Endpoints {
 	return Endpoints{
-		GetCourse:    makeGetCourse(svc, log),
+		GetCourse:    wrapEndpoint(makeGetCourse(svc, log), middlewares),
 		GetCourses:   makeGetCourses(svc, log),
 		CreateCourse: makeCreateCourse(svc, log),
 		UpdateCourse: makeUpdateCourse(svc, log),

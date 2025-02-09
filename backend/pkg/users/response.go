@@ -12,8 +12,8 @@ type GetUserResponse struct {
 	Age            int    `json:"age"`
 	Gender         string `json:"gender,omitempty"`
 	EducationLevel string `json:"education_level,omitempty"`
+	Code           string `json:"code,omitempty"`
 	Address        string `json:"address,omitempty"`
-	Password       string `json:"-,omitempty"`
 	CreatedAt      string `json:"created_at"`
 }
 

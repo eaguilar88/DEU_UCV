@@ -21,6 +21,7 @@ var (
 	errNotFound        = errors.New("rows not found")
 	errInvalidPassword = errors.New("invalid password")
 	errInternal        = errors.New("internal error")
+	ErrMissingClaims   = NewCustomError(http.StatusUnauthorized, errors.New("missing claims"))
 )
 
 type CustomError interface {

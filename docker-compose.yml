@@ -1,6 +1,6 @@
 services:
-  # vuejs:
-  #   container_name: "deu-vuejs"
+  # homepage:
+  #   container_name: "deu-home-vuejs"
   #   image: "deu_vuejs"
   #   build:
   #     context: "frontend"

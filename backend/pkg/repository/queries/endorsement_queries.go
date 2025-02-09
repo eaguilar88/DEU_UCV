@@ -5,71 +5,63 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/eaguilar88/deu/pkg/entities"
+	"github.com/eaguilar88/deu/pkg/repository/models"
 )
 
 var (
-	endorsementTableName         = fmt.Sprintf("%s.endorsement_requests", schema)
+	endorsementTableName         = fmt.Sprintf("%s.requests", schema)
 	endorsementQuerySelectCommon = []string{
-		"u.id", "u.ci", "u.username", "u.first_name", "u.last_name", "u.date_of_birth", "u.gender", "u.education", "u.address", "u.created_at",
+		"id", "user_id", "type", "name", "description", "status", "comments", "created_at", "updated_at",
 	}
 )
 
 func GetEndorsementByID(endorsementID int) sq.SelectBuilder {
 	return psql.Select(endorsementQuerySelectCommon...).
-		From(fmt.Sprintf("%s AS u", endorsementTableName)).
-		Where(sq.Eq{"u.id": endorsementID})
+		From(endorsementTableName).
+		Where(sq.Eq{"id": endorsementID})
 }
 
 func GetEndorsements(page entities.PageScope) sq.SelectBuilder {
 	return psql.Select(endorsementQuerySelectCommon...).
-		From(fmt.Sprintf("%s AS u", endorsementTableName)).
+		From(endorsementTableName).
 		Limit(uint64(page.PerPage)).
 		Offset(uint64(page.Offset()))
 }
 
-func InsertEndorsement(user entities.User) sq.InsertBuilder {
-	ciType, ciNumber := splitUserCI(user)
-
+func InsertEndorsement(endorsement models.Endorsement) sq.InsertBuilder {
 	return psql.Insert(endorsementTableName).
 		Columns(
-			"ci",
-			"username",
-			"first_name",
-			"last_name",
-			"date_of_birth",
-			"gender",
-			"education",
-			"address",
-			"password",
+			"user_id",
+			"type",
+			"name",
+			"description",
+			"status",
+			"comments",
 			"created_at",
 			"updated_at",
 		).
 		Values(
-			ciNumber,
-			ciType,
-			user.Username,
-			user.FirstName,
-			user.LastName,
-			user.DateOfBirth,
-			user.Gender,
-			user.EducationLevel,
-			user.Address,
-			user.Password,
+			endorsement.UserID,
+			endorsement.Type,
+			endorsement.Name.String,
+			endorsement.Description.String,
+			endorsement.Status,
+			endorsement.Comments.String,
 			sq.Expr("NOW()"),
 			sq.Expr("NOW()"),
 		).Suffix("RETURNING id")
 }
 
-func UpdateEndorsementInfo(user entities.User, userID int) sq.UpdateBuilder {
+func UpdateEndorsementInfo(endorsement models.Endorsement, endorsementID int) sq.UpdateBuilder {
 	return psql.Update(endorsementTableName).
-		Set("first_name", user.FirstName).
-		Set("last_name", user.LastName).
-		Set("date_of_birth", user.DateOfBirth).
-		Set("gender", user.Gender).
-		Set("address", user.Address).
-		Set("education", user.EducationLevel).
+		Set("user_id", endorsement.UserID).
+		Set("status", endorsement.Status).
+		Set("type", endorsement.Type).
+		Set("name", endorsement.Name.String).
+		Set("description", endorsement.Description.String).
+		Set("comments", endorsement.Comments.String).
 		Set("updated_at", sq.Expr("NOW()")).
-		Where(sq.Eq{"id": userID})
+		Where(sq.Eq{"id": endorsementID})
 }
 
 func DeleteEndorsement(endorsementID int) sq.DeleteBuilder {
