@@ -14,3 +14,15 @@ Preguntas a Mercy
     
 * El proyecto de Karen, eso es responsabilidad de nosotros exponer al público? (listo)
 * Lista de roles
+
+# Reunión 10-02-2025
+
+Preguntas a Mercy
+
+* Usuarios individuales para administradores
+    
+* Los usuarios pueden ser creados por otros administradores o a través de solicitudes de registro que luego serán aprobadas por admin
+
+* Agregar soft deletes
+
+* Traefik para routing
