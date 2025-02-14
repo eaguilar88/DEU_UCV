@@ -1,13 +1,17 @@
 services:
-  # homepage:
-  #   container_name: "deu-home-vuejs"
-  #   image: "deu_vuejs"
-  #   build:
-  #     context: "frontend"
-  #     dockerfile: "Dockerfile"
-  #   depends_on:
-  #     - "go-deu"
-  #     - "postgres16"
+  home:
+    container_name: "landing-app"
+    build:
+      context: "./home"
+      dockerfile: "Dockerfile"
+    env_file:
+      - .env
+    ports:
+      - ${HTTP_LANDING_PORT}:${HTTP_LANDING_PORT}
+    restart: "always"
+    depends_on:
+      - db
+      - go-deu
 
   go-deu:
     container_name: "boh-go"
@@ -17,7 +21,7 @@ services:
     env_file:
       - .env
     ports:
-      - ${HTTP_SERVE_PORT}:${HTTP_SERVE_PORT}
+      - ${HTTP_SERVE_PORT}
     links:
       - "db"
   db:

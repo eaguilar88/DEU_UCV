@@ -1,0 +1,26 @@
+# Stage 1: Build the Vue.js app
+FROM node:18.20.4 AS build-stage
+
+WORKDIR /app
+
+# Install dependencies
+COPY package*.json ./
+RUN npm install
+
+# Copy the rest of the application code
+COPY . .
+
+# Build the application
+RUN npm run build
+
+# Stage 2: Serve the app with a production-ready server
+FROM nginx:alpine AS production-stage
+
+# Copy the build output to the Nginx html directory
+COPY --from=build-stage /app/dist /usr/share/nginx/html
+
+# Expose port 8080
+EXPOSE 8080
+
+# Start Nginx server
+CMD ["nginx", "-g", "daemon off;"]
