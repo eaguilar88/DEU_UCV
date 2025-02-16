@@ -1,0 +1,6 @@
+[submodule "diplomados"]
+	path = diplomados
+	url = git@github.com:RoaRobinson97/ecp_ucv.git
+[submodule "landing"]
+	path = landing
+	url = git@github.com:SoniAmira/DEUWEB.git
