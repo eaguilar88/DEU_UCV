@@ -1,32 +1,84 @@
-services:
-  # homepage:
-  #   container_name: "deu-home-vuejs"
-  #   image: "deu_vuejs"
-  #   build:
-  #     context: "frontend"
-  #     dockerfile: "Dockerfile"
-  #   depends_on:
-  #     - "go-deu"
-  #     - "postgres16"
 
-  go-deu:
-    container_name: "boh-go"
+services:
+  traefik:
+    image: traefik:v3.3
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      - "--api.dashboard=true"                  # Enable the dashboard
+      - "--api.insecure=true"                   # Allow insecure dashboard (for local testing)
+      - "--providers.docker=true"               # Enable Docker provider
+      - "--providers.docker.exposedbydefault=false" # Don't expose containers by default
+      - "--entrypoints.web.address=:80"         # Define entrypoint for HTTP
+      - "--entrypoints.websecure.address=:443"  # Enable HTTPS
+      - "--log.level=DEBUG"                       # Set log level to warn
+    ports:
+      - "80:80"   # Expose HTTP
+      - "443:443" # Expose HTTPS
+      - "8080:8080" # Expose Traefik dashboard (optional)
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"  # Allow Traefik to talk to Docker
+    networks:
+      - web
+  landing:
+    container_name: "landing-app"
+    build:
+      context: "./landing"
+      dockerfile: "Dockerfile"
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - db
+    labels:
+      - "traefik.enable=true"                     # Enable Traefik for this service
+      - "traefik.http.routers.landing.rule=Host(`localhost`)"  # Route based on hostname
+      - "traefik.http.routers.landing.entrypoints=web"  # Use the web entrypoint
+      - "traefik.http.services.landing.loadbalancer.server.port=80"  # Target container's port
+    networks:
+      - web
+  diplomados:
+    container_name: "diplomados-app"
+    build:
+      context: "./diplomados"
+      dockerfile: "Dockerfile"
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - db
+    labels:
+      - "traefik.enable=true"                     # Enable Traefik for this service
+      - "traefik.http.routers.diplomados.rule=Host(`diplomados.localhost`)"  # Route based on hostname
+      - "traefik.http.routers.diplomados.entrypoints=web"  # Use the web entrypoint
+      - "traefik.http.services.diplomados.loadbalancer.server.port=80"  # Target container's port
+    networks:
+      - web
+  backend:
+    container_name: "backend-go"
     build:
       context: "./backend"
       dockerfile: "Dockerfile"
+    restart: unless-stopped
     env_file:
       - .env
-    ports:
-      - ${HTTP_SERVE_PORT}:${HTTP_SERVE_PORT}
     links:
       - "db"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`api.localhost`)"
+      - "traefik.http.routers.backend.entrypoints=web"  # Use the web entrypoint
+      - "traefik.http.services.backend.loadbalancer.server.port=80"  # Target container's port
+    networks:
+      - web
   db:
     container_name: "pg16"
     image: postgres:16-alpine
-    restart: "unless-stopped"
+    restart: unless-stopped
     volumes:
       - ./postgresql:/docker-entrypoint-initdb.d
     env_file:
       - .env
 volumes:
   postgres_data:
+networks:
+  web:
+    driver: bridge

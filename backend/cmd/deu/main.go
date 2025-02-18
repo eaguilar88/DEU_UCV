@@ -64,6 +64,7 @@ func main() {
 	authEndpoints := auth.MakeEndpoints(authService, logger, nil)
 
 	addDocsRoute(r, docsSource, logger)
+	addHealthRoute(r)
 	userSvc := users.NewUsersService(repository, logger)
 	userEndpoints := users.MakeEndpoints(userSvc, logger, endpointMiddlewares)
 
@@ -102,6 +103,10 @@ func main() {
 
 func addDocsRoute(r *mux.Router, docsRoute string, log log.Logger) {
 	r.HandleFunc("/docs", docs.DocsHandler(r, docsRoute, log)).Methods("GET")
+}
+
+func addHealthRoute(r *mux.Router) {
+	r.HandleFunc("/health", transport.HealthHandler).Methods("GET")
 }
 
 func mustConnectToDB(conf config.DatabaseConfig) (*sql.DB, error) {
