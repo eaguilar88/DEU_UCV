@@ -1,35 +1,32 @@
 package queries
 
 import (
-	"fmt"
-
 	sq "github.com/Masterminds/squirrel"
 	"github.com/eaguilar88/deu/pkg/entities"
 	"github.com/eaguilar88/deu/pkg/repository/models"
 )
 
 var (
-	groupTableName         = fmt.Sprintf("%s.extension_groups", schema)
 	groupQuerySelectCommon = []string{
-		"c.id", "c.user_id", "c.endorsement_id", "c.endorsed_by", "c.objectives", "c.content", "c.cost", "c.location", "c.created_at",
+		"c.id", "e.name", "e.description", "e.user_id", "e.endorsement_id", "e.endorsed_by", "c.objectives", "c.content", "c.cost", "c.location", "c.created_at",
 	}
 )
 
 func GetGroupByID(groupID int) sq.SelectBuilder {
 	return psql.Select(groupQuerySelectCommon...).
-		From(groupTableName).
+		From(groupsTableName).
 		Where(sq.Eq{"id": groupID})
 }
 
 func GetGroups(page entities.PageScope) sq.SelectBuilder {
 	return psql.Select(groupQuerySelectCommon...).
-		From(groupTableName).
+		From(groupsTableName).
 		Limit(uint64(page.PerPage)).
 		Offset(uint64(page.Offset()))
 }
 
 func InsertGroup(group models.ExtensionGroup) sq.InsertBuilder {
-	return psql.Insert(groupTableName).
+	return psql.Insert(groupsTableName).
 		Columns(
 			"user_id",
 			"endorsement_id",
@@ -57,6 +54,6 @@ func InsertGroup(group models.ExtensionGroup) sq.InsertBuilder {
 }
 
 func DeleteGroup(endorsementID int) sq.DeleteBuilder {
-	return psql.Delete(groupTableName).
+	return psql.Delete(groupsTableName).
 		Where(sq.Eq{"id": endorsementID})
 }

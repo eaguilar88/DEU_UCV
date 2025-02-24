@@ -90,3 +90,30 @@ func scanEndorsment(row scannable) (models.Endorsement, error) {
 
 	return result, err
 }
+
+func newEndorsmentFromModel(endorsement models.Endorsement) entities.Endorsements {
+	result := entities.Endorsements{
+		ID: endorsement.ID,
+		User: entities.User{
+			ID: endorsement.ID,
+		},
+		Status: entities.EndorsementStatus(endorsement.Status),
+
+		CreatedAt:   endorsement.CreatedAt,
+		UpdatedAtAt: endorsement.UpdatedAt,
+	}
+
+	if endorsement.Name.Valid {
+		result.Name = endorsement.Name.String
+	}
+
+	if endorsement.Description.Valid {
+		result.Description = endorsement.Description.String
+	}
+
+	if endorsement.Comments.Valid {
+		result.Comments = endorsement.Comments.String
+	}
+
+	return result
+}
