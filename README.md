@@ -11,7 +11,39 @@ Sistema para la Dirección de Extensión Universitaria de la UCV
     * Actividades de los grupos de extensión
 ## Responsables
 - Ellery Aguilar
-- Alejandra Giannattasio
-- Alexanyer Naranjo
+- Robinson Roa
+- Sonia Nahit
 - Kristian Ferreira
 - Ronald More
+
+## How To Run
+
+Para renombrar el archivo `.env.example` a `.env`, puede usar uno de los siguientes comandos:
+
+Usando `cp`:
+```
+cp .env.example .env
+```
+
+Usando `mv`:
+```
+mv .env.example .env
+```
+
+### Desarrollo Backend
+Para iniciar el desarrollo del backend, ejecute el siguiente comando:
+```
+make start-db
+```
+
+### Desarrollo Frontend
+Para iniciar el desarrollo del frontend, ejecute el siguiente comando:
+```
+make start-backend
+```
+
+### Entorno de Producción
+Para iniciar el entorno de producción, ejecute el siguiente comando:
+```
+make start-prod
+```
