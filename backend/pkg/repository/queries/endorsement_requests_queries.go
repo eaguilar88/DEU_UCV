@@ -1,15 +1,12 @@
 package queries
 
 import (
-	"fmt"
-
 	sq "github.com/Masterminds/squirrel"
 	"github.com/eaguilar88/deu/pkg/entities"
 	"github.com/eaguilar88/deu/pkg/repository/models"
 )
 
 var (
-	endorsementTableName         = fmt.Sprintf("%s.requests", schema)
 	endorsementQuerySelectCommon = []string{
 		"id", "user_id", "type", "name", "description", "status", "comments", "created_at", "updated_at",
 	}
@@ -17,19 +14,19 @@ var (
 
 func GetEndorsementByID(endorsementID int) sq.SelectBuilder {
 	return psql.Select(endorsementQuerySelectCommon...).
-		From(endorsementTableName).
+		From(endorsementsTableName).
 		Where(sq.Eq{"id": endorsementID})
 }
 
 func GetEndorsements(page entities.PageScope) sq.SelectBuilder {
 	return psql.Select(endorsementQuerySelectCommon...).
-		From(endorsementTableName).
+		From(endorsementsTableName).
 		Limit(uint64(page.PerPage)).
 		Offset(uint64(page.Offset()))
 }
 
 func InsertEndorsement(endorsement models.Endorsement) sq.InsertBuilder {
-	return psql.Insert(endorsementTableName).
+	return psql.Insert(endorsementsTableName).
 		Columns(
 			"user_id",
 			"type",
@@ -53,7 +50,7 @@ func InsertEndorsement(endorsement models.Endorsement) sq.InsertBuilder {
 }
 
 func UpdateEndorsementInfo(endorsement models.Endorsement, endorsementID int) sq.UpdateBuilder {
-	return psql.Update(endorsementTableName).
+	return psql.Update(endorsementsTableName).
 		Set("user_id", endorsement.UserID).
 		Set("status", endorsement.Status).
 		Set("type", endorsement.Type).
@@ -65,6 +62,6 @@ func UpdateEndorsementInfo(endorsement models.Endorsement, endorsementID int) sq
 }
 
 func DeleteEndorsement(endorsementID int) sq.DeleteBuilder {
-	return psql.Delete(endorsementTableName).
+	return psql.Delete(endorsementsTableName).
 		Where(sq.Eq{"id": endorsementID})
 }

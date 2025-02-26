@@ -76,7 +76,7 @@ func makeGetUsers(svc Service, log log.Logger) endpoint.Endpoint {
 		}
 
 		response := GetUsersResponse{
-			Users: users,
+			Users: userEntitiesToUserDTO(users),
 			Pages: pages,
 		}
 		return response, nil

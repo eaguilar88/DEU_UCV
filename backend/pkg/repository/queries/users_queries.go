@@ -14,43 +14,41 @@ const (
 )
 
 var (
-	psql                  = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
-	userTableName         = fmt.Sprintf("%s.users", schema)
-	roleTableName         = fmt.Sprintf("%s.roles", schema)
-	pivotTableName        = fmt.Sprintf("%s.user_roles", schema)
 	userQuerySelectCommon = []string{
-		"u.id", "u.ci", "u.username", "u.first_name", "u.last_name", "u.date_of_birth", "u.gender", "u.education", "u.provider_code", "u.address", "u.created_at",
+		"u.id", "u.ci", "u.username", "u.first_name", "u.last_name", "u.date_of_birth", "u.gender", "u.education", "u.address", "u.created_at", "p.code",
 	}
 )
 
 func GetRolesByUserID(userID int) sq.SelectBuilder {
 	return psql.Select("r.name").
-		From(fmt.Sprintf("%s AS r", roleTableName)).
+		From(fmt.Sprintf("%s AS r", rolesTableName)).
 		LeftJoin(fmt.Sprintf("%s AS pr ON pr.role_id = r.id", pivotTableName)).
 		Where(sq.Eq{"pr.user_id": userID})
 }
 
 func GetUserByUsername(username string) sq.SelectBuilder {
 	return psql.Select("u.id", "u.username", "u.first_name", "u.last_name", "u.password").
-		From(fmt.Sprintf("%s AS u", userTableName)).
+		From(fmt.Sprintf("%s AS u", usersTableName)).
 		Where(sq.Eq{"u.username": username})
 }
 
 func GetUserByID(userID int) sq.SelectBuilder {
 	return psql.Select(userQuerySelectCommon...).
-		From(fmt.Sprintf("%s AS u", userTableName)).
+		From(fmt.Sprintf("%s AS u", usersTableName)).
+		LeftJoin(fmt.Sprintf("%s AS p ON p.user_id = u.id", providersTableName)).
 		Where(sq.Eq{"u.id": userID})
 }
 
 func GetUsers(page entities.PageScope) sq.SelectBuilder {
 	return psql.Select(userQuerySelectCommon...).
-		From(fmt.Sprintf("%s AS u", userTableName)).
+		From(fmt.Sprintf("%s AS u", usersTableName)).
 		Limit(uint64(page.PerPage)).
+		LeftJoin(fmt.Sprintf("%s AS p ON p.user_id = u.id", providersTableName)).
 		Offset(uint64(page.Offset()))
 }
 
 func InsertUser(user models.User) sq.InsertBuilder {
-	return psql.Insert(userTableName).
+	return psql.Insert(usersTableName).
 		Columns(
 			"ci",
 			"username",
@@ -87,7 +85,7 @@ func AddRoleToUser(userID, role int) sq.InsertBuilder {
 }
 
 func UpdateUserInfo(user entities.User, userID int) sq.UpdateBuilder {
-	return psql.Update(userTableName).
+	return psql.Update(usersTableName).
 		Set("first_name", user.FirstName).
 		Set("last_name", user.LastName).
 		Set("date_of_birth", user.DateOfBirth).
@@ -99,19 +97,19 @@ func UpdateUserInfo(user entities.User, userID int) sq.UpdateBuilder {
 }
 
 func UpdateUsername(user entities.User, userID int) sq.UpdateBuilder {
-	return psql.Update(userTableName).
+	return psql.Update(usersTableName).
 		Set("updated_at", sq.Expr("NOW()")).
 		Where(sq.Eq{"id": userID})
 }
 
 func UpdateUserPassword(user entities.User, userID int) sq.UpdateBuilder {
-	return psql.Update(fmt.Sprintf("%s AS u", userTableName)).
+	return psql.Update(fmt.Sprintf("%s AS u", usersTableName)).
 		Set("u.updated_at", sq.Expr("NOW()")).
 		Where(sq.Eq{"u.id": userID})
 }
 
 func DeleteUser(userID int) sq.DeleteBuilder {
-	return psql.Delete(userTableName).
+	return psql.Delete(usersTableName).
 		Where(sq.Eq{"id": userID})
 }
 

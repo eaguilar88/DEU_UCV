@@ -1,14 +1,15 @@
 package entities
 
 type Course struct {
-	ID          int          `json:"id,omitempty"`
-	Owner       User         `json:"owner,omitempty"`
-	Endorsement Endorsements `json:"endorsement,omitempty"`
-	SignedBy    string       `json:"signed_by,omitempty"`
-	Objectives  string       `json:"objectives,omitempty"`
-	Cost        float64      `json:"cost,omitempty"`
-	Content     string       `json:"content,omitempty"`
-	Location    string       `json:"location,omitempty"`
-	CreatedAt   string       `json:"created_at,omitempty"`
-	UpdatedAt   string       `json:"updated_at,omitempty"`
+	ID          int
+	Owner       User
+	Endorsement Endorsements
+	Name        string
+	Description string
+	Objectives  string
+	Cost        float64
+	Content     string
+	Location    string
+	CreatedAt   string
+	UpdatedAt   string
 }

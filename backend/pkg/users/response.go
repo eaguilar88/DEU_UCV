@@ -18,7 +18,7 @@ type GetUserResponse struct {
 }
 
 type GetUsersResponse struct {
-	Users []entities.User    `json:"users,omitempty"`
+	Users []GetUserResponse  `json:"users,omitempty"`
 	Pages entities.PageScope `json:"pages,omitempty"`
 }
 
@@ -29,3 +29,24 @@ type CreateUsersResponse struct {
 type UpdateUserResponse struct{}
 
 type DeleteUserResponse struct{}
+
+func userEntitiesToUserDTO(users []entities.User) []GetUserResponse {
+	var out = make([]GetUserResponse, 0, len(users))
+	for _, user := range users {
+		out = append(out, GetUserResponse{
+			ID:             user.ID,
+			CI:             user.CI,
+			Username:       user.Username,
+			FirstName:      user.FirstName,
+			LastName:       user.LastName,
+			DateOfBirth:    user.DateOfBirth,
+			Age:            user.Age,
+			Gender:         user.Gender,
+			EducationLevel: user.EducationLevel,
+			Code:           user.ProviderCode,
+			Address:        user.Address,
+			CreatedAt:      user.CreatedAt,
+		})
+	}
+	return out
+}
