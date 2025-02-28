@@ -1,0 +1,12 @@
+with-expecter: True
+dir: "{{.InterfaceDir}}/mocks"
+mockname: "{{.InterfaceName}}Mock"
+outpkg: "mocks"
+filename: "{{.InterfaceName | lower | snakecase}}_mock.go"
+all: True
+log-level: "warn"
+packages:
+  github.com/eaguilar88/deu:
+    config:
+      recursive: True
+      

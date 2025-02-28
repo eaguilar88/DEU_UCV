@@ -2,14 +2,15 @@ package users
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"net/http"
 	"strconv"
 
 	"github.com/eaguilar88/deu/pkg/entities"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
+	"github.com/labstack/echo/v4"
 )
 
 type Service interface {
@@ -28,132 +29,117 @@ type Endpoints struct {
 	DeleteUser endpoint.Endpoint
 }
 
-func MakeEndpoints(svc Service, log log.Logger, middlewares []endpoint.Middleware) Endpoints {
-	return Endpoints{
-		GetUser:    wrapEndpoint(makeGetUser(svc, log), middlewares),
-		GetUsers:   wrapEndpoint(makeGetUsers(svc, log), middlewares),
-		CreateUser: wrapEndpoint(makeCreateUser(svc, log), middlewares),
-		UpdateUser: wrapEndpoint(makeUpdateUser(svc, log), middlewares),
-		DeleteUser: wrapEndpoint(makeDeleteUser(svc, log), middlewares),
+type UserEndpointsHandler struct {
+	svc Service
+	log log.Logger
+}
+
+func MakeUserEndpointsHandler(svc Service, log log.Logger) UserEndpointsHandler {
+	return UserEndpointsHandler{
+		svc: svc,
+		log: log,
 	}
 }
 
-func wrapEndpoint(e endpoint.Endpoint, middlewares []endpoint.Middleware) endpoint.Endpoint {
-	for _, m := range middlewares {
-		e = m(e)
+func (h *UserEndpointsHandler) GetUser(c echo.Context) error {
+	ctx := c.Request().Context()
+	req := GetUserRequest{ID: c.Param("id")}
+	user, err := h.svc.GetUser(ctx, req.ID)
+	if err != nil {
+		level.Error(h.log).Log("message", "could not decode", "error", err)
+		return c.JSON(http.StatusInternalServerError, err)
 	}
-	return e
+
+	return c.JSON(http.StatusOK, entitiesUserToGetUserResponse(user))
 }
 
-func makeGetUser(svc Service, log log.Logger) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(GetUserRequest)
-		if !ok {
-			level.Error(log).Log("message", "could not decode", "request", request)
-			return nil, errors.New("could not decode")
-		}
-		user, err := svc.GetUser(ctx, req.ID)
-		if err != nil {
-			level.Error(log).Log("message", "could not decode", "error", err)
-			return nil, err
-		}
+func (h *UserEndpointsHandler) GetUsers(c echo.Context) error {
+	ctx := c.Request().Context()
+	scope := entities.PageScope{}
 
-		return entitiesUserToGetUserResponse(user), nil
+	scope.GetPageFromVars(c.QueryParam("page"))
+	scope.GetPerPageFromVars(c.QueryParam("per_page"))
+
+	req := GetUsersRequest{
+		PageScope: scope,
 	}
+	users, pages, err := h.svc.GetUsers(ctx, req.PageScope)
+	if err != nil {
+		level.Error(h.log).Log("message", "could not decode", "error", err)
+		return c.JSON(http.StatusInternalServerError, err)
+	}
+
+	response := GetUsersResponse{
+		Users: userEntitiesToUserDTO(users),
+		Pages: pages,
+	}
+	return c.JSON(http.StatusOK, response)
 }
 
-func makeGetUsers(svc Service, log log.Logger) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(GetUsersRequest)
-		if !ok {
-			level.Error(log).Log("message", "could not decode", "request", request)
-			return nil, errors.New("could not decode")
-		}
-		users, pages, err := svc.GetUsers(ctx, req.PageScope)
-		if err != nil {
-			level.Error(log).Log("message", "could not decode", "error", err)
-			return nil, err
-		}
-
-		response := GetUsersResponse{
-			Users: userEntitiesToUserDTO(users),
-			Pages: pages,
-		}
-		return response, nil
+func (h *UserEndpointsHandler) CreateUser(c echo.Context) error {
+	ctx := c.Request().Context()
+	var req CreateUserRequest
+	if err := c.Bind(&req); err != nil {
+		level.Error(h.log).Log("message", "could not decode", "request", req)
+		return c.JSON(http.StatusInternalServerError, err)
 	}
+
+	newUser, err := createUserRequestToEntitiesUser(req)
+	if err != nil {
+		level.Error(h.log).Log("message", "errors creating request", "error", err)
+		return c.JSON(http.StatusInternalServerError, err)
+	}
+
+	userID, err := h.svc.CreateUser(ctx, newUser)
+	if err != nil {
+		level.Error(h.log).Log("message", "could not decode", "error", err)
+		return c.JSON(http.StatusInternalServerError, err)
+	}
+
+	response := CreateUsersResponse{
+		ID: fmt.Sprintf("%d", userID),
+	}
+	return c.JSON(http.StatusOK, response)
 }
 
-func makeCreateUser(svc Service, log log.Logger) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(CreateUserRequest)
-		if !ok {
-			level.Error(log).Log("message", "could not decode", "request", request)
-			return nil, errors.New("could not decode")
-		}
-		newUser, err := createUserRequestToEntitiesUser(req)
-		if err != nil {
-			level.Error(log).Log("message", "errors creating request", "error", err)
-			return nil, err
-		}
-
-		userID, err := svc.CreateUser(ctx, newUser)
-		if err != nil {
-			level.Error(log).Log("message", "could not decode", "error", err)
-			return nil, err
-		}
-
-		response := CreateUsersResponse{
-			ID: fmt.Sprintf("%d", userID),
-		}
-		return response, nil
+func (h *UserEndpointsHandler) UpdateUser(c echo.Context) error {
+	ctx := c.Request().Context()
+	var req UpdateUserRequest
+	if err := c.Bind(&req); err != nil {
+		level.Error(h.log).Log("message", "could not decode", "request", req)
+		return c.JSON(http.StatusInternalServerError, err)
 	}
+
+	intID, err := strconv.Atoi(req.ID)
+	if err != nil {
+		level.Error(h.log).Log("message", "could not decode", "request", req)
+		return c.JSON(http.StatusInternalServerError, err)
+	}
+
+	newUser := updateUserRequestToEntitiesUser(req, intID)
+	err = h.svc.UpdateUser(ctx, intID, newUser)
+	if err != nil {
+		level.Error(h.log).Log("message", "could not decode", "error", err)
+		return c.JSON(http.StatusInternalServerError, err)
+	}
+
+	return c.JSON(http.StatusOK, UpdateUserResponse{})
 }
 
-func makeUpdateUser(svc Service, log log.Logger) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(UpdateUserRequest)
-		if !ok {
-			level.Error(log).Log("message", "could not decode", "request", request)
-			return nil, errors.New("could not decode")
-		}
-
-		intID, err := strconv.Atoi(req.ID)
-		if err != nil {
-			level.Error(log).Log("message", "could not decode", "request", request)
-			return nil, errors.New("could not decode")
-		}
-
-		newUser := updateUserRequestToEntitiesUser(req, intID)
-		err = svc.UpdateUser(ctx, intID, newUser)
-		if err != nil {
-			level.Error(log).Log("message", "could not decode", "error", err)
-			return nil, err
-		}
-
-		return UpdateUserResponse{}, nil
+func (h *UserEndpointsHandler) DeleteUser(c echo.Context) error {
+	ctx := c.Request().Context()
+	req := DeleteUserRequest{ID: c.Param("id")}
+	intID, err := strconv.Atoi(req.ID)
+	if err != nil {
+		level.Error(h.log).Log("message", "could not decode", "request", req)
+		return c.JSON(http.StatusInternalServerError, err)
 	}
-}
 
-func makeDeleteUser(svc Service, log log.Logger) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(DeleteUserRequest)
-		if !ok {
-			level.Error(log).Log("message", "could not decode", "request", request)
-			return nil, errors.New("could not decode")
-		}
-
-		intID, err := strconv.Atoi(req.ID)
-		if err != nil {
-			level.Error(log).Log("message", "could not decode", "request", request)
-			return nil, errors.New("could not decode")
-		}
-
-		err = svc.DeleteUser(ctx, intID)
-		if err != nil {
-			level.Error(log).Log("message", "could not decode", "error", err)
-			return nil, err
-		}
-
-		return DeleteUserResponse{}, nil
+	err = h.svc.DeleteUser(ctx, intID)
+	if err != nil {
+		level.Error(h.log).Log("message", "could not decode", "error", err)
+		return c.JSON(http.StatusInternalServerError, err)
 	}
+
+	return c.JSON(http.StatusOK, DeleteUserResponse{})
 }

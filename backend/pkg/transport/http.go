@@ -8,10 +8,11 @@ import (
 	"github.com/eaguilar88/deu/pkg/entities"
 	"github.com/go-kit/kit/endpoint"
 	kitHTTP "github.com/go-kit/kit/transport/http"
+	"github.com/labstack/echo/v4"
 )
 
-func HealthHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "OK")
+func HealthHandler(c echo.Context) error {
+	return c.String(http.StatusOK, "Ok")
 }
 
 func NewQueryScopeFromURL(url *url.URL) (entities.PageScope, error) {
