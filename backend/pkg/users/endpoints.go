@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	"github.com/eaguilar88/deu/pkg/entities"
-	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/labstack/echo/v4"
@@ -19,14 +18,6 @@ type Service interface {
 	CreateUser(ctx context.Context, user entities.User) (int64, error)
 	UpdateUser(ctx context.Context, userID int, user entities.User) error
 	DeleteUser(ctx context.Context, userID int) error
-}
-
-type Endpoints struct {
-	GetUser    endpoint.Endpoint
-	GetUsers   endpoint.Endpoint
-	CreateUser endpoint.Endpoint
-	UpdateUser endpoint.Endpoint
-	DeleteUser endpoint.Endpoint
 }
 
 type UserEndpointsHandler struct {
@@ -69,11 +60,10 @@ func (h *UserEndpointsHandler) GetUsers(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 
-	response := GetUsersResponse{
+	return c.JSON(http.StatusOK, GetUsersResponse{
 		Users: userEntitiesToUserDTO(users),
 		Pages: pages,
-	}
-	return c.JSON(http.StatusOK, response)
+	})
 }
 
 func (h *UserEndpointsHandler) CreateUser(c echo.Context) error {
@@ -81,7 +71,7 @@ func (h *UserEndpointsHandler) CreateUser(c echo.Context) error {
 	var req CreateUserRequest
 	if err := c.Bind(&req); err != nil {
 		level.Error(h.log).Log("message", "could not decode", "request", req)
-		return c.JSON(http.StatusInternalServerError, err)
+		return echo.ErrBadRequest
 	}
 
 	newUser, err := createUserRequestToEntitiesUser(req)
@@ -96,10 +86,9 @@ func (h *UserEndpointsHandler) CreateUser(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 
-	response := CreateUsersResponse{
+	return c.JSON(http.StatusCreated, CreateUsersResponse{
 		ID: fmt.Sprintf("%d", userID),
-	}
-	return c.JSON(http.StatusOK, response)
+	})
 }
 
 func (h *UserEndpointsHandler) UpdateUser(c echo.Context) error {
@@ -110,7 +99,7 @@ func (h *UserEndpointsHandler) UpdateUser(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 
-	intID, err := strconv.Atoi(req.ID)
+	intID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		level.Error(h.log).Log("message", "could not decode", "request", req)
 		return c.JSON(http.StatusInternalServerError, err)
@@ -123,7 +112,7 @@ func (h *UserEndpointsHandler) UpdateUser(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 
-	return c.JSON(http.StatusOK, UpdateUserResponse{})
+	return c.JSON(http.StatusAccepted, nil)
 }
 
 func (h *UserEndpointsHandler) DeleteUser(c echo.Context) error {
@@ -141,5 +130,5 @@ func (h *UserEndpointsHandler) DeleteUser(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 
-	return c.JSON(http.StatusOK, DeleteUserResponse{})
+	return c.JSON(http.StatusAccepted, nil)
 }

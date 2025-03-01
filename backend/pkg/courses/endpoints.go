@@ -2,14 +2,14 @@ package courses
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"net/http"
 	"strconv"
 
 	"github.com/eaguilar88/deu/pkg/entities"
-	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
+	"github.com/labstack/echo/v4"
 )
 
 type Service interface {
@@ -20,135 +20,114 @@ type Service interface {
 	DeleteCourse(ctx context.Context, courseID int) error
 }
 
-type Endpoints struct {
-	GetCourse    endpoint.Endpoint
-	GetCourses   endpoint.Endpoint
-	CreateCourse endpoint.Endpoint
-	UpdateCourse endpoint.Endpoint
-	DeleteCourse endpoint.Endpoint
+type CourseEndpointsHandler struct {
+	svc Service
+	log log.Logger
 }
 
-func MakeEndpoints(svc Service, log log.Logger, middlewares []endpoint.Middleware) Endpoints {
-	return Endpoints{
-		GetCourse:    wrapEndpoint(makeGetCourse(svc, log), middlewares),
-		GetCourses:   makeGetCourses(svc, log),
-		CreateCourse: makeCreateCourse(svc, log),
-		UpdateCourse: makeUpdateCourse(svc, log),
-		DeleteCourse: makeDeleteCourse(svc, log),
+func MakeCourseEndpointsHandler(svc Service, log log.Logger) CourseEndpointsHandler {
+	return CourseEndpointsHandler{
+		svc: svc,
+		log: log,
 	}
 }
 
-func wrapEndpoint(e endpoint.Endpoint, middlewares []endpoint.Middleware) endpoint.Endpoint {
-	for _, m := range middlewares {
-		e = m(e)
+func (h *CourseEndpointsHandler) GetCourse(c echo.Context) error {
+	ctx := c.Request().Context()
+	req := GetCourseRequest{ID: c.Param("id")}
+	course, err := h.svc.GetCourse(ctx, req.ID)
+	if err != nil {
+		level.Error(h.log).Log("message", "could not decode", "error", err)
+		return echo.ErrInternalServerError
 	}
-	return e
+
+	return c.JSON(http.StatusOK, entitiesCourseToGetCourseResponse(course))
 }
 
-func makeGetCourse(svc Service, log log.Logger) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(GetCourseRequest)
-		if !ok {
-			level.Error(log).Log("message", "could not decode", "request", request)
-			return nil, errors.New("could not decode")
-		}
-		user, err := svc.GetCourse(ctx, req.ID)
-		if err != nil {
-			level.Error(log).Log("message", "could not decode", "error", err)
-			return nil, err
-		}
+func (h *CourseEndpointsHandler) GetCourses(c echo.Context) error {
 
-		return entitiesCourseToGetCourseResponse(user), nil
+	ctx := c.Request().Context()
+	scope := entities.PageScope{}
+
+	scope.GetPageFromVars(c.QueryParam("page"))
+	scope.GetPerPageFromVars(c.QueryParam("per_page"))
+	req := GetCoursesRequest{
+		PageScope: scope,
 	}
+	courses, pages, err := h.svc.GetCourses(ctx, req.PageScope)
+	if err != nil {
+		level.Error(h.log).Log("message", "could not decode", "error", err)
+		return echo.ErrInternalServerError
+	}
+
+	return c.JSON(http.StatusOK, GetCoursesResponse{
+		Courses: courses,
+		Pages:   pages,
+	})
 }
 
-func makeGetCourses(svc Service, log log.Logger) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(GetCoursesRequest)
-		if !ok {
-			level.Error(log).Log("message", "could not decode", "request", request)
-			return nil, errors.New("could not decode")
-		}
-		users, pages, err := svc.GetCourses(ctx, req.PageScope)
-		if err != nil {
-			level.Error(log).Log("message", "could not decode", "error", err)
-			return nil, err
-		}
-
-		response := GetCoursesResponse{
-			Courses: users,
-			Pages:   pages,
-		}
-		return response, nil
+func (h *CourseEndpointsHandler) CreateCourse(c echo.Context) error {
+	ctx := c.Request().Context()
+	var req CreateCourseRequest
+	if err := c.Bind(&req); err != nil {
+		level.Error(h.log).Log("message", "could not decode", "error", err)
+		return echo.ErrBadRequest
 	}
+
+	userID, err := h.svc.CreateCourse(ctx, createCourseRequestToEntitiesCourse(req))
+	if err != nil {
+		level.Error(h.log).Log("message", "could not decode", "error", err)
+		return echo.ErrInternalServerError
+	}
+
+	return c.JSON(http.StatusCreated, CreateCoursesResponse{
+		ID: fmt.Sprintf("%d", userID),
+	})
 }
 
-func makeCreateCourse(svc Service, log log.Logger) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(CreateCourseRequest)
-		if !ok {
-			level.Error(log).Log("message", "could not decode", "request", request)
-			return nil, errors.New("could not decode")
-		}
-		newUser := createCourseRequestToEntitiesCourse(req)
-		userID, err := svc.CreateCourse(ctx, newUser)
-		if err != nil {
-			level.Error(log).Log("message", "could not decode", "error", err)
-			return nil, err
-		}
-
-		response := CreateCoursesResponse{
-			ID: fmt.Sprintf("%d", userID),
-		}
-		return response, nil
+func (h *CourseEndpointsHandler) UpdateCourse(c echo.Context) error {
+	ctx := c.Request().Context()
+	var req UpdateCourseRequest
+	if err := c.Bind(&req); err != nil {
+		level.Error(h.log).Log("message", "could not decode", "request", req)
+		return echo.ErrBadRequest
 	}
+
+	intID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		level.Error(h.log).Log("message", "invalid id", "request", req)
+		return echo.ErrBadRequest
+	}
+
+	updatedCourse := updateCourseRequestToEntitiesCourse(req, intID)
+	err = h.svc.UpdateCourse(ctx, intID, updatedCourse)
+	if err != nil {
+		level.Error(h.log).Log("message", "could not decode", "error", err)
+		return echo.ErrUnprocessableEntity
+	}
+
+	return c.JSON(http.StatusAccepted, nil)
 }
 
-func makeUpdateCourse(svc Service, log log.Logger) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(UpdateCourseRequest)
-		if !ok {
-			level.Error(log).Log("message", "could not decode", "request", request)
-			return nil, errors.New("could not decode")
-		}
-
-		intID, err := strconv.Atoi(req.ID)
-		if err != nil {
-			level.Error(log).Log("message", "could not decode", "request", request)
-			return nil, errors.New("could not decode")
-		}
-
-		newUser := updateCourseRequestToEntitiesCourse(req, intID)
-		err = svc.UpdateCourse(ctx, intID, newUser)
-		if err != nil {
-			level.Error(log).Log("message", "could not decode", "error", err)
-			return nil, err
-		}
-
-		return UpdateCourseResponse{}, nil
+func (h *CourseEndpointsHandler) DeleteCourse(c echo.Context) error {
+	ctx := c.Request().Context()
+	var req DeleteCourseRequest
+	if err := c.Bind(&req); err != nil {
+		level.Error(h.log).Log("message", "could not decode", "request", req)
+		return echo.ErrBadRequest
 	}
-}
 
-func makeDeleteCourse(svc Service, log log.Logger) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(DeleteCourseRequest)
-		if !ok {
-			level.Error(log).Log("message", "could not decode", "request", request)
-			return nil, errors.New("could not decode")
-		}
-
-		intID, err := strconv.Atoi(req.ID)
-		if err != nil {
-			level.Error(log).Log("message", "could not decode", "request", request)
-			return nil, errors.New("could not decode")
-		}
-
-		err = svc.DeleteCourse(ctx, intID)
-		if err != nil {
-			level.Error(log).Log("message", "could not decode", "error", err)
-			return nil, err
-		}
-
-		return DeleteCourseResponse{}, nil
+	intID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		level.Error(h.log).Log("message", "invalid id", "request", req)
+		return echo.ErrBadRequest
 	}
+
+	err = h.svc.DeleteCourse(ctx, intID)
+	if err != nil {
+		level.Error(h.log).Log("message", "could not decode", "error", err)
+		return echo.ErrUnprocessableEntity
+	}
+
+	return c.JSON(http.StatusAccepted, nil)
 }

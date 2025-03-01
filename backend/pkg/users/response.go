@@ -26,10 +26,6 @@ type CreateUsersResponse struct {
 	ID string `json:"id,omitempty"`
 }
 
-type UpdateUserResponse struct{}
-
-type DeleteUserResponse struct{}
-
 func userEntitiesToUserDTO(users []entities.User) []GetUserResponse {
 	var out = make([]GetUserResponse, 0, len(users))
 	for _, user := range users {

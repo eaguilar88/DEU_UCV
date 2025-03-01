@@ -22,7 +22,3 @@ type GetEndorsementsResponse struct {
 type CreateEndorsementResponse struct {
 	ID string `json:"id,omitempty"`
 }
-
-type UpdateEndorsementResponse struct{}
-
-type DeleteEndorsementResponse struct{}

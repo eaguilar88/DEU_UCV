@@ -7,6 +7,8 @@ import (
 
 	"github.com/eaguilar88/deu/pkg/auth"
 	"github.com/eaguilar88/deu/pkg/config"
+	"github.com/eaguilar88/deu/pkg/courses"
+	"github.com/eaguilar88/deu/pkg/endorsements"
 	"github.com/eaguilar88/deu/pkg/jwt"
 	"github.com/eaguilar88/deu/pkg/repository"
 	"github.com/eaguilar88/deu/pkg/transport"
@@ -54,16 +56,16 @@ func main() {
 	userSvc := users.NewUsersService(repository, logger)
 	userEndpoints := users.MakeUserEndpointsHandler(userSvc, logger)
 
-	// endorsementSvc := endorsements.NewEndorsementsService(repository, logger)
-	// endorsementEndpoints := endorsements.MakeEndpoints(endorsementSvc, logger, nil)
+	endorsementSvc := endorsements.NewEndorsementsService(repository, logger)
+	endorsementEndpoints := endorsements.MakeEndorsementEndpointsHandler(endorsementSvc, logger)
 
-	// courseSvc := courses.NewCoursesService(repository, logger)
-	// courseEndpoints := courses.MakeEndpoints(courseSvc, logger, nil)
+	courseSvc := courses.NewCoursesService(repository, logger)
+	courseEndpoints := courses.MakeCourseEndpointsHandler(courseSvc, logger)
 
 	addAuthRoutes(e, authEndpoints)
-	addUserRoutes(e, userEndpoints)
-	// addEndorsementRoutes(e, endorsementEndpoints)
-	// addCourseRoutes(e, courseEndpoints)
+	addUserRoutes(e, userEndpoints, signer, logger)
+	addEndorsementRoutes(e, endorsementEndpoints)
+	addCourseRoutes(e, courseEndpoints)
 
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", config.HTTPPort)))
 }
@@ -87,46 +89,28 @@ func addAuthRoutes(e *echo.Echo, endpoints auth.AuthEndpointsHandler) {
 	e.POST("/auth/login", endpoints.LoginHandleHTTP)
 }
 
-func addUserRoutes(e *echo.Echo, endpoints users.UserEndpointsHandler) {
-	e.GET("/users/:id", endpoints.GetUser)
-	e.GET("/users", endpoints.GetUsers)
-	e.POST("/users", endpoints.CreateUser)
-	e.PUT("/users/:id", endpoints.UpdateUser)
-	e.DELETE("/users/:id", endpoints.DeleteUser)
+func addUserRoutes(e *echo.Echo, endpoints users.UserEndpointsHandler, signer jwt.Signer, logger log.Logger) {
+	g := e.Group("/users")
+	g.Use(jwt.JWTMiddleware(signer, logger))
+	g.GET("/:id", endpoints.GetUser)
+	g.GET("", endpoints.GetUsers)
+	g.POST("", endpoints.CreateUser)
+	g.PUT("/:id", endpoints.UpdateUser)
+	g.DELETE("/:id", endpoints.DeleteUser)
 }
 
-// func addEndorsementRoutes(e *echo.Echo, endpoints endorsements.Endpoints) {
-// 	e.GET(fmt.Sprintf(transport.FormatEndorsements, transport.ParamEndorsementID), func(c echo.Context) error {
-// 		return transport.GetEndorsementHandleHTTP(c.Response().Writer, c.Request(), endpoints.GetEndorsement)
-// 	})
-// 	e.GET(transport.PathEndorsements, func(c echo.Context) error {
-// 		return transport.GetEndorsementsHandleHTTP(c.Response().Writer, c.Request(), endpoints.GetEndorsements)
-// 	})
-// 	e.POST(transport.PathEndorsements, func(c echo.Context) error {
-// 		return transport.CreateEndorsementHandleHTTP(c.Response().Writer, c.Request(), endpoints.CreateEndorsement)
-// 	})
-// 	e.PUT(fmt.Sprintf(transport.FormatEndorsements, transport.ParamEndorsementID), func(c echo.Context) error {
-// 		return transport.UpdateEndorsementHandleHTTP(c.Response().Writer, c.Request(), endpoints.UpdateEndorsement)
-// 	})
-// 	e.DELETE(fmt.Sprintf(transport.FormatEndorsements, transport.ParamEndorsementID), func(c echo.Context) error {
-// 		return transport.DeleteEndorsementHandleHTTP(c.Response().Writer, c.Request(), endpoints.DeleteEndorsement)
-// 	})
-// }
+func addEndorsementRoutes(e *echo.Echo, endpoints endorsements.EndorsementEndpointsHandler) {
+	e.GET("/endorsements/:id", endpoints.GetEndorsement)
+	e.GET("/endorsements", endpoints.GetEndorsements)
+	e.POST("/endorsements", endpoints.CreateEndorsement)
+	e.PUT("/endorsements/:id", endpoints.UpdateEndorsement)
+	e.DELETE("/endorsements/:id", endpoints.DeleteEndorsement)
+}
 
-// func addCourseRoutes(e *echo.Echo, endpoints courses.Endpoints) {
-// 	e.GET(fmt.Sprintf(transport.FormatCourses, transport.ParamCourseID), func(c echo.Context) error {
-// 		return courses.GetCourseHandleHTTP(c.Response().Writer, c.Request(), endpoints.GetCourse)
-// 	})
-// 	e.GET(transport.PathCourses, func(c echo.Context) error {
-// 		return courses.GetCoursesHandleHTTP(c.Response().Writer, c.Request(), endpoints.GetCourses)
-// 	})
-// 	e.POST(transport.PathCourses, func(c echo.Context) error {
-// 		return courses.CreateCourseHandleHTTP(c.Response().Writer, c.Request(), endpoints.CreateCourse)
-// 	})
-// 	e.PUT(fmt.Sprintf(transport.FormatCourses, transport.ParamCourseID), func(c echo.Context) error {
-// 		return courses.UpdateCourseHandleHTTP(c.Response().Writer, c.Request(), endpoints.UpdateCourse)
-// 	})
-// 	e.DELETE(fmt.Sprintf(transport.FormatCourses, transport.ParamCourseID), func(c echo.Context) error {
-// 		return courses.DeleteCourseHandleHTTP(c.Response().Writer, c.Request(), endpoints.DeleteCourse)
-// 	})
-// }
+func addCourseRoutes(e *echo.Echo, endpoints courses.CourseEndpointsHandler) {
+	e.GET("/courses/:id", endpoints.GetCourse)
+	e.GET("/courses", endpoints.GetCourses)
+	e.POST("/courses", endpoints.CreateCourse)
+	e.PUT("/courses/:id", endpoints.UpdateCourse)
+	e.DELETE("/courses/:id", endpoints.DeleteCourse)
+}

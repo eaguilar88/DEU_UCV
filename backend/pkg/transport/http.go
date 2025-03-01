@@ -6,8 +6,6 @@ import (
 	"net/url"
 
 	"github.com/eaguilar88/deu/pkg/entities"
-	"github.com/go-kit/kit/endpoint"
-	kitHTTP "github.com/go-kit/kit/transport/http"
 	"github.com/labstack/echo/v4"
 )
 
@@ -33,50 +31,4 @@ type swaggerVariables struct {
 	Version     string
 	Name        string
 	GitCommitID string
-}
-
-// Endorsement Endpoints
-func GetEndorsementHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
-	return kitHTTP.NewServer(
-		ep,
-		decodeGetEndorsementRequestHTTP,
-		encodeGetEndorsementResponseHTTP,
-		options...,
-	)
-}
-
-func GetEndorsementsHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
-	return kitHTTP.NewServer(
-		ep,
-		decodeGetEndorsementsRequestHTTP,
-		encodeGetEndorsementsResponseHTTP,
-		options...,
-	)
-}
-
-func CreateEndorsementHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
-	return kitHTTP.NewServer(
-		ep,
-		decodeCreateEndorsementRequestHTTP,
-		encodeCreateEndorsementResponseHTTP,
-		options...,
-	)
-}
-
-func UpdateEndorsementHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
-	return kitHTTP.NewServer(
-		ep,
-		decodeUpdateEndorsementRequestHTTP,
-		encodeUpdateEndorsementResponseHTTP,
-		options...,
-	)
-}
-
-func DeleteEndorsementHandleHTTP(ep endpoint.Endpoint, options []kitHTTP.ServerOption) *kitHTTP.Server {
-	return kitHTTP.NewServer(
-		ep,
-		decodeDeleteEndorsementRequestHTTP,
-		encodeDeleteEndorsementResponseHTTP,
-		options...,
-	)
 }
