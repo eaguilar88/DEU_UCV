@@ -25,7 +25,7 @@ func (r *PostgresRepository) GetEndorsement(ctx context.Context, endorsementID i
 		return entities.Endorsements{}, err
 	}
 	defer rows.Close()
-	var endorsement models.Endorsement
+	var endorsement models.EndorsementRequest
 	for rows.Next() {
 		endorsement, err = scanEndorsment(rows)
 		if err != nil {
@@ -74,16 +74,22 @@ func (r *PostgresRepository) DeleteEndorsement(ctx context.Context, endorsementI
 	panic("")
 }
 
-func scanEndorsment(row scannable) (models.Endorsement, error) {
-	result := models.Endorsement{}
+func scanEndorsment(row scannable) (models.EndorsementRequest, error) {
+	result := models.EndorsementRequest{}
 	err := row.Scan(
 		&result.ID,
-		&result.UserID,
-		&result.Type,
 		&result.Name,
 		&result.Description,
+		&result.Type,
 		&result.Status,
 		&result.Comments,
+		&result.UserID,
+		&result.UserFirstName,
+		&result.UserLastName,
+		&result.ReviewerID,
+		&result.ReviewerFirstName,
+		&result.ReviewerLastName,
+		&result.ReviewedAt,
 		&result.CreatedAt,
 		&result.UpdatedAt,
 	)
@@ -91,14 +97,22 @@ func scanEndorsment(row scannable) (models.Endorsement, error) {
 	return result, err
 }
 
-func newEndorsmentFromModel(endorsement models.Endorsement) entities.Endorsements {
+func newEndorsmentFromModel(endorsement models.EndorsementRequest) entities.Endorsements {
 	result := entities.Endorsements{
 		ID: endorsement.ID,
 		User: entities.User{
-			ID: endorsement.ID,
+			ID:        endorsement.UserID,
+			FirstName: endorsement.UserFirstName,
+			LastName:  endorsement.UserLastName,
 		},
-		Status: entities.EndorsementStatus(endorsement.Status),
-
+		Reviewer: entities.User{
+			ID:        endorsement.ReviewerID,
+			FirstName: endorsement.ReviewerFirstName,
+			LastName:  endorsement.ReviewerLastName,
+		},
+		Status:      entities.EndorsementStatus(endorsement.Status),
+		Type:        endorsement.Type,
+		ReviewedAt:  endorsement.ReviewedAt,
 		CreatedAt:   endorsement.CreatedAt,
 		UpdatedAtAt: endorsement.UpdatedAt,
 	}

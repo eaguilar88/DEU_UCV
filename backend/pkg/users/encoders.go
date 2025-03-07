@@ -2,7 +2,7 @@ package users
 
 import "github.com/eaguilar88/deu/pkg/entities"
 
-func entitiesUserToGetUserResponse(user entities.User) GetUserResponse {
+func UserEntityToGetUserResponse(user entities.User) GetUserResponse {
 	return GetUserResponse{
 		ID:             user.ID,
 		CI:             user.CI,

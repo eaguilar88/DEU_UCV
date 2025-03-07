@@ -60,7 +60,7 @@ func (h *EndorsementEndpointsHandler) GetEndorsements(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, GetEndorsementsResponse{
-		Endorsements: endorsements,
+		Endorsements: endorsementEntitiesToGetEndorsementsResponse(endorsements),
 		Pages:        pages,
 	})
 }

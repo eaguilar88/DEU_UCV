@@ -41,7 +41,7 @@ func (h *UserEndpointsHandler) GetUser(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 
-	return c.JSON(http.StatusOK, entitiesUserToGetUserResponse(user))
+	return c.JSON(http.StatusOK, UserEntityToGetUserResponse(user))
 }
 
 func (h *UserEndpointsHandler) GetUsers(c echo.Context) error {

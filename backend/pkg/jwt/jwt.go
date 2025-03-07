@@ -18,7 +18,7 @@ type CustomClaims struct {
 
 // Signer defines the interface for an authorization service.
 type Signer interface {
-	ValidateToken(tokenString string) error // Takes token string
+	ValidateToken(tokenString string) (map[string]any, error) // Takes token string
 	GenerateJWT(userID string, roles []string) (string, error)
 }
 
@@ -36,8 +36,8 @@ func NewJWTSigner(signingKey string, ttl uint32, logger *log.Logger) Signer {
 	}
 }
 
-func (s *JWTSigner) ValidateToken(tokenString string) error {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+func (s *JWTSigner) ValidateToken(tokenString string) (map[string]any, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
 		// Make sure that the token method conform to "SigningMethodHMAC"
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -46,15 +46,16 @@ func (s *JWTSigner) ValidateToken(tokenString string) error {
 	})
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	if _, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		// Claims are valid
-		return nil // Token is valid
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		return nil, fmt.Errorf("invalid token")
 	}
 
-	return fmt.Errorf("invalid token")
+	// Token is valid
+	return claims, nil
 }
 
 func (s *JWTSigner) GenerateJWT(userID string, roles []string) (string, error) {

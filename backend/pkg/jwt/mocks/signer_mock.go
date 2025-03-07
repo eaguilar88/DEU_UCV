@@ -75,21 +75,33 @@ func (_c *SignerMock_GenerateJWT_Call) RunAndReturn(run func(string, []string) (
 }
 
 // ValidateToken provides a mock function with given fields: tokenString
-func (_m *SignerMock) ValidateToken(tokenString string) error {
+func (_m *SignerMock) ValidateToken(tokenString string) (map[string]interface{}, error) {
 	ret := _m.Called(tokenString)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ValidateToken")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
+	var r0 map[string]interface{}
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (map[string]interface{}, error)); ok {
+		return rf(tokenString)
+	}
+	if rf, ok := ret.Get(0).(func(string) map[string]interface{}); ok {
 		r0 = rf(tokenString)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[string]interface{})
+		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(tokenString)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // SignerMock_ValidateToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ValidateToken'
@@ -110,12 +122,12 @@ func (_c *SignerMock_ValidateToken_Call) Run(run func(tokenString string)) *Sign
 	return _c
 }
 
-func (_c *SignerMock_ValidateToken_Call) Return(_a0 error) *SignerMock_ValidateToken_Call {
-	_c.Call.Return(_a0)
+func (_c *SignerMock_ValidateToken_Call) Return(_a0 map[string]interface{}, _a1 error) *SignerMock_ValidateToken_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *SignerMock_ValidateToken_Call) RunAndReturn(run func(string) error) *SignerMock_ValidateToken_Call {
+func (_c *SignerMock_ValidateToken_Call) RunAndReturn(run func(string) (map[string]interface{}, error)) *SignerMock_ValidateToken_Call {
 	_c.Call.Return(run)
 	return _c
 }
