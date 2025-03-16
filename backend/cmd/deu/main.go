@@ -13,11 +13,10 @@ import (
 	"github.com/eaguilar88/deu/pkg/repository"
 	"github.com/eaguilar88/deu/pkg/transport"
 	"github.com/eaguilar88/deu/pkg/users"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	_ "github.com/lib/pq"
+	"go.uber.org/zap"
 )
 
 // const (
@@ -26,33 +25,28 @@ import (
 // )
 
 func main() {
-	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
-	logger = log.With(logger, "ts", log.DefaultTimestampUTC, "caller", log.DefaultCaller)
 
+	logger, _ := config.NewLogger()
+	defer logger.Sync()
 	config, err := config.Read(logger)
 	if err != nil {
-		level.Error(logger).Log("error parsing configuration.")
+		logger.Error("error parsing configuration.")
 		os.Exit(1)
 	}
 
 	postgres, err := mustConnectToDB(config.Database)
 	if err != nil {
-		level.Error(logger).Log("message", "error connecting to the db", "error", err)
+		logger.Error("error connecting to the db", zap.Error(err))
 		os.Exit(1)
 	}
 	defer postgres.Close()
 
-	signer := jwt.NewJWTSigner(config.JWTEncryptionKey, config.TTL, &logger)
-
-	e := echo.New()
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
+	signer := jwt.NewJWTSigner(config.JWTEncryptionKey, config.TTL, logger)
 
 	repository := repository.NewRepository(postgres, config.FilePath, logger)
 	authService := auth.NewAuthService(repository, signer, logger)
 	authEndpoints := auth.MakeAuthEndpointsHandler(authService, logger)
 
-	addHealthRoute(e)
 	userSvc := users.NewUsersService(repository, logger)
 	userEndpoints := users.MakeUserEndpointsHandler(userSvc, logger)
 
@@ -62,10 +56,17 @@ func main() {
 	courseSvc := courses.NewCoursesService(repository, logger)
 	courseEndpoints := courses.MakeCourseEndpointsHandler(courseSvc, logger)
 
+	e := echo.New()
+	e.Use(middleware.Recover())
+	middlewares := []echo.MiddlewareFunc{
+		jwt.JWTMiddleware(signer, logger),
+	}
+
+	addHealthRoute(e)
 	addAuthRoutes(e, authEndpoints)
-	addUserRoutes(e, userEndpoints, signer, logger)
-	addEndorsementRoutes(e, endorsementEndpoints)
-	addCourseRoutes(e, courseEndpoints)
+	addUserRoutes(e, userEndpoints, middlewares...)
+	addEndorsementRoutes(e, endorsementEndpoints, middlewares...)
+	addCourseRoutes(e, courseEndpoints, middlewares...)
 
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", config.HTTPPort)))
 }
@@ -89,9 +90,8 @@ func addAuthRoutes(e *echo.Echo, endpoints auth.AuthEndpointsHandler) {
 	e.POST("/auth/login", endpoints.LoginHandleHTTP)
 }
 
-func addUserRoutes(e *echo.Echo, endpoints users.UserEndpointsHandler, signer jwt.Signer, logger log.Logger) {
-	g := e.Group("/users")
-	g.Use(jwt.JWTMiddleware(signer, logger))
+func addUserRoutes(e *echo.Echo, endpoints users.UserEndpointsHandler, middlewares ...echo.MiddlewareFunc) {
+	g := e.Group("/users", middlewares...)
 	g.GET("/:id", endpoints.GetUser)
 	g.GET("", endpoints.GetUsers)
 	g.POST("", endpoints.CreateUser)
@@ -99,18 +99,21 @@ func addUserRoutes(e *echo.Echo, endpoints users.UserEndpointsHandler, signer jw
 	g.DELETE("/:id", endpoints.DeleteUser)
 }
 
-func addEndorsementRoutes(e *echo.Echo, endpoints endorsements.EndorsementEndpointsHandler) {
-	e.GET("/endorsements/:id", endpoints.GetEndorsement)
-	e.GET("/endorsements", endpoints.GetEndorsements)
-	e.POST("/endorsements", endpoints.CreateEndorsement)
-	e.PUT("/endorsements/:id", endpoints.UpdateEndorsement)
-	e.DELETE("/endorsements/:id", endpoints.DeleteEndorsement)
+func addEndorsementRoutes(e *echo.Echo, endpoints endorsements.EndorsementEndpointsHandler, middlewares ...echo.MiddlewareFunc) {
+	g := e.Group("/endorsements", middlewares...)
+	g.GET("/:id", endpoints.GetEndorsement)
+	g.GET("", endpoints.GetEndorsements)
+	g.POST("", endpoints.CreateEndorsement)
+	g.PUT("/:id", endpoints.UpdateEndorsement)
+	g.DELETE("/:id", endpoints.DeleteEndorsement)
 }
 
-func addCourseRoutes(e *echo.Echo, endpoints courses.CourseEndpointsHandler) {
-	e.GET("/courses/:id", endpoints.GetCourse)
-	e.GET("/courses", endpoints.GetCourses)
-	e.POST("/courses", endpoints.CreateCourse)
-	e.PUT("/courses/:id", endpoints.UpdateCourse)
-	e.DELETE("/courses/:id", endpoints.DeleteCourse)
+func addCourseRoutes(e *echo.Echo, endpoints courses.CourseEndpointsHandler, middlewares ...echo.MiddlewareFunc) {
+	publicGroup := e.Group("/courses")
+	publicGroup.GET("/:id", endpoints.GetCourse)
+	publicGroup.GET("", endpoints.GetCourses)
+	protectedGroup := e.Group("/courses", middlewares...)
+	protectedGroup.POST("", endpoints.CreateCourse)
+	protectedGroup.PUT("/:id", endpoints.UpdateCourse)
+	protectedGroup.DELETE("/:id", endpoints.DeleteCourse)
 }

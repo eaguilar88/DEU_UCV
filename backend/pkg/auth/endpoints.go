@@ -5,9 +5,8 @@ import (
 	"net/http"
 
 	"github.com/eaguilar88/deu/pkg/entities"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
 )
 
 type Service interface {
@@ -16,10 +15,10 @@ type Service interface {
 
 type AuthEndpointsHandler struct {
 	svc Service
-	log log.Logger
+	log *zap.Logger
 }
 
-func MakeAuthEndpointsHandler(svc Service, log log.Logger) AuthEndpointsHandler {
+func MakeAuthEndpointsHandler(svc Service, log *zap.Logger) AuthEndpointsHandler {
 	return AuthEndpointsHandler{
 		svc: svc,
 		log: log,
@@ -33,7 +32,7 @@ func (h AuthEndpointsHandler) LoginHandleHTTP(c echo.Context) error {
 	}
 	token, user, err := h.svc.Login(c.Request().Context(), req.Username, req.Password)
 	if err != nil {
-		level.Error(h.log).Log("message", "error logging user", "error", err)
+		h.log.Error("error logging user", zap.Error(err))
 		return echo.ErrUnauthorized
 	}
 

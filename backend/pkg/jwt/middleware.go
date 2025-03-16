@@ -6,20 +6,19 @@ import (
 
 	"net/http"
 
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
 	// Updated import
 )
 
 // JWTMiddleware checks for the existence and validity of a JWT in the context.
-func JWTMiddleware(signer Signer, log log.Logger) echo.MiddlewareFunc {
+func JWTMiddleware(signer Signer, logger *zap.Logger) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			tokenString := c.Request().Header.Get("Authorization")
 
 			if tokenString == "" {
-				level.Error(log).Log("message", "authorization token is missing")
+				logger.Error("authorization token is missing")
 				return echo.NewHTTPError(http.StatusUnauthorized, "authorization token is missing")
 			}
 
@@ -29,21 +28,21 @@ func JWTMiddleware(signer Signer, log log.Logger) echo.MiddlewareFunc {
 			// Use your Signer to validate the token
 			claims, err := signer.ValidateToken(tokenString)
 			if err != nil {
-				level.Error(log).Log("message", "invalid authorization token", "error", err)
+				logger.Error("invalid authorization token", zap.Error(err))
 				return echo.NewHTTPError(http.StatusUnauthorized, fmt.Sprintf("invalid authorization token: %v", err))
 			}
 
 			// Extract "v1" map from claims
 			v1Claims, ok := claims["v1"].(map[string]interface{})
 			if !ok {
-				level.Error(log).Log("message", "v1 claims missing or invalid")
+				logger.Error("v1 claims missing or invalid")
 				return echo.NewHTTPError(http.StatusUnauthorized, "v1 claims missing or invalid")
 			}
 
 			// Extract userID from v1 map
 			userID, ok := v1Claims["userID"].(string)
 			if !ok || userID == "" {
-				level.Error(log).Log("message", "userID missing in v1 claims")
+				logger.Error("userID missing in v1 claims")
 				return echo.NewHTTPError(http.StatusUnauthorized, "userID missing in v1 claims")
 			}
 

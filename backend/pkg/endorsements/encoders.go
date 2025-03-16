@@ -5,15 +5,15 @@ import (
 	"github.com/eaguilar88/deu/pkg/users"
 )
 
-func endorsementEntitiesToGetEndorsementsResponse(endorsements []entities.Endorsements) []GetEndorsementResponse {
+func EndorsementEntitiesToGetEndorsementsResponse(endorsements []entities.Endorsements) []GetEndorsementResponse {
 	var responses = make([]GetEndorsementResponse, 0, len(endorsements))
 	for _, endorsement := range endorsements {
-		responses = append(responses, entitiesEndorsementToGetEndorsementResponse(endorsement))
+		responses = append(responses, EntitiesEndorsementToGetEndorsementResponse(endorsement))
 	}
 	return responses
 }
 
-func entitiesEndorsementToGetEndorsementResponse(endorsement entities.Endorsements) GetEndorsementResponse {
+func EntitiesEndorsementToGetEndorsementResponse(endorsement entities.Endorsements) GetEndorsementResponse {
 	return GetEndorsementResponse{
 		ID:          endorsement.ID,
 		User:        users.UserEntityToGetUserResponse(endorsement.User),

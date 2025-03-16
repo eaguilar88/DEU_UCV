@@ -4,8 +4,7 @@ import (
 	"fmt"
 
 	"github.com/caarlos0/env/v10"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
+	"go.uber.org/zap"
 )
 
 type Server struct {
@@ -39,21 +38,21 @@ func (cfg DatabaseConfig) String() string {
 }
 
 // Read current server config - specific for each application
-func Read(logger log.Logger) (Server, error) {
+func Read(logger *zap.Logger) (Server, error) {
 	var config Server
 
 	if err := env.Parse(&config); err != nil {
-		_ = level.Error(logger).Log("msg", "failed to parse configuration", "error", err)
+		logger.Error("failed to parse configuration", zap.Error(err))
 		return config, err
 	}
 
 	if err := env.Parse(&config.Database); err != nil {
-		_ = level.Error(logger).Log("msg", "failed to parse database configuration", "error", err)
+		logger.Error("failed to parse database configuration", zap.Error(err))
 		return config, err
 	}
 
 	if err := env.Parse(&config.Email); err != nil {
-		_ = level.Error(logger).Log("msg", "failed to parse email configuration", "error", err)
+		logger.Error("failed to parse email configuration", zap.Error(err))
 		return config, err
 	}
 

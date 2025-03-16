@@ -7,9 +7,8 @@ import (
 	"strconv"
 
 	"github.com/eaguilar88/deu/pkg/entities"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
 )
 
 type Service interface {
@@ -22,10 +21,10 @@ type Service interface {
 
 type EndorsementEndpointsHandler struct {
 	svc Service
-	log log.Logger
+	log *zap.Logger
 }
 
-func MakeEndorsementEndpointsHandler(svc Service, log log.Logger) EndorsementEndpointsHandler {
+func MakeEndorsementEndpointsHandler(svc Service, log *zap.Logger) EndorsementEndpointsHandler {
 	return EndorsementEndpointsHandler{
 		svc: svc,
 		log: log,
@@ -37,14 +36,13 @@ func (h *EndorsementEndpointsHandler) GetEndorsement(c echo.Context) error {
 	req := GetEndorsementRequest{ID: c.Param("id")}
 	endorsement, err := h.svc.GetEndorsement(ctx, req.ID)
 	if err != nil {
-		level.Error(h.log).Log("message", "could not decode", "error", err)
+		h.log.Error("could not decode", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, err)
 	}
-	return c.JSON(http.StatusOK, entitiesEndorsementToGetEndorsementResponse(endorsement))
+	return c.JSON(http.StatusOK, EntitiesEndorsementToGetEndorsementResponse(endorsement))
 }
 
 func (h *EndorsementEndpointsHandler) GetEndorsements(c echo.Context) error {
-
 	ctx := c.Request().Context()
 	scope := entities.PageScope{}
 
@@ -55,12 +53,12 @@ func (h *EndorsementEndpointsHandler) GetEndorsements(c echo.Context) error {
 	}
 	endorsements, pages, err := h.svc.GetEndorsements(ctx, req.PageScope)
 	if err != nil {
-		level.Error(h.log).Log("message", "could not decode", "error", err)
+		h.log.Error("could not decode", zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 
 	return c.JSON(http.StatusOK, GetEndorsementsResponse{
-		Endorsements: endorsementEntitiesToGetEndorsementsResponse(endorsements),
+		Endorsements: EndorsementEntitiesToGetEndorsementsResponse(endorsements),
 		Pages:        pages,
 	})
 }
@@ -69,13 +67,13 @@ func (h *EndorsementEndpointsHandler) CreateEndorsement(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req CreateEndorsementRequest
 	if err := c.Bind(&req); err != nil {
-		level.Error(h.log).Log("message", "could not decode", "error", err)
+		h.log.Error("could not decode", zap.Error(err))
 		return echo.ErrBadRequest
 	}
 
 	userID, err := h.svc.CreateEndorsement(ctx, createEndorsementRequestToEntitiesEndorsement(req))
 	if err != nil {
-		level.Error(h.log).Log("message", "could not decode", "error", err)
+		h.log.Error("could not decode", zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 
@@ -88,20 +86,20 @@ func (h *EndorsementEndpointsHandler) UpdateEndorsement(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req UpdateEndorsementRequest
 	if err := c.Bind(&req); err != nil {
-		level.Error(h.log).Log("message", "could not decode", "request", req)
+		h.log.Error("could not decode", zap.Error(err), zap.Any("request", req))
 		return echo.ErrBadRequest
 	}
 
 	intID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		level.Error(h.log).Log("message", "invalid id", "request", req)
+		h.log.Error("invalid id", zap.Error(err), zap.Any("request", req))
 		return echo.ErrBadRequest
 	}
 
 	updatedEndorsement := updateEndorsementRequestToEntitiesEndorsement(req, intID)
 	err = h.svc.UpdateEndorsement(ctx, intID, updatedEndorsement)
 	if err != nil {
-		level.Error(h.log).Log("message", "could not decode", "error", err)
+		h.log.Error("could not decode", zap.Error(err))
 		return echo.ErrUnprocessableEntity
 	}
 
@@ -113,19 +111,19 @@ func (h *EndorsementEndpointsHandler) DeleteEndorsement(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req DeleteEndorsementRequest
 	if err := c.Bind(&req); err != nil {
-		level.Error(h.log).Log("message", "could not decode", "request", req)
+		h.log.Error("could not decode", zap.Error(err), zap.Any("request", req))
 		return echo.ErrBadRequest
 	}
 
 	intID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		level.Error(h.log).Log("message", "invalid id", "request", req)
+		h.log.Error("invalid id", zap.Error(err), zap.Any("request", req))
 		return echo.ErrBadRequest
 	}
 
 	err = h.svc.DeleteEndorsement(ctx, intID)
 	if err != nil {
-		level.Error(h.log).Log("message", "could not decode", "error", err)
+		h.log.Error("could not decode", zap.Error(err))
 		return echo.ErrUnprocessableEntity
 	}
 

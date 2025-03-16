@@ -7,9 +7,8 @@ import (
 	"strconv"
 
 	"github.com/eaguilar88/deu/pkg/entities"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
 )
 
 type Service interface {
@@ -22,10 +21,10 @@ type Service interface {
 
 type CourseEndpointsHandler struct {
 	svc Service
-	log log.Logger
+	log *zap.Logger
 }
 
-func MakeCourseEndpointsHandler(svc Service, log log.Logger) CourseEndpointsHandler {
+func MakeCourseEndpointsHandler(svc Service, log *zap.Logger) CourseEndpointsHandler {
 	return CourseEndpointsHandler{
 		svc: svc,
 		log: log,
@@ -37,15 +36,14 @@ func (h *CourseEndpointsHandler) GetCourse(c echo.Context) error {
 	req := GetCourseRequest{ID: c.Param("id")}
 	course, err := h.svc.GetCourse(ctx, req.ID)
 	if err != nil {
-		level.Error(h.log).Log("message", "could not decode", "error", err)
+		h.log.Error(fmt.Sprintf("error getting course with ID: %s", req.ID), zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 
-	return c.JSON(http.StatusOK, entitiesCourseToGetCourseResponse(course))
+	return c.JSON(http.StatusOK, EntitiesCourseToGetCourseResponse(course))
 }
 
 func (h *CourseEndpointsHandler) GetCourses(c echo.Context) error {
-
 	ctx := c.Request().Context()
 	scope := entities.PageScope{}
 
@@ -56,12 +54,12 @@ func (h *CourseEndpointsHandler) GetCourses(c echo.Context) error {
 	}
 	courses, pages, err := h.svc.GetCourses(ctx, req.PageScope)
 	if err != nil {
-		level.Error(h.log).Log("message", "could not decode", "error", err)
+		h.log.Error("could not decode", zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 
 	return c.JSON(http.StatusOK, GetCoursesResponse{
-		Courses: courses,
+		Courses: EntitiesCoursesToGetCoursesResponse(courses),
 		Pages:   pages,
 	})
 }
@@ -70,13 +68,13 @@ func (h *CourseEndpointsHandler) CreateCourse(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req CreateCourseRequest
 	if err := c.Bind(&req); err != nil {
-		level.Error(h.log).Log("message", "could not decode", "error", err)
+		h.log.Error("could not decode", zap.Error(err))
 		return echo.ErrBadRequest
 	}
 
 	userID, err := h.svc.CreateCourse(ctx, createCourseRequestToEntitiesCourse(req))
 	if err != nil {
-		level.Error(h.log).Log("message", "could not decode", "error", err)
+		h.log.Error("could not decode", zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 
@@ -89,20 +87,20 @@ func (h *CourseEndpointsHandler) UpdateCourse(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req UpdateCourseRequest
 	if err := c.Bind(&req); err != nil {
-		level.Error(h.log).Log("message", "could not decode", "request", req)
+		h.log.Error("could not decode", zap.Error(err), zap.Any("request", req))
 		return echo.ErrBadRequest
 	}
 
 	intID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		level.Error(h.log).Log("message", "invalid id", "request", req)
+		h.log.Error("invalid id", zap.Error(err), zap.Any("request", req))
 		return echo.ErrBadRequest
 	}
 
 	updatedCourse := updateCourseRequestToEntitiesCourse(req, intID)
 	err = h.svc.UpdateCourse(ctx, intID, updatedCourse)
 	if err != nil {
-		level.Error(h.log).Log("message", "could not decode", "error", err)
+		h.log.Error("could not decode", zap.Error(err))
 		return echo.ErrUnprocessableEntity
 	}
 
@@ -113,19 +111,19 @@ func (h *CourseEndpointsHandler) DeleteCourse(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req DeleteCourseRequest
 	if err := c.Bind(&req); err != nil {
-		level.Error(h.log).Log("message", "could not decode", "request", req)
+		h.log.Error("could not decode", zap.Error(err), zap.Any("request", req))
 		return echo.ErrBadRequest
 	}
 
 	intID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		level.Error(h.log).Log("message", "invalid id", "request", req)
+		h.log.Error("invalid id", zap.Error(err), zap.Any("request", req))
 		return echo.ErrBadRequest
 	}
 
 	err = h.svc.DeleteCourse(ctx, intID)
 	if err != nil {
-		level.Error(h.log).Log("message", "could not decode", "error", err)
+		h.log.Error("could not decode", zap.Error(err))
 		return echo.ErrUnprocessableEntity
 	}
 

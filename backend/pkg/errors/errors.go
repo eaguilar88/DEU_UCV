@@ -1,15 +1,10 @@
 package errors
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
-
-	"github.com/go-kit/log"
-
-	kitHTTP "github.com/go-kit/kit/transport/http"
 )
 
 const internalServerBodyError = `{"code":500,"message":"internal server error"}`
@@ -130,33 +125,4 @@ func NewUnprocessableError(err error) CustomError {
 
 func NewBadRequestError(err error) CustomError {
 	return NewCustomError(http.StatusBadRequest, err)
-}
-
-// MakeHTTPErrorEncoder
-func MakeHTTPErrorEncoder(logger log.Logger) kitHTTP.ErrorEncoder {
-	return func(_ context.Context, err error, w http.ResponseWriter) {
-		logger.Log("error", err.Error())
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		if headerer, ok := err.(kitHTTP.Headerer); ok {
-			for k, values := range headerer.Headers() {
-				for _, v := range values {
-					w.Header().Add(k, v)
-				}
-			}
-		}
-		b := []byte(internalServerBodyError)
-		code := http.StatusInternalServerError
-		if sc, ok := err.(kitHTTP.StatusCoder); ok {
-			code = sc.StatusCode()
-		}
-		if ce, ok := err.(*customError); ok {
-			code = ce.StatusCode()
-			if ce.StatusCode() != http.StatusInternalServerError {
-				b, _ = ce.MarshalJSON()
-			}
-		}
-
-		w.WriteHeader(code)
-		w.Write(b)
-	}
 }

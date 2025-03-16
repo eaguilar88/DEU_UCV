@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-kit/log"
 	jwt "github.com/golang-jwt/jwt/v4"
+	"go.uber.org/zap"
 )
 
 const tokenIssuer = "deu"
@@ -25,10 +25,10 @@ type Signer interface {
 type JWTSigner struct {
 	SigningKey string
 	TTL        uint32
-	Logger     *log.Logger
+	Logger     *zap.Logger
 }
 
-func NewJWTSigner(signingKey string, ttl uint32, logger *log.Logger) Signer {
+func NewJWTSigner(signingKey string, ttl uint32, logger *zap.Logger) Signer {
 	return &JWTSigner{
 		SigningKey: signingKey,
 		TTL:        ttl,

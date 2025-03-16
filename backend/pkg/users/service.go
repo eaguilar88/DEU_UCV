@@ -11,8 +11,7 @@ import (
 
 	"github.com/eaguilar88/deu/pkg/entities"
 	errs "github.com/eaguilar88/deu/pkg/errors"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
+	"go.uber.org/zap"
 )
 
 type Repository interface {
@@ -28,10 +27,10 @@ type Repository interface {
 
 type UserService struct {
 	repo Repository
-	log  log.Logger
+	log  *zap.Logger
 }
 
-func NewUsersService(repository Repository, logger log.Logger) Service {
+func NewUsersService(repository Repository, logger *zap.Logger) Service {
 	return &UserService{
 		repo: repository,
 		log:  logger,
@@ -75,18 +74,18 @@ func (s *UserService) CreateUser(ctx context.Context, user entities.User) (int64
 	// User exists, now handle roles
 	roles, err := s.repo.GetUserRoles(ctx, existingUser.ID)
 	if err != nil {
-		level.Error(s.log).Log("message", "error getting user roles", "error", err)
+		s.log.Error("error getting user roles", zap.Error(err))
 		return -1, err
 	}
 
 	if slices.Contains(roles, user.Roles[0]) {
-		level.Warn(s.log).Log("message", fmt.Sprintf("user %s already has the role %s", existingUser.Username, user.Roles[0]))
+		s.log.Warn(fmt.Sprintf("user %s already has the role %s", existingUser.Username, user.Roles[0]))
 		return -1, errs.NewDuplicateEntryError(errors.New("user already exist"))
 	}
 
 	err = s.repo.AddRoleToUser(ctx, nil, existingUser.ID, entities.RoleIDFromName(user.Roles[0]))
 	if err != nil {
-		level.Error(s.log).Log("message", "error adding role to user", "error", err)
+		s.log.Error("error adding role to user", zap.Error(err))
 		return -1, err
 	}
 

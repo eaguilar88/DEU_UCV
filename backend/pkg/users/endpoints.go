@@ -7,9 +7,8 @@ import (
 	"strconv"
 
 	"github.com/eaguilar88/deu/pkg/entities"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
 )
 
 type Service interface {
@@ -22,10 +21,10 @@ type Service interface {
 
 type UserEndpointsHandler struct {
 	svc Service
-	log log.Logger
+	log *zap.Logger
 }
 
-func MakeUserEndpointsHandler(svc Service, log log.Logger) UserEndpointsHandler {
+func MakeUserEndpointsHandler(svc Service, log *zap.Logger) UserEndpointsHandler {
 	return UserEndpointsHandler{
 		svc: svc,
 		log: log,
@@ -37,7 +36,7 @@ func (h *UserEndpointsHandler) GetUser(c echo.Context) error {
 	req := GetUserRequest{ID: c.Param("id")}
 	user, err := h.svc.GetUser(ctx, req.ID)
 	if err != nil {
-		level.Error(h.log).Log("message", "could not decode", "error", err)
+		h.log.Error(fmt.Sprintf("error getting user with ID: %s", req.ID), zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 
@@ -56,7 +55,7 @@ func (h *UserEndpointsHandler) GetUsers(c echo.Context) error {
 	}
 	users, pages, err := h.svc.GetUsers(ctx, req.PageScope)
 	if err != nil {
-		level.Error(h.log).Log("message", "could not decode", "error", err)
+		h.log.Error("error getting users", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 
@@ -70,19 +69,19 @@ func (h *UserEndpointsHandler) CreateUser(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req CreateUserRequest
 	if err := c.Bind(&req); err != nil {
-		level.Error(h.log).Log("message", "could not decode", "request", req)
+		h.log.Error("error decoding create user request", zap.Error(err))
 		return echo.ErrBadRequest
 	}
 
 	newUser, err := createUserRequestToEntitiesUser(req)
 	if err != nil {
-		level.Error(h.log).Log("message", "errors creating request", "error", err)
+		h.log.Error("error creating new user entity", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 
 	userID, err := h.svc.CreateUser(ctx, newUser)
 	if err != nil {
-		level.Error(h.log).Log("message", "could not decode", "error", err)
+		h.log.Error("error creating new user", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 
@@ -95,20 +94,20 @@ func (h *UserEndpointsHandler) UpdateUser(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req UpdateUserRequest
 	if err := c.Bind(&req); err != nil {
-		level.Error(h.log).Log("message", "could not decode", "request", req)
+		h.log.Error("error decoding request", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 
 	intID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		level.Error(h.log).Log("message", "could not decode", "request", req)
+		h.log.Error("error getting id from request", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 
 	newUser := updateUserRequestToEntitiesUser(req, intID)
 	err = h.svc.UpdateUser(ctx, intID, newUser)
 	if err != nil {
-		level.Error(h.log).Log("message", "could not decode", "error", err)
+		h.log.Error(fmt.Sprintf("error updating user with ID: %s", req.ID), zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 
@@ -120,13 +119,13 @@ func (h *UserEndpointsHandler) DeleteUser(c echo.Context) error {
 	req := DeleteUserRequest{ID: c.Param("id")}
 	intID, err := strconv.Atoi(req.ID)
 	if err != nil {
-		level.Error(h.log).Log("message", "could not decode", "request", req)
+		h.log.Error("error decoding request", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 
 	err = h.svc.DeleteUser(ctx, intID)
 	if err != nil {
-		level.Error(h.log).Log("message", "could not decode", "error", err)
+		h.log.Error(fmt.Sprintf("error deleting user with ID: %s", req.ID), zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 

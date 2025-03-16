@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/eaguilar88/deu/pkg/entities"
-	"github.com/go-kit/log"
+	"go.uber.org/zap"
 )
 
 type Repository interface {
@@ -18,10 +18,10 @@ type Repository interface {
 
 type EndorsementService struct {
 	repo Repository
-	log  log.Logger
+	log  *zap.Logger
 }
 
-func NewEndorsementsService(repository Repository, logger log.Logger) *EndorsementService {
+func NewEndorsementsService(repository Repository, logger *zap.Logger) *EndorsementService {
 	return &EndorsementService{
 		repo: repository,
 		log:  logger,

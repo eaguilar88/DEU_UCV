@@ -7,8 +7,8 @@ import (
 	"github.com/eaguilar88/deu/pkg/auth/mocks"
 	"github.com/eaguilar88/deu/pkg/entities"
 	jwtMock "github.com/eaguilar88/deu/pkg/jwt/mocks"
-	"github.com/go-kit/log"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 func TestAuthService_Login(t *testing.T) {
@@ -49,7 +49,7 @@ func TestAuthService_Login(t *testing.T) {
 		},
 	}
 	ctx := context.Background()
-	loggerMock := log.NewNopLogger()
+	loggerMock := zap.NewNop()
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
