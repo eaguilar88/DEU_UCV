@@ -1,23 +1,28 @@
 package courses
 
-import "github.com/eaguilar88/deu/pkg/entities"
+import (
+	"github.com/eaguilar88/deu/pkg/endorsements"
+	"github.com/eaguilar88/deu/pkg/entities"
+	"github.com/eaguilar88/deu/pkg/users"
+)
 
 type GetCourseResponse struct {
-	ID          int                   `json:"id,omitempty"`
-	Owner       entities.User         `json:"owner,omitempty"`
-	Endorsement entities.Endorsements `json:"endorsement,omitempty"`
-	SignedBy    string                `json:"signed_by,omitempty"`
-	Objectives  string                `json:"objectives,omitempty"`
-	Cost        float64               `json:"cost,omitempty"`
-	Content     string                `json:"content,omitempty"`
-	Location    string                `json:"location,omitempty"`
-	CreatedAt   string                `json:"created_at,omitempty"`
-	UpdatedAt   string                `json:"updated_at,omitempty"`
+	ID          int                                 `json:"id,omitempty"`
+	Content     string                              `json:"content,omitempty"`
+	Cost        float64                             `json:"cost,omitempty"`
+	CreatedAt   string                              `json:"created_at,omitempty"`
+	Description string                              `json:"description,omitempty"`
+	Endorsement endorsements.GetEndorsementResponse `json:"endorsement,omitempty"`
+	Location    string                              `json:"location,omitempty"`
+	Name        string                              `json:"name,omitempty"`
+	Objectives  string                              `json:"objectives,omitempty"`
+	Owner       users.GetUserResponse               `json:"owner,omitempty"`
+	UpdatedAt   string                              `json:"updated_at,omitempty"`
 }
 
 type GetCoursesResponse struct {
-	Courses []entities.Course  `json:"courses,omitempty"`
-	Pages   entities.PageScope `json:"pages,omitempty"`
+	Courses []GetCourseResponse `json:"courses,omitempty"`
+	Pages   entities.PageScope  `json:"pages,omitempty"`
 }
 
 type CreateCoursesResponse struct {

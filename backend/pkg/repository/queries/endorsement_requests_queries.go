@@ -1,6 +1,8 @@
 package queries
 
 import (
+	"fmt"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/eaguilar88/deu/pkg/entities"
 	"github.com/eaguilar88/deu/pkg/repository/models"
@@ -8,24 +10,42 @@ import (
 
 var (
 	endorsementQuerySelectCommon = []string{
-		"id", "user_id", "type", "name", "description", "status", "comments", "created_at", "updated_at",
+		"r.id",
+		"r.name",
+		"r.description",
+		"r.type",
+		"r.status",
+		"r.comments",
+		"owner.id owner_id",
+		"owner.first_name",
+		"owner.last_name",
+		"reviewer.id reviewer_id",
+		"reviewer.first_name",
+		"reviewer.last_name",
+		"r.reviewed_at",
+		"r.created_at",
+		"r.updated_at",
 	}
 )
 
 func GetEndorsementByID(endorsementID int) sq.SelectBuilder {
 	return psql.Select(endorsementQuerySelectCommon...).
-		From(endorsementsTableName).
-		Where(sq.Eq{"id": endorsementID})
+		From(fmt.Sprintf("%s AS r", endorsementsTableName)).
+		Join(fmt.Sprintf("%s AS owner ON r.user_id = owner.id", usersTableName)).
+		Join(fmt.Sprintf("%s AS reviewer ON r.reviewer_id = reviewer.id", usersTableName)).
+		Where(sq.Eq{"r.id": endorsementID})
 }
 
 func GetEndorsements(page entities.PageScope) sq.SelectBuilder {
 	return psql.Select(endorsementQuerySelectCommon...).
-		From(endorsementsTableName).
+		From(fmt.Sprintf("%s AS r", endorsementsTableName)).
+		Join(fmt.Sprintf("%s AS owner ON r.user_id = owner.id", usersTableName)).
+		Join(fmt.Sprintf("%s AS reviewer ON r.reviewer_id = reviewer.id", usersTableName)).
 		Limit(uint64(page.PerPage)).
 		Offset(uint64(page.Offset()))
 }
 
-func InsertEndorsement(endorsement models.Endorsement) sq.InsertBuilder {
+func InsertEndorsement(endorsement models.EndorsementRequest) sq.InsertBuilder {
 	return psql.Insert(endorsementsTableName).
 		Columns(
 			"user_id",
@@ -33,23 +53,17 @@ func InsertEndorsement(endorsement models.Endorsement) sq.InsertBuilder {
 			"name",
 			"description",
 			"status",
-			"comments",
-			"created_at",
-			"updated_at",
 		).
 		Values(
 			endorsement.UserID,
 			endorsement.Type,
 			endorsement.Name.String,
 			endorsement.Description.String,
-			endorsement.Status,
-			endorsement.Comments.String,
-			sq.Expr("NOW()"),
-			sq.Expr("NOW()"),
+			entities.EndorsementStatus_CREATED,
 		).Suffix("RETURNING id")
 }
 
-func UpdateEndorsementInfo(endorsement models.Endorsement, endorsementID int) sq.UpdateBuilder {
+func UpdateEndorsementInfo(endorsement models.EndorsementRequest, endorsementID int) sq.UpdateBuilder {
 	return psql.Update(endorsementsTableName).
 		Set("user_id", endorsement.UserID).
 		Set("status", endorsement.Status).
@@ -58,10 +72,10 @@ func UpdateEndorsementInfo(endorsement models.Endorsement, endorsementID int) sq
 		Set("description", endorsement.Description.String).
 		Set("comments", endorsement.Comments.String).
 		Set("updated_at", sq.Expr("NOW()")).
-		Where(sq.Eq{"id": endorsementID})
+		Where(sq.Eq{"r.id": endorsementID})
 }
 
 func DeleteEndorsement(endorsementID int) sq.DeleteBuilder {
 	return psql.Delete(endorsementsTableName).
-		Where(sq.Eq{"id": endorsementID})
+		Where(sq.Eq{"r.id": endorsementID})
 }

@@ -22,20 +22,29 @@ func (p *PageScope) GetPageFromVars(raw string) error {
 	if raw == "" {
 		return nil
 	}
-	var err error
-	p.Page, err = strconv.Atoi(raw)
-	return err // if not a number (helps debugging)
+
+	page, err := strconv.Atoi(raw)
+	if err != nil || p.Page <= 0 {
+		return err
+	}
+
+	p.Page = page
+
+	return nil
 }
 
 func (p *PageScope) GetPerPageFromVars(raw string) error {
+	p.PerPage = DefaultPerPage
 	if raw == "" {
-		p.PerPage = DefaultPerPage
 		return nil
 	}
-	var err error
-	p.PerPage, err = strconv.Atoi(raw)
-	if p.PerPage <= 0 {
-		p.PerPage = DefaultPerPage
+
+	perPage, err := strconv.Atoi(raw)
+	if err != nil || p.PerPage <= 0 {
+		return err
 	}
-	return err // if not a number (helps debugging)
+
+	p.PerPage = perPage
+
+	return nil
 }

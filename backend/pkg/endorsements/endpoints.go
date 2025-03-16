@@ -2,14 +2,13 @@ package endorsements
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"net/http"
 	"strconv"
 
 	"github.com/eaguilar88/deu/pkg/entities"
-	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
+	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
 )
 
 type Service interface {
@@ -20,135 +19,113 @@ type Service interface {
 	DeleteEndorsement(ctx context.Context, endorsementID int) error
 }
 
-type Endpoints struct {
-	GetEndorsement    endpoint.Endpoint
-	GetEndorsements   endpoint.Endpoint
-	CreateEndorsement endpoint.Endpoint
-	UpdateEndorsement endpoint.Endpoint
-	DeleteEndorsement endpoint.Endpoint
+type EndorsementEndpointsHandler struct {
+	svc Service
+	log *zap.Logger
 }
 
-func MakeEndpoints(svc Service, log log.Logger, middlewares []endpoint.Middleware) Endpoints {
-	return Endpoints{
-		GetEndorsement:    makeGetEndorsement(svc, log),
-		GetEndorsements:   makeGetEndorsements(svc, log),
-		CreateEndorsement: makeCreateEndorsement(svc, log),
-		UpdateEndorsement: makeUpdateEndorsement(svc, log),
-		DeleteEndorsement: makeDeleteEndorsement(svc, log),
+func MakeEndorsementEndpointsHandler(svc Service, log *zap.Logger) EndorsementEndpointsHandler {
+	return EndorsementEndpointsHandler{
+		svc: svc,
+		log: log,
 	}
 }
 
-func wrapEndpoint(e endpoint.Endpoint, middlewares []endpoint.Middleware) endpoint.Endpoint {
-	for _, m := range middlewares {
-		e = m(e)
+func (h *EndorsementEndpointsHandler) GetEndorsement(c echo.Context) error {
+	ctx := c.Request().Context()
+	req := GetEndorsementRequest{ID: c.Param("id")}
+	endorsement, err := h.svc.GetEndorsement(ctx, req.ID)
+	if err != nil {
+		h.log.Error("could not decode", zap.Error(err))
+		return c.JSON(http.StatusInternalServerError, err)
 	}
-	return e
+	return c.JSON(http.StatusOK, EntitiesEndorsementToGetEndorsementResponse(endorsement))
 }
 
-func makeGetEndorsement(svc Service, log log.Logger) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(GetEndorsementRequest)
-		if !ok {
-			level.Error(log).Log("message", "could not decode", "request", request)
-			return nil, errors.New("could not decode")
-		}
-		endorsement, err := svc.GetEndorsement(ctx, req.ID)
-		if err != nil {
-			level.Error(log).Log("message", "could not decode", "error", err)
-			return nil, err
-		}
+func (h *EndorsementEndpointsHandler) GetEndorsements(c echo.Context) error {
+	ctx := c.Request().Context()
+	scope := entities.PageScope{}
 
-		return entitiesEndorsementToGetEndorsementResponse(endorsement), nil
+	scope.GetPageFromVars(c.QueryParam("page"))
+	scope.GetPerPageFromVars(c.QueryParam("per_page"))
+	req := GetEndorsementsRequest{
+		PageScope: scope,
 	}
+	endorsements, pages, err := h.svc.GetEndorsements(ctx, req.PageScope)
+	if err != nil {
+		h.log.Error("could not decode", zap.Error(err))
+		return echo.ErrInternalServerError
+	}
+
+	return c.JSON(http.StatusOK, GetEndorsementsResponse{
+		Endorsements: EndorsementEntitiesToGetEndorsementsResponse(endorsements),
+		Pages:        pages,
+	})
 }
 
-func makeGetEndorsements(svc Service, log log.Logger) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(GetEndorsementsRequest)
-		if !ok {
-			level.Error(log).Log("message", "could not decode", "request", request)
-			return nil, errors.New("could not decode")
-		}
-		users, pages, err := svc.GetEndorsements(ctx, req.PageScope)
-		if err != nil {
-			level.Error(log).Log("message", "could not decode", "error", err)
-			return nil, err
-		}
-
-		response := GetEndorsementsResponse{
-			Endorsements: users,
-			Pages:        pages,
-		}
-		return response, nil
+func (h *EndorsementEndpointsHandler) CreateEndorsement(c echo.Context) error {
+	ctx := c.Request().Context()
+	var req CreateEndorsementRequest
+	if err := c.Bind(&req); err != nil {
+		h.log.Error("could not decode", zap.Error(err))
+		return echo.ErrBadRequest
 	}
+
+	userID, err := h.svc.CreateEndorsement(ctx, createEndorsementRequestToEntitiesEndorsement(req))
+	if err != nil {
+		h.log.Error("could not decode", zap.Error(err))
+		return echo.ErrInternalServerError
+	}
+
+	return c.JSON(http.StatusCreated, CreateEndorsementResponse{
+		ID: fmt.Sprintf("%d", userID),
+	})
 }
 
-func makeCreateEndorsement(svc Service, log log.Logger) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(CreateEndorsementRequest)
-		if !ok {
-			level.Error(log).Log("message", "could not decode", "request", request)
-			return nil, errors.New("could not decode")
-		}
-		newUser := createEndorsementRequestToEntitiesEndorsement(req)
-		userID, err := svc.CreateEndorsement(ctx, newUser)
-		if err != nil {
-			level.Error(log).Log("message", "could not decode", "error", err)
-			return nil, err
-		}
-
-		response := CreateEndorsementResponse{
-			ID: fmt.Sprintf("%d", userID),
-		}
-		return response, nil
+func (h *EndorsementEndpointsHandler) UpdateEndorsement(c echo.Context) error {
+	ctx := c.Request().Context()
+	var req UpdateEndorsementRequest
+	if err := c.Bind(&req); err != nil {
+		h.log.Error("could not decode", zap.Error(err), zap.Any("request", req))
+		return echo.ErrBadRequest
 	}
+
+	intID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		h.log.Error("invalid id", zap.Error(err), zap.Any("request", req))
+		return echo.ErrBadRequest
+	}
+
+	updatedEndorsement := updateEndorsementRequestToEntitiesEndorsement(req, intID)
+	err = h.svc.UpdateEndorsement(ctx, intID, updatedEndorsement)
+	if err != nil {
+		h.log.Error("could not decode", zap.Error(err))
+		return echo.ErrUnprocessableEntity
+	}
+
+	return c.JSON(http.StatusAccepted, nil)
 }
 
-func makeUpdateEndorsement(svc Service, log log.Logger) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(UpdateEndorsementRequest)
-		if !ok {
-			level.Error(log).Log("message", "could not decode", "request", request)
-			return nil, errors.New("could not decode")
-		}
+func (h *EndorsementEndpointsHandler) DeleteEndorsement(c echo.Context) error {
 
-		intID, err := strconv.Atoi(req.ID)
-		if err != nil {
-			level.Error(log).Log("message", "could not decode", "request", request)
-			return nil, errors.New("could not decode")
-		}
-
-		newUser := updateEndorsementRequestToEntitiesEndorsement(req, intID)
-		err = svc.UpdateEndorsement(ctx, intID, newUser)
-		if err != nil {
-			level.Error(log).Log("message", "could not decode", "error", err)
-			return nil, err
-		}
-
-		return UpdateEndorsementResponse{}, nil
+	ctx := c.Request().Context()
+	var req DeleteEndorsementRequest
+	if err := c.Bind(&req); err != nil {
+		h.log.Error("could not decode", zap.Error(err), zap.Any("request", req))
+		return echo.ErrBadRequest
 	}
-}
 
-func makeDeleteEndorsement(svc Service, log log.Logger) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(DeleteEndorsementRequest)
-		if !ok {
-			level.Error(log).Log("message", "could not decode", "request", request)
-			return nil, errors.New("could not decode")
-		}
-
-		intID, err := strconv.Atoi(req.ID)
-		if err != nil {
-			level.Error(log).Log("message", "could not decode", "request", request)
-			return nil, errors.New("could not decode")
-		}
-
-		err = svc.DeleteEndorsement(ctx, intID)
-		if err != nil {
-			level.Error(log).Log("message", "could not decode", "error", err)
-			return nil, err
-		}
-
-		return DeleteEndorsementResponse{}, nil
+	intID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		h.log.Error("invalid id", zap.Error(err), zap.Any("request", req))
+		return echo.ErrBadRequest
 	}
+
+	err = h.svc.DeleteEndorsement(ctx, intID)
+	if err != nil {
+		h.log.Error("could not decode", zap.Error(err))
+		return echo.ErrUnprocessableEntity
+	}
+
+	return c.JSON(http.StatusAccepted, nil)
 }

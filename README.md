@@ -16,7 +16,12 @@ Sistema para la Dirección de Extensión Universitaria de la UCV
 - Kristian Ferreira
 - Ronald More
 
-## How To Run
+## Enlaces a otros proyectos
+- [Landing del proyecto](https://github.com/soniamira/deuweb)
+- [Sistema de diplomados](https://github.com/RoaRobinson97/ecp_ucv)
+
+
+## Iniciar desarrollo
 
 Para renombrar el archivo `.env.example` a `.env`, puede usar uno de los siguientes comandos:
 

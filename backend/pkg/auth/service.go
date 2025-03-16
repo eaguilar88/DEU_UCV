@@ -6,8 +6,7 @@ import (
 
 	"github.com/eaguilar88/deu/pkg/entities"
 	"github.com/eaguilar88/deu/pkg/jwt"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
+	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -16,9 +15,7 @@ type Repository interface {
 	GetUserRoles(ctx context.Context, userID int) ([]string, error)
 }
 
-// /generate service `AuthService` with `repository` field
-
-func NewAuthService(repo Repository, signer jwt.Signer, logger log.Logger) Service {
+func NewAuthService(repo Repository, signer jwt.Signer, logger *zap.Logger) Service {
 	return &AuthService{
 		repository: repo,
 		signer:     signer,
@@ -29,7 +26,7 @@ func NewAuthService(repo Repository, signer jwt.Signer, logger log.Logger) Servi
 type AuthService struct {
 	repository Repository
 	signer     jwt.Signer
-	logger     log.Logger
+	logger     *zap.Logger
 }
 
 func (s *AuthService) Login(ctx context.Context, username, password string) (string, *entities.User, error) {
@@ -42,7 +39,6 @@ func (s *AuthService) Login(ctx context.Context, username, password string) (str
 	// Compare the provided password with the stored hash
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		level.Error(s.logger).Log("message", "invalid password", "error", err)
 		return "", nil, err
 	}
 

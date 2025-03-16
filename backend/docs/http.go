@@ -5,15 +5,14 @@ import (
 	"io/fs"
 	"net/http"
 
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/gorilla/mux"
+	"go.uber.org/zap"
 )
 
 //go:embed swagger
 var swaggerFS embed.FS
 
-func DocsHandler(r *mux.Router, docsRoute string, logger log.Logger) http.HandlerFunc {
+func DocsHandler(r *mux.Router, docsRoute string, logger *zap.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Serve static files from embedded file system
 		swaggerFS, err := fs.Sub(swaggerFS, "swagger")
@@ -32,7 +31,7 @@ func DocsHandler(r *mux.Router, docsRoute string, logger log.Logger) http.Handle
 		// Serve index.html with embedded service.yaml
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		if _, err := w.Write(indexHTML); err != nil {
-			level.Error(logger).Log("message", "failed to write index.html", "err", err)
+			logger.Error("failed to write index.html", zap.Error(err))
 		}
 
 	}

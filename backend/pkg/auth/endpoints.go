@@ -2,56 +2,47 @@ package auth
 
 import (
 	"context"
-	"errors"
+	"net/http"
 
 	"github.com/eaguilar88/deu/pkg/entities"
-	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
+	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
 )
 
 type Service interface {
 	Login(ctx context.Context, username, password string) (string, *entities.User, error)
 }
 
-type Endpoints struct {
-	Login endpoint.Endpoint
+type AuthEndpointsHandler struct {
+	svc Service
+	log *zap.Logger
 }
 
-func wrapEndpoint(e endpoint.Endpoint, middlewares []endpoint.Middleware) endpoint.Endpoint {
-	for _, m := range middlewares {
-		e = m(e)
-	}
-	return e
-}
-
-func MakeEndpoints(svc Service, log log.Logger, middlewares []endpoint.Middleware) Endpoints {
-	return Endpoints{
-		Login: wrapEndpoint(makeLogin(svc, log), middlewares),
+func MakeAuthEndpointsHandler(svc Service, log *zap.Logger) AuthEndpointsHandler {
+	return AuthEndpointsHandler{
+		svc: svc,
+		log: log,
 	}
 }
 
-func makeLogin(svc Service, log log.Logger) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(LoginRequest)
-		if !ok {
-			level.Error(log).Log("message", "could not decode", "request", request)
-			return nil, errors.New("could not decode")
-		}
-		token, user, err := svc.Login(ctx, req.Username, req.Password)
-		if err != nil {
-			level.Error(log).Log("message", "error logging user", "error", err)
-			return nil, err
-		}
-
-		response := LoginResponse{
-			Token: token,
-			User: LoginUserResponse{
-				ID:    user.ID,
-				Name:  user.FirstName + " " + user.LastName,
-				Roles: user.Roles,
-			},
-		}
-		return response, nil
+func (h AuthEndpointsHandler) LoginHandleHTTP(c echo.Context) error {
+	req := new(LoginRequest)
+	if err := c.Bind(req); err != nil {
+		return c.String(http.StatusBadRequest, "error decoding request")
 	}
+	token, user, err := h.svc.Login(c.Request().Context(), req.Username, req.Password)
+	if err != nil {
+		h.log.Error("error logging user", zap.Error(err))
+		return echo.ErrUnauthorized
+	}
+
+	response := LoginResponse{
+		Token: token,
+		User: LoginUserResponse{
+			ID:    user.ID,
+			Name:  user.FirstName + " " + user.LastName,
+			Roles: user.Roles,
+		},
+	}
+	return c.JSON(http.StatusOK, response)
 }

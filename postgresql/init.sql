@@ -78,8 +78,9 @@ CREATE TABLE deu.requests (
   name VARCHAR,
   description TEXT,
   status request_status_enum DEFAULT 'created' NOT NULL,
-  reviewer_id INTEGER REFERENCES deu.users(id) ON DELETE SET NULL, -- ID de la cuenta de administrador que revisa la solicitud
+  reviewer_id INTEGER REFERENCES deu.users(id) DEFAULT NULL ON DELETE CASCADE, -- ID de la cuenta de administrador que revisa la solicitud
   comments TEXT,
+  reviewed_at TIMESTAMP DEFAULT NULL,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW(),
   deleted_at TIMESTAMP DEFAULT NULL
@@ -238,8 +239,8 @@ INSERT INTO deu.user_roles (user_id, role_id) VALUES
   (1, 2),
   (2, 4);
 
-  INSERT INTO deu.requests (user_id, type, name, description, status, reviewer_id, comments) VALUES
-    (2, 'course', 'Curso de SQL', 'Curso avanzado de SQL para desarrolladores', 'approved', 1, 'Aprobado por el administrador');
+  INSERT INTO deu.requests (user_id, type, name, description, status, reviewer_id, comments, reviewed_at) VALUES
+    (2, 'course', 'Curso de SQL', 'Curso avanzado de SQL para desarrolladores', 'approved', 1, 'Aprobado por el administrador', NOW());
 
   INSERT INTO deu.entities (name, description, user_id, endorsement_id) VALUES
     ('Curso de SQL', 'Curso avanzado de SQL para desarrolladores', 2, 1);

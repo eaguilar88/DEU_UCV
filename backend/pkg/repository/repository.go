@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/go-kit/log"
+	"go.uber.org/zap"
 )
 
 const (
@@ -23,10 +23,10 @@ type preparer interface {
 type PostgresRepository struct {
 	db           *sql.DB
 	documentsDir string
-	logger       log.Logger
+	logger       *zap.Logger
 }
 
-func NewRepository(connection *sql.DB, directory string, logger log.Logger) *PostgresRepository {
+func NewRepository(connection *sql.DB, directory string, logger *zap.Logger) *PostgresRepository {
 	return &PostgresRepository{
 		db:           connection,
 		documentsDir: directory,

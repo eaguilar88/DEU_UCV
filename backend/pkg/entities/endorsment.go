@@ -3,11 +3,13 @@ package entities
 type Endorsements struct {
 	ID          int
 	User        User
+	Reviewer    User
 	Status      EndorsementStatus
 	Type        string
 	Name        string
 	Description string
 	Comments    string
+	ReviewedAt  string
 	CreatedAt   string
 	UpdatedAtAt string
 }
@@ -15,8 +17,15 @@ type Endorsements struct {
 type EndorsementStatus string
 
 const (
-	ItemStatus_CREATED      EndorsementStatus = "created"
-	ItemStatus_APPROVED     EndorsementStatus = "aprobado"
-	ItemStatus_REJECTED     EndorsementStatus = "rechazado"
-	ItemStatus_UNDER_REVIEW EndorsementStatus = "en revisión"
+	EndorsementStatus_CREATED      EndorsementStatus = "created"
+	EndorsementStatus_APPROVED     EndorsementStatus = "aprobado"
+	EndorsementStatus_REJECTED     EndorsementStatus = "rechazado"
+	EndorsementStatus_UNDER_REVIEW EndorsementStatus = "en revisión"
+)
+
+type EndorsementType string
+
+const (
+	EndorsementType_COURSE EndorsementType = "diplomado"
+	EndorsementType_GROUP  EndorsementType = "grupo de extensión"
 )

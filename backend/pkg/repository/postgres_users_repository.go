@@ -11,9 +11,8 @@ import (
 	errs "github.com/eaguilar88/deu/pkg/errors"
 	"github.com/eaguilar88/deu/pkg/repository/models"
 	"github.com/eaguilar88/deu/pkg/repository/queries"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/lib/pq"
+	"go.uber.org/zap"
 )
 
 func (r *PostgresRepository) GetUserByUsername(ctx context.Context, username string) (entities.User, error) {
@@ -110,7 +109,7 @@ func (r *PostgresRepository) CreateUser(ctx context.Context, user entities.User)
 
 	sql, args, err := queries.InsertUser(userModel).ToSql()
 	if err != nil {
-		level.Error(r.logger).Log("message", "error formating query", "err", err)
+		r.logger.Error("error formatting query", zap.Error(err))
 		return -1, errs.NewInternalError(err)
 	}
 
@@ -124,10 +123,10 @@ func (r *PostgresRepository) CreateUser(ctx context.Context, user entities.User)
 	err = stmt.QueryRowContext(ctx, args...).Scan(&lastInsertedID)
 	if err != nil {
 		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == pgErrorCodeUniqueViolation {
-			level.Error(r.logger).Log("message", "error inserting user", "err", err)
+			r.logger.Error("error inserting user", zap.Error(err))
 			return -1, errs.NewDuplicateEntryError(err)
 		}
-		level.Error(r.logger).Log("message", "error inserting user", "err", err)
+		r.logger.Error("error inserting user", zap.Error(err))
 		return -1, errs.NewInternalError(err)
 	}
 	err = r.AddRoleToUser(ctx, tx, int(lastInsertedID), entities.RoleIDFromName(user.Roles[0]))
@@ -136,7 +135,7 @@ func (r *PostgresRepository) CreateUser(ctx context.Context, user entities.User)
 	}
 
 	if err := tx.Commit(); err != nil {
-		level.Error(r.logger).Log("message", "error commiting tx", "err", err)
+		r.logger.Error("error committing tx", zap.Error(err))
 		return -1, err
 	}
 
@@ -232,17 +231,17 @@ func (r *PostgresRepository) AddRoleToUser(ctx context.Context, tx *sql.Tx, user
 	return prepareAndExecute(ctx, r.db, sql, args, r.logger)
 }
 
-func prepareAndExecute(ctx context.Context, p preparer, sql string, args []interface{}, log log.Logger) error {
+func prepareAndExecute(ctx context.Context, p preparer, sql string, args []interface{}, log *zap.Logger) error {
 	stmt, err := p.PrepareContext(ctx, sql)
 	if err != nil {
-		level.Error(log).Log("message", "what up preparing", "err", err)
+		log.Error("error preparing", zap.Error(err))
 		return err
 	}
 	defer stmt.Close()
 
 	_, err = stmt.ExecContext(ctx, args...)
 	if err != nil {
-		level.Error(log).Log("message", "what up executing", "err", err)
+		log.Error("error executing", zap.Error(err))
 		return errs.NewInternalError(err)
 	}
 	return nil
