@@ -60,7 +60,7 @@ func (h *UserEndpointsHandler) GetUsers(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, GetUsersResponse{
-		Users: userEntitiesToUserDTO(users),
+		Users: UserEntitiesToGetUserResponse(users),
 		Pages: pages,
 	})
 }

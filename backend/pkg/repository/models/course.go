@@ -19,4 +19,5 @@ type Course struct {
 	Location          sql.NullString
 	CreatedAt         string
 	UpdatedAt         string
+	DeletedAt         string
 }

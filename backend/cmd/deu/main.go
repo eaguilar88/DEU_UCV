@@ -7,6 +7,7 @@ import (
 
 	"github.com/eaguilar88/deu/pkg/auth"
 	"github.com/eaguilar88/deu/pkg/config"
+	"github.com/eaguilar88/deu/pkg/course_periods"
 	"github.com/eaguilar88/deu/pkg/courses"
 	"github.com/eaguilar88/deu/pkg/endorsements"
 	"github.com/eaguilar88/deu/pkg/jwt"
@@ -56,6 +57,9 @@ func main() {
 	courseSvc := courses.NewCoursesService(repository, logger)
 	courseEndpoints := courses.MakeCourseEndpointsHandler(courseSvc, logger)
 
+	cpService := course_periods.NewCoursePeriodService(repository, logger)
+	cpEndpoints := course_periods.MakeCoursePeriodEndpointsHandler(cpService, logger)
+
 	e := echo.New()
 	e.Use(middleware.Recover())
 	middlewares := []echo.MiddlewareFunc{
@@ -67,6 +71,7 @@ func main() {
 	addUserRoutes(e, userEndpoints, middlewares...)
 	addEndorsementRoutes(e, endorsementEndpoints, middlewares...)
 	addCourseRoutes(e, courseEndpoints, middlewares...)
+	addCoursePeriodRoutes(e, cpEndpoints, middlewares...)
 
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", config.HTTPPort)))
 }
@@ -116,4 +121,14 @@ func addCourseRoutes(e *echo.Echo, endpoints courses.CourseEndpointsHandler, mid
 	protectedGroup.POST("", endpoints.CreateCourse)
 	protectedGroup.PUT("/:id", endpoints.UpdateCourse)
 	protectedGroup.DELETE("/:id", endpoints.DeleteCourse)
+}
+
+func addCoursePeriodRoutes(e *echo.Echo, endpoints course_periods.CoursePeriodEndpointsHandler, middlewares ...echo.MiddlewareFunc) {
+	publicGroup := e.Group("/course_periods")
+	publicGroup.GET("/:id", endpoints.GetCoursePeriod)
+	publicGroup.GET("", endpoints.GetCoursePeriods)
+	protectedGroup := e.Group("/course_periods", middlewares...)
+	protectedGroup.POST("", endpoints.CreateCoursePeriod)
+	protectedGroup.PUT("/:id", endpoints.UpdateCoursePeriod)
+	protectedGroup.DELETE("/:id", endpoints.DeleteCoursePeriod)
 }

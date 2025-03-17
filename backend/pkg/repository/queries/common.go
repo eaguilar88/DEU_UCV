@@ -17,4 +17,5 @@ var (
 	providersTableName    = fmt.Sprintf("%s.providers", schema)
 	endorsementsTableName = fmt.Sprintf("%s.requests", schema)
 	groupsTableName       = fmt.Sprintf("%s.extension_groups", schema)
+	periodsTableName      = fmt.Sprintf("%s.course_cycles", schema)
 )

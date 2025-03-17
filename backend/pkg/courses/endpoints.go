@@ -14,7 +14,7 @@ import (
 type Service interface {
 	GetCourse(ctx context.Context, courseID string) (entities.Course, error)
 	GetCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error)
-	CreateCourse(ctx context.Context, user entities.Course) (int64, error)
+	CreateCourse(ctx context.Context, course entities.Course) (int64, error)
 	UpdateCourse(ctx context.Context, courseID int, user entities.Course) error
 	DeleteCourse(ctx context.Context, courseID int) error
 }
@@ -72,14 +72,14 @@ func (h *CourseEndpointsHandler) CreateCourse(c echo.Context) error {
 		return echo.ErrBadRequest
 	}
 
-	userID, err := h.svc.CreateCourse(ctx, createCourseRequestToEntitiesCourse(req))
+	courseID, err := h.svc.CreateCourse(ctx, createCourseRequestToEntitiesCourse(req))
 	if err != nil {
 		h.log.Error("could not decode", zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 
 	return c.JSON(http.StatusCreated, CreateCoursesResponse{
-		ID: fmt.Sprintf("%d", userID),
+		ID: fmt.Sprintf("%d", courseID),
 	})
 }
 

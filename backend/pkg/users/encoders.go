@@ -18,3 +18,11 @@ func UserEntityToGetUserResponse(user entities.User) GetUserResponse {
 		CreatedAt:      user.CreatedAt,
 	}
 }
+
+func UserEntitiesToGetUserResponse(users []entities.User) []GetUserResponse {
+	var out = make([]GetUserResponse, 0, len(users))
+	for _, user := range users {
+		out = append(out, UserEntityToGetUserResponse(user))
+	}
+	return out
+}
