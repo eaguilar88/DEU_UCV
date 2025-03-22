@@ -27,3 +27,5 @@ stop-db:
 generate-mocks:
 	docker run --user 1000:1000 --rm -v ${PWD}/backend:/src -w /src vektra/mockery --config .mockery.yaml
 
+go-test:
+	cd backend && go test -count=1 -short -cover ./...

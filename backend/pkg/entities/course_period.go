@@ -7,6 +7,7 @@ type CoursePeriod struct {
 	StartDate       string
 	EndDate         string
 	InscriptionDate string
+	IsActive        bool
 	CreatedAt       string
 	UpdatedAt       string
 	DeletedAt       string

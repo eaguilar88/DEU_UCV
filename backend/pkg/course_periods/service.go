@@ -15,6 +15,7 @@ type Repository interface {
 	CreateCoursePeriod(ctx context.Context, coursePeriod entities.CoursePeriod) (int64, error)
 	UpdateCoursePeriod(ctx context.Context, periodID int, coursePeriod entities.CoursePeriod) error
 	DeleteCoursePeriod(ctx context.Context, periodID int) error
+	GetUsersByCoursePeriodID(ctx context.Context, periodID int) ([]entities.User, error)
 }
 
 type CoursePeriodService struct {
@@ -36,6 +37,24 @@ func (s *CoursePeriodService) GetCoursePeriod(ctx context.Context, periodID stri
 	}
 	period, err := s.repo.GetCoursePeriodByID(ctx, intID)
 	if err != nil {
+		return entities.CoursePeriod{}, err
+	}
+	participantsChan := make(chan []entities.User)
+	errorChan := make(chan error)
+
+	go func() {
+		users, err := s.repo.GetUsersByCoursePeriodID(ctx, intID)
+		if err != nil {
+			errorChan <- err
+			return
+		}
+		participantsChan <- users
+	}()
+
+	select {
+	case participants := <-participantsChan:
+		period.Participants = participants
+	case err := <-errorChan:
 		return entities.CoursePeriod{}, err
 	}
 	return period, nil

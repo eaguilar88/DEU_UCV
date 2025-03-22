@@ -11,10 +11,11 @@ var (
 	periodQuerySelectCommon = []string{
 		"cp.id",
 		"cp.course_id",
-		"c.name",
-		"c.description",
+		"e.name",
+		"e.description",
 		"cp.start_date",
 		"cp.end_date",
+		"cp.is_active",
 		"cp.inscription_date",
 		"cp.created_at",
 		"cp.updated_at",
@@ -25,7 +26,7 @@ var (
 func GetCoursePeriodByID(periodID int) sq.SelectBuilder {
 	return psql.Select(periodQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS cp", periodsTableName)).
-		Join(fmt.Sprintf("%s AS c ON cp.course_id = c.id", coursesTableName)).
+		Join(fmt.Sprintf("%s AS e ON cp.course_id = e.id", entitiesTableName)).
 		Where(sq.Eq{"cp.id": periodID})
 }
 

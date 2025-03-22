@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/eaguilar88/deu/pkg/entities"
-	"github.com/eaguilar88/deu/pkg/repository/models"
-	"github.com/eaguilar88/deu/pkg/repository/queries"
+	"github.com/eaguilar88/deu/pkg/postgres_repository/models"
+	"github.com/eaguilar88/deu/pkg/postgres_repository/queries"
 )
 
 func (r *PostgresRepository) GetEndorsement(ctx context.Context, endorsementID int) (entities.Endorsements, error) {

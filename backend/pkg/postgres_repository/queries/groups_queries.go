@@ -3,7 +3,7 @@ package queries
 import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/eaguilar88/deu/pkg/entities"
-	"github.com/eaguilar88/deu/pkg/repository/models"
+	"github.com/eaguilar88/deu/pkg/postgres_repository/models"
 )
 
 var (

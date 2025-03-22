@@ -11,7 +11,7 @@ import (
 	"github.com/eaguilar88/deu/pkg/courses"
 	"github.com/eaguilar88/deu/pkg/endorsements"
 	"github.com/eaguilar88/deu/pkg/jwt"
-	"github.com/eaguilar88/deu/pkg/repository"
+	repository "github.com/eaguilar88/deu/pkg/postgres_repository"
 	"github.com/eaguilar88/deu/pkg/transport"
 	"github.com/eaguilar88/deu/pkg/users"
 	"github.com/labstack/echo/v4"

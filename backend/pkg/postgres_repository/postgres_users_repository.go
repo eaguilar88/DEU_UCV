@@ -9,8 +9,8 @@ import (
 
 	"github.com/eaguilar88/deu/pkg/entities"
 	errs "github.com/eaguilar88/deu/pkg/errors"
-	"github.com/eaguilar88/deu/pkg/repository/models"
-	"github.com/eaguilar88/deu/pkg/repository/queries"
+	"github.com/eaguilar88/deu/pkg/postgres_repository/models"
+	"github.com/eaguilar88/deu/pkg/postgres_repository/queries"
 	"github.com/lib/pq"
 	"go.uber.org/zap"
 )
@@ -229,6 +229,10 @@ func (r *PostgresRepository) AddRoleToUser(ctx context.Context, tx *sql.Tx, user
 		return prepareAndExecute(ctx, tx, sql, args, r.logger)
 	}
 	return prepareAndExecute(ctx, r.db, sql, args, r.logger)
+}
+
+func (r *PostgresRepository) GetUsersByCoursePeriodID(ctx context.Context, periodID int) ([]entities.User, error) {
+	return nil, nil
 }
 
 func prepareAndExecute(ctx context.Context, p preparer, sql string, args []interface{}, log *zap.Logger) error {
