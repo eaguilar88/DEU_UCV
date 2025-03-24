@@ -1,6 +1,8 @@
 package queries
 
 import (
+	"fmt"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/eaguilar88/deu/pkg/entities"
 	"github.com/eaguilar88/deu/pkg/postgres_repository/models"
@@ -8,14 +10,32 @@ import (
 
 var (
 	groupQuerySelectCommon = []string{
-		"c.id", "e.name", "e.description", "e.user_id", "e.endorsement_id", "e.endorsed_by", "c.objectives", "c.content", "c.cost", "c.location", "c.created_at",
+		"g.id",
+		"e.name",
+		"e.description",
+		"e.endorsement_id",
+		"requester.id",
+		"requester.first_name",
+		"requester.last_name",
+		"reviewer.id",
+		"reviewer.first_name",
+		"reviewer.last_name",
+		"c.objectives",
+		"c.content",
+		"c.cost",
+		"c.location",
+		"c.created_at",
 	}
 )
 
 func GetGroupByID(groupID int) sq.SelectBuilder {
 	return psql.Select(groupQuerySelectCommon...).
-		From(groupsTableName).
-		Where(sq.Eq{"id": groupID})
+		From(fmt.Sprintf("%s AS e", entitiesTableName)).
+		Join(fmt.Sprintf("%s AS g ON e.id = g.entity_id", groupsTableName)).
+		Join(fmt.Sprintf("%s AS r ON e.endorsement_id = r.id", endorsementsTableName)).
+		Join(fmt.Sprintf("%s AS requester ON r.user_id = requester.id", usersTableName)).
+		Join(fmt.Sprintf("%s AS reviewer ON r.reviewer_id = reviewer.id", usersTableName)).
+		Where(sq.Eq{"g.id": groupID})
 }
 
 func GetGroups(page entities.PageScope) sq.SelectBuilder {

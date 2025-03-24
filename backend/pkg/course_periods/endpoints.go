@@ -15,7 +15,7 @@ import (
 
 type Service interface {
 	GetCoursePeriod(ctx context.Context, periodID string) (entities.CoursePeriod, error)
-	GetCoursePeriods(ctx context.Context, pageScope entities.PageScope) ([]entities.CoursePeriod, entities.PageScope, error)
+	GetCoursePeriods(ctx context.Context, courseID string, pageScope entities.PageScope) ([]entities.CoursePeriod, entities.PageScope, error)
 	CreateCoursePeriod(ctx context.Context, period entities.CoursePeriod) (int64, error)
 	UpdateCoursePeriod(ctx context.Context, periodID int, period entities.CoursePeriod) error
 	DeleteCoursePeriod(ctx context.Context, periodID int) error
@@ -49,10 +49,12 @@ func (h *CoursePeriodEndpointsHandler) GetCoursePeriods(c echo.Context) error {
 	ctx := c.Request().Context()
 	scope := entities.PageScope{}
 
+	courseID := c.Param("course_id")
+
 	scope.GetPageFromVars(c.QueryParam("page"))
 	scope.GetPerPageFromVars(c.QueryParam("per_page"))
 
-	periods, pages, err := h.svc.GetCoursePeriods(ctx, scope)
+	periods, pages, err := h.svc.GetCoursePeriods(ctx, courseID, scope)
 	if err != nil {
 		h.log.Error("could not decode", zap.Error(err))
 		return echo.ErrInternalServerError

@@ -10,7 +10,7 @@ import (
 
 var (
 	courseQuerySelectCommon = []string{
-		"e.id",
+		"c.id",
 		"e.name",
 		"e.description",
 		"e.endorsement_id",
@@ -29,14 +29,14 @@ var (
 	}
 )
 
-func GetCourseByID(userID int) sq.SelectBuilder {
+func GetCourseByID(courseID int) sq.SelectBuilder {
 	return psql.Select(courseQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS e", entitiesTableName)).
 		Join(fmt.Sprintf("%s AS c ON e.id = c.entity_id", coursesTableName)).
 		Join(fmt.Sprintf("%s AS r ON e.endorsement_id = r.id", endorsementsTableName)).
 		Join(fmt.Sprintf("%s AS requester ON r.user_id = requester.id", usersTableName)).
 		Join(fmt.Sprintf("%s AS reviewer ON r.reviewer_id = reviewer.id", usersTableName)).
-		Where(sq.Eq{"e.id": userID})
+		Where(sq.Eq{"e.id": courseID})
 }
 
 func GetCourses(page entities.PageScope) sq.SelectBuilder {
@@ -60,8 +60,6 @@ func InsertCourse(course models.Course) sq.InsertBuilder {
 			"content",
 			"cost",
 			"location",
-			"created_at",
-			"updated_at",
 		).
 		Values(
 			course.OwnerID,
@@ -71,8 +69,6 @@ func InsertCourse(course models.Course) sq.InsertBuilder {
 			course.Content,
 			course.Cost,
 			course.Location,
-			sq.Expr("NOW()"),
-			sq.Expr("NOW()"),
 		).Suffix("RETURNING id")
 }
 

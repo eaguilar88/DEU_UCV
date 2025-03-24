@@ -15,7 +15,7 @@ start-db:
 	git submodule update --recursive
 	docker compose -f docker-compose.dev.yml up -d
 
-stop:
+stop-backend:
 	docker compose down
 
 stop-prod:

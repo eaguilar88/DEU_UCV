@@ -124,10 +124,10 @@ func addCourseRoutes(e *echo.Echo, endpoints courses.CourseEndpointsHandler, mid
 }
 
 func addCoursePeriodRoutes(e *echo.Echo, endpoints course_periods.CoursePeriodEndpointsHandler, middlewares ...echo.MiddlewareFunc) {
-	publicGroup := e.Group("/course_periods")
+	publicGroup := e.Group("/courses/:course_id/periods")
 	publicGroup.GET("/:id", endpoints.GetCoursePeriod)
 	publicGroup.GET("", endpoints.GetCoursePeriods)
-	protectedGroup := e.Group("/course_periods", middlewares...)
+	protectedGroup := e.Group("/courses/:course_id/periods", middlewares...)
 	protectedGroup.POST("", endpoints.CreateCoursePeriod)
 	protectedGroup.PUT("/:id", endpoints.UpdateCoursePeriod)
 	protectedGroup.DELETE("/:id", endpoints.DeleteCoursePeriod)

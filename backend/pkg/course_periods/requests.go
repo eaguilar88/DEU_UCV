@@ -5,16 +5,18 @@ import (
 )
 
 type GetCoursePeriodRequest struct {
-	ID string `param:"id"`
+	CourseID string `param:"course_id"`
+	ID       string `param:"id"`
 }
 
 type GetCoursePeriodsRequest struct {
-	Page    int `query:"page"`
-	PerPage int `query:"per_page"`
+	CourseID string `param:"course_id"`
+	Page     int    `query:"page"`
+	PerPage  int    `query:"per_page"`
 }
 
 type CreateCoursePeriodRequest struct {
-	CourseID        int    `json:"course_id"`
+	CourseID        int    `param:"course_id"`
 	StartDate       string `json:"start_date"`
 	EndDate         string `json:"end_date"`
 	InscriptionDate string `json:"inscription_date"`
@@ -58,5 +60,6 @@ func updateCoursePeriodRequestToEntitiesCoursePeriod(req UpdateCoursePeriodReque
 }
 
 type DeleteCoursePeriodRequest struct {
-	ID string `param:"id"`
+	CourseID string `param:"course_id"`
+	ID       string `param:"id"`
 }

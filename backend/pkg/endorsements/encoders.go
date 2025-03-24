@@ -14,10 +14,12 @@ func EndorsementEntitiesToGetEndorsementsResponse(endorsements []entities.Endors
 }
 
 func EntitiesEndorsementToGetEndorsementResponse(endorsement entities.Endorsements) GetEndorsementResponse {
+	user := users.UserEntityToGetUserResponse(endorsement.User)
+	reviewer := users.UserEntityToGetUserResponse(endorsement.Reviewer)
 	return GetEndorsementResponse{
 		ID:          endorsement.ID,
-		User:        users.UserEntityToGetUserResponse(endorsement.User),
-		Reviewer:    users.UserEntityToGetUserResponse(endorsement.Reviewer),
+		User:        &user,
+		Reviewer:    &reviewer,
 		Status:      endorsement.Status,
 		Type:        endorsement.Type,
 		Name:        endorsement.Name,

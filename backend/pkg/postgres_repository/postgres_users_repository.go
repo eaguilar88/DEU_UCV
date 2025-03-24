@@ -232,7 +232,32 @@ func (r *PostgresRepository) AddRoleToUser(ctx context.Context, tx *sql.Tx, user
 }
 
 func (r *PostgresRepository) GetUsersByCoursePeriodID(ctx context.Context, periodID int) ([]entities.User, error) {
-	return nil, nil
+	sql, args, err := queries.GetUsersByCoursePeriodID(periodID).ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	stmt, err := r.db.PrepareContext(ctx, sql)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.QueryContext(ctx, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []entities.User
+	for rows.Next() {
+		usr, err := scanUser(rows)
+		if err != nil {
+			return nil, errs.NewScanError(err)
+		}
+		users = append(users, newUserFromModel(usr))
+	}
+	return users, nil
 }
 
 func prepareAndExecute(ctx context.Context, p preparer, sql string, args []interface{}, log *zap.Logger) error {

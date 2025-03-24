@@ -4,7 +4,7 @@ import "database/sql"
 
 type CoursePeriod struct {
 	ID              int
-	Course          Course
+	CourseID        int
 	StartDate       string
 	EndDate         string
 	InscriptionDate string

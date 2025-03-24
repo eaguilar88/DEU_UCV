@@ -47,6 +47,13 @@ func GetUsers(page entities.PageScope) sq.SelectBuilder {
 		Offset(uint64(page.Offset()))
 }
 
+func GetUsersByCoursePeriodID(coursePeriodID int) sq.SelectBuilder {
+	return psql.Select(userQuerySelectCommon...).
+		From(fmt.Sprintf("%s AS u", usersTableName)).
+		Join(fmt.Sprintf("%s AS up ON up.user_id = u.id", participantsTableName)).
+		Where(sq.Eq{"up.course_period_id": coursePeriodID})
+}
+
 func InsertUser(user models.User) sq.InsertBuilder {
 	return psql.Insert(usersTableName).
 		Columns(

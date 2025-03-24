@@ -15,17 +15,19 @@ func EntitiesCoursesToGetCoursesResponse(courses []entities.Course) []GetCourseR
 }
 
 func EntitiesCourseToGetCourseResponse(course entities.Course) GetCourseResponse {
+	endorsement := endorsements.EntitiesEndorsementToGetEndorsementResponse(course.Endorsement)
+	owner := users.UserEntityToGetUserResponse(course.Owner)
 	return GetCourseResponse{
 		ID:          course.ID,
 		Content:     course.Content,
 		Cost:        course.Cost,
 		CreatedAt:   course.CreatedAt,
 		Description: course.Description,
-		Endorsement: endorsements.EntitiesEndorsementToGetEndorsementResponse(course.Endorsement),
+		Endorsement: &endorsement,
 		Location:    course.Location,
 		Name:        course.Name,
 		Objectives:  course.Objectives,
-		Owner:       users.UserEntityToGetUserResponse(course.Owner),
+		Owner:       &owner,
 		UpdatedAt:   course.UpdatedAt,
 	}
 }

@@ -5,14 +5,13 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/eaguilar88/deu/pkg/entities"
+	"github.com/eaguilar88/deu/pkg/postgres_repository/models"
 )
 
 var (
 	periodQuerySelectCommon = []string{
 		"cp.id",
 		"cp.course_id",
-		"e.name",
-		"e.description",
 		"cp.start_date",
 		"cp.end_date",
 		"cp.is_active",
@@ -26,19 +25,20 @@ var (
 func GetCoursePeriodByID(periodID int) sq.SelectBuilder {
 	return psql.Select(periodQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS cp", periodsTableName)).
-		Join(fmt.Sprintf("%s AS e ON cp.course_id = e.id", entitiesTableName)).
+		Where(sq.Eq{"cp.is_active": true}).
 		Where(sq.Eq{"cp.id": periodID})
 }
 
-func GetCoursePeriods(page entities.PageScope) sq.SelectBuilder {
+func GetCoursePeriods(courseID int, page entities.PageScope) sq.SelectBuilder {
 	return psql.Select(periodQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS cp", periodsTableName)).
-		Join(fmt.Sprintf("%s AS c ON cp.course_id = c.id", coursesTableName)).
+		Where(sq.Eq{"cp.course_id": courseID}).
+		Where(sq.Eq{"cp.is_active": true}).
 		Limit(uint64(page.PerPage)).
 		Offset(uint64(page.Offset()))
 }
 
-func InsertCoursePeriod(coursePeriod entities.CoursePeriod) sq.InsertBuilder {
+func InsertCoursePeriod(coursePeriod models.CoursePeriod) sq.InsertBuilder {
 	return psql.Insert(periodsTableName).
 		Columns(
 			"course_id",
@@ -47,23 +47,25 @@ func InsertCoursePeriod(coursePeriod entities.CoursePeriod) sq.InsertBuilder {
 			"inscription_date",
 		).
 		Values(
-			coursePeriod.Course.ID,
+			coursePeriod.CourseID,
 			coursePeriod.StartDate,
 			coursePeriod.EndDate,
 			coursePeriod.InscriptionDate,
-		)
+		).Suffix("RETURNING id")
 }
 
-func UpdateCoursePeriod(periodID int, coursePeriod entities.CoursePeriod) sq.UpdateBuilder {
+func UpdateCoursePeriod(periodID int, coursePeriod models.CoursePeriod) sq.UpdateBuilder {
 	return psql.Update(periodsTableName).
-		Set("course_id", coursePeriod.Course.ID).
+		Set("course_id", coursePeriod.CourseID).
 		Set("start_date", coursePeriod.StartDate).
 		Set("end_date", coursePeriod.EndDate).
 		Set("inscription_date", coursePeriod.InscriptionDate).
 		Where(sq.Eq{"id": periodID})
 }
 
-func DeleteCoursePeriod(periodID int) sq.DeleteBuilder {
-	return psql.Delete(periodsTableName).
+func DeleteCoursePeriod(periodID int) sq.UpdateBuilder {
+	return sq.Update(periodsTableName).
+		Set("deleted_at", "NOW()").
+		Set("is_active", false).
 		Where(sq.Eq{"id": periodID})
 }

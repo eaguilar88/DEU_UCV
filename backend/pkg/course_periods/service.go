@@ -11,7 +11,7 @@ import (
 
 type Repository interface {
 	GetCoursePeriodByID(ctx context.Context, periodID int) (entities.CoursePeriod, error)
-	GetCoursePeriods(ctx context.Context, pageScope entities.PageScope) ([]entities.CoursePeriod, entities.PageScope, error)
+	GetCoursePeriods(ctx context.Context, courseID int, pageScope entities.PageScope) ([]entities.CoursePeriod, entities.PageScope, error)
 	CreateCoursePeriod(ctx context.Context, coursePeriod entities.CoursePeriod) (int64, error)
 	UpdateCoursePeriod(ctx context.Context, periodID int, coursePeriod entities.CoursePeriod) error
 	DeleteCoursePeriod(ctx context.Context, periodID int) error
@@ -60,8 +60,12 @@ func (s *CoursePeriodService) GetCoursePeriod(ctx context.Context, periodID stri
 	return period, nil
 }
 
-func (s *CoursePeriodService) GetCoursePeriods(ctx context.Context, pageScope entities.PageScope) ([]entities.CoursePeriod, entities.PageScope, error) {
-	periods, page, err := s.repo.GetCoursePeriods(ctx, pageScope)
+func (s *CoursePeriodService) GetCoursePeriods(ctx context.Context, courseID string, pageScope entities.PageScope) ([]entities.CoursePeriod, entities.PageScope, error) {
+	intID, err := strconv.Atoi(courseID)
+	if err != nil {
+		return nil, entities.PageScope{}, err
+	}
+	periods, page, err := s.repo.GetCoursePeriods(ctx, intID, pageScope)
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
