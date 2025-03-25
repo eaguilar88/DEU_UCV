@@ -48,10 +48,10 @@ func GetUsers(page entities.PageScope) sq.SelectBuilder {
 }
 
 func GetUsersByCoursePeriodID(coursePeriodID int) sq.SelectBuilder {
-	return psql.Select(userQuerySelectCommon...).
+	return psql.Select("u.id", "u.ci", "u.first_name", "u.last_name").
 		From(fmt.Sprintf("%s AS u", usersTableName)).
 		Join(fmt.Sprintf("%s AS up ON up.user_id = u.id", participantsTableName)).
-		Where(sq.Eq{"up.course_period_id": coursePeriodID})
+		Where(sq.Eq{"up.id": coursePeriodID})
 }
 
 func InsertUser(user models.User) sq.InsertBuilder {

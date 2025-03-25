@@ -4,6 +4,7 @@ package course_periods
 import (
 	"context"
 	"strconv"
+	"sync"
 
 	"github.com/eaguilar88/deu/pkg/entities"
 	"go.uber.org/zap"
@@ -69,6 +70,26 @@ func (s *CoursePeriodService) GetCoursePeriods(ctx context.Context, courseID str
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
+	var wg sync.WaitGroup
+	errCh := make(chan error, len(periods))
+	for i := range periods {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			participants, err := s.repo.GetUsersByCoursePeriodID(ctx, periods[i].ID)
+			if err != nil {
+				errCh <- err
+				return
+			}
+			periods[i].Participants = participants
+		}(i)
+	}
+	wg.Wait()
+	close(errCh)
+	if len(errCh) > 0 {
+		return nil, entities.PageScope{}, <-errCh // Return the first error
+	}
+
 	return periods, page, nil
 }
 

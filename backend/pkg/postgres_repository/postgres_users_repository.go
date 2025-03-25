@@ -251,11 +251,17 @@ func (r *PostgresRepository) GetUsersByCoursePeriodID(ctx context.Context, perio
 
 	var users []entities.User
 	for rows.Next() {
-		usr, err := scanUser(rows)
+		result := models.User{}
+		err = rows.Scan(
+			&result.ID,
+			&result.CI,
+			&result.FirstName,
+			&result.LastName,
+		)
 		if err != nil {
 			return nil, errs.NewScanError(err)
 		}
-		users = append(users, newUserFromModel(usr))
+		users = append(users, newUserFromModel(result))
 	}
 	return users, nil
 }
