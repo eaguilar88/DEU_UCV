@@ -26,9 +26,9 @@ func MakeAuthEndpointsHandler(svc Service, log *zap.Logger) AuthEndpointsHandler
 }
 
 func (h AuthEndpointsHandler) LoginHandleHTTP(c echo.Context) error {
-	req := new(LoginRequest)
-	if err := c.Bind(req); err != nil {
-		return c.String(http.StatusBadRequest, "error decoding request")
+	var req LoginRequest
+	if err := c.Bind(&req); err != nil {
+		return echo.ErrUnauthorized
 	}
 	token, user, err := h.svc.Login(c.Request().Context(), req.Username, req.Password)
 	if err != nil {

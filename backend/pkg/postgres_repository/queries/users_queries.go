@@ -39,12 +39,12 @@ func GetUserByID(userID string) sq.SelectBuilder {
 		Where(sq.Eq{"u.id": userID})
 }
 
-func GetUsers(page entities.PageScope) sq.SelectBuilder {
+func GetUsers(limit, offset int) sq.SelectBuilder {
 	return psql.Select(userQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS u", usersTableName)).
-		Limit(uint64(page.PerPage)).
+		Limit(uint64(limit)).
 		LeftJoin(fmt.Sprintf("%s AS p ON p.user_id = u.id", providersTableName)).
-		Offset(uint64(page.Offset()))
+		Offset(uint64(offset))
 }
 
 func GetUsersByCoursePeriodID(coursePeriodID string) sq.SelectBuilder {

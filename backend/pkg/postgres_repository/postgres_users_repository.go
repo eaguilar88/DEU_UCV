@@ -69,7 +69,7 @@ func (r *PostgresRepository) GetUser(ctx context.Context, userID string) (entiti
 }
 
 func (r *PostgresRepository) GetUsers(ctx context.Context, pageScope entities.PageScope) ([]entities.User, entities.PageScope, error) {
-	sql, args, err := queries.GetUsers(pageScope).ToSql()
+	sql, args, err := queries.GetUsers(pageScope.PerPage, pageScope.Offset()).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}

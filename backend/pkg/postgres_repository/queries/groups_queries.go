@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/eaguilar88/deu/pkg/entities"
 	"github.com/eaguilar88/deu/pkg/postgres_repository/models"
 )
 
@@ -28,7 +27,7 @@ var (
 	}
 )
 
-func GetGroupByID(groupID int) sq.SelectBuilder {
+func GetGroupByID(groupID string) sq.SelectBuilder {
 	return psql.Select(groupQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS g", groupsTableName)).
 		Join(fmt.Sprintf("%s AS r ON g.endorsement_id = r.id", endorsementsTableName)).
@@ -37,11 +36,11 @@ func GetGroupByID(groupID int) sq.SelectBuilder {
 		Where(sq.Eq{"g.id": groupID})
 }
 
-func GetGroups(page entities.PageScope) sq.SelectBuilder {
+func GetGroups(limit, offset int) sq.SelectBuilder {
 	return psql.Select(groupQuerySelectCommon...).
 		From(groupsTableName).
-		Limit(uint64(page.PerPage)).
-		Offset(uint64(page.Offset()))
+		Limit(uint64(limit)).
+		Offset(uint64(offset))
 }
 
 func InsertGroup(group models.ExtensionGroup) sq.InsertBuilder {
@@ -66,7 +65,18 @@ func InsertGroup(group models.ExtensionGroup) sq.InsertBuilder {
 		).Suffix("RETURNING id")
 }
 
-func DeleteGroup(endorsementID int) sq.DeleteBuilder {
+func UpdateGroup(group models.ExtensionGroup) sq.UpdateBuilder {
+	return psql.Update(groupsTableName).
+		Set("name", group.Name).
+		Set("description", group.Description).
+		Set("endorsement_id", group.EndorsementID).
+		Set("objective", group.Objective).
+		Set("location", group.Location).
+		Set("updated_at", sq.Expr("NOW()")).
+		Where(sq.Eq{"id": group.ID})
+}
+
+func DeleteGroup(groupID string) sq.DeleteBuilder {
 	return psql.Delete(groupsTableName).
-		Where(sq.Eq{"id": endorsementID})
+		Where(sq.Eq{"id": groupID})
 }
