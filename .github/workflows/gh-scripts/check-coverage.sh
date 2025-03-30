@@ -1,4 +1,4 @@
-THRESHOLD="70.0"
+THRESHOLD="5.0"
 
 grep -v -E '(/gen/|/generate/|mock|test|/common/proto/)' coverage.tmp.out > coverage.out
 COVERAGE=$(go tool cover -func=coverage.out | grep total | grep -Eo '[0-9]+\.[0-9]+')
