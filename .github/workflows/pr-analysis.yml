@@ -89,7 +89,7 @@ jobs:
     - name: Check Coverage Threshold - ${{ steps.relative-path.outputs.relative-path }}
       run: |
         cd backend
-        $GITHUB_WORKSPACE/.github/workflows/github-scripts/scripts/check-coverage.sh
+        $GITHUB_WORKSPACE/.github/workflows/gh-scripts/check-coverage.sh
 
     - name: Set status
       if: ${{ github.ref == 'refs/heads/development' }}
