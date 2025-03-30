@@ -1,7 +1,7 @@
 package entities
 
 type CoursePeriod struct {
-	ID              int
+	ID              string
 	Course          Course
 	Participants    []User
 	StartDate       string

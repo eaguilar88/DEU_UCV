@@ -45,7 +45,7 @@ func (r *PostgresRepository) GetUserByUsername(ctx context.Context, username str
 	return newUserFromModel(user), nil
 }
 
-func (r *PostgresRepository) GetUser(ctx context.Context, userID int) (entities.User, error) {
+func (r *PostgresRepository) GetUser(ctx context.Context, userID string) (entities.User, error) {
 	query := queries.GetUserByID(userID)
 	sql, args, err := query.ToSql()
 	if err != nil {
@@ -129,7 +129,7 @@ func (r *PostgresRepository) CreateUser(ctx context.Context, user entities.User)
 		r.logger.Error("error inserting user", zap.Error(err))
 		return -1, errs.NewInternalError(err)
 	}
-	err = r.AddRoleToUser(ctx, tx, int(lastInsertedID), entities.RoleIDFromName(user.Roles[0]))
+	err = r.AddRoleToUser(ctx, tx, fmt.Sprintf("%d", lastInsertedID), entities.RoleIDFromName(user.Roles[0]))
 	if err != nil {
 		return -1, errs.NewInternalError(err)
 	}
@@ -142,7 +142,7 @@ func (r *PostgresRepository) CreateUser(ctx context.Context, user entities.User)
 	return lastInsertedID, nil
 }
 
-func (r *PostgresRepository) UpdateUser(ctx context.Context, userID int, user entities.User) error {
+func (r *PostgresRepository) UpdateUser(ctx context.Context, userID string, user entities.User) error {
 	sql, args, err := queries.UpdateUserInfo(user, userID).ToSql()
 	if err != nil {
 		return errs.NewBadQueryError(err)
@@ -166,7 +166,7 @@ func (r *PostgresRepository) UpdateUser(ctx context.Context, userID int, user en
 	return nil
 }
 
-func (r *PostgresRepository) DeleteUser(ctx context.Context, userID int) error {
+func (r *PostgresRepository) DeleteUser(ctx context.Context, userID string) error {
 	sql, args, err := queries.DeleteUser(userID).ToSql()
 	if err != nil {
 		return errs.NewBadQueryError(err)
@@ -190,7 +190,7 @@ func (r *PostgresRepository) DeleteUser(ctx context.Context, userID int) error {
 	return nil
 }
 
-func (r *PostgresRepository) GetUserRoles(ctx context.Context, userID int) ([]string, error) {
+func (r *PostgresRepository) GetUserRoles(ctx context.Context, userID string) ([]string, error) {
 	sql, args, err := queries.GetRolesByUserID(userID).ToSql()
 	if err != nil {
 		return nil, err
@@ -220,7 +220,7 @@ func (r *PostgresRepository) GetUserRoles(ctx context.Context, userID int) ([]st
 	return roles, nil
 }
 
-func (r *PostgresRepository) AddRoleToUser(ctx context.Context, tx *sql.Tx, userID, role int) error {
+func (r *PostgresRepository) AddRoleToUser(ctx context.Context, tx *sql.Tx, userID string, role int) error {
 	sql, args, err := queries.AddRoleToUser(userID, role).ToSql()
 	if err != nil {
 		return err
@@ -231,7 +231,7 @@ func (r *PostgresRepository) AddRoleToUser(ctx context.Context, tx *sql.Tx, user
 	return prepareAndExecute(ctx, r.db, sql, args, r.logger)
 }
 
-func (r *PostgresRepository) GetUsersByCoursePeriodID(ctx context.Context, periodID int) ([]entities.User, error) {
+func (r *PostgresRepository) GetUsersByCoursePeriodID(ctx context.Context, periodID string) ([]entities.User, error) {
 	sql, args, err := queries.GetUsersByCoursePeriodID(periodID).ToSql()
 	if err != nil {
 		return nil, err

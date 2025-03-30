@@ -3,7 +3,7 @@ package users
 import "github.com/eaguilar88/deu/pkg/entities"
 
 type GetUserResponse struct {
-	ID             int    `json:"id,omitempty"`
+	ID             string `json:"id,omitempty"`
 	CI             string `json:"ci,omitempty"`
 	Username       string `json:"username,omitempty"`
 	FirstName      string `json:"first_name,omitempty"`

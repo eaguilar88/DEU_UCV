@@ -7,34 +7,30 @@ type GetCoursesRequest struct {
 }
 
 type GetCourseRequest struct {
-	ID string
+	ID string `path:"id"`
 }
 
 type CreateCourseRequest struct {
-	Document       string `json:"ci"`
-	Username       string `json:"username"`
-	FirstName      string `json:"first_name"`
-	LastName       string `json:"last_name"`
-	DateOfBirth    string `json:"date_of_birth"`
-	Gender         string `json:"gender"`
-	EducationLevel string `json:"education_level"`
-	Address        string `json:"address"`
-	Password       string `json:"password"`
+	UserID        string
+	EndorsementID string  `json:"endorsement_id"`
+	Name          string  `json:"name"`
+	Description   string  `json:"description"`
+	Objectives    string  `json:"objectives"`
+	Content       string  `json:"content"`
+	Cost          float64 `json:"cost"`
+	Location      string  `json:"location"`
 }
 
 type DeleteCourseRequest struct {
-	ID string
+	ID string `path:"id"`
 }
 
 type UpdateCourseRequest struct {
-	ID             string
-	Document       string `json:"ci"`
-	Username       string `json:"username"`
-	FirstName      string `json:"first_name"`
-	LastName       string `json:"last_name"`
-	DateOfBirth    string `json:"date_of_birth"`
-	Gender         string `json:"gender"`
-	EducationLevel string `json:"education_level"`
-	Address        string `json:"address"`
-	Password       string `json:"password"`
+	ID          string  `path:"id"`
+	Name        string  `json:"name"`
+	Description string  `json:"description"`
+	Objectives  string  `json:"objectives"`
+	Content     string  `json:"content"`
+	Cost        float64 `json:"cost"`
+	Location    string  `json:"location"`
 }

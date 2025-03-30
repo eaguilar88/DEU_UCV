@@ -6,7 +6,7 @@ import (
 )
 
 type GetEndorsementResponse struct {
-	ID          int                        `json:"id,omitempty"`
+	ID          string                     `json:"id,omitempty"`
 	User        *users.GetUserResponse     `json:"user,omitempty"`
 	Reviewer    *users.GetUserResponse     `json:"reviewer,omitempty"`
 	Status      entities.EndorsementStatus `json:"status,omitempty"`

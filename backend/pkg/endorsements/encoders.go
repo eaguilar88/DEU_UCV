@@ -5,7 +5,7 @@ import (
 	"github.com/eaguilar88/deu/pkg/users"
 )
 
-func EndorsementEntitiesToGetEndorsementsResponse(endorsements []entities.Endorsements) []GetEndorsementResponse {
+func EndorsementEntitiesToGetEndorsementsResponse(endorsements []entities.Endorsement) []GetEndorsementResponse {
 	var responses = make([]GetEndorsementResponse, 0, len(endorsements))
 	for _, endorsement := range endorsements {
 		responses = append(responses, EntitiesEndorsementToGetEndorsementResponse(endorsement))
@@ -13,7 +13,7 @@ func EndorsementEntitiesToGetEndorsementsResponse(endorsements []entities.Endors
 	return responses
 }
 
-func EntitiesEndorsementToGetEndorsementResponse(endorsement entities.Endorsements) GetEndorsementResponse {
+func EntitiesEndorsementToGetEndorsementResponse(endorsement entities.Endorsement) GetEndorsementResponse {
 	user := users.UserEntityToGetUserResponse(endorsement.User)
 	reviewer := users.UserEntityToGetUserResponse(endorsement.Reviewer)
 	return GetEndorsementResponse{

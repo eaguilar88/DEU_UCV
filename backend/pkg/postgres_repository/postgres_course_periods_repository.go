@@ -11,7 +11,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (r *PostgresRepository) GetCoursePeriodByID(ctx context.Context, periodID int) (entities.CoursePeriod, error) {
+func (r *PostgresRepository) GetCoursePeriodByID(ctx context.Context, periodID string) (entities.CoursePeriod, error) {
 	query := queries.GetCoursePeriodByID(periodID)
 	sql, args, err := query.ToSql()
 	if err != nil {
@@ -31,7 +31,7 @@ func (r *PostgresRepository) GetCoursePeriodByID(ctx context.Context, periodID i
 	return newCoursePeriodFromModel(coursePeriod), nil
 }
 
-func (r *PostgresRepository) GetCoursePeriods(ctx context.Context, courseID int, pageScope entities.PageScope) ([]entities.CoursePeriod, entities.PageScope, error) {
+func (r *PostgresRepository) GetCoursePeriods(ctx context.Context, courseID string, pageScope entities.PageScope) ([]entities.CoursePeriod, entities.PageScope, error) {
 	sql, args, err := queries.GetCoursePeriods(courseID, pageScope).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
@@ -88,11 +88,43 @@ func (r *PostgresRepository) CreateCoursePeriod(ctx context.Context, coursePerio
 	return lastInsertedID, nil
 }
 
-func (r *PostgresRepository) UpdateCoursePeriod(ctx context.Context, periodID int, coursePeriod entities.CoursePeriod) error {
+func (r *PostgresRepository) UpdateCoursePeriod(ctx context.Context, periodID string, coursePeriod entities.CoursePeriod) error {
+	sql, args, err := queries.UpdateCoursePeriod(periodID, newCoursePeriodModelFromEntities(coursePeriod)).ToSql()
+	if err != nil {
+		return err
+	}
+	stmt, err := r.db.PrepareContext(ctx, sql)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	result, err := stmt.ExecContext(ctx, args...)
+	if err != nil {
+		return err
+	}
+	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
+		return errs.NewNotFoundError(err)
+	}
 	return nil
 }
 
-func (r *PostgresRepository) DeleteCoursePeriod(ctx context.Context, periodID int) error {
+func (r *PostgresRepository) DeleteCoursePeriod(ctx context.Context, periodID string) error {
+	sql, args, err := queries.DeleteCoursePeriod(periodID).ToSql()
+	if err != nil {
+		return errs.NewBadQueryError(err)
+	}
+	stmt, err := r.db.PrepareContext(ctx, sql)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	result, err := stmt.ExecContext(ctx, args...)
+	if err != nil {
+		return err
+	}
+	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
+		return errs.NewNotFoundError(err)
+	}
 	return nil
 }
 
@@ -131,5 +163,16 @@ func newCoursePeriodFromModel(coursePeriod models.CoursePeriod) entities.CourseP
 		CreatedAt:       coursePeriod.CreatedAt,
 		UpdatedAt:       coursePeriod.UpdatedAt,
 		DeletedAt:       deletedAt,
+	}
+}
+
+func newCoursePeriodModelFromEntities(cp entities.CoursePeriod) models.CoursePeriod {
+	return models.CoursePeriod{
+		ID:              cp.ID,
+		CourseID:        cp.Course.ID,
+		StartDate:       cp.StartDate,
+		EndDate:         cp.EndDate,
+		IsActive:        cp.IsActive,
+		InscriptionDate: cp.InscriptionDate,
 	}
 }

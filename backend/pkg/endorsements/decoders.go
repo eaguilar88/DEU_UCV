@@ -4,8 +4,8 @@ import (
 	"github.com/eaguilar88/deu/pkg/entities"
 )
 
-func createEndorsementRequestToEntitiesEndorsement(req CreateEndorsementRequest) entities.Endorsements {
-	return entities.Endorsements{
+func createEndorsementRequestToEntitiesEndorsement(req CreateEndorsementRequest) entities.Endorsement {
+	return entities.Endorsement{
 		User: entities.User{
 			ID: req.UserID,
 		},
@@ -19,10 +19,10 @@ func createEndorsementRequestToEntitiesEndorsement(req CreateEndorsementRequest)
 	}
 }
 
-func updateEndorsementRequestToEntitiesEndorsement(req UpdateEndorsementRequest, ID int) entities.Endorsements {
+func updateEndorsementRequestToEntitiesEndorsement(req UpdateEndorsementRequest) entities.Endorsement {
 
-	return entities.Endorsements{
-		ID: ID,
+	return entities.Endorsement{
+		ID: req.ID,
 		User: entities.User{
 			ID: req.UserID,
 		},

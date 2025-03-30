@@ -11,29 +11,28 @@ import (
 var (
 	groupQuerySelectCommon = []string{
 		"g.id",
-		"e.name",
-		"e.description",
-		"e.endorsement_id",
-		"requester.id",
-		"requester.first_name",
-		"requester.last_name",
+		"g.name",
+		"g.description",
+		"g.endorsement_id",
+		"owner.id",
+		"owner.first_name",
+		"owner.last_name",
 		"reviewer.id",
 		"reviewer.first_name",
 		"reviewer.last_name",
-		"c.objectives",
-		"c.content",
-		"c.cost",
-		"c.location",
-		"c.created_at",
+		"g.objective",
+		"g.location",
+		"g.created_at",
+		"g.updated_at",
+		"g.deleted_at",
 	}
 )
 
 func GetGroupByID(groupID int) sq.SelectBuilder {
 	return psql.Select(groupQuerySelectCommon...).
-		From(fmt.Sprintf("%s AS e", entitiesTableName)).
-		Join(fmt.Sprintf("%s AS g ON e.id = g.entity_id", groupsTableName)).
-		Join(fmt.Sprintf("%s AS r ON e.endorsement_id = r.id", endorsementsTableName)).
-		Join(fmt.Sprintf("%s AS requester ON r.user_id = requester.id", usersTableName)).
+		From(fmt.Sprintf("%s AS g", groupsTableName)).
+		Join(fmt.Sprintf("%s AS r ON g.endorsement_id = r.id", endorsementsTableName)).
+		Join(fmt.Sprintf("%s AS owner ON g.user_id = owner.id", usersTableName)).
 		Join(fmt.Sprintf("%s AS reviewer ON r.reviewer_id = reviewer.id", usersTableName)).
 		Where(sq.Eq{"g.id": groupID})
 }
@@ -48,26 +47,20 @@ func GetGroups(page entities.PageScope) sq.SelectBuilder {
 func InsertGroup(group models.ExtensionGroup) sq.InsertBuilder {
 	return psql.Insert(groupsTableName).
 		Columns(
-			"user_id",
-			"endorsement_id",
 			"name",
 			"description",
+			"user_id",
+			"endorsement_id",
 			"objective",
-			"action",
-			"reach",
-			"path",
-			"created_at",
-			"updated_at",
+			"location",
 		).
 		Values(
-			group.UserID,
-			group.EndorsementID,
 			group.Name,
 			group.Description,
+			group.OwnerID,
+			group.EndorsementID,
 			group.Objective,
-			group.Action,
-			group.Reach,
-			group.Path,
+			group.Location,
 			sq.Expr("NOW()"),
 			sq.Expr("NOW()"),
 		).Suffix("RETURNING id")

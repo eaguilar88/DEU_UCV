@@ -3,14 +3,14 @@ package models
 import "database/sql"
 
 type Course struct {
-	ID                int
+	ID                string
 	Name              string
 	Description       sql.NullString
-	OwnerID           int
+	OwnerID           string
 	OwnerFirstName    string
 	OwnerLastName     string
-	EndorsementID     int
-	EndorserID        int
+	EndorsementID     string
+	EndorserID        string
 	EndorserFirstName string
 	EndorserLastName  string
 	Content           string

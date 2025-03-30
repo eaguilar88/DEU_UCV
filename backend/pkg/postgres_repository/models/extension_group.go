@@ -3,15 +3,19 @@ package models
 import "database/sql"
 
 type ExtensionGroup struct {
-	ID            int
-	UserID        int
-	EndorsementID int
-	Name          string
-	Description   sql.NullString
-	Objective     sql.NullString
-	Action        sql.NullString
-	Reach         string
-	Path          string
-	CreatedAt     string
-	UpdatedAt     string
+	ID                int
+	Name              string
+	Description       sql.NullString
+	OwnerID           int
+	OwnerFirstName    string
+	OwnerLastName     string
+	EndorsementID     int
+	EndorserID        int
+	EndorserFirstName string
+	EndorserLastName  string
+	Objective         sql.NullString
+	Location          sql.NullString
+	CreatedAt         string
+	UpdatedAt         string
+	DeletedAt         string
 }

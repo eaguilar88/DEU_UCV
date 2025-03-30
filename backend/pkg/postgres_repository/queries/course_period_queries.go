@@ -22,14 +22,14 @@ var (
 	}
 )
 
-func GetCoursePeriodByID(periodID int) sq.SelectBuilder {
+func GetCoursePeriodByID(periodID string) sq.SelectBuilder {
 	return psql.Select(periodQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS cp", periodsTableName)).
 		Where(sq.Eq{"cp.is_active": true}).
 		Where(sq.Eq{"cp.id": periodID})
 }
 
-func GetCoursePeriods(courseID int, page entities.PageScope) sq.SelectBuilder {
+func GetCoursePeriods(courseID string, page entities.PageScope) sq.SelectBuilder {
 	return psql.Select(periodQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS cp", periodsTableName)).
 		Where(sq.Eq{"cp.course_id": courseID}).
@@ -54,7 +54,7 @@ func InsertCoursePeriod(coursePeriod models.CoursePeriod) sq.InsertBuilder {
 		).Suffix("RETURNING id")
 }
 
-func UpdateCoursePeriod(periodID int, coursePeriod models.CoursePeriod) sq.UpdateBuilder {
+func UpdateCoursePeriod(periodID string, coursePeriod models.CoursePeriod) sq.UpdateBuilder {
 	return psql.Update(periodsTableName).
 		Set("course_id", coursePeriod.CourseID).
 		Set("start_date", coursePeriod.StartDate).
@@ -63,7 +63,7 @@ func UpdateCoursePeriod(periodID int, coursePeriod models.CoursePeriod) sq.Updat
 		Where(sq.Eq{"id": periodID})
 }
 
-func DeleteCoursePeriod(periodID int) sq.UpdateBuilder {
+func DeleteCoursePeriod(periodID string) sq.UpdateBuilder {
 	return sq.Update(periodsTableName).
 		Set("deleted_at", "NOW()").
 		Set("is_active", false).

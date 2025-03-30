@@ -7,7 +7,7 @@ import (
 )
 
 type GetCourseResponse struct {
-	ID          int                                  `json:"id,omitempty"`
+	ID          string                               `json:"id,omitempty"`
 	Content     string                               `json:"content,omitempty"`
 	Cost        float64                              `json:"cost,omitempty"`
 	CreatedAt   string                               `json:"created_at,omitempty"`

@@ -4,16 +4,15 @@ import (
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/eaguilar88/deu/pkg/entities"
 	"github.com/eaguilar88/deu/pkg/postgres_repository/models"
 )
 
 var (
 	courseQuerySelectCommon = []string{
 		"c.id",
-		"e.name",
-		"e.description",
-		"e.endorsement_id",
+		"c.name",
+		"c.description",
+		"c.endorsement_id",
 		"requester.id",
 		"requester.first_name",
 		"requester.last_name",
@@ -24,47 +23,48 @@ var (
 		"c.objectives",
 		"c.cost",
 		"c.location",
-		"e.created_at",
-		"e.updated_at",
+		"c.created_at",
+		"c.updated_at",
+		"c.deleted_at",
 	}
 )
 
-func GetCourseByID(courseID int) sq.SelectBuilder {
+func GetCourseByID(courseID string) sq.SelectBuilder {
 	return psql.Select(courseQuerySelectCommon...).
-		From(fmt.Sprintf("%s AS e", entitiesTableName)).
-		Join(fmt.Sprintf("%s AS c ON e.id = c.entity_id", coursesTableName)).
-		Join(fmt.Sprintf("%s AS r ON e.endorsement_id = r.id", endorsementsTableName)).
-		Join(fmt.Sprintf("%s AS requester ON r.user_id = requester.id", usersTableName)).
+		From(fmt.Sprintf("%s AS c", coursesTableName)).
+		Join(fmt.Sprintf("%s AS r ON c.endorsement_id = r.id", endorsementsTableName)).
+		Join(fmt.Sprintf("%s AS requester ON c.user_id = requester.id", usersTableName)).
 		Join(fmt.Sprintf("%s AS reviewer ON r.reviewer_id = reviewer.id", usersTableName)).
 		Where(sq.Eq{"e.id": courseID})
 }
 
-func GetCourses(page entities.PageScope) sq.SelectBuilder {
+func GetCourses(limit, offset int) sq.SelectBuilder {
 	return psql.Select(courseQuerySelectCommon...).
-		From(fmt.Sprintf("%s AS e", entitiesTableName)).
-		Join(fmt.Sprintf("%s AS c ON e.id = c.entity_id", coursesTableName)).
-		Join(fmt.Sprintf("%s AS r ON e.endorsement_id = r.id", endorsementsTableName)).
+		From(fmt.Sprintf("%s AS c", coursesTableName)).
+		Join(fmt.Sprintf("%s AS r ON c.endorsement_id = r.id", endorsementsTableName)).
 		Join(fmt.Sprintf("%s AS requester ON r.user_id = requester.id", usersTableName)).
 		Join(fmt.Sprintf("%s AS reviewer ON r.reviewer_id = reviewer.id", usersTableName)).
-		Limit(uint64(page.PerPage)).
-		Offset(uint64(page.Offset()))
+		Limit(uint64(limit)).
+		Offset(uint64(offset))
 }
 
 func InsertCourse(course models.Course) sq.InsertBuilder {
-	return psql.Insert(coursesTableName).
+	return psql.Insert(entitiesTableName).
 		Columns(
+			"name",
+			"description",
 			"user_id",
 			"endorsement_id",
-			"endorsed_by",
 			"objectives",
 			"content",
 			"cost",
 			"location",
 		).
 		Values(
+			course.Name,
+			course.Description,
 			course.OwnerID,
 			course.EndorsementID,
-			course.EndorserID,
 			course.Objectives,
 			course.Content,
 			course.Cost,
@@ -72,7 +72,18 @@ func InsertCourse(course models.Course) sq.InsertBuilder {
 		).Suffix("RETURNING id")
 }
 
-func DeleteCourse(endorsementID int) sq.DeleteBuilder {
+func UpdateCourse(courseID string, course models.Course) sq.UpdateBuilder {
+	return psql.Update(coursesTableName).
+		Set("name", course.Name).
+		Set("description", course.Description.String).
+		Set("objectives", course.Objectives.String).
+		Set("content", course.Content).
+		Set("cost", course.Cost).
+		Set("location", course.Location).
+		Where(sq.Eq{"id": courseID})
+}
+
+func DeleteCourse(courseID string) sq.DeleteBuilder {
 	return psql.Delete(coursesTableName).
-		Where(sq.Eq{"id": endorsementID})
+		Where(sq.Eq{"id": courseID})
 }

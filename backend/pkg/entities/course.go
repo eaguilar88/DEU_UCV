@@ -1,11 +1,11 @@
 package entities
 
 type Course struct {
-	ID          int
+	ID          string
 	Content     string
 	Cost        float64
 	Description string
-	Endorsement Endorsements
+	Endorsement Endorsement
 	Location    string
 	Name        string
 	Objectives  string

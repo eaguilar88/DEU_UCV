@@ -1,7 +1,7 @@
 package entities
 
-type Endorsements struct {
-	ID          int
+type Endorsement struct {
+	ID          string
 	User        User
 	Reviewer    User
 	Status      EndorsementStatus

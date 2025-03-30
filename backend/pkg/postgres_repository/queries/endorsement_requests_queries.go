@@ -28,7 +28,7 @@ var (
 	}
 )
 
-func GetEndorsementByID(endorsementID int) sq.SelectBuilder {
+func GetEndorsementByID(endorsementID string) sq.SelectBuilder {
 	return psql.Select(endorsementQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS r", endorsementsTableName)).
 		Join(fmt.Sprintf("%s AS owner ON r.user_id = owner.id", usersTableName)).
@@ -63,7 +63,7 @@ func InsertEndorsement(endorsement models.EndorsementRequest) sq.InsertBuilder {
 		).Suffix("RETURNING id")
 }
 
-func UpdateEndorsementInfo(endorsement models.EndorsementRequest, endorsementID int) sq.UpdateBuilder {
+func UpdateEndorsementInfo(endorsement models.EndorsementRequest, endorsementID string) sq.UpdateBuilder {
 	return psql.Update(endorsementsTableName).
 		Set("user_id", endorsement.UserID).
 		Set("status", endorsement.Status).
@@ -75,7 +75,7 @@ func UpdateEndorsementInfo(endorsement models.EndorsementRequest, endorsementID 
 		Where(sq.Eq{"r.id": endorsementID})
 }
 
-func DeleteEndorsement(endorsementID int) sq.DeleteBuilder {
+func DeleteEndorsement(endorsementID string) sq.DeleteBuilder {
 	return psql.Delete(endorsementsTableName).
 		Where(sq.Eq{"r.id": endorsementID})
 }

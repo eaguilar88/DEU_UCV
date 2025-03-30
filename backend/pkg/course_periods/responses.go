@@ -6,14 +6,14 @@ import (
 )
 
 type GetCoursePeriodResponse struct {
-	ID              int                     `json:"id"`
-	Participans     []users.GetUserResponse `json:"participans"`
+	ID              string                  `json:"id"`
+	Participans     []users.GetUserResponse `json:"participans,omitempty"`
 	StartDate       string                  `json:"start_date"`
 	EndDate         string                  `json:"end_date"`
 	InscriptionDate string                  `json:"inscription_date"`
 	CreatedAt       string                  `json:"created_at"`
 	UpdatedAt       string                  `json:"updated_at"`
-	DeletedAt       string                  `json:"deleted_at"`
+	DeletedAt       string                  `json:"deleted_at,omitempty"`
 }
 
 func EntitiesCoursePeriodToGetCoursePeriodResponse(coursePeriod entities.CoursePeriod) GetCoursePeriodResponse {

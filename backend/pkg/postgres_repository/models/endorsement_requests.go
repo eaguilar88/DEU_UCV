@@ -3,11 +3,11 @@ package models
 import "database/sql"
 
 type EndorsementRequest struct {
-	ID                int
-	UserID            int
+	ID                string
+	UserID            string
 	UserFirstName     string
 	UserLastName      string
-	ReviewerID        int
+	ReviewerID        string
 	ReviewerFirstName string
 	ReviewerLastName  string
 	Type              string

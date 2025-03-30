@@ -19,7 +19,7 @@ var (
 	}
 )
 
-func GetRolesByUserID(userID int) sq.SelectBuilder {
+func GetRolesByUserID(userID string) sq.SelectBuilder {
 	return psql.Select("r.name").
 		From(fmt.Sprintf("%s AS r", rolesTableName)).
 		LeftJoin(fmt.Sprintf("%s AS pr ON pr.role_id = r.id", pivotTableName)).
@@ -32,7 +32,7 @@ func GetUserByUsername(username string) sq.SelectBuilder {
 		Where(sq.Eq{"u.username": username})
 }
 
-func GetUserByID(userID int) sq.SelectBuilder {
+func GetUserByID(userID string) sq.SelectBuilder {
 	return psql.Select(userQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS u", usersTableName)).
 		LeftJoin(fmt.Sprintf("%s AS p ON p.user_id = u.id", providersTableName)).
@@ -47,7 +47,7 @@ func GetUsers(page entities.PageScope) sq.SelectBuilder {
 		Offset(uint64(page.Offset()))
 }
 
-func GetUsersByCoursePeriodID(coursePeriodID int) sq.SelectBuilder {
+func GetUsersByCoursePeriodID(coursePeriodID string) sq.SelectBuilder {
 	return psql.Select("u.id", "u.ci", "u.first_name", "u.last_name").
 		From(fmt.Sprintf("%s AS u", usersTableName)).
 		Join(fmt.Sprintf("%s AS up ON up.user_id = u.id", participantsTableName)).
@@ -84,14 +84,14 @@ func InsertUser(user models.User) sq.InsertBuilder {
 		).Suffix("RETURNING id")
 }
 
-func AddRoleToUser(userID, role int) sq.InsertBuilder {
+func AddRoleToUser(userID string, role int) sq.InsertBuilder {
 	return psql.Insert(pivotTableName).
 		Columns("user_id", "role_id").
 		Values(userID, role).
 		Suffix("RETURNING id")
 }
 
-func UpdateUserInfo(user entities.User, userID int) sq.UpdateBuilder {
+func UpdateUserInfo(user entities.User, userID string) sq.UpdateBuilder {
 	return psql.Update(usersTableName).
 		Set("first_name", user.FirstName).
 		Set("last_name", user.LastName).
@@ -103,19 +103,28 @@ func UpdateUserInfo(user entities.User, userID int) sq.UpdateBuilder {
 		Where(sq.Eq{"id": userID})
 }
 
-func UpdateUsername(user entities.User, userID int) sq.UpdateBuilder {
+func UpdateUsername(user entities.User, userID string) sq.UpdateBuilder {
 	return psql.Update(usersTableName).
 		Set("updated_at", sq.Expr("NOW()")).
 		Where(sq.Eq{"id": userID})
 }
 
-func UpdateUserPassword(user entities.User, userID int) sq.UpdateBuilder {
+func UpdateUserPassword(userID string, password string) sq.UpdateBuilder {
 	return psql.Update(fmt.Sprintf("%s AS u", usersTableName)).
+		Set("password", password).
 		Set("u.updated_at", sq.Expr("NOW()")).
 		Where(sq.Eq{"u.id": userID})
 }
 
-func DeleteUser(userID int) sq.DeleteBuilder {
+func SoftDeleteUser(userID string) sq.UpdateBuilder {
+	return psql.Update(usersTableName).
+		Set("deleted_at", sq.Expr("NOW()")).
+		Set("updated_at", sq.Expr("NOW()")).
+		Where(sq.Eq{"deleted_at": nil}).
+		Where(sq.Eq{"id": userID})
+}
+
+func DeleteUser(userID string) sq.DeleteBuilder {
 	return psql.Delete(usersTableName).
 		Where(sq.Eq{"id": userID})
 }

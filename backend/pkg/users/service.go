@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"slices"
-	"strconv"
 
 	"github.com/eaguilar88/deu/pkg/entities"
 	errs "github.com/eaguilar88/deu/pkg/errors"
@@ -15,14 +15,14 @@ import (
 )
 
 type Repository interface {
-	GetUser(ctx context.Context, userID int) (entities.User, error)
+	GetUser(ctx context.Context, userID string) (entities.User, error)
 	GetUserByUsername(ctx context.Context, username string) (entities.User, error)
 	GetUsers(ctx context.Context, pageScope entities.PageScope) ([]entities.User, entities.PageScope, error)
 	CreateUser(ctx context.Context, user entities.User) (int64, error)
-	UpdateUser(ctx context.Context, userID int, user entities.User) error
-	DeleteUser(ctx context.Context, userID int) error
-	AddRoleToUser(ctx context.Context, tx *sql.Tx, userID, role int) error
-	GetUserRoles(ctx context.Context, userID int) ([]string, error)
+	UpdateUser(ctx context.Context, userID string, user entities.User) error
+	DeleteUser(ctx context.Context, userID string) error
+	AddRoleToUser(ctx context.Context, tx *sql.Tx, userID string, role int) error
+	GetUserRoles(ctx context.Context, userID string) ([]string, error)
 }
 
 type UserService struct {
@@ -38,11 +38,7 @@ func NewUsersService(repository Repository, logger *zap.Logger) Service {
 }
 
 func (s *UserService) GetUser(ctx context.Context, userID string) (entities.User, error) {
-	intID, err := strconv.Atoi(userID)
-	if err != nil {
-		return entities.User{}, err
-	}
-	user, err := s.repo.GetUser(ctx, intID)
+	user, err := s.repo.GetUser(ctx, userID)
 	if err != nil {
 		return entities.User{}, err
 	}
@@ -80,7 +76,7 @@ func (s *UserService) CreateUser(ctx context.Context, user entities.User) (int64
 
 	if slices.Contains(roles, user.Roles[0]) {
 		s.log.Warn(fmt.Sprintf("user %s already has the role %s", existingUser.Username, user.Roles[0]))
-		return -1, errs.NewDuplicateEntryError(errors.New("user already exist"))
+		return -1, errs.NewBadRequestError(errs.NewDuplicateEntryError(errors.New("user already has the role")))
 	}
 
 	err = s.repo.AddRoleToUser(ctx, nil, existingUser.ID, entities.RoleIDFromName(user.Roles[0]))
@@ -88,18 +84,22 @@ func (s *UserService) CreateUser(ctx context.Context, user entities.User) (int64
 		s.log.Error("error adding role to user", zap.Error(err))
 		return -1, err
 	}
-
-	return int64(existingUser.ID), nil // Return the existing user's ID
+	existingUserID, err := strconv.Atoi(existingUser.ID)
+	if err != nil {
+		s.log.Error("error converting user ID to int", zap.Error(err))
+		return -1, err
+	}
+	return int64(existingUserID), nil
 }
 
-func (s *UserService) UpdateUser(ctx context.Context, userID int, user entities.User) error {
+func (s *UserService) UpdateUser(ctx context.Context, userID string, user entities.User) error {
 	if err := s.repo.UpdateUser(ctx, userID, user); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *UserService) DeleteUser(ctx context.Context, userID int) error {
+func (s *UserService) DeleteUser(ctx context.Context, userID string) error {
 	if err := s.repo.DeleteUser(ctx, userID); err != nil {
 		return err
 	}

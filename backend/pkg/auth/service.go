@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/eaguilar88/deu/pkg/entities"
 	"github.com/eaguilar88/deu/pkg/jwt"
@@ -12,7 +11,7 @@ import (
 
 type Repository interface {
 	GetUserByUsername(ctx context.Context, username string) (entities.User, error)
-	GetUserRoles(ctx context.Context, userID int) ([]string, error)
+	GetUserRoles(ctx context.Context, userID string) ([]string, error)
 }
 
 func NewAuthService(repo Repository, signer jwt.Signer, logger *zap.Logger) Service {
@@ -49,7 +48,7 @@ func (s *AuthService) Login(ctx context.Context, username, password string) (str
 
 	user.Roles = roles
 
-	tokenString, err := s.signer.GenerateJWT(fmt.Sprintf("%d", user.ID), roles)
+	tokenString, err := s.signer.GenerateJWT(user.ID, roles)
 	if err != nil {
 		return "", nil, err
 	}

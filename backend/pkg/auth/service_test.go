@@ -38,7 +38,7 @@ func TestAuthService_Login(t *testing.T) {
 			},
 			token: "token",
 			user: &entities.User{
-				ID:        1,
+				ID:        "1",
 				FirstName: "Jon",
 				LastName:  "Doe",
 				Password:  "$2a$10$rFfAKJJIvbGaQCay8zC9bulGQ/kOYDOwwVBGr0WyWA1sUTLZsuXpa",

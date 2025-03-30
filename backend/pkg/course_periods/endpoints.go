@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/eaguilar88/deu/pkg/entities"
 	"github.com/labstack/echo/v4"
@@ -17,8 +16,8 @@ type Service interface {
 	GetCoursePeriod(ctx context.Context, periodID string) (entities.CoursePeriod, error)
 	GetCoursePeriods(ctx context.Context, courseID string, pageScope entities.PageScope) ([]entities.CoursePeriod, entities.PageScope, error)
 	CreateCoursePeriod(ctx context.Context, period entities.CoursePeriod) (int64, error)
-	UpdateCoursePeriod(ctx context.Context, periodID int, period entities.CoursePeriod) error
-	DeleteCoursePeriod(ctx context.Context, periodID int) error
+	UpdateCoursePeriod(ctx context.Context, periodID string, period entities.CoursePeriod) error
+	DeleteCoursePeriod(ctx context.Context, periodID string) error
 }
 
 type CoursePeriodEndpointsHandler struct {
@@ -74,11 +73,7 @@ func (h *CoursePeriodEndpointsHandler) CreateCoursePeriod(c echo.Context) error 
 		h.log.Error("could not decode", zap.Error(err))
 		return echo.ErrBadRequest
 	}
-	userID, err := strconv.Atoi(c.Get("userID").(string))
-	if err != nil {
-		h.log.Error("could not decode userID from context", zap.Error(err))
-		return echo.ErrBadRequest
-	}
+	userID := c.Get("userID").(string)
 
 	periodID, err := h.svc.CreateCoursePeriod(ctx, createCoursePeriodRequestToEntitiesCoursePeriod(req, userID))
 	if err != nil {
@@ -99,14 +94,10 @@ func (h *CoursePeriodEndpointsHandler) UpdateCoursePeriod(c echo.Context) error 
 		return echo.ErrBadRequest
 	}
 
-	userID, err := strconv.Atoi(c.Get("userID").(string))
-	if err != nil {
-		h.log.Error("could not decode userID from context", zap.Error(err))
-		return echo.ErrBadRequest
-	}
+	userID := c.Get("userID").(string)
 
 	updatedPeriod := updateCoursePeriodRequestToEntitiesCoursePeriod(req, userID)
-	err = h.svc.UpdateCoursePeriod(ctx, updatedPeriod.ID, updatedPeriod)
+	err := h.svc.UpdateCoursePeriod(ctx, updatedPeriod.ID, updatedPeriod)
 	if err != nil {
 		h.log.Error("could not decode", zap.Error(err))
 		return echo.ErrUnprocessableEntity
@@ -123,13 +114,7 @@ func (h *CoursePeriodEndpointsHandler) DeleteCoursePeriod(c echo.Context) error 
 		return echo.ErrBadRequest
 	}
 
-	intID, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		h.log.Error("invalid id", zap.Error(err), zap.Any("request", req))
-		return echo.ErrBadRequest
-	}
-
-	err = h.svc.DeleteCoursePeriod(ctx, intID)
+	err := h.svc.DeleteCoursePeriod(ctx, req.ID)
 	if err != nil {
 		h.log.Error("could not decode", zap.Error(err))
 		return echo.ErrUnprocessableEntity

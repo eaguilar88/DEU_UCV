@@ -24,11 +24,11 @@ type CreateUserRequest struct {
 }
 
 type DeleteUserRequest struct {
-	ID string
+	ID string `param:"id"`
 }
 
 type UpdateUserRequest struct {
-	ID             string
+	ID             string `param:"id"`
 	Document       string `json:"ci"`
 	Username       string `json:"username"`
 	FirstName      string `json:"first_name"`

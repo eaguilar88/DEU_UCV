@@ -3,8 +3,8 @@ package models
 import "database/sql"
 
 type CoursePeriod struct {
-	ID              int
-	CourseID        int
+	ID              string
+	CourseID        string
 	StartDate       string
 	EndDate         string
 	InscriptionDate string
