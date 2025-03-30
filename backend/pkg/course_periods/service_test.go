@@ -12,7 +12,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func TestNewCoursePeriodService(t *testing.T) {
+func TestNewCoursePeriodsService(t *testing.T) {
 	type testCase struct {
 		name       string
 		repository Repository
@@ -29,7 +29,7 @@ func TestNewCoursePeriodService(t *testing.T) {
 		},
 	}
 	t.Run(tc.name, func(t *testing.T) {
-		got := NewCoursePeriodService(tc.repository, tc.logger)
+		got := NewCoursePeriodsService(tc.repository, tc.logger)
 		assert.Equal(t, tc.want, got)
 	})
 }
@@ -88,7 +88,7 @@ func TestCoursePeriodService_GetCoursePeriod(t *testing.T) {
 			if tt.prepare != nil {
 				tt.prepare(ctx, &tt)
 			}
-			s := NewCoursePeriodService(tt.repoMock, loggerMock)
+			s := NewCoursePeriodsService(tt.repoMock, loggerMock)
 			got, err := s.GetCoursePeriod(ctx, tt.periodID)
 			assert.Equal(t, tt.wantErr, err)
 			assert.Equal(t, tt.want, got)
@@ -168,7 +168,7 @@ func TestCoursePeriodService_GetCoursePeriods(t *testing.T) {
 			if tt.prepare != nil {
 				tt.prepare(ctx, &tt)
 			}
-			s := NewCoursePeriodService(tt.repoMock, loggerMock)
+			s := NewCoursePeriodsService(tt.repoMock, loggerMock)
 			got, _, err := s.GetCoursePeriods(ctx, tt.periodID, tt.pageScope)
 			assert.Equal(t, tt.wantErr, err)
 			assert.Equal(t, tt.want, got)
@@ -215,7 +215,7 @@ func TestCoursePeriodService_CreateCoursePeriod(t *testing.T) {
 			if tt.prepare != nil {
 				tt.prepare(ctx, &tt)
 			}
-			s := NewCoursePeriodService(tt.repoMock, loggerMock)
+			s := NewCoursePeriodsService(tt.repoMock, loggerMock)
 			got, err := s.CreateCoursePeriod(ctx, entities.CoursePeriod{})
 			assert.Equal(t, tt.wantErr, err)
 			assert.Equal(t, tt.want, got)
@@ -259,7 +259,7 @@ func TestCoursePeriodService_UpdateCoursePeriod(t *testing.T) {
 			if tt.prepare != nil {
 				tt.prepare(ctx, &tt)
 			}
-			s := NewCoursePeriodService(tt.repoMock, loggerMock)
+			s := NewCoursePeriodsService(tt.repoMock, loggerMock)
 			err := s.UpdateCoursePeriod(ctx, "1", entities.CoursePeriod{})
 			assert.Equal(t, tt.wantErr, err)
 			tt.repoMock.AssertExpectations(t)
@@ -302,7 +302,7 @@ func TestCoursePeriodService_DeleteCoursePeriod(t *testing.T) {
 			if tt.prepare != nil {
 				tt.prepare(ctx, &tt)
 			}
-			s := NewCoursePeriodService(tt.repoMock, loggerMock)
+			s := NewCoursePeriodsService(tt.repoMock, loggerMock)
 			err := s.DeleteCoursePeriod(ctx, "1", "1")
 			assert.Equal(t, tt.wantErr, err)
 			tt.repoMock.AssertExpectations(t)
