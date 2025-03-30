@@ -80,17 +80,17 @@ func (_c *ServiceMock_CreateCoursePeriod_Call) RunAndReturn(run func(context.Con
 	return _c
 }
 
-// DeleteCoursePeriod provides a mock function with given fields: ctx, periodID
-func (_m *ServiceMock) DeleteCoursePeriod(ctx context.Context, periodID string) error {
-	ret := _m.Called(ctx, periodID)
+// DeleteCoursePeriod provides a mock function with given fields: ctx, periodID, userID
+func (_m *ServiceMock) DeleteCoursePeriod(ctx context.Context, periodID string, userID string) error {
+	ret := _m.Called(ctx, periodID, userID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteCoursePeriod")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, periodID)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = rf(ctx, periodID, userID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -106,13 +106,14 @@ type ServiceMock_DeleteCoursePeriod_Call struct {
 // DeleteCoursePeriod is a helper method to define mock.On call
 //   - ctx context.Context
 //   - periodID string
-func (_e *ServiceMock_Expecter) DeleteCoursePeriod(ctx interface{}, periodID interface{}) *ServiceMock_DeleteCoursePeriod_Call {
-	return &ServiceMock_DeleteCoursePeriod_Call{Call: _e.mock.On("DeleteCoursePeriod", ctx, periodID)}
+//   - userID string
+func (_e *ServiceMock_Expecter) DeleteCoursePeriod(ctx interface{}, periodID interface{}, userID interface{}) *ServiceMock_DeleteCoursePeriod_Call {
+	return &ServiceMock_DeleteCoursePeriod_Call{Call: _e.mock.On("DeleteCoursePeriod", ctx, periodID, userID)}
 }
 
-func (_c *ServiceMock_DeleteCoursePeriod_Call) Run(run func(ctx context.Context, periodID string)) *ServiceMock_DeleteCoursePeriod_Call {
+func (_c *ServiceMock_DeleteCoursePeriod_Call) Run(run func(ctx context.Context, periodID string, userID string)) *ServiceMock_DeleteCoursePeriod_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(string), args[2].(string))
 	})
 	return _c
 }
@@ -122,7 +123,7 @@ func (_c *ServiceMock_DeleteCoursePeriod_Call) Return(_a0 error) *ServiceMock_De
 	return _c
 }
 
-func (_c *ServiceMock_DeleteCoursePeriod_Call) RunAndReturn(run func(context.Context, string) error) *ServiceMock_DeleteCoursePeriod_Call {
+func (_c *ServiceMock_DeleteCoursePeriod_Call) RunAndReturn(run func(context.Context, string, string) error) *ServiceMock_DeleteCoursePeriod_Call {
 	_c.Call.Return(run)
 	return _c
 }

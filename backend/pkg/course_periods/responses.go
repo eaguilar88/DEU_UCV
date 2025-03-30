@@ -45,3 +45,7 @@ func EntitiesCoursePeriodsToGetCoursePeriodsResponse(coursePeriods []entities.Co
 type CreateCoursePeriodResponse struct {
 	ID string `json:"id"`
 }
+
+type UpdateCoursePeriodResponse struct{}
+
+type DeleteCoursePeriodResponse struct{}

@@ -60,6 +60,6 @@ func updateCoursePeriodRequestToEntitiesCoursePeriod(req UpdateCoursePeriodReque
 }
 
 type DeleteCoursePeriodRequest struct {
-	CourseID string `param:"course_id"`
 	ID       string `param:"id"`
+	CourseID string `param:"course_id"`
 }

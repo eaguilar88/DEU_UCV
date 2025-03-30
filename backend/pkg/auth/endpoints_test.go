@@ -23,23 +23,19 @@ func TestMakeAuthEndpointsHandler(t *testing.T) {
 		log  *zap.Logger
 		want AuthEndpointsHandler
 	}
-	tests := []testCase{
-		{
-			name: "success",
-			svc:  &mocks.ServiceMock{},
-			log:  zap.NewNop(),
-			want: AuthEndpointsHandler{
-				svc: &mocks.ServiceMock{},
-				log: zap.NewNop(),
-			},
+	tc := testCase{
+		name: "success",
+		svc:  &mocks.ServiceMock{},
+		log:  zap.NewNop(),
+		want: AuthEndpointsHandler{
+			svc: &mocks.ServiceMock{},
+			log: zap.NewNop(),
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := MakeAuthEndpointsHandler(tt.svc, tt.log)
-			assert.Equal(t, tt.want.svc, got.svc)
-		})
-	}
+	t.Run(tc.name, func(t *testing.T) {
+		got := MakeAuthEndpointsHandler(tc.svc, tc.log)
+		assert.Equal(t, tc.want.svc, got.svc)
+	})
 }
 
 func TestAuthEndpointsHandler_LoginHandleHTTP(t *testing.T) {
@@ -92,15 +88,15 @@ func TestAuthEndpointsHandler_LoginHandleHTTP(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, "/login", bytes.NewBuffer(jsonBytes))
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			rec := httptest.NewRecorder()
-			echoCtx := echo.New().NewContext(req, rec)
+			ctx := echo.New().NewContext(req, rec)
 
 			if tt.prepare != nil {
-				tt.prepare(echoCtx, &tt)
+				tt.prepare(ctx, &tt)
 			}
 
 			h := MakeAuthEndpointsHandler(tt.svc, loggerMock)
 
-			err = h.LoginHandleHTTP(echoCtx)
+			err = h.LoginHandleHTTP(ctx)
 			assert.Equal(t, tt.wantErr, err)
 			if tt.wantErr == nil {
 				var respBody LoginResponse

@@ -20,8 +20,8 @@ type GetGroupResponse struct {
 	DeletedAt   string                               `json:"deleted_at,omitempty"`
 }
 type GetGroupsResponse struct {
-	Groups []GetGroupResponse `json:"groups"`
-	Page   entities.PageScope `json:"page"`
+	Groups    []GetGroupResponse `json:"groups"`
+	PageScope entities.PageScope `json:"page"`
 }
 type CreateGroupResponse struct {
 	ID string `json:"id"`
@@ -29,3 +29,28 @@ type CreateGroupResponse struct {
 type UpdateGroupResponse struct{}
 
 type DeleteGroupResponse struct{}
+
+func EntitiesGroupsToGetGroupsResponse(groups []entities.ExtensionGroup) []GetGroupResponse {
+	var res []GetGroupResponse
+	for _, group := range groups {
+		res = append(res, EntitiesGroupToGetGroupResponse(group))
+	}
+	return res
+}
+
+func EntitiesGroupToGetGroupResponse(group entities.ExtensionGroup) GetGroupResponse {
+	owner := users.UserEntityToGetUserResponse(group.Owner)
+	endorsement := endorsements.EntitiesEndorsementToGetEndorsementResponse(group.Endorsement)
+	return GetGroupResponse{
+		ID:          group.ID,
+		Name:        group.Name,
+		Description: group.Description,
+		Owner:       &owner,
+		Endorsement: &endorsement,
+		Objective:   group.Objective,
+		Location:    group.Location,
+		Active:      group.Active,
+		CreatedAt:   group.CreatedAt,
+		UpdatedAt:   group.UpdatedAt,
+	}
+}

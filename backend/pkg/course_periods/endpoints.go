@@ -17,7 +17,7 @@ type Service interface {
 	GetCoursePeriods(ctx context.Context, courseID string, pageScope entities.PageScope) ([]entities.CoursePeriod, entities.PageScope, error)
 	CreateCoursePeriod(ctx context.Context, period entities.CoursePeriod) (int64, error)
 	UpdateCoursePeriod(ctx context.Context, periodID string, period entities.CoursePeriod) error
-	DeleteCoursePeriod(ctx context.Context, periodID string) error
+	DeleteCoursePeriod(ctx context.Context, periodID, userID string) error
 }
 
 type CoursePeriodEndpointsHandler struct {
@@ -34,7 +34,12 @@ func MakeCoursePeriodEndpointsHandler(svc Service, log *zap.Logger) CoursePeriod
 
 func (h *CoursePeriodEndpointsHandler) GetCoursePeriod(c echo.Context) error {
 	ctx := c.Request().Context()
-	req := GetCoursePeriodRequest{ID: c.Param("id")}
+	var req GetCoursePeriodRequest
+	if err := c.Bind(&req); err != nil {
+		h.log.Error("could not decode", zap.Error(err))
+		return echo.ErrBadRequest
+	}
+
 	period, err := h.svc.GetCoursePeriod(ctx, req.ID)
 	if err != nil {
 		h.log.Error(fmt.Sprintf("error getting course period with ID: %s", req.ID), zap.Error(err))
@@ -73,7 +78,11 @@ func (h *CoursePeriodEndpointsHandler) CreateCoursePeriod(c echo.Context) error 
 		h.log.Error("could not decode", zap.Error(err))
 		return echo.ErrBadRequest
 	}
-	userID := c.Get("userID").(string)
+	userID, ok := c.Get("userID").(string)
+	if !ok {
+		h.log.Error("no user ID found in context")
+		return echo.ErrBadRequest
+	}
 
 	periodID, err := h.svc.CreateCoursePeriod(ctx, createCoursePeriodRequestToEntitiesCoursePeriod(req, userID))
 	if err != nil {
@@ -94,7 +103,11 @@ func (h *CoursePeriodEndpointsHandler) UpdateCoursePeriod(c echo.Context) error 
 		return echo.ErrBadRequest
 	}
 
-	userID := c.Get("userID").(string)
+	userID, ok := c.Get("userID").(string)
+	if !ok {
+		h.log.Error("no user ID found in context")
+		return echo.ErrBadRequest
+	}
 
 	updatedPeriod := updateCoursePeriodRequestToEntitiesCoursePeriod(req, userID)
 	err := h.svc.UpdateCoursePeriod(ctx, updatedPeriod.ID, updatedPeriod)
@@ -113,8 +126,13 @@ func (h *CoursePeriodEndpointsHandler) DeleteCoursePeriod(c echo.Context) error 
 		h.log.Error("could not decode", zap.Error(err), zap.Any("request", req))
 		return echo.ErrBadRequest
 	}
+	userID, ok := c.Get("userID").(string)
+	if !ok {
+		h.log.Error("no user ID found in context")
+		return echo.ErrBadRequest
+	}
 
-	err := h.svc.DeleteCoursePeriod(ctx, req.ID)
+	err := h.svc.DeleteCoursePeriod(ctx, req.ID, userID)
 	if err != nil {
 		h.log.Error("could not decode", zap.Error(err))
 		return echo.ErrUnprocessableEntity

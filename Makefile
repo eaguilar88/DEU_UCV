@@ -9,7 +9,7 @@ start-backend:
 
 start-prod:
 	git submodule update --recursive
-	docker compose -f docker-compose.prod.yml up -d --build
+	docker stack deploy -c docker-compose.prod.yml my-stack
 
 start-db:
 	git submodule update --recursive

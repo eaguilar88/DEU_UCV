@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/eaguilar88/deu/pkg/auth"
@@ -10,9 +11,10 @@ import (
 	"github.com/eaguilar88/deu/pkg/course_periods"
 	"github.com/eaguilar88/deu/pkg/courses"
 	"github.com/eaguilar88/deu/pkg/endorsements"
+	"github.com/eaguilar88/deu/pkg/groups"
 	"github.com/eaguilar88/deu/pkg/jwt"
 	repository "github.com/eaguilar88/deu/pkg/postgres_repository"
-	"github.com/eaguilar88/deu/pkg/transport"
+	"github.com/eaguilar88/deu/pkg/security"
 	"github.com/eaguilar88/deu/pkg/users"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -57,10 +59,14 @@ func main() {
 	courseSvc := courses.NewCoursesService(repository, logger)
 	courseEndpoints := courses.MakeCourseEndpointsHandler(courseSvc, logger)
 
-	cpService := course_periods.NewCoursePeriodService(repository, logger)
+	cpService := course_periods.NewCoursePeriodsService(repository, logger)
 	cpEndpoints := course_periods.MakeCoursePeriodEndpointsHandler(cpService, logger)
 
+	groupService := groups.NewGroupsService(repository, logger)
+	groupEndpoints := groups.MakeGroupEndpointsHandler(groupService, logger)
+
 	e := echo.New()
+	e.Validator = security.NewCustomValidator()
 	e.Use(middleware.Recover())
 	middlewares := []echo.MiddlewareFunc{
 		jwt.JWTMiddleware(signer, logger),
@@ -72,13 +78,14 @@ func main() {
 	addEndorsementRoutes(e, endorsementEndpoints, middlewares...)
 	addCourseRoutes(e, courseEndpoints, middlewares...)
 	addCoursePeriodRoutes(e, cpEndpoints, middlewares...)
+	addGroupsRoutes(e, groupEndpoints, middlewares...)
 
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", config.HTTPPort)))
 }
 
 func addHealthRoute(e *echo.Echo) {
 	e.GET("/health", func(c echo.Context) error {
-		return transport.HealthHandler(c)
+		return c.String(http.StatusOK, "Ok")
 	})
 }
 
@@ -131,4 +138,14 @@ func addCoursePeriodRoutes(e *echo.Echo, endpoints course_periods.CoursePeriodEn
 	protectedGroup.POST("", endpoints.CreateCoursePeriod)
 	protectedGroup.PUT("/:id", endpoints.UpdateCoursePeriod)
 	protectedGroup.DELETE("/:id", endpoints.DeleteCoursePeriod)
+}
+
+func addGroupsRoutes(e *echo.Echo, endpoints groups.GroupEndpointsHandler, middlewares ...echo.MiddlewareFunc) {
+	publicGroup := e.Group("/groups/:group_id")
+	publicGroup.GET("/:id", endpoints.GetGroup)
+	publicGroup.GET("", endpoints.GetGroups)
+	protectedGroup := e.Group("/groups/:group_id", middlewares...)
+	protectedGroup.POST("", endpoints.CreateGroup)
+	protectedGroup.PUT("/:id", endpoints.UpdateGroup)
+	protectedGroup.DELETE("/:id", endpoints.DeleteGroup)
 }

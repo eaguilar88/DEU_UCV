@@ -23,7 +23,7 @@ type CoursePeriodService struct {
 	log  *zap.Logger
 }
 
-func NewCoursePeriodService(repository Repository, logger *zap.Logger) *CoursePeriodService {
+func NewCoursePeriodsService(repository Repository, logger *zap.Logger) Service {
 	return &CoursePeriodService{
 		repo: repository,
 		log:  logger,
@@ -99,7 +99,7 @@ func (s *CoursePeriodService) UpdateCoursePeriod(ctx context.Context, periodID s
 	return nil
 }
 
-func (s *CoursePeriodService) DeleteCoursePeriod(ctx context.Context, periodID string) error {
+func (s *CoursePeriodService) DeleteCoursePeriod(ctx context.Context, periodID, userID string) error {
 	if err := s.repo.DeleteCoursePeriod(ctx, periodID); err != nil {
 		return err
 	}
