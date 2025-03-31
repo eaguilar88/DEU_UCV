@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/eaguilar88/deu/pkg/entities"
 	"github.com/labstack/echo/v4"
@@ -14,9 +13,9 @@ import (
 type Service interface {
 	GetCourse(ctx context.Context, courseID string) (entities.Course, error)
 	GetCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error)
-	CreateCourse(ctx context.Context, user entities.Course) (int64, error)
-	UpdateCourse(ctx context.Context, courseID int, user entities.Course) error
-	DeleteCourse(ctx context.Context, courseID int) error
+	CreateCourse(ctx context.Context, course entities.Course) (int64, error)
+	UpdateCourse(ctx context.Context, courseID string, user entities.Course) error
+	DeleteCourse(ctx context.Context, courseID string) error
 }
 
 type CourseEndpointsHandler struct {
@@ -72,14 +71,14 @@ func (h *CourseEndpointsHandler) CreateCourse(c echo.Context) error {
 		return echo.ErrBadRequest
 	}
 
-	userID, err := h.svc.CreateCourse(ctx, createCourseRequestToEntitiesCourse(req))
+	courseID, err := h.svc.CreateCourse(ctx, createCourseRequestToEntitiesCourse(req))
 	if err != nil {
 		h.log.Error("could not decode", zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 
 	return c.JSON(http.StatusCreated, CreateCoursesResponse{
-		ID: fmt.Sprintf("%d", userID),
+		ID: fmt.Sprintf("%d", courseID),
 	})
 }
 
@@ -91,14 +90,8 @@ func (h *CourseEndpointsHandler) UpdateCourse(c echo.Context) error {
 		return echo.ErrBadRequest
 	}
 
-	intID, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		h.log.Error("invalid id", zap.Error(err), zap.Any("request", req))
-		return echo.ErrBadRequest
-	}
-
-	updatedCourse := updateCourseRequestToEntitiesCourse(req, intID)
-	err = h.svc.UpdateCourse(ctx, intID, updatedCourse)
+	updatedCourse := updateCourseRequestToEntitiesCourse(req, c.Param("id"))
+	err := h.svc.UpdateCourse(ctx, c.Param("id"), updatedCourse)
 	if err != nil {
 		h.log.Error("could not decode", zap.Error(err))
 		return echo.ErrUnprocessableEntity
@@ -115,13 +108,7 @@ func (h *CourseEndpointsHandler) DeleteCourse(c echo.Context) error {
 		return echo.ErrBadRequest
 	}
 
-	intID, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		h.log.Error("invalid id", zap.Error(err), zap.Any("request", req))
-		return echo.ErrBadRequest
-	}
-
-	err = h.svc.DeleteCourse(ctx, intID)
+	err := h.svc.DeleteCourse(ctx, req.ID)
 	if err != nil {
 		h.log.Error("could not decode", zap.Error(err))
 		return echo.ErrUnprocessableEntity

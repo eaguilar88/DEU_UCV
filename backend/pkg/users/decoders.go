@@ -35,10 +35,10 @@ func generateSecurePassword(password string) (string, error) {
 	return string(hashedPassword), nil
 }
 
-func updateUserRequestToEntitiesUser(req UpdateUserRequest, ID int) entities.User {
+func updateUserRequestToEntitiesUser(req UpdateUserRequest) entities.User {
 
 	return entities.User{
-		ID:             ID,
+		ID:             req.ID,
 		CI:             req.Document,
 		Username:       req.Username,
 		FirstName:      req.FirstName,

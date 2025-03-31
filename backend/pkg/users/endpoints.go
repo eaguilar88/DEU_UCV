@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/eaguilar88/deu/pkg/entities"
 	"github.com/labstack/echo/v4"
@@ -15,8 +14,8 @@ type Service interface {
 	GetUser(ctx context.Context, userID string) (entities.User, error)
 	GetUsers(ctx context.Context, pageScope entities.PageScope) ([]entities.User, entities.PageScope, error)
 	CreateUser(ctx context.Context, user entities.User) (int64, error)
-	UpdateUser(ctx context.Context, userID int, user entities.User) error
-	DeleteUser(ctx context.Context, userID int) error
+	UpdateUser(ctx context.Context, userID string, user entities.User) error
+	DeleteUser(ctx context.Context, userID string) error
 }
 
 type UserEndpointsHandler struct {
@@ -60,7 +59,7 @@ func (h *UserEndpointsHandler) GetUsers(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, GetUsersResponse{
-		Users: userEntitiesToUserDTO(users),
+		Users: UserEntitiesToGetUserResponse(users),
 		Pages: pages,
 	})
 }
@@ -98,14 +97,8 @@ func (h *UserEndpointsHandler) UpdateUser(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 
-	intID, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		h.log.Error("error getting id from request", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, err)
-	}
-
-	newUser := updateUserRequestToEntitiesUser(req, intID)
-	err = h.svc.UpdateUser(ctx, intID, newUser)
+	newUser := updateUserRequestToEntitiesUser(req)
+	err := h.svc.UpdateUser(ctx, req.ID, newUser)
 	if err != nil {
 		h.log.Error(fmt.Sprintf("error updating user with ID: %s", req.ID), zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, err)
@@ -116,14 +109,13 @@ func (h *UserEndpointsHandler) UpdateUser(c echo.Context) error {
 
 func (h *UserEndpointsHandler) DeleteUser(c echo.Context) error {
 	ctx := c.Request().Context()
-	req := DeleteUserRequest{ID: c.Param("id")}
-	intID, err := strconv.Atoi(req.ID)
-	if err != nil {
+	var req DeleteUserRequest
+	if err := c.Bind(&req); err != nil {
 		h.log.Error("error decoding request", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 
-	err = h.svc.DeleteUser(ctx, intID)
+	err := h.svc.DeleteUser(ctx, req.ID)
 	if err != nil {
 		h.log.Error(fmt.Sprintf("error deleting user with ID: %s", req.ID), zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, err)

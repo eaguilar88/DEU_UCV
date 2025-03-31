@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/eaguilar88/deu/pkg/entities"
 	"github.com/labstack/echo/v4"
@@ -12,11 +11,11 @@ import (
 )
 
 type Service interface {
-	GetEndorsement(ctx context.Context, endorsementID string) (entities.Endorsements, error)
-	GetEndorsements(ctx context.Context, pageScope entities.PageScope) ([]entities.Endorsements, entities.PageScope, error)
-	CreateEndorsement(ctx context.Context, endorsement entities.Endorsements) (int64, error)
-	UpdateEndorsement(ctx context.Context, endorsementID int, Endorsement entities.Endorsements) error
-	DeleteEndorsement(ctx context.Context, endorsementID int) error
+	GetEndorsement(ctx context.Context, endorsementID string) (entities.Endorsement, error)
+	GetEndorsements(ctx context.Context, pageScope entities.PageScope) ([]entities.Endorsement, entities.PageScope, error)
+	CreateEndorsement(ctx context.Context, endorsement entities.Endorsement) (int64, error)
+	UpdateEndorsement(ctx context.Context, endorsement entities.Endorsement) error
+	DeleteEndorsement(ctx context.Context, endorsementID string) error
 }
 
 type EndorsementEndpointsHandler struct {
@@ -90,14 +89,8 @@ func (h *EndorsementEndpointsHandler) UpdateEndorsement(c echo.Context) error {
 		return echo.ErrBadRequest
 	}
 
-	intID, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		h.log.Error("invalid id", zap.Error(err), zap.Any("request", req))
-		return echo.ErrBadRequest
-	}
-
-	updatedEndorsement := updateEndorsementRequestToEntitiesEndorsement(req, intID)
-	err = h.svc.UpdateEndorsement(ctx, intID, updatedEndorsement)
+	updatedEndorsement := updateEndorsementRequestToEntitiesEndorsement(req)
+	err := h.svc.UpdateEndorsement(ctx, updatedEndorsement)
 	if err != nil {
 		h.log.Error("could not decode", zap.Error(err))
 		return echo.ErrUnprocessableEntity
@@ -115,13 +108,8 @@ func (h *EndorsementEndpointsHandler) DeleteEndorsement(c echo.Context) error {
 		return echo.ErrBadRequest
 	}
 
-	intID, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		h.log.Error("invalid id", zap.Error(err), zap.Any("request", req))
-		return echo.ErrBadRequest
-	}
-
-	err = h.svc.DeleteEndorsement(ctx, intID)
+	intID := c.Param("id")
+	err := h.svc.DeleteEndorsement(ctx, intID)
 	if err != nil {
 		h.log.Error("could not decode", zap.Error(err))
 		return echo.ErrUnprocessableEntity

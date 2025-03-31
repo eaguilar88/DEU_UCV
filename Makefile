@@ -9,13 +9,13 @@ start-backend:
 
 start-prod:
 	git submodule update --recursive
-	docker compose -f docker-compose.prod.yml up -d --build
+	docker stack deploy -c docker-compose.prod.yml my-stack
 
 start-db:
 	git submodule update --recursive
 	docker compose -f docker-compose.dev.yml up -d
 
-stop:
+stop-backend:
 	docker compose down
 
 stop-prod:
@@ -25,5 +25,7 @@ stop-db:
 	docker compose -f docker-compose.dev.yml down
 
 generate-mocks:
-	docker run --user 1000:1000 --rm -v ${PWD}/backend:/src -w /src vektra/mockery --config .mockery.yaml
+	docker run --user 1000:1000 --rm -v ${PWD}/backend:/src -w /src vektra/mockery:v2.53 --config .mockery.yaml
 
+go-test:
+	cd backend && go test -count=1 -short -cover ./...

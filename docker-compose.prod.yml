@@ -60,6 +60,12 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+    secrets:
+      - b2_key_id
+      - b2_application_id
+    environment:
+      - B2_KEY_ID_FILE=/run/secrets/b2_key_id
+      - B2_APPLICATION_ID_FILE=/run/secrets/b2_application_id
     links:
       - "db"
     labels:
@@ -82,3 +88,8 @@ volumes:
 networks:
   web:
     driver: bridge
+secrets:
+  b2_key_id:
+    external: true
+  b2_application_id:
+    external: true

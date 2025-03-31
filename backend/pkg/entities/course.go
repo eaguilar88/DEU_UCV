@@ -1,15 +1,16 @@
 package entities
 
 type Course struct {
-	ID          int
-	Owner       User
-	Endorsement Endorsements
-	Name        string
-	Description string
-	Objectives  string
-	Cost        float64
+	ID          string
 	Content     string
+	Cost        float64
+	Description string
+	Endorsement Endorsement
 	Location    string
+	Name        string
+	Objectives  string
+	Owner       User
+	Periods     []CoursePeriod
 	CreatedAt   string
 	UpdatedAt   string
 }

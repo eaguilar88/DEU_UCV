@@ -10,7 +10,7 @@ type RegisterResponse struct {
 }
 
 type LoginUserResponse struct {
-	ID    int      `json:"id"`
+	ID    string   `json:"id"`
 	Name  string   `json:"name"`
 	Roles []string `json:"roles"`
 }

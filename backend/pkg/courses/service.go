@@ -2,18 +2,17 @@ package courses
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/eaguilar88/deu/pkg/entities"
 	"go.uber.org/zap"
 )
 
 type Repository interface {
-	GetCourse(ctx context.Context, courseID int) (entities.Course, error)
+	GetCourse(ctx context.Context, courseID string) (entities.Course, error)
 	GetCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error)
 	CreateCourse(ctx context.Context, course entities.Course) (int64, error)
-	UpdateCourse(ctx context.Context, courseID int, user entities.Course) error
-	DeleteCourse(ctx context.Context, courseID int) error
+	UpdateCourse(ctx context.Context, courseID string, user entities.Course) error
+	DeleteCourse(ctx context.Context, courseID string) error
 }
 
 type CourseService struct {
@@ -29,11 +28,7 @@ func NewCoursesService(repository Repository, logger *zap.Logger) Service {
 }
 
 func (s *CourseService) GetCourse(ctx context.Context, courseID string) (entities.Course, error) {
-	intID, err := strconv.Atoi(courseID)
-	if err != nil {
-		return entities.Course{}, err
-	}
-	course, err := s.repo.GetCourse(ctx, intID)
+	course, err := s.repo.GetCourse(ctx, courseID)
 	if err != nil {
 		return entities.Course{}, err
 	}
@@ -56,14 +51,14 @@ func (s *CourseService) CreateCourse(ctx context.Context, course entities.Course
 	return id, nil
 }
 
-func (s *CourseService) UpdateCourse(ctx context.Context, courseID int, course entities.Course) error {
+func (s *CourseService) UpdateCourse(ctx context.Context, courseID string, course entities.Course) error {
 	if err := s.repo.UpdateCourse(ctx, courseID, course); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *CourseService) DeleteCourse(ctx context.Context, courseID int) error {
+func (s *CourseService) DeleteCourse(ctx context.Context, courseID string) error {
 	if err := s.repo.DeleteCourse(ctx, courseID); err != nil {
 		return err
 	}

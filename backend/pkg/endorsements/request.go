@@ -11,7 +11,7 @@ type GetEndorsementRequest struct {
 }
 
 type CreateEndorsementRequest struct {
-	UserID      int    `json:"user_id,omitempty"`
+	UserID      string `json:"user_id,omitempty"`
 	Type        string `json:"type,omitempty"`
 	Name        string `json:"name,omitempty"`
 	Description string `json:"description,omitempty"`
@@ -22,12 +22,12 @@ type CreateEndorsementRequest struct {
 }
 
 type DeleteEndorsementRequest struct {
-	ID string
+	ID string `path:"id"`
 }
 
 type UpdateEndorsementRequest struct {
-	ID          string `json:"id,omitempty"`
-	UserID      int    `json:"user_id,omitempty"`
+	ID          string `path:"id"`
+	UserID      string `json:"user_id,omitempty"`
 	Type        string `json:"type,omitempty"`
 	Name        string `json:"name,omitempty"`
 	Description string `json:"description,omitempty"`
