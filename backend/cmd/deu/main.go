@@ -25,9 +25,8 @@ import (
 )
 
 const (
-	docsSource          = "./docs/openapi/service.yaml"
-	noVersionDefinedYet = "Version to be defined"
-	bucketName          = "deu-ucv"
+// docsSource          = "./docs/openapi/service.yaml"
+// noVersionDefinedYet = "Version to be defined"
 )
 
 func main() {
