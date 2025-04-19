@@ -21,6 +21,7 @@ func (r *PostgresRepository) GetCoursePeriodByID(ctx context.Context, periodID s
 	if err != nil {
 		return entities.CoursePeriod{}, err
 	}
+	//nolint:errcheck
 	defer stmt.Close()
 	var coursePeriod models.CoursePeriod
 	row := stmt.QueryRowContext(ctx, args...)

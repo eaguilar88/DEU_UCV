@@ -32,6 +32,7 @@ const (
 func main() {
 
 	logger, _ := config.NewLogger()
+	//nolint:errcheck
 	defer logger.Sync()
 	config, err := config.Read(logger)
 	if err != nil {
@@ -44,6 +45,7 @@ func main() {
 		logger.Error("error connecting to the db", zap.Error(err))
 		os.Exit(1)
 	}
+	//nolint:errcheck
 	defer postgres.Close()
 	logger.Info("connected to the db", zap.String("db", config.Database.String()))
 	if err := postgres.Ping(); err != nil {
