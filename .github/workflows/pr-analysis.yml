@@ -9,7 +9,7 @@ on:
 jobs:
   lint:
     name: Go Linters Check
-    runs-on: medium
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
@@ -30,51 +30,16 @@ jobs:
           version: v1.64.2
           args: --verbose --timeout=5m
 
-  tests:
-    name: Unit Tests
-    runs-on: medium
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Go
-        uses: actions/setup-go@v4
-        with:
-          go-version-file: ${{ matrix.module }}/go.mod
-          cache: true
-
-      - name: Configure git for private modules
-        env:
-          USER: ${{ secrets.ADMIN_GITHUB_USERNAME }}
-          TOKEN: ${{ secrets.ADMIN_GITHUB_TOKEN }}
-        run: >-
-          git config --global url."https://$USER:$TOKEN@github.com".insteadOf "https://github.com"
-
-      - name: Install Dependencies
-        run: cd ${{ matrix.module }} && GOWORK=off go mod vendor
-
-      - name: Extract Relative Path
-        id: relative-path
-        run: echo "relative-path=$(realpath --relative-to=. ${{ matrix.module }})" >> $GITHUB_OUTPUT
-
-      - name: Run Tests - ${{ steps.relative-path.outputs.relative-path }}
-        run: |
-          cd ${{ matrix.module }}
-          go test ./... -race -coverprofile=./coverage.tmp.out -covermode=atomic -coverpkg=./...
-
-
-
   run-with-coverage:
     name: Run Go Tests with Coverage
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Set up Go
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v4
       with:
         go-version-file: go.mod
 
@@ -91,10 +56,10 @@ jobs:
         cd backend
         $GITHUB_WORKSPACE/.github/workflows/gh-scripts/check-coverage.sh
 
-    - name: Set status
-      if: ${{ github.ref == 'refs/heads/development' }}
-      uses: marocchino/sticky-pull-request-comment@v2
-      with:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        message: |
-          Go tests status: ${{ job.status }}
+    # - name: Set status
+    #   if: ${{ github.ref == 'refs/heads/development' }}
+    #   uses: marocchino/sticky-pull-request-comment@v2
+    #   with:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #     message: |
+    #       Go tests status: ${{ job.status }}
