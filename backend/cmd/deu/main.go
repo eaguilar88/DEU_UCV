@@ -58,6 +58,7 @@ func main() {
 		config.BlackBlazeB2.KeyID,
 		config.BlackBlazeB2.ApplicationKey,
 		config.BlackBlazeB2.Endpoint,
+		config.BlackBlazeB2.Region,
 		logger,
 	)
 	if err != nil {

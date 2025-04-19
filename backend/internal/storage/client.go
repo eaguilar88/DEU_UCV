@@ -27,10 +27,10 @@ type B2Client struct {
 	logger     *zap.Logger
 }
 
-func NewB2Client(bucketName, keyID, applicationKey, endpoint string, logger *zap.Logger) (StorageClient, error) {
+func NewB2Client(bucketName, keyID, applicationKey, endpoint, region string, logger *zap.Logger) (StorageClient, error) {
 	cfg, err := config.LoadDefaultConfig(
 		context.TODO(),
-		config.WithRegion("us-east-005"),
+		config.WithRegion(region),
 		config.WithCredentialsProvider(
 			credentials.NewStaticCredentialsProvider(
 				keyID,
