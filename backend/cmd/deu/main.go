@@ -6,26 +6,29 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/eaguilar88/deu/pkg/auth"
-	"github.com/eaguilar88/deu/pkg/config"
-	"github.com/eaguilar88/deu/pkg/course_periods"
-	"github.com/eaguilar88/deu/pkg/courses"
-	"github.com/eaguilar88/deu/pkg/endorsements"
-	"github.com/eaguilar88/deu/pkg/groups"
-	"github.com/eaguilar88/deu/pkg/jwt"
-	repository "github.com/eaguilar88/deu/pkg/postgres_repository"
-	"github.com/eaguilar88/deu/pkg/security"
-	"github.com/eaguilar88/deu/pkg/users"
+	"github.com/eaguilar88/deu/internal/auth"
+	"github.com/eaguilar88/deu/internal/config"
+	"github.com/eaguilar88/deu/internal/course_periods"
+	"github.com/eaguilar88/deu/internal/courses"
+	"github.com/eaguilar88/deu/internal/endorsements"
+	"github.com/eaguilar88/deu/internal/groups"
+	"github.com/eaguilar88/deu/internal/jwt"
+	repository "github.com/eaguilar88/deu/internal/postgres_repository"
+	"github.com/eaguilar88/deu/internal/providers"
+	"github.com/eaguilar88/deu/internal/security"
+	"github.com/eaguilar88/deu/internal/storage"
+	"github.com/eaguilar88/deu/internal/users"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	_ "github.com/lib/pq"
 	"go.uber.org/zap"
 )
 
-// const (
-// 	docsSource          = "./docs/openapi/service.yaml"
-// 	noVersionDefinedYet = "Version to be defined"
-// )
+const (
+	docsSource          = "./docs/openapi/service.yaml"
+	noVersionDefinedYet = "Version to be defined"
+	bucketName          = "deu-ucv"
+)
 
 func main() {
 
@@ -43,8 +46,24 @@ func main() {
 		os.Exit(1)
 	}
 	defer postgres.Close()
+	logger.Info("connected to the db", zap.String("db", config.Database.String()))
+	if err := postgres.Ping(); err != nil {
+		logger.Error("error pinging the db", zap.Error(err))
+		os.Exit(1)
+	}
 
 	signer := jwt.NewJWTSigner(config.JWTEncryptionKey, config.TTL, logger)
+	bbClient, err := storage.NewB2Client(
+		config.BlackBlazeB2.BucketName,
+		config.BlackBlazeB2.KeyID,
+		config.BlackBlazeB2.ApplicationKey,
+		config.BlackBlazeB2.Endpoint,
+		logger,
+	)
+	if err != nil {
+		logger.Error("error creating b2 client", zap.Error(err))
+		os.Exit(1)
+	}
 
 	repository := repository.NewRepository(postgres, config.FilePath, logger)
 	authService := auth.NewAuthService(repository, signer, logger)
@@ -53,7 +72,7 @@ func main() {
 	userSvc := users.NewUsersService(repository, logger)
 	userEndpoints := users.MakeUserEndpointsHandler(userSvc, logger)
 
-	endorsementSvc := endorsements.NewEndorsementsService(repository, logger)
+	endorsementSvc := endorsements.NewEndorsementsService(repository, bbClient, logger)
 	endorsementEndpoints := endorsements.MakeEndorsementEndpointsHandler(endorsementSvc, logger)
 
 	courseSvc := courses.NewCoursesService(repository, logger)
@@ -65,9 +84,13 @@ func main() {
 	groupService := groups.NewGroupsService(repository, logger)
 	groupEndpoints := groups.MakeGroupEndpointsHandler(groupService, logger)
 
+	providerService := providers.NewProvidersService(repository, bbClient, logger)
+	providerEndpoints := providers.MakeProviderEndpointsHandler(providerService, logger)
+
 	e := echo.New()
 	e.Validator = security.NewCustomValidator()
 	e.Use(middleware.Recover())
+	e.Use(middleware.CORS())
 	middlewares := []echo.MiddlewareFunc{
 		jwt.JWTMiddleware(signer, logger),
 	}
@@ -79,6 +102,7 @@ func main() {
 	addCourseRoutes(e, courseEndpoints, middlewares...)
 	addCoursePeriodRoutes(e, cpEndpoints, middlewares...)
 	addGroupsRoutes(e, groupEndpoints, middlewares...)
+	addProviderRoutes(e, providerEndpoints, middlewares...)
 
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", config.HTTPPort)))
 }
@@ -148,4 +172,14 @@ func addGroupsRoutes(e *echo.Echo, endpoints groups.GroupEndpointsHandler, middl
 	protectedGroup.POST("", endpoints.CreateGroup)
 	protectedGroup.PUT("/:id", endpoints.UpdateGroup)
 	protectedGroup.DELETE("/:id", endpoints.DeleteGroup)
+}
+
+func addProviderRoutes(e *echo.Echo, endpoints providers.ProviderEndpointsHandler, middlewares ...echo.MiddlewareFunc) {
+	publicGroup := e.Group("/providers")
+	publicGroup.GET("/:id", endpoints.GetProvider)
+	publicGroup.GET("", endpoints.GetProviders)
+	protectedGroup := e.Group("/providers", middlewares...)
+	protectedGroup.POST("", endpoints.CreateProvider)
+	protectedGroup.PUT("/:id", endpoints.UpdateProvider)
+	protectedGroup.DELETE("/:id", endpoints.DeleteProvider)
 }

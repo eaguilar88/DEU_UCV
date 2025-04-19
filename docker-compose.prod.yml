@@ -80,7 +80,7 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     volumes:
-      - ./postgresql:/docker-entrypoint-initdb.d
+      - ./postgresql/v2:/docker-entrypoint-initdb.d
     env_file:
       - .env
 volumes:
