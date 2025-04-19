@@ -30,8 +30,10 @@ const (
 )
 
 func main() {
-
-	logger, _ := config.NewLogger()
+	logger, err := config.NewLogger()
+	if err != nil {
+		os.Exit(1)
+	}
 	//nolint:errcheck
 	defer logger.Sync()
 	config, err := config.Read(logger)
@@ -116,7 +118,14 @@ func addHealthRoute(e *echo.Echo) {
 }
 
 func mustConnectToDB(conf config.DatabaseConfig) (*sql.DB, error) {
-	connection := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable", conf.User, conf.Password, conf.Hostname, conf.Port, conf.Name)
+	connection := fmt.Sprintf(
+		"postgres://%s:%s@%s:%d/%s?sslmode=disable",
+		conf.User,
+		conf.Password,
+		conf.Hostname,
+		conf.Port,
+		conf.Name,
+	)
 	db, err := sql.Open("postgres", connection)
 	if err != nil {
 		return nil, err
@@ -128,7 +137,11 @@ func addAuthRoutes(e *echo.Echo, endpoints auth.AuthEndpointsHandler) {
 	e.POST("/auth/login", endpoints.LoginHandleHTTP)
 }
 
-func addUserRoutes(e *echo.Echo, endpoints users.UserEndpointsHandler, middlewares ...echo.MiddlewareFunc) {
+func addUserRoutes(
+	e *echo.Echo,
+	endpoints users.UserEndpointsHandler,
+	middlewares ...echo.MiddlewareFunc,
+) {
 	g := e.Group("/users", middlewares...)
 	g.GET("/:id", endpoints.GetUser)
 	g.GET("", endpoints.GetUsers)
@@ -137,7 +150,11 @@ func addUserRoutes(e *echo.Echo, endpoints users.UserEndpointsHandler, middlewar
 	g.DELETE("/:id", endpoints.DeleteUser)
 }
 
-func addEndorsementRoutes(e *echo.Echo, endpoints endorsements.EndorsementEndpointsHandler, middlewares ...echo.MiddlewareFunc) {
+func addEndorsementRoutes(
+	e *echo.Echo,
+	endpoints endorsements.EndorsementEndpointsHandler,
+	middlewares ...echo.MiddlewareFunc,
+) {
 	g := e.Group("/endorsements", middlewares...)
 	g.GET("/:id", endpoints.GetEndorsement)
 	g.GET("", endpoints.GetEndorsements)
@@ -146,7 +163,11 @@ func addEndorsementRoutes(e *echo.Echo, endpoints endorsements.EndorsementEndpoi
 	g.DELETE("/:id", endpoints.DeleteEndorsement)
 }
 
-func addCourseRoutes(e *echo.Echo, endpoints courses.CourseEndpointsHandler, middlewares ...echo.MiddlewareFunc) {
+func addCourseRoutes(
+	e *echo.Echo,
+	endpoints courses.CourseEndpointsHandler,
+	middlewares ...echo.MiddlewareFunc,
+) {
 	publicGroup := e.Group("/courses")
 	publicGroup.GET("/:id", endpoints.GetCourse)
 	publicGroup.GET("", endpoints.GetCourses)
@@ -156,7 +177,11 @@ func addCourseRoutes(e *echo.Echo, endpoints courses.CourseEndpointsHandler, mid
 	protectedGroup.DELETE("/:id", endpoints.DeleteCourse)
 }
 
-func addCoursePeriodRoutes(e *echo.Echo, endpoints course_periods.CoursePeriodEndpointsHandler, middlewares ...echo.MiddlewareFunc) {
+func addCoursePeriodRoutes(
+	e *echo.Echo,
+	endpoints course_periods.CoursePeriodEndpointsHandler,
+	middlewares ...echo.MiddlewareFunc,
+) {
 	publicGroup := e.Group("/courses/:course_id/periods")
 	publicGroup.GET("/:id", endpoints.GetCoursePeriod)
 	publicGroup.GET("", endpoints.GetCoursePeriods)
@@ -166,7 +191,11 @@ func addCoursePeriodRoutes(e *echo.Echo, endpoints course_periods.CoursePeriodEn
 	protectedGroup.DELETE("/:id", endpoints.DeleteCoursePeriod)
 }
 
-func addGroupsRoutes(e *echo.Echo, endpoints groups.GroupEndpointsHandler, middlewares ...echo.MiddlewareFunc) {
+func addGroupsRoutes(
+	e *echo.Echo,
+	endpoints groups.GroupEndpointsHandler,
+	middlewares ...echo.MiddlewareFunc,
+) {
 	publicGroup := e.Group("/groups/:group_id")
 	publicGroup.GET("/:id", endpoints.GetGroup)
 	publicGroup.GET("", endpoints.GetGroups)
@@ -176,7 +205,11 @@ func addGroupsRoutes(e *echo.Echo, endpoints groups.GroupEndpointsHandler, middl
 	protectedGroup.DELETE("/:id", endpoints.DeleteGroup)
 }
 
-func addProviderRoutes(e *echo.Echo, endpoints providers.ProviderEndpointsHandler, middlewares ...echo.MiddlewareFunc) {
+func addProviderRoutes(
+	e *echo.Echo,
+	endpoints providers.ProviderEndpointsHandler,
+	middlewares ...echo.MiddlewareFunc,
+) {
 	publicGroup := e.Group("/providers")
 	publicGroup.GET("/:id", endpoints.GetProvider)
 	publicGroup.GET("", endpoints.GetProviders)

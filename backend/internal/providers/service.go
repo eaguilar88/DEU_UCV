@@ -14,7 +14,10 @@ import (
 type Repository interface {
 	GetProvider(ctx context.Context, providerID string) (entities.Provider, error)
 	GetProviderByCode(ctx context.Context, code string) (entities.Provider, error)
-	GetProviders(ctx context.Context, pageScope entities.PageScope) ([]entities.Provider, entities.PageScope, error)
+	GetProviders(
+		ctx context.Context,
+		pageScope entities.PageScope,
+	) ([]entities.Provider, entities.PageScope, error)
 	CreateProvider(ctx context.Context, provider entities.Provider) (int64, error)
 	UpdateProvider(ctx context.Context, providerID string, provider entities.Provider) error
 	DeleteProvider(ctx context.Context, providerID string) error
@@ -26,7 +29,11 @@ type ProvidersService struct {
 	logger  *zap.Logger
 }
 
-func NewProvidersService(repo Repository, storage storage.StorageClient, logger *zap.Logger) Service {
+func NewProvidersService(
+	repo Repository,
+	storage storage.StorageClient,
+	logger *zap.Logger,
+) Service {
 	return &ProvidersService{
 		repo:    repo,
 		storage: storage,
@@ -34,7 +41,10 @@ func NewProvidersService(repo Repository, storage storage.StorageClient, logger 
 	}
 }
 
-func (s *ProvidersService) GetProvider(ctx context.Context, providerID string) (entities.Provider, error) {
+func (s *ProvidersService) GetProvider(
+	ctx context.Context,
+	providerID string,
+) (entities.Provider, error) {
 	provider, err := s.repo.GetProvider(ctx, providerID)
 	if err != nil {
 		s.logger.Error("failed to get provider", zap.Error(err))
@@ -43,7 +53,10 @@ func (s *ProvidersService) GetProvider(ctx context.Context, providerID string) (
 	return provider, nil
 }
 
-func (s *ProvidersService) GetProviderByCode(ctx context.Context, code string) (entities.Provider, error) {
+func (s *ProvidersService) GetProviderByCode(
+	ctx context.Context,
+	code string,
+) (entities.Provider, error) {
 	provider, err := s.repo.GetProviderByCode(ctx, code)
 	if err != nil {
 		s.logger.Error("failed to get provider by code", zap.Error(err))
@@ -52,7 +65,10 @@ func (s *ProvidersService) GetProviderByCode(ctx context.Context, code string) (
 	return provider, nil
 }
 
-func (s *ProvidersService) GetProviders(ctx context.Context, pageScope entities.PageScope) ([]entities.Provider, entities.PageScope, error) {
+func (s *ProvidersService) GetProviders(
+	ctx context.Context,
+	pageScope entities.PageScope,
+) ([]entities.Provider, entities.PageScope, error) {
 	providers, pageScope, err := s.repo.GetProviders(ctx, pageScope)
 	if err != nil {
 		s.logger.Error("failed to get providers", zap.Error(err))
@@ -61,7 +77,10 @@ func (s *ProvidersService) GetProviders(ctx context.Context, pageScope entities.
 	return providers, pageScope, nil
 }
 
-func (s *ProvidersService) CreateProvider(ctx context.Context, provider *entities.Provider) (int64, error) {
+func (s *ProvidersService) CreateProvider(
+	ctx context.Context,
+	provider *entities.Provider,
+) (int64, error) {
 	code, err := entities.GenerateProviderCode(provider.Type)
 	if err != nil {
 		s.logger.Error("failed to generate provider code", zap.Error(err))
@@ -111,7 +130,11 @@ func (s *ProvidersService) CreateProvider(ctx context.Context, provider *entitie
 	return createdProviderID, nil
 }
 
-func (s *ProvidersService) UpdateProvider(ctx context.Context, providerID string, provider *entities.Provider) error {
+func (s *ProvidersService) UpdateProvider(
+	ctx context.Context,
+	providerID string,
+	provider *entities.Provider,
+) error {
 	err := s.repo.UpdateProvider(ctx, providerID, *provider)
 	if err != nil {
 		s.logger.Error("failed to update provider", zap.Error(err))

@@ -12,7 +12,10 @@ import (
 
 type Service interface {
 	GetEndorsement(ctx context.Context, endorsementID string) (entities.Endorsement, error)
-	GetEndorsements(ctx context.Context, pageScope entities.PageScope) ([]entities.Endorsement, entities.PageScope, error)
+	GetEndorsements(
+		ctx context.Context,
+		pageScope entities.PageScope,
+	) ([]entities.Endorsement, entities.PageScope, error)
 	CreateEndorsement(ctx context.Context, endorsement entities.Endorsement) (int64, error)
 	UpdateEndorsement(ctx context.Context, endorsement entities.Endorsement) error
 	DeleteEndorsement(ctx context.Context, endorsementID string) error
@@ -45,7 +48,9 @@ func (h *EndorsementEndpointsHandler) GetEndorsements(c echo.Context) error {
 	ctx := c.Request().Context()
 	scope := entities.PageScope{}
 
+	//nolint:errcheck
 	scope.GetPageFromVars(c.QueryParam("page"))
+	//nolint:errcheck
 	scope.GetPerPageFromVars(c.QueryParam("per_page"))
 	req := GetEndorsementsRequest{
 		PageScope: scope,
@@ -100,7 +105,6 @@ func (h *EndorsementEndpointsHandler) UpdateEndorsement(c echo.Context) error {
 }
 
 func (h *EndorsementEndpointsHandler) DeleteEndorsement(c echo.Context) error {
-
 	ctx := c.Request().Context()
 	var req DeleteEndorsementRequest
 	if err := c.Bind(&req); err != nil {

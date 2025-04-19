@@ -12,7 +12,10 @@ import (
 
 type Service interface {
 	GetCourse(ctx context.Context, courseID string) (entities.Course, error)
-	GetCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error)
+	GetCourses(
+		ctx context.Context,
+		pageScope entities.PageScope,
+	) ([]entities.Course, entities.PageScope, error)
 	CreateCourse(ctx context.Context, course entities.Course) (int64, error)
 	UpdateCourse(ctx context.Context, courseID string, user entities.Course) error
 	DeleteCourse(ctx context.Context, courseID string) error
@@ -46,7 +49,9 @@ func (h *CourseEndpointsHandler) GetCourses(c echo.Context) error {
 	ctx := c.Request().Context()
 	scope := entities.PageScope{}
 
+	//nolint:errcheck
 	scope.GetPageFromVars(c.QueryParam("page"))
+	//nolint:errcheck
 	scope.GetPerPageFromVars(c.QueryParam("per_page"))
 	req := GetCoursesRequest{
 		PageScope: scope,

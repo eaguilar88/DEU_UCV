@@ -7,25 +7,23 @@ import (
 	"github.com/eaguilar88/deu/internal/postgres_repository/models"
 )
 
-var (
-	groupQuerySelectCommon = []string{
-		"g.id",
-		"g.name",
-		"g.description",
-		"g.endorsement_id",
-		"owner.id",
-		"owner.first_name",
-		"owner.last_name",
-		"reviewer.id",
-		"reviewer.first_name",
-		"reviewer.last_name",
-		"g.objective",
-		"g.location",
-		"g.created_at",
-		"g.updated_at",
-		"g.deleted_at",
-	}
-)
+var groupQuerySelectCommon = []string{
+	"g.id",
+	"g.name",
+	"g.description",
+	"g.endorsement_id",
+	"owner.id",
+	"owner.first_name",
+	"owner.last_name",
+	"reviewer.id",
+	"reviewer.first_name",
+	"reviewer.last_name",
+	"g.objective",
+	"g.location",
+	"g.created_at",
+	"g.updated_at",
+	"g.deleted_at",
+}
 
 func GetGroupByID(groupID string) sq.SelectBuilder {
 	return psql.Select(groupQuerySelectCommon...).

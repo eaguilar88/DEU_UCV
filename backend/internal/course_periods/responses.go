@@ -16,7 +16,9 @@ type GetCoursePeriodResponse struct {
 	DeletedAt       string                  `json:"deleted_at,omitempty"`
 }
 
-func EntitiesCoursePeriodToGetCoursePeriodResponse(coursePeriod entities.CoursePeriod) GetCoursePeriodResponse {
+func EntitiesCoursePeriodToGetCoursePeriodResponse(
+	coursePeriod entities.CoursePeriod,
+) GetCoursePeriodResponse {
 	return GetCoursePeriodResponse{
 		ID:              coursePeriod.ID,
 		Participans:     users.UserEntitiesToGetUserResponse(coursePeriod.Participants),
@@ -34,8 +36,10 @@ type GetCoursePeriodsResponse struct {
 	Pages   entities.PageScope        `json:"pages"`
 }
 
-func EntitiesCoursePeriodsToGetCoursePeriodsResponse(coursePeriods []entities.CoursePeriod) []GetCoursePeriodResponse {
-	var out = make([]GetCoursePeriodResponse, 0, len(coursePeriods))
+func EntitiesCoursePeriodsToGetCoursePeriodsResponse(
+	coursePeriods []entities.CoursePeriod,
+) []GetCoursePeriodResponse {
+	out := make([]GetCoursePeriodResponse, 0, len(coursePeriods))
 	for _, coursePeriod := range coursePeriods {
 		out = append(out, EntitiesCoursePeriodToGetCoursePeriodResponse(coursePeriod))
 	}

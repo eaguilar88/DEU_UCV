@@ -12,7 +12,10 @@ import (
 	"go.uber.org/zap"
 )
 
-func (r *PostgresRepository) GetCourse(ctx context.Context, courseID string) (entities.Course, error) {
+func (r *PostgresRepository) GetCourse(
+	ctx context.Context,
+	courseID string,
+) (entities.Course, error) {
 	query := queries.GetCourseByID(courseID)
 	sql, args, err := query.ToSql()
 	if err != nil {
@@ -32,7 +35,10 @@ func (r *PostgresRepository) GetCourse(ctx context.Context, courseID string) (en
 	return newCourseFromModel(course), nil
 }
 
-func (r *PostgresRepository) GetCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error) {
+func (r *PostgresRepository) GetCourses(
+	ctx context.Context,
+	pageScope entities.PageScope,
+) ([]entities.Course, entities.PageScope, error) {
 	sql, args, err := queries.GetCourses(pageScope.PerPage, pageScope.Offset()).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
@@ -58,7 +64,10 @@ func (r *PostgresRepository) GetCourses(ctx context.Context, pageScope entities.
 	return courses, pageScope, nil
 }
 
-func (r *PostgresRepository) CreateCourse(ctx context.Context, course entities.Course) (int64, error) {
+func (r *PostgresRepository) CreateCourse(
+	ctx context.Context,
+	course entities.Course,
+) (int64, error) {
 	sql, args, err := queries.InsertCourse(newCourseModelFromEntities(course)).ToSql()
 	if err != nil {
 		r.logger.Error("error creating query", zap.Error(err))
@@ -83,7 +92,11 @@ func (r *PostgresRepository) CreateCourse(ctx context.Context, course entities.C
 	return lastInsertedID, nil
 }
 
-func (r *PostgresRepository) UpdateCourse(ctx context.Context, courseID string, course entities.Course) error {
+func (r *PostgresRepository) UpdateCourse(
+	ctx context.Context,
+	courseID string,
+	course entities.Course,
+) error {
 	sql, args, err := queries.UpdateCourse(courseID, newCourseModelFromEntities(course)).ToSql()
 	if err != nil {
 		return errs.NewBadQueryError(err)
@@ -156,7 +169,7 @@ func scanCourse(row scannable) (models.Course, error) {
 }
 
 func newCourseFromModel(course models.Course) entities.Course {
-	var c = entities.Course{
+	c := entities.Course{
 		ID:   course.ID,
 		Name: course.Name,
 		Endorsement: entities.Endorsement{
@@ -197,7 +210,7 @@ func newCourseFromModel(course models.Course) entities.Course {
 }
 
 func newCourseModelFromEntities(course entities.Course) models.Course {
-	var c = models.Course{
+	c := models.Course{
 		ID:                course.ID,
 		Name:              course.Name,
 		EndorsementID:     course.Endorsement.ID,

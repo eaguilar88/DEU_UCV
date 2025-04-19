@@ -8,25 +8,23 @@ import (
 	"github.com/eaguilar88/deu/internal/postgres_repository/models"
 )
 
-var (
-	endorsementQuerySelectCommon = []string{
-		"r.id",
-		"r.name",
-		"r.description",
-		"r.type",
-		"r.status",
-		"r.comments",
-		"owner.id owner_id",
-		"owner.first_name",
-		"owner.last_name",
-		"reviewer.id reviewer_id",
-		"reviewer.first_name",
-		"reviewer.last_name",
-		"r.reviewed_at",
-		"r.created_at",
-		"r.updated_at",
-	}
-)
+var endorsementQuerySelectCommon = []string{
+	"r.id",
+	"r.name",
+	"r.description",
+	"r.type",
+	"r.status",
+	"r.comments",
+	"owner.id owner_id",
+	"owner.first_name",
+	"owner.last_name",
+	"reviewer.id reviewer_id",
+	"reviewer.first_name",
+	"reviewer.last_name",
+	"r.reviewed_at",
+	"r.created_at",
+	"r.updated_at",
+}
 
 func GetEndorsementByID(endorsementID string) sq.SelectBuilder {
 	return psql.Select(endorsementQuerySelectCommon...).
@@ -63,7 +61,10 @@ func InsertEndorsement(endorsement models.EndorsementRequest) sq.InsertBuilder {
 		).Suffix("RETURNING id")
 }
 
-func UpdateEndorsementInfo(endorsement models.EndorsementRequest, endorsementID string) sq.UpdateBuilder {
+func UpdateEndorsementInfo(
+	endorsement models.EndorsementRequest,
+	endorsementID string,
+) sq.UpdateBuilder {
 	return psql.Update(endorsementsTableName).
 		Set("user_id", endorsement.UserID).
 		Set("status", endorsement.Status).

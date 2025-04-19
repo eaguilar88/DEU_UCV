@@ -12,7 +12,10 @@ import (
 
 type Service interface {
 	GetUser(ctx context.Context, userID string) (entities.User, error)
-	GetUsers(ctx context.Context, pageScope entities.PageScope) ([]entities.User, entities.PageScope, error)
+	GetUsers(
+		ctx context.Context,
+		pageScope entities.PageScope,
+	) ([]entities.User, entities.PageScope, error)
 	CreateUser(ctx context.Context, user entities.User) (int64, error)
 	UpdateUser(ctx context.Context, userID string, user entities.User) error
 	DeleteUser(ctx context.Context, userID string) error
@@ -46,7 +49,9 @@ func (h *UserEndpointsHandler) GetUsers(c echo.Context) error {
 	ctx := c.Request().Context()
 	scope := entities.PageScope{}
 
+	//nolint:errcheck
 	scope.GetPageFromVars(c.QueryParam("page"))
+	//nolint:errcheck
 	scope.GetPerPageFromVars(c.QueryParam("per_page"))
 
 	req := GetUsersRequest{

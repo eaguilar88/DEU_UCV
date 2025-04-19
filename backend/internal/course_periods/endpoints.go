@@ -14,7 +14,11 @@ import (
 
 type Service interface {
 	GetCoursePeriod(ctx context.Context, periodID string) (entities.CoursePeriod, error)
-	GetCoursePeriods(ctx context.Context, courseID string, pageScope entities.PageScope) ([]entities.CoursePeriod, entities.PageScope, error)
+	GetCoursePeriods(
+		ctx context.Context,
+		courseID string,
+		pageScope entities.PageScope,
+	) ([]entities.CoursePeriod, entities.PageScope, error)
 	CreateCoursePeriod(ctx context.Context, period entities.CoursePeriod) (int64, error)
 	UpdateCoursePeriod(ctx context.Context, periodID string, period entities.CoursePeriod) error
 	DeleteCoursePeriod(ctx context.Context, periodID, userID string) error
@@ -55,7 +59,10 @@ func (h *CoursePeriodEndpointsHandler) GetCoursePeriods(c echo.Context) error {
 
 	courseID := c.Param("course_id")
 
+	//nolint:errcheck
+	//nolint:errcheck
 	scope.GetPageFromVars(c.QueryParam("page"))
+	//nolint:errcheck
 	scope.GetPerPageFromVars(c.QueryParam("per_page"))
 
 	periods, pages, err := h.svc.GetCoursePeriods(ctx, courseID, scope)
@@ -84,7 +91,10 @@ func (h *CoursePeriodEndpointsHandler) CreateCoursePeriod(c echo.Context) error 
 		return echo.ErrBadRequest
 	}
 
-	periodID, err := h.svc.CreateCoursePeriod(ctx, createCoursePeriodRequestToEntitiesCoursePeriod(req, userID))
+	periodID, err := h.svc.CreateCoursePeriod(
+		ctx,
+		createCoursePeriodRequestToEntitiesCoursePeriod(req, userID),
+	)
 	if err != nil {
 		h.log.Error("could not decode", zap.Error(err))
 		return echo.ErrInternalServerError

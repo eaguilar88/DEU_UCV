@@ -13,7 +13,10 @@ import (
 // TODO: Implement endpoints.go logic
 type Service interface {
 	GetGroup(ctx context.Context, groupID string) (entities.ExtensionGroup, error)
-	GetGroups(ctx context.Context, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error)
+	GetGroups(
+		ctx context.Context,
+		pageScope entities.PageScope,
+	) ([]entities.ExtensionGroup, entities.PageScope, error)
 	CreateGroup(ctx context.Context, group entities.ExtensionGroup, userID string) (int64, error)
 	UpdateGroup(ctx context.Context, groupID string, group entities.ExtensionGroup) error
 	DeleteGroup(ctx context.Context, groupID, userID string) error
@@ -120,6 +123,7 @@ func (h *GroupEndpointsHandler) UpdateGroup(c echo.Context) error {
 
 	return c.JSON(http.StatusAccepted, nil)
 }
+
 func (h *GroupEndpointsHandler) DeleteGroup(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req DeleteGroupRequest

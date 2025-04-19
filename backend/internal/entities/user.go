@@ -28,7 +28,8 @@ func (u *User) SetAge() {
 	}
 	currentDate := time.Now()
 	age := currentDate.Year() - dob.Year()
-	if currentDate.Month() < dob.Month() || (currentDate.Month() == dob.Month() && currentDate.Day() < dob.Day()) {
+	if currentDate.Month() < dob.Month() ||
+		(currentDate.Month() == dob.Month() && currentDate.Day() < dob.Day()) {
 		age--
 	}
 	u.Age = age

@@ -7,18 +7,16 @@ import (
 	"github.com/eaguilar88/deu/internal/postgres_repository/models"
 )
 
-var (
-	providerQuerySelectCommon = []string{
-		"p.id",
-		"u.id",
-		"u.first_name",
-		"u.last_name",
-		"p.code",
-		"p.is_active",
-		"p.created_at",
-		"p.updated_at",
-	}
-)
+var providerQuerySelectCommon = []string{
+	"p.id",
+	"u.id",
+	"u.first_name",
+	"u.last_name",
+	"p.code",
+	"p.is_active",
+	"p.created_at",
+	"p.updated_at",
+}
 
 func GetProviderByID(id string, status, isDeleted bool) sq.SelectBuilder {
 	builder := psql.Select(providerQuerySelectCommon...).

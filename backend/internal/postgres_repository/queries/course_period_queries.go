@@ -8,19 +8,17 @@ import (
 	"github.com/eaguilar88/deu/internal/postgres_repository/models"
 )
 
-var (
-	periodQuerySelectCommon = []string{
-		"cp.id",
-		"cp.course_id",
-		"cp.start_date",
-		"cp.end_date",
-		"cp.is_active",
-		"cp.inscription_date",
-		"cp.created_at",
-		"cp.updated_at",
-		"cp.deleted_at",
-	}
-)
+var periodQuerySelectCommon = []string{
+	"cp.id",
+	"cp.course_id",
+	"cp.start_date",
+	"cp.end_date",
+	"cp.is_active",
+	"cp.inscription_date",
+	"cp.created_at",
+	"cp.updated_at",
+	"cp.deleted_at",
+}
 
 func GetCoursePeriodByID(periodID string) sq.SelectBuilder {
 	return psql.Select(periodQuerySelectCommon...).

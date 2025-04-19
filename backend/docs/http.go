@@ -33,6 +33,5 @@ func DocsHandler(r *mux.Router, docsRoute string, logger *zap.Logger) http.Handl
 		if _, err := w.Write(indexHTML); err != nil {
 			logger.Error("failed to write index.html", zap.Error(err))
 		}
-
 	}
 }

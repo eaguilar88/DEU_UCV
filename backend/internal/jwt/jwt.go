@@ -44,7 +44,6 @@ func (s *JWTSigner) ValidateToken(tokenString string) (map[string]any, error) {
 		}
 		return []byte(s.SigningKey), nil // Your signing key here
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +61,10 @@ func (s *JWTSigner) GenerateJWT(userID string, roles []string) (string, error) {
 	// Create JWT claims
 	claims := jwt.MapClaims{
 		"iss": tokenIssuer,
-		"exp": time.Now().Add(time.Second * time.Duration(s.TTL)).Unix(), // Set expiration using s.TTL
+		"exp": time.Now().
+			Add(time.Second * time.Duration(s.TTL)).
+			Unix(),
+		// Set expiration using s.TTL
 		"iat": time.Now().Unix(),
 		"v1": map[string]interface{}{
 			"roles":  roles,

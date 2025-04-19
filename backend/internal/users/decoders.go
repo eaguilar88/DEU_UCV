@@ -36,7 +36,6 @@ func generateSecurePassword(password string) (string, error) {
 }
 
 func updateUserRequestToEntitiesUser(req UpdateUserRequest) entities.User {
-
 	return entities.User{
 		ID:             req.ID,
 		CI:             req.Document,

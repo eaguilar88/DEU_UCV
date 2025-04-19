@@ -11,18 +11,21 @@ type GetCoursePeriodRequest struct {
 
 type GetCoursePeriodsRequest struct {
 	CourseID string `param:"course_id"`
-	Page     int    `query:"page"`
-	PerPage  int    `query:"per_page"`
+	Page     int    `                  query:"page"`
+	PerPage  int    `                  query:"per_page"`
 }
 
 type CreateCoursePeriodRequest struct {
 	CourseID        string `param:"course_id"`
-	StartDate       string `json:"start_date"`
-	EndDate         string `json:"end_date"`
-	InscriptionDate string `json:"inscription_date"`
+	StartDate       string `                  json:"start_date"`
+	EndDate         string `                  json:"end_date"`
+	InscriptionDate string `                  json:"inscription_date"`
 }
 
-func createCoursePeriodRequestToEntitiesCoursePeriod(req CreateCoursePeriodRequest, userID string) entities.CoursePeriod {
+func createCoursePeriodRequestToEntitiesCoursePeriod(
+	req CreateCoursePeriodRequest,
+	userID string,
+) entities.CoursePeriod {
 	return entities.CoursePeriod{
 		Course: entities.Course{
 			ID: req.CourseID,
@@ -38,13 +41,16 @@ func createCoursePeriodRequestToEntitiesCoursePeriod(req CreateCoursePeriodReque
 
 type UpdateCoursePeriodRequest struct {
 	ID              string `param:"id"`
-	CourseID        string `json:"course_id"`
-	StartDate       string `json:"start_date"`
-	EndDate         string `json:"end_date"`
-	InscriptionDate string `json:"inscription_date"`
+	CourseID        string `           json:"course_id"`
+	StartDate       string `           json:"start_date"`
+	EndDate         string `           json:"end_date"`
+	InscriptionDate string `           json:"inscription_date"`
 }
 
-func updateCoursePeriodRequestToEntitiesCoursePeriod(req UpdateCoursePeriodRequest, userID string) entities.CoursePeriod {
+func updateCoursePeriodRequestToEntitiesCoursePeriod(
+	req UpdateCoursePeriodRequest,
+	userID string,
+) entities.CoursePeriod {
 	return entities.CoursePeriod{
 		ID: req.ID,
 		Course: entities.Course{

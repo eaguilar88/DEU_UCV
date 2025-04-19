@@ -7,27 +7,25 @@ import (
 	"github.com/eaguilar88/deu/internal/postgres_repository/models"
 )
 
-var (
-	courseQuerySelectCommon = []string{
-		"c.id",
-		"c.name",
-		"c.description",
-		"c.endorsement_id",
-		"requester.id",
-		"requester.first_name",
-		"requester.last_name",
-		"reviewer.id",
-		"reviewer.first_name",
-		"reviewer.last_name",
-		"c.content",
-		"c.objectives",
-		"c.cost",
-		"c.location",
-		"c.created_at",
-		"c.updated_at",
-		"c.deleted_at",
-	}
-)
+var courseQuerySelectCommon = []string{
+	"c.id",
+	"c.name",
+	"c.description",
+	"c.endorsement_id",
+	"requester.id",
+	"requester.first_name",
+	"requester.last_name",
+	"reviewer.id",
+	"reviewer.first_name",
+	"reviewer.last_name",
+	"c.content",
+	"c.objectives",
+	"c.cost",
+	"c.location",
+	"c.created_at",
+	"c.updated_at",
+	"c.deleted_at",
+}
 
 func GetCourseByID(courseID string) sq.SelectBuilder {
 	return psql.Select(courseQuerySelectCommon...).

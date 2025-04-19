@@ -11,7 +11,10 @@ import (
 	"go.uber.org/zap"
 )
 
-func (r *PostgresRepository) GetCoursePeriodByID(ctx context.Context, periodID string) (entities.CoursePeriod, error) {
+func (r *PostgresRepository) GetCoursePeriodByID(
+	ctx context.Context,
+	periodID string,
+) (entities.CoursePeriod, error) {
 	query := queries.GetCoursePeriodByID(periodID)
 	sql, args, err := query.ToSql()
 	if err != nil {
@@ -32,7 +35,11 @@ func (r *PostgresRepository) GetCoursePeriodByID(ctx context.Context, periodID s
 	return newCoursePeriodFromModel(coursePeriod), nil
 }
 
-func (r *PostgresRepository) GetCoursePeriods(ctx context.Context, courseID string, pageScope entities.PageScope) ([]entities.CoursePeriod, entities.PageScope, error) {
+func (r *PostgresRepository) GetCoursePeriods(
+	ctx context.Context,
+	courseID string,
+	pageScope entities.PageScope,
+) ([]entities.CoursePeriod, entities.PageScope, error) {
 	sql, args, err := queries.GetCoursePeriods(courseID, pageScope).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
@@ -58,7 +65,10 @@ func (r *PostgresRepository) GetCoursePeriods(ctx context.Context, courseID stri
 	return coursePeriods, pageScope, nil
 }
 
-func (r *PostgresRepository) CreateCoursePeriod(ctx context.Context, coursePeriod entities.CoursePeriod) (int64, error) {
+func (r *PostgresRepository) CreateCoursePeriod(
+	ctx context.Context,
+	coursePeriod entities.CoursePeriod,
+) (int64, error) {
 	cpModel := models.CoursePeriod{
 		ID:              coursePeriod.ID,
 		CourseID:        coursePeriod.Course.ID,
@@ -89,8 +99,13 @@ func (r *PostgresRepository) CreateCoursePeriod(ctx context.Context, coursePerio
 	return lastInsertedID, nil
 }
 
-func (r *PostgresRepository) UpdateCoursePeriod(ctx context.Context, periodID string, coursePeriod entities.CoursePeriod) error {
-	sql, args, err := queries.UpdateCoursePeriod(periodID, newCoursePeriodModelFromEntities(coursePeriod)).ToSql()
+func (r *PostgresRepository) UpdateCoursePeriod(
+	ctx context.Context,
+	periodID string,
+	coursePeriod entities.CoursePeriod,
+) error {
+	sql, args, err := queries.UpdateCoursePeriod(periodID, newCoursePeriodModelFromEntities(coursePeriod)).
+		ToSql()
 	if err != nil {
 		return err
 	}

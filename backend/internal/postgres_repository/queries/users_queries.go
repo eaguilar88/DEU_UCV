@@ -2,18 +2,15 @@ package queries
 
 import (
 	"fmt"
-	"strings"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/postgres_repository/models"
 )
 
-var (
-	userQuerySelectCommon = []string{
-		"u.id", "u.ci", "u.email", "u.first_name", "u.last_name", "u.date_of_birth", "u.gender", "u.education", "u.address", "u.created_at", "p.code",
-	}
-)
+var userQuerySelectCommon = []string{
+	"u.id", "u.ci", "u.email", "u.first_name", "u.last_name", "u.date_of_birth", "u.gender", "u.education", "u.address", "u.created_at", "p.code",
+}
 
 func GetRolesByUserID(userID string) sq.SelectBuilder {
 	return psql.Select("r.name").
@@ -124,10 +121,4 @@ func SoftDeleteUser(userID string) sq.UpdateBuilder {
 func DeleteUser(userID string) sq.DeleteBuilder {
 	return psql.Delete(usersTableName).
 		Where(sq.Eq{"id": userID})
-}
-
-func splitUserCI(user entities.User) (string, string) {
-	ciType := strings.Split(user.CI, "-")[0]
-	ciNumber := strings.Split(user.CI, "-")[1]
-	return ciType, ciNumber
 }

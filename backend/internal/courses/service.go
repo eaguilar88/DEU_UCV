@@ -9,7 +9,10 @@ import (
 
 type Repository interface {
 	GetCourse(ctx context.Context, courseID string) (entities.Course, error)
-	GetCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error)
+	GetCourses(
+		ctx context.Context,
+		pageScope entities.PageScope,
+	) ([]entities.Course, entities.PageScope, error)
 	CreateCourse(ctx context.Context, course entities.Course) (int64, error)
 	UpdateCourse(ctx context.Context, courseID string, user entities.Course) error
 	DeleteCourse(ctx context.Context, courseID string) error
@@ -35,7 +38,10 @@ func (s *CourseService) GetCourse(ctx context.Context, courseID string) (entitie
 	return course, nil
 }
 
-func (s *CourseService) GetCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error) {
+func (s *CourseService) GetCourses(
+	ctx context.Context,
+	pageScope entities.PageScope,
+) ([]entities.Course, entities.PageScope, error) {
 	courses, page, err := s.repo.GetCourses(ctx, pageScope)
 	if err != nil {
 		return nil, entities.PageScope{}, err
@@ -51,7 +57,11 @@ func (s *CourseService) CreateCourse(ctx context.Context, course entities.Course
 	return id, nil
 }
 
-func (s *CourseService) UpdateCourse(ctx context.Context, courseID string, course entities.Course) error {
+func (s *CourseService) UpdateCourse(
+	ctx context.Context,
+	courseID string,
+	course entities.Course,
+) error {
 	if err := s.repo.UpdateCourse(ctx, courseID, course); err != nil {
 		return err
 	}

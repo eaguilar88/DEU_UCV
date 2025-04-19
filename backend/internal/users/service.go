@@ -5,9 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"strconv"
-
 	"slices"
+	"strconv"
 
 	"github.com/eaguilar88/deu/internal/entities"
 	errs "github.com/eaguilar88/deu/internal/errors"
@@ -17,7 +16,10 @@ import (
 type Repository interface {
 	GetUser(ctx context.Context, userID string) (entities.User, error)
 	GetUserByUsername(ctx context.Context, username string) (entities.User, error)
-	GetUsers(ctx context.Context, pageScope entities.PageScope) ([]entities.User, entities.PageScope, error)
+	GetUsers(
+		ctx context.Context,
+		pageScope entities.PageScope,
+	) ([]entities.User, entities.PageScope, error)
 	CreateUser(ctx context.Context, user entities.User) (int64, error)
 	UpdateUser(ctx context.Context, userID string, user entities.User) error
 	DeleteUser(ctx context.Context, userID string) error
@@ -45,7 +47,10 @@ func (s *UserService) GetUser(ctx context.Context, userID string) (entities.User
 	return user, nil
 }
 
-func (s *UserService) GetUsers(ctx context.Context, pageScope entities.PageScope) ([]entities.User, entities.PageScope, error) {
+func (s *UserService) GetUsers(
+	ctx context.Context,
+	pageScope entities.PageScope,
+) ([]entities.User, entities.PageScope, error) {
 	users, page, err := s.repo.GetUsers(ctx, pageScope)
 	if err != nil {
 		return nil, entities.PageScope{}, err
@@ -75,8 +80,12 @@ func (s *UserService) CreateUser(ctx context.Context, user entities.User) (int64
 	}
 
 	if slices.Contains(roles, user.Roles[0]) {
-		s.log.Warn(fmt.Sprintf("user %s already has the role %s", existingUser.Username, user.Roles[0]))
-		return -1, errs.NewBadRequestError(errs.NewDuplicateEntryError(errors.New("user already has the role")))
+		s.log.Warn(
+			fmt.Sprintf("user %s already has the role %s", existingUser.Username, user.Roles[0]),
+		)
+		return -1, errs.NewBadRequestError(
+			errs.NewDuplicateEntryError(errors.New("user already has the role")),
+		)
 	}
 
 	err = s.repo.AddRoleToUser(ctx, nil, existingUser.ID, entities.RoleIDFromName(user.Roles[0]))

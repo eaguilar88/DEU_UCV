@@ -28,8 +28,10 @@ type AuthService struct {
 	logger     *zap.Logger
 }
 
-func (s *AuthService) Login(ctx context.Context, username, password string) (string, *entities.User, error) {
-
+func (s *AuthService) Login(
+	ctx context.Context,
+	username, password string,
+) (string, *entities.User, error) {
 	user, err := s.repository.GetUserByUsername(ctx, username)
 	if err != nil {
 		return "", nil, err

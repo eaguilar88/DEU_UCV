@@ -4,7 +4,9 @@ import (
 	"github.com/eaguilar88/deu/internal/entities"
 )
 
-func createEndorsementRequestToEntitiesEndorsement(req CreateEndorsementRequest) entities.Endorsement {
+func createEndorsementRequestToEntitiesEndorsement(
+	req CreateEndorsementRequest,
+) entities.Endorsement {
 	return entities.Endorsement{
 		User: entities.User{
 			ID: req.UserID,
@@ -19,8 +21,9 @@ func createEndorsementRequestToEntitiesEndorsement(req CreateEndorsementRequest)
 	}
 }
 
-func updateEndorsementRequestToEntitiesEndorsement(req UpdateEndorsementRequest) entities.Endorsement {
-
+func updateEndorsementRequestToEntitiesEndorsement(
+	req UpdateEndorsementRequest,
+) entities.Endorsement {
 	return entities.Endorsement{
 		ID: req.ID,
 		User: entities.User{

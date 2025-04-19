@@ -8,7 +8,10 @@ import (
 	"github.com/eaguilar88/deu/internal/postgres_repository/queries"
 )
 
-func (r *PostgresRepository) GetEndorsement(ctx context.Context, endorsementID string) (entities.Endorsement, error) {
+func (r *PostgresRepository) GetEndorsement(
+	ctx context.Context,
+	endorsementID string,
+) (entities.Endorsement, error) {
 	query := queries.GetEndorsementByID(endorsementID)
 	sql, args, err := query.ToSql()
 	if err != nil {
@@ -34,7 +37,11 @@ func (r *PostgresRepository) GetEndorsement(ctx context.Context, endorsementID s
 	}
 	return newEndorsmentFromModel(endorsement), nil
 }
-func (r *PostgresRepository) GetEndorsements(ctx context.Context, pageScope entities.PageScope) ([]entities.Endorsement, entities.PageScope, error) {
+
+func (r *PostgresRepository) GetEndorsements(
+	ctx context.Context,
+	pageScope entities.PageScope,
+) ([]entities.Endorsement, entities.PageScope, error) {
 	sql, args, err := queries.GetEndorsements(pageScope).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
@@ -64,12 +71,21 @@ func (r *PostgresRepository) GetEndorsements(ctx context.Context, pageScope enti
 	return endorsements, pageScope, nil
 }
 
-func (r *PostgresRepository) CreateEndorsement(ctx context.Context, endorsement entities.Endorsement) (int64, error) {
+func (r *PostgresRepository) CreateEndorsement(
+	ctx context.Context,
+	endorsement entities.Endorsement,
+) (int64, error) {
 	panic("")
 }
-func (r *PostgresRepository) UpdateEndorsement(ctx context.Context, endorsementID string, endorsement entities.Endorsement) error {
+
+func (r *PostgresRepository) UpdateEndorsement(
+	ctx context.Context,
+	endorsementID string,
+	endorsement entities.Endorsement,
+) error {
 	panic("")
 }
+
 func (r *PostgresRepository) DeleteEndorsement(ctx context.Context, endorsementID string) error {
 	panic("")
 }

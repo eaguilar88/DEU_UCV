@@ -13,7 +13,10 @@ import (
 type Service interface {
 	GetProvider(ctx context.Context, providerID string) (entities.Provider, error)
 	GetProviderByCode(ctx context.Context, providerCode string) (entities.Provider, error)
-	GetProviders(ctx context.Context, pageScope entities.PageScope) ([]entities.Provider, entities.PageScope, error)
+	GetProviders(
+		ctx context.Context,
+		pageScope entities.PageScope,
+	) ([]entities.Provider, entities.PageScope, error)
 	CreateProvider(ctx context.Context, provider *entities.Provider) (int64, error)
 	UpdateProvider(ctx context.Context, providerID string, provider *entities.Provider) error
 	DeleteProvider(ctx context.Context, providerID string) error
@@ -31,6 +34,7 @@ func MakeProviderEndpointsHandler(svc Service, log *zap.Logger) ProviderEndpoint
 		log: log,
 	}
 }
+
 func (h *ProviderEndpointsHandler) GetProvider(c echo.Context) error {
 	ctx := c.Request().Context()
 	req := GetProviderRequest{ID: c.Param("id")}
@@ -42,11 +46,14 @@ func (h *ProviderEndpointsHandler) GetProvider(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, ProviderEntityToGetProviderResponse(provider))
 }
+
 func (h *ProviderEndpointsHandler) GetProviders(c echo.Context) error {
 	ctx := c.Request().Context()
 	scope := entities.PageScope{}
 
+	//nolint:errcheck
 	scope.GetPageFromVars(c.QueryParam("page"))
+	//nolint:errcheck
 	scope.GetPerPageFromVars(c.QueryParam("per_page"))
 
 	req := GetProvidersRequest{
@@ -60,6 +67,7 @@ func (h *ProviderEndpointsHandler) GetProviders(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, ProvidersEntityToGetProvidersResponse(providers, pages))
 }
+
 func (h *ProviderEndpointsHandler) CreateProvider(c echo.Context) error {
 	ctx := c.Request().Context()
 
@@ -83,6 +91,7 @@ func (h *ProviderEndpointsHandler) CreateProvider(c echo.Context) error {
 
 	return c.JSON(http.StatusCreated, id)
 }
+
 func (h *ProviderEndpointsHandler) UpdateProvider(c echo.Context) error {
 	ctx := c.Request().Context()
 	userID, ok := c.Get("userID").(string)
@@ -105,6 +114,7 @@ func (h *ProviderEndpointsHandler) UpdateProvider(c echo.Context) error {
 
 	return c.NoContent(http.StatusAccepted)
 }
+
 func (h *ProviderEndpointsHandler) DeleteProvider(c echo.Context) error {
 	ctx := c.Request().Context()
 	err := h.svc.DeleteProvider(ctx, c.Param("id"))

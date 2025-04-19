@@ -10,7 +10,10 @@ import (
 	"github.com/eaguilar88/deu/internal/postgres_repository/queries"
 )
 
-func (r *PostgresRepository) GetGroupByID(ctx context.Context, groupID string) (entities.ExtensionGroup, error) {
+func (r *PostgresRepository) GetGroupByID(
+	ctx context.Context,
+	groupID string,
+) (entities.ExtensionGroup, error) {
 	sql, args, err := queries.GetGroupByID(groupID).ToSql()
 	if err != nil {
 		return entities.ExtensionGroup{}, err
@@ -29,7 +32,10 @@ func (r *PostgresRepository) GetGroupByID(ctx context.Context, groupID string) (
 	return newGroupFromModel(group), nil
 }
 
-func (r *PostgresRepository) GetGroups(ctx context.Context, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error) {
+func (r *PostgresRepository) GetGroups(
+	ctx context.Context,
+	pageScope entities.PageScope,
+) ([]entities.ExtensionGroup, entities.PageScope, error) {
 	sql, args, err := queries.GetGroups(pageScope.PerPage, pageScope.Offset()).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
@@ -55,7 +61,10 @@ func (r *PostgresRepository) GetGroups(ctx context.Context, pageScope entities.P
 	return groups, pageScope, nil
 }
 
-func (r *PostgresRepository) CreateGroup(ctx context.Context, group entities.ExtensionGroup) (int64, error) {
+func (r *PostgresRepository) CreateGroup(
+	ctx context.Context,
+	group entities.ExtensionGroup,
+) (int64, error) {
 	sql, args, err := queries.InsertGroup(newGroupToModel(group)).ToSql()
 	if err != nil {
 		return 0, err
@@ -71,6 +80,7 @@ func (r *PostgresRepository) CreateGroup(ctx context.Context, group entities.Ext
 	}
 	return result.LastInsertId()
 }
+
 func (r *PostgresRepository) UpdateGroup(ctx context.Context, group entities.ExtensionGroup) error {
 	sql, args, err := queries.UpdateGroup(newGroupToModel(group)).ToSql()
 	if err != nil {
@@ -136,6 +146,7 @@ func scanGroup(row scannable) (models.ExtensionGroup, error) {
 	}
 	return group, nil
 }
+
 func newGroupToModel(group entities.ExtensionGroup) models.ExtensionGroup {
 	return models.ExtensionGroup{
 		ID:   group.ID,
@@ -161,7 +172,6 @@ func newGroupToModel(group entities.ExtensionGroup) models.ExtensionGroup {
 }
 
 func newGroupFromModel(group models.ExtensionGroup) entities.ExtensionGroup {
-
 	var description, objective, location string
 	if group.Description.Valid {
 		description = group.Description.String

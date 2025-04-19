@@ -20,7 +20,7 @@ func UserEntityToGetUserResponse(user entities.User) GetUserResponse {
 }
 
 func UserEntitiesToGetUserResponse(users []entities.User) []GetUserResponse {
-	var out = make([]GetUserResponse, 0, len(users))
+	out := make([]GetUserResponse, 0, len(users))
 	for _, user := range users {
 		out = append(out, UserEntityToGetUserResponse(user))
 	}

@@ -15,7 +15,10 @@ import (
 	"go.uber.org/zap"
 )
 
-func (r *PostgresRepository) GetUserByUsername(ctx context.Context, username string) (entities.User, error) {
+func (r *PostgresRepository) GetUserByUsername(
+	ctx context.Context,
+	username string,
+) (entities.User, error) {
 	query, args, err := queries.GetUserByUsername(username).ToSql()
 	if err != nil {
 		return entities.User{}, err
@@ -68,7 +71,10 @@ func (r *PostgresRepository) GetUser(ctx context.Context, userID string) (entiti
 	return newUserFromModel(user), nil
 }
 
-func (r *PostgresRepository) GetUsers(ctx context.Context, pageScope entities.PageScope) ([]entities.User, entities.PageScope, error) {
+func (r *PostgresRepository) GetUsers(
+	ctx context.Context,
+	pageScope entities.PageScope,
+) ([]entities.User, entities.PageScope, error) {
 	sql, args, err := queries.GetUsers(pageScope.PerPage, pageScope.Offset()).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
@@ -129,7 +135,12 @@ func (r *PostgresRepository) CreateUser(ctx context.Context, user entities.User)
 		r.logger.Error("error inserting user", zap.Error(err))
 		return -1, errs.NewInternalError(err)
 	}
-	err = r.AddRoleToUser(ctx, tx, fmt.Sprintf("%d", lastInsertedID), entities.RoleIDFromName(user.Roles[0]))
+	err = r.AddRoleToUser(
+		ctx,
+		tx,
+		fmt.Sprintf("%d", lastInsertedID),
+		entities.RoleIDFromName(user.Roles[0]),
+	)
 	if err != nil {
 		return -1, errs.NewInternalError(err)
 	}
@@ -142,7 +153,11 @@ func (r *PostgresRepository) CreateUser(ctx context.Context, user entities.User)
 	return lastInsertedID, nil
 }
 
-func (r *PostgresRepository) UpdateUser(ctx context.Context, userID string, user entities.User) error {
+func (r *PostgresRepository) UpdateUser(
+	ctx context.Context,
+	userID string,
+	user entities.User,
+) error {
 	sql, args, err := queries.UpdateUserInfo(user, userID).ToSql()
 	if err != nil {
 		return errs.NewBadQueryError(err)
@@ -208,7 +223,7 @@ func (r *PostgresRepository) GetUserRoles(ctx context.Context, userID string) ([
 	}
 	defer rows.Close()
 
-	var roles = make([]string, 0)
+	roles := make([]string, 0)
 	var role string
 	for rows.Next() {
 		err = rows.Scan(&role)
@@ -220,7 +235,12 @@ func (r *PostgresRepository) GetUserRoles(ctx context.Context, userID string) ([
 	return roles, nil
 }
 
-func (r *PostgresRepository) AddRoleToUser(ctx context.Context, tx *sql.Tx, userID string, role int) error {
+func (r *PostgresRepository) AddRoleToUser(
+	ctx context.Context,
+	tx *sql.Tx,
+	userID string,
+	role int,
+) error {
 	sql, args, err := queries.AddRoleToUser(userID, role).ToSql()
 	if err != nil {
 		return err
@@ -231,7 +251,10 @@ func (r *PostgresRepository) AddRoleToUser(ctx context.Context, tx *sql.Tx, user
 	return prepareAndExecute(ctx, r.db, sql, args, r.logger)
 }
 
-func (r *PostgresRepository) GetUsersByCoursePeriodID(ctx context.Context, periodID string) ([]entities.User, error) {
+func (r *PostgresRepository) GetUsersByCoursePeriodID(
+	ctx context.Context,
+	periodID string,
+) ([]entities.User, error) {
 	sql, args, err := queries.GetUsersByCoursePeriodID(periodID).ToSql()
 	if err != nil {
 		return nil, err
@@ -266,7 +289,13 @@ func (r *PostgresRepository) GetUsersByCoursePeriodID(ctx context.Context, perio
 	return users, nil
 }
 
-func prepareAndExecute(ctx context.Context, p preparer, sql string, args []interface{}, log *zap.Logger) error {
+func prepareAndExecute(
+	ctx context.Context,
+	p preparer,
+	sql string,
+	args []interface{},
+	log *zap.Logger,
+) error {
 	stmt, err := p.PrepareContext(ctx, sql)
 	if err != nil {
 		log.Error("error preparing", zap.Error(err))

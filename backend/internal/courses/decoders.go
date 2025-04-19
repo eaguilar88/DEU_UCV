@@ -22,7 +22,6 @@ func createCourseRequestToEntitiesCourse(req CreateCourseRequest) entities.Cours
 }
 
 func updateCourseRequestToEntitiesCourse(req UpdateCourseRequest, ID string) entities.Course {
-
 	return entities.Course{
 		ID:          ID,
 		Name:        req.Name,

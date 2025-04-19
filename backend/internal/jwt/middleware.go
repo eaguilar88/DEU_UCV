@@ -2,13 +2,11 @@ package jwt
 
 import (
 	"fmt"
-	"strings"
-
 	"net/http"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
-	// Updated import
 )
 
 // JWTMiddleware checks for the existence and validity of a JWT in the context.
@@ -29,7 +27,10 @@ func JWTMiddleware(signer Signer, logger *zap.Logger) echo.MiddlewareFunc {
 			claims, err := signer.ValidateToken(tokenString)
 			if err != nil {
 				logger.Error("invalid authorization token", zap.Error(err))
-				return echo.NewHTTPError(http.StatusUnauthorized, fmt.Sprintf("invalid authorization token: %v", err))
+				return echo.NewHTTPError(
+					http.StatusUnauthorized,
+					fmt.Sprintf("invalid authorization token: %v", err),
+				)
 			}
 
 			// Extract "v1" map from claims

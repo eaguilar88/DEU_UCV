@@ -17,14 +17,14 @@ const (
 )
 
 type DeuConfig struct {
-	HTTPPort         int                `env:"HTTP_SERVE_PORT" envDefault:"80" envWhitelisted:"true"`
+	HTTPPort         int                `env:"HTTP_SERVE_PORT"          envDefault:"80"   envWhitelisted:"true"`
 	JWTEncryptionKey string             `env:"JWT_SIGNING_KEY,required"`
 	FilePath         string             `env:"FILE_PATH,required"`
-	TTL              uint32             `env:"TOKEN_TTL" envDefault:"3600"`
-	Flavor           string             `env:"FLAVOR" envDefault:"dev"`
-	Database         DatabaseConfig     `envPrefix:"POSTGRES_"`
-	Email            EmailConfig        `envPrefix:"EMAIL_"`
-	BlackBlazeB2     BlackBlazeB2Config `envPrefix:"BLACKBLAZE_B2_"`
+	TTL              uint32             `env:"TOKEN_TTL"                envDefault:"3600"`
+	Flavor           string             `env:"FLAVOR"                   envDefault:"dev"`
+	Database         DatabaseConfig     `                                                                       envPrefix:"POSTGRES_"`
+	Email            EmailConfig        `                                                                       envPrefix:"EMAIL_"`
+	BlackBlazeB2     BlackBlazeB2Config `                                                                       envPrefix:"BLACKBLAZE_B2_"`
 }
 
 func (s *DeuConfig) IsProd() bool {
@@ -40,18 +40,18 @@ type DatabaseConfig struct {
 }
 
 type EmailConfig struct {
-	Server   string `env:"SERVER" envDefault:"smtp.gmail.com"`
-	Name     string `env:"NAME" envDefault:"DEU"`
+	Server   string `env:"SERVER"   envDefault:"smtp.gmail.com"`
+	Name     string `env:"NAME"     envDefault:"DEU"`
 	User     string `env:"USERNAME"`
 	Password string `env:"PASSWORD"`
-	Port     int    `env:"PORT" envDefault:"587"`
+	Port     int    `env:"PORT"     envDefault:"587"`
 }
 
 type BlackBlazeB2Config struct {
-	BucketName     string `env:"BUCKET_NAME" envDefault:"deu"`
-	Endpoint       string `env:"ENDPOINT" envDefault:"s3.us-west-002.backblazeb2.com"`
-	KeyName        string `env:"KEY_NAME" envDefault:"deu"`
-	Region         string `env:"REGION" envDefault:"us-west-002"`
+	BucketName     string `env:"BUCKET_NAME"              envDefault:"deu"`
+	Endpoint       string `env:"ENDPOINT"                 envDefault:"s3.us-west-002.backblazeb2.com"`
+	KeyName        string `env:"KEY_NAME"                 envDefault:"deu"`
+	Region         string `env:"REGION"                   envDefault:"us-west-002"`
 	ApplicationKey string `env:"APPLICATION_KEY,required"`
 	KeyID          string `env:"KEY_ID,required"`
 }
@@ -71,7 +71,9 @@ func Read(logger *zap.Logger) (DeuConfig, error) {
 	}
 
 	if config.IsProd() {
-		config.BlackBlazeB2.ApplicationKey = readSecret("/run/secrets/blackblaze_b2_application_key")
+		config.BlackBlazeB2.ApplicationKey = readSecret(
+			"/run/secrets/blackblaze_b2_application_key",
+		)
 		config.BlackBlazeB2.KeyID = readSecret("/run/secrets/blackblaze_b2_key_id")
 	}
 

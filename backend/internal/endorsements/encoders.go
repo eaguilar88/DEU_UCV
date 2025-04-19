@@ -5,15 +5,19 @@ import (
 	"github.com/eaguilar88/deu/internal/users"
 )
 
-func EndorsementEntitiesToGetEndorsementsResponse(endorsements []entities.Endorsement) []GetEndorsementResponse {
-	var responses = make([]GetEndorsementResponse, 0, len(endorsements))
+func EndorsementEntitiesToGetEndorsementsResponse(
+	endorsements []entities.Endorsement,
+) []GetEndorsementResponse {
+	responses := make([]GetEndorsementResponse, 0, len(endorsements))
 	for _, endorsement := range endorsements {
 		responses = append(responses, EntitiesEndorsementToGetEndorsementResponse(endorsement))
 	}
 	return responses
 }
 
-func EntitiesEndorsementToGetEndorsementResponse(endorsement entities.Endorsement) GetEndorsementResponse {
+func EntitiesEndorsementToGetEndorsementResponse(
+	endorsement entities.Endorsement,
+) GetEndorsementResponse {
 	user := users.UserEntityToGetUserResponse(endorsement.User)
 	reviewer := users.UserEntityToGetUserResponse(endorsement.Reviewer)
 	return GetEndorsementResponse{

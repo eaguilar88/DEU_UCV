@@ -7,8 +7,6 @@ import (
 	"net/http"
 )
 
-const internalServerBodyError = `{"code":500,"message":"internal server error"}`
-
 var (
 	errScan            = errors.New("scan error")
 	errBadQuery        = errors.New("bad query error")
@@ -28,11 +26,6 @@ type CustomError interface {
 type customError struct {
 	Cause error
 	Code  int
-}
-
-type httpError struct {
-	Message string `json:"message"`
-	Code    int    `json:"code"`
 }
 
 func NewScanError(err error) error {

@@ -18,7 +18,10 @@ type GenProvidersResponse struct {
 	Pages     entities.PageScope    `json:"pages"`
 }
 
-func ProvidersEntityToGetProvidersResponse(providers []entities.Provider, pageScope entities.PageScope) GenProvidersResponse {
+func ProvidersEntityToGetProvidersResponse(
+	providers []entities.Provider,
+	pageScope entities.PageScope,
+) GenProvidersResponse {
 	var responseProviders []GetProviderResponse
 	for _, provider := range providers {
 		responseProviders = append(responseProviders, ProviderEntityToGetProviderResponse(provider))
