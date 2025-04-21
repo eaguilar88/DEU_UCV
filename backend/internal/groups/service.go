@@ -10,10 +10,7 @@ import (
 // TODO: Implement service.go logic
 type Repository interface {
 	GetGroupByID(ctx context.Context, groupID string) (entities.ExtensionGroup, error)
-	GetGroups(
-		ctx context.Context,
-		pageScope entities.PageScope,
-	) ([]entities.ExtensionGroup, entities.PageScope, error)
+	GetGroups(ctx context.Context, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error)
 	CreateGroup(ctx context.Context, group entities.ExtensionGroup) (int64, error)
 	UpdateGroup(ctx context.Context, group entities.ExtensionGroup) error
 	DeleteGroup(ctx context.Context, groupID string) error

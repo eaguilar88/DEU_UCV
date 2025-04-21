@@ -2,38 +2,34 @@ package endorsements
 
 import (
 	"context"
+	"mime/multipart"
 
 	"github.com/eaguilar88/deu/internal/entities"
-	"github.com/eaguilar88/deu/internal/storage"
 	"go.uber.org/zap"
 )
 
 type Repository interface {
 	GetEndorsement(ctx context.Context, endorsementID string) (entities.Endorsement, error)
-	GetEndorsements(
-		ctx context.Context,
-		pageScope entities.PageScope,
-	) ([]entities.Endorsement, entities.PageScope, error)
+	GetEndorsements(ctx context.Context, pageScope entities.PageScope) ([]entities.Endorsement, entities.PageScope, error)
 	CreateEndorsement(ctx context.Context, endorsement entities.Endorsement) (int64, error)
-	UpdateEndorsement(
-		ctx context.Context,
-		endorsementID string,
-		endorsement entities.Endorsement,
-	) error
+	UpdateEndorsement(ctx context.Context, endorsementID string, endorsement entities.Endorsement) error
 	DeleteEndorsement(ctx context.Context, endorsementID string) error
+}
+
+type StorageClient interface {
+	UploadFile(ctx context.Context, file multipart.File, objectKey string, metadata map[string]string) error
+	DownloadFile(ctx context.Context, objectKey string, destinationPath string) error
+	DeleteFile(ctx context.Context, objectKey string) error
+	GetFileURL(ctx context.Context, objectKey string) (string, error)
 }
 
 type EndorsementService struct {
 	repo    Repository
-	storage storage.StorageClient
+	storage StorageClient
 	log     *zap.Logger
 }
 
-func NewEndorsementsService(
-	repository Repository,
-	s3 storage.StorageClient,
-	logger *zap.Logger,
-) *EndorsementService {
+func NewEndorsementsService(repository Repository, s3 StorageClient, logger *zap.Logger) *EndorsementService {
 	return &EndorsementService{
 		repo:    repository,
 		storage: s3,

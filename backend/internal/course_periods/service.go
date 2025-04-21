@@ -11,17 +11,9 @@ import (
 
 type Repository interface {
 	GetCoursePeriodByID(ctx context.Context, periodID string) (entities.CoursePeriod, error)
-	GetCoursePeriods(
-		ctx context.Context,
-		courseID string,
-		pageScope entities.PageScope,
-	) ([]entities.CoursePeriod, entities.PageScope, error)
+	GetCoursePeriods(ctx context.Context, courseID string, pageScope entities.PageScope) ([]entities.CoursePeriod, entities.PageScope, error)
 	CreateCoursePeriod(ctx context.Context, coursePeriod entities.CoursePeriod) (int64, error)
-	UpdateCoursePeriod(
-		ctx context.Context,
-		periodID string,
-		coursePeriod entities.CoursePeriod,
-	) error
+	UpdateCoursePeriod(ctx context.Context, periodID string, coursePeriod entities.CoursePeriod) error
 	DeleteCoursePeriod(ctx context.Context, periodID string) error
 	GetUsersByCoursePeriodID(ctx context.Context, periodID string) ([]entities.User, error)
 }

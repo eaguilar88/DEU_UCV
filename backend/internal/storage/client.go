@@ -12,30 +12,13 @@ import (
 	"go.uber.org/zap"
 )
 
-type StorageClient interface {
-	UploadFile(
-		ctx context.Context,
-		file multipart.File,
-		objectKey string,
-		metadata map[string]string,
-	) error
-	// DownloadFile(ctx context.Context, objectKey string, destinationPath string) error
-	// DeleteFile(ctx context.Context, objectKey string) error
-	// ListFiles(ctx context.Context, prefix string) ([]string, error)
-	// GetFileURL(ctx context.Context, objectKey string) (string, error)
-	// GetFileMetadata(ctx context.Context, objectKey string) (map[string]string, error)
-}
-
 type B2Client struct {
 	bucketName string
 	client     *s3.Client
 	logger     *zap.Logger
 }
 
-func NewB2Client(
-	bucketName, keyID, applicationKey, endpoint, region string,
-	logger *zap.Logger,
-) (StorageClient, error) {
+func NewB2Client(bucketName, keyID, applicationKey, endpoint, region string, logger *zap.Logger) (*B2Client, error) {
 	cfg, err := config.LoadDefaultConfig(
 		context.TODO(),
 		config.WithRegion(region),
@@ -62,12 +45,7 @@ func NewB2Client(
 	}, nil
 }
 
-func (b *B2Client) UploadFile(
-	ctx context.Context,
-	file multipart.File,
-	objectKey string,
-	metadata map[string]string,
-) error {
+func (b *B2Client) UploadFile(ctx context.Context, file multipart.File, objectKey string, metadata map[string]string) error {
 	_, err := b.client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket:   aws.String(b.bucketName),
 		Key:      aws.String(objectKey),
@@ -82,11 +60,7 @@ func (b *B2Client) UploadFile(
 	return nil
 }
 
-func (b *B2Client) DownloadFile(
-	ctx context.Context,
-	objectKey string,
-	destinationPath string,
-) error {
+func (b *B2Client) DownloadFile(ctx context.Context, objectKey string, destinationPath string) error {
 	// Implement the download logic here
 	return nil
 }
@@ -106,10 +80,7 @@ func (b *B2Client) GetFileURL(ctx context.Context, objectKey string) (string, er
 	return "", nil
 }
 
-func (b *B2Client) GetFileMetadata(
-	ctx context.Context,
-	objectKey string,
-) (map[string]string, error) {
+func (b *B2Client) GetFileMetadata(ctx context.Context, objectKey string) (map[string]string, error) {
 	// Implement the get file metadata logic here
 	return nil, nil
 }

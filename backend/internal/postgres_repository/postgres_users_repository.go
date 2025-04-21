@@ -15,10 +15,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (r *PostgresRepository) GetUserByUsername(
-	ctx context.Context,
-	username string,
-) (entities.User, error) {
+func (r *PostgresRepository) GetUserByUsername(ctx context.Context, username string) (entities.User, error) {
 	query, args, err := queries.GetUserByUsername(username).ToSql()
 	if err != nil {
 		return entities.User{}, err
@@ -71,10 +68,7 @@ func (r *PostgresRepository) GetUser(ctx context.Context, userID string) (entiti
 	return newUserFromModel(user), nil
 }
 
-func (r *PostgresRepository) GetUsers(
-	ctx context.Context,
-	pageScope entities.PageScope,
-) ([]entities.User, entities.PageScope, error) {
+func (r *PostgresRepository) GetUsers(ctx context.Context, pageScope entities.PageScope) ([]entities.User, entities.PageScope, error) {
 	sql, args, err := queries.GetUsers(pageScope.PerPage, pageScope.Offset()).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err

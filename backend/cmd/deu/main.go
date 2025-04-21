@@ -210,11 +210,10 @@ func addProviderRoutes(
 	endpoints providers.ProviderEndpointsHandler,
 	middlewares ...echo.MiddlewareFunc,
 ) {
-	publicGroup := e.Group("/providers")
-	publicGroup.GET("/:id", endpoints.GetProvider)
-	publicGroup.GET("", endpoints.GetProviders)
-	protectedGroup := e.Group("/providers", middlewares...)
-	protectedGroup.POST("", endpoints.CreateProvider)
-	protectedGroup.PUT("/:id", endpoints.UpdateProvider)
-	protectedGroup.DELETE("/:id", endpoints.DeleteProvider)
+	group := e.Group("/providers", middlewares...)
+	group.GET("/:id", endpoints.GetProvider)
+	group.GET("", endpoints.GetProviders)
+	group.POST("", endpoints.CreateProvider)
+	group.PUT("/:id", endpoints.UpdateProvider)
+	group.DELETE("/:id", endpoints.DeleteProvider)
 }

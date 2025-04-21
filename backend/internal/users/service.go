@@ -16,10 +16,7 @@ import (
 type Repository interface {
 	GetUser(ctx context.Context, userID string) (entities.User, error)
 	GetUserByUsername(ctx context.Context, username string) (entities.User, error)
-	GetUsers(
-		ctx context.Context,
-		pageScope entities.PageScope,
-	) ([]entities.User, entities.PageScope, error)
+	GetUsers(ctx context.Context, pageScope entities.PageScope) ([]entities.User, entities.PageScope, error)
 	CreateUser(ctx context.Context, user entities.User) (int64, error)
 	UpdateUser(ctx context.Context, userID string, user entities.User) error
 	DeleteUser(ctx context.Context, userID string) error

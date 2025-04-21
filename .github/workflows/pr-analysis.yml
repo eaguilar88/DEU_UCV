@@ -1,4 +1,4 @@
-name: Run Go Tests
+name: PR Analysis
 run-name: ${{github.actor}} is running Go app tests
 on:
   push:
@@ -52,7 +52,7 @@ jobs:
     - name: Install bc
       run: sudo apt update && sudo apt install bc
 
-    - name: Check Coverage Threshold - ${{ steps.relative-path.outputs.relative-path }}
+    - name: Check Coverage Threshold
       run: |
         cd backend
         $GITHUB_WORKSPACE/.github/workflows/gh-scripts/check-coverage.sh

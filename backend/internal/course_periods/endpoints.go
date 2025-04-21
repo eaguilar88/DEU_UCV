@@ -14,11 +14,7 @@ import (
 
 type Service interface {
 	GetCoursePeriod(ctx context.Context, periodID string) (entities.CoursePeriod, error)
-	GetCoursePeriods(
-		ctx context.Context,
-		courseID string,
-		pageScope entities.PageScope,
-	) ([]entities.CoursePeriod, entities.PageScope, error)
+	GetCoursePeriods(ctx context.Context, courseID string, pageScope entities.PageScope) ([]entities.CoursePeriod, entities.PageScope, error)
 	CreateCoursePeriod(ctx context.Context, period entities.CoursePeriod) (int64, error)
 	UpdateCoursePeriod(ctx context.Context, periodID string, period entities.CoursePeriod) error
 	DeleteCoursePeriod(ctx context.Context, periodID, userID string) error

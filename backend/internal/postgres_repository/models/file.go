@@ -4,11 +4,11 @@ type File struct {
 	ID         string
 	OwnerID    string
 	OwnerType  string
-	Path       string
-	FileName   string
+	FileKey    string
 	Public     bool
-	MetaData   map[string]string
+	Metadata   map[string]string
 	UploadedBy string
 	CreatedAt  string
+	UpdatedAt  string
 	DeletedAt  string
 }
