@@ -37,7 +37,7 @@ type ProvidersService struct {
 	logger  *zap.Logger
 }
 
-func NewProvidersService(repo Repository, storage StorageClient, logger *zap.Logger) Service {
+func NewProvidersService(repo Repository, storage StorageClient, logger *zap.Logger) *ProvidersService {
 	return &ProvidersService{
 		repo:    repo,
 		storage: storage,

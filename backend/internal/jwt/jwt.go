@@ -28,7 +28,7 @@ type JWTSigner struct {
 	Logger     *zap.Logger
 }
 
-func NewJWTSigner(signingKey string, ttl uint32, logger *zap.Logger) Signer {
+func NewJWTSigner(signingKey string, ttl uint32, logger *zap.Logger) *JWTSigner {
 	return &JWTSigner{
 		SigningKey: signingKey,
 		TTL:        ttl,

@@ -23,7 +23,7 @@ type CoursePeriodService struct {
 	log  *zap.Logger
 }
 
-func NewCoursePeriodsService(repository Repository, logger *zap.Logger) Service {
+func NewCoursePeriodsService(repository Repository, logger *zap.Logger) *CoursePeriodService {
 	return &CoursePeriodService{
 		repo: repository,
 		log:  logger,

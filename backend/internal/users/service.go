@@ -29,7 +29,7 @@ type UserService struct {
 	log  *zap.Logger
 }
 
-func NewUsersService(repository Repository, logger *zap.Logger) Service {
+func NewUsersService(repository Repository, logger *zap.Logger) *UserService {
 	return &UserService{
 		repo: repository,
 		log:  logger,
