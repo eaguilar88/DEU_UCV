@@ -21,7 +21,7 @@ type GroupService struct {
 	log  *zap.Logger
 }
 
-func NewGroupsService(repository Repository, logger *zap.Logger) Service {
+func NewGroupsService(repository Repository, logger *zap.Logger) *GroupService {
 	return &GroupService{
 		repo: repository,
 		log:  logger,

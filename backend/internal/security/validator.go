@@ -4,15 +4,11 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-type Validator interface {
-	Validate(req any) error
-}
-
 type CustomValidator struct {
 	validator *validator.Validate
 }
 
-func NewCustomValidator() Validator {
+func NewCustomValidator() *CustomValidator {
 	return &CustomValidator{
 		validator: validator.New(),
 	}
