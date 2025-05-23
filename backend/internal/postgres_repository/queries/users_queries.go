@@ -23,6 +23,7 @@ func GetRolesByUserID(userID string) sq.SelectBuilder {
 func GetUserByUsername(username string) sq.SelectBuilder {
 	return psql.Select("u.id", "u.email", "u.first_name", "u.last_name", "u.password").
 		From(fmt.Sprintf("%s AS u", usersTableName)).
+		Where(sq.Eq{"u.deleted_at": nil}).
 		Where(sq.Eq{"u.email": username})
 }
 
@@ -30,6 +31,7 @@ func GetUserByID(userID string) sq.SelectBuilder {
 	return psql.Select(userQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS u", usersTableName)).
 		LeftJoin(fmt.Sprintf("%s AS p ON p.user_id = u.id", providersTableName)).
+		Where(sq.Eq{"u.deleted_at": nil}).
 		Where(sq.Eq{"u.id": userID})
 }
 
@@ -38,6 +40,7 @@ func GetUsers(limit, offset int) sq.SelectBuilder {
 		From(fmt.Sprintf("%s AS u", usersTableName)).
 		Limit(uint64(limit)).
 		LeftJoin(fmt.Sprintf("%s AS p ON p.user_id = u.id", providersTableName)).
+		Where(sq.Eq{"u.deleted_at": nil}).
 		Offset(uint64(offset))
 }
 
@@ -45,6 +48,7 @@ func GetUsersByCoursePeriodID(coursePeriodID string) sq.SelectBuilder {
 	return psql.Select("u.id", "u.ci", "u.first_name", "u.last_name").
 		From(fmt.Sprintf("%s AS u", usersTableName)).
 		Join(fmt.Sprintf("%s AS up ON up.user_id = u.id", participantsTableName)).
+		Where(sq.Eq{"u.deleted_at": nil}).
 		Where(sq.Eq{"up.id": coursePeriodID})
 }
 
@@ -94,12 +98,14 @@ func UpdateUserInfo(user entities.User, userID string) sq.UpdateBuilder {
 		Set("address", user.Address).
 		Set("education", user.EducationLevel).
 		Set("updated_at", sq.Expr("NOW()")).
+		Where(sq.Eq{"u.deleted_at": nil}).
 		Where(sq.Eq{"id": userID})
 }
 
 func UpdateUsername(user entities.User, userID string) sq.UpdateBuilder {
 	return psql.Update(usersTableName).
 		Set("updated_at", sq.Expr("NOW()")).
+		Where(sq.Eq{"u.deleted_at": nil}).
 		Where(sq.Eq{"id": userID})
 }
 
@@ -107,6 +113,7 @@ func UpdateUserPassword(userID string, password string) sq.UpdateBuilder {
 	return psql.Update(fmt.Sprintf("%s AS u", usersTableName)).
 		Set("password", password).
 		Set("u.updated_at", sq.Expr("NOW()")).
+		Where(sq.Eq{"u.deleted_at": nil}).
 		Where(sq.Eq{"u.id": userID})
 }
 
@@ -115,10 +122,5 @@ func SoftDeleteUser(userID string) sq.UpdateBuilder {
 		Set("deleted_at", sq.Expr("NOW()")).
 		Set("updated_at", sq.Expr("NOW()")).
 		Where(sq.Eq{"deleted_at": nil}).
-		Where(sq.Eq{"id": userID})
-}
-
-func DeleteUser(userID string) sq.DeleteBuilder {
-	return psql.Delete(usersTableName).
 		Where(sq.Eq{"id": userID})
 }

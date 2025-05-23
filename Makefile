@@ -4,7 +4,7 @@ loadenv:
 	@set -a && source .env && set +a && env | grep -E '^HTTP_'
 
 start-backend:
-	git submodule update --recursive
+	git submodule update --recursive --remote
 	docker compose up -d
 
 start-prod:
@@ -12,7 +12,7 @@ start-prod:
 	docker compose -f docker-compose.prod.yml up -d
 
 start-db:
-	git submodule update --recursive
+	git submodule update --recursive --remote
 	docker compose -f docker-compose.dev.yml up -d
 
 stop-backend:
@@ -29,3 +29,7 @@ generate-mocks:
 
 go-test:
 	cd backend && go test -count=1 -short -cover ./...
+
+git-pull:
+	git submodule update --recursive --remote
+	git pull

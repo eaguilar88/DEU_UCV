@@ -9,10 +9,10 @@ import (
 )
 
 type Repository interface {
-	GetEndorsement(ctx context.Context, endorsementID string) (entities.Endorsement, error)
-	GetEndorsements(ctx context.Context, pageScope entities.PageScope) ([]entities.Endorsement, entities.PageScope, error)
-	CreateEndorsement(ctx context.Context, endorsement entities.Endorsement) (int64, error)
-	UpdateEndorsement(ctx context.Context, endorsementID string, endorsement entities.Endorsement) error
+	GetEndorsement(ctx context.Context, endorsementID string) (entities.CourseRequest, error)
+	GetEndorsements(ctx context.Context, pageScope entities.PageScope) ([]entities.CourseRequest, entities.PageScope, error)
+	CreateEndorsement(ctx context.Context, endorsement entities.CourseRequest) (int64, error)
+	UpdateEndorsement(ctx context.Context, endorsementID string, endorsement entities.CourseRequest) error
 	DeleteEndorsement(ctx context.Context, endorsementID string) error
 }
 
@@ -37,21 +37,15 @@ func NewEndorsementsService(repository Repository, s3 StorageClient, logger *zap
 	}
 }
 
-func (s *EndorsementService) GetEndorsement(
-	ctx context.Context,
-	endorsementID string,
-) (entities.Endorsement, error) {
+func (s *EndorsementService) GetEndorsement(ctx context.Context, endorsementID string) (entities.CourseRequest, error) {
 	user, err := s.repo.GetEndorsement(ctx, endorsementID)
 	if err != nil {
-		return entities.Endorsement{}, err
+		return entities.CourseRequest{}, err
 	}
 	return user, nil
 }
 
-func (s *EndorsementService) GetEndorsements(
-	ctx context.Context,
-	pageScope entities.PageScope,
-) ([]entities.Endorsement, entities.PageScope, error) {
+func (s *EndorsementService) GetEndorsements(ctx context.Context, pageScope entities.PageScope) ([]entities.CourseRequest, entities.PageScope, error) {
 	users, page, err := s.repo.GetEndorsements(ctx, pageScope)
 	if err != nil {
 		return nil, entities.PageScope{}, err
@@ -59,10 +53,7 @@ func (s *EndorsementService) GetEndorsements(
 	return users, page, nil
 }
 
-func (s *EndorsementService) CreateEndorsement(
-	ctx context.Context,
-	endorsement entities.Endorsement,
-) (int64, error) {
+func (s *EndorsementService) CreateEndorsement(ctx context.Context, endorsement entities.CourseRequest) (int64, error) {
 	id, err := s.repo.CreateEndorsement(ctx, endorsement)
 	if err != nil {
 		return -1, err
@@ -70,10 +61,7 @@ func (s *EndorsementService) CreateEndorsement(
 	return id, nil
 }
 
-func (s *EndorsementService) UpdateEndorsement(
-	ctx context.Context,
-	endorsement entities.Endorsement,
-) error {
+func (s *EndorsementService) UpdateEndorsement(ctx context.Context, endorsement entities.CourseRequest) error {
 	if err := s.repo.UpdateEndorsement(ctx, endorsement.ID, endorsement); err != nil {
 		return err
 	}

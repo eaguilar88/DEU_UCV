@@ -12,7 +12,7 @@ type GetCourseRequest struct {
 
 type CreateCourseRequest struct {
 	UserID        string
-	EndorsementID string  `json:"endorsement_id"`
+	EndorsementID string  `json:"request_id"`
 	Name          string  `json:"name"`
 	Description   string  `json:"description"`
 	Objectives    string  `json:"objectives"`

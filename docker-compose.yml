@@ -15,7 +15,7 @@ services:
     image: postgres:16-alpine
     restart: "unless-stopped"
     volumes:
-      - ./postgresql/v2:/docker-entrypoint-initdb.d
+      - ./postgresql:/docker-entrypoint-initdb.d
     ports:
       - ${POSTGRES_PORT}:${POSTGRES_PORT}
     env_file:

@@ -1,11 +1,11 @@
-package endorsements
+package course_request
 
 import (
 	"github.com/eaguilar88/deu/internal/entities"
 )
 
-func createEndorsementRequestToEntitiesEndorsement(
-	req CreateEndorsementRequest,
+func createCourseRequestRequestToEntitiesCourseRequest(
+	req CreateCourseRequestRequest,
 ) entities.CourseRequest {
 	return entities.CourseRequest{
 		User: entities.User{
@@ -21,8 +21,8 @@ func createEndorsementRequestToEntitiesEndorsement(
 	}
 }
 
-func updateEndorsementRequestToEntitiesEndorsement(
-	req UpdateEndorsementRequest,
+func updateCourseRequestRequestToEntitiesCourseRequest(
+	req UpdateCourseRequestRequest,
 ) entities.CourseRequest {
 	return entities.CourseRequest{
 		ID: req.ID,

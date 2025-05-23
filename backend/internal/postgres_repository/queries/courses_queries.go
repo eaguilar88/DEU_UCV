@@ -11,7 +11,7 @@ var courseQuerySelectCommon = []string{
 	"c.id",
 	"c.name",
 	"c.description",
-	"c.endorsement_id",
+	"c.request_id",
 	"requester.id",
 	"requester.first_name",
 	"requester.last_name",
@@ -30,7 +30,7 @@ var courseQuerySelectCommon = []string{
 func GetCourseByID(courseID string) sq.SelectBuilder {
 	return psql.Select(courseQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS c", coursesTableName)).
-		Join(fmt.Sprintf("%s AS r ON c.endorsement_id = r.id", endorsementsTableName)).
+		Join(fmt.Sprintf("%s AS r ON c.request_id = r.id", courseRequestsTableName)).
 		Join(fmt.Sprintf("%s AS requester ON c.user_id = requester.id", usersTableName)).
 		Join(fmt.Sprintf("%s AS reviewer ON r.reviewer_id = reviewer.id", usersTableName)).
 		Where(sq.Eq{"e.id": courseID})
@@ -39,7 +39,7 @@ func GetCourseByID(courseID string) sq.SelectBuilder {
 func GetCourses(limit, offset int) sq.SelectBuilder {
 	return psql.Select(courseQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS c", coursesTableName)).
-		Join(fmt.Sprintf("%s AS r ON c.endorsement_id = r.id", endorsementsTableName)).
+		Join(fmt.Sprintf("%s AS r ON c.request_id = r.id", courseRequestsTableName)).
 		Join(fmt.Sprintf("%s AS requester ON r.user_id = requester.id", usersTableName)).
 		Join(fmt.Sprintf("%s AS reviewer ON r.reviewer_id = reviewer.id", usersTableName)).
 		Limit(uint64(limit)).
@@ -52,7 +52,7 @@ func InsertCourse(course models.Course) sq.InsertBuilder {
 			"name",
 			"description",
 			"user_id",
-			"endorsement_id",
+			"request_id",
 			"objectives",
 			"content",
 			"cost",
@@ -62,7 +62,7 @@ func InsertCourse(course models.Course) sq.InsertBuilder {
 			course.Name,
 			course.Description,
 			course.OwnerID,
-			course.EndorsementID,
+			course.RequestID,
 			course.Objectives,
 			course.Content,
 			course.Cost,

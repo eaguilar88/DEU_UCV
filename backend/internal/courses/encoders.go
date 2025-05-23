@@ -1,7 +1,7 @@
 package courses
 
 import (
-	"github.com/eaguilar88/deu/internal/endorsements"
+	"github.com/eaguilar88/deu/internal/course_request"
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/users"
 )
@@ -15,7 +15,20 @@ func EntitiesCoursesToGetCoursesResponse(courses []entities.Course) []GetCourseR
 }
 
 func EntitiesCourseToGetCourseResponse(course entities.Course) GetCourseResponse {
-	endorsement := endorsements.EntitiesEndorsementToGetEndorsementResponse(course.Endorsement)
+	// Using the new course_request package
+	endorsement := course_request.EntitiesCourseRequestToGetCourseRequestResponse(entities.CourseRequest{
+		ID:          course.CourseRequest.ID,
+		User:        course.CourseRequest.User,
+		Reviewer:    course.CourseRequest.Reviewer,
+		Status:      course.CourseRequest.Status,
+		Type:        course.CourseRequest.Type,
+		Name:        course.CourseRequest.Name,
+		Description: course.CourseRequest.Description,
+		Comments:    course.CourseRequest.Comments,
+		ReviewedAt:  course.CourseRequest.ReviewedAt,
+		CreatedAt:   course.CourseRequest.CreatedAt,
+		UpdatedAtAt: course.CourseRequest.UpdatedAtAt,
+	})
 	owner := users.UserEntityToGetUserResponse(course.Owner)
 	return GetCourseResponse{
 		ID:          course.ID,

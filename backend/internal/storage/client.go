@@ -3,7 +3,10 @@ package storage
 import (
 	"context"
 	"fmt"
+	"io"
 	"mime/multipart"
+	"os"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -61,26 +64,103 @@ func (b *B2Client) UploadFile(ctx context.Context, file multipart.File, objectKe
 }
 
 func (b *B2Client) DownloadFile(ctx context.Context, objectKey string, destinationPath string) error {
-	// Implement the download logic here
+	result, err := b.client.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(b.bucketName),
+		Key:    aws.String(objectKey),
+	})
+	if err != nil {
+		b.logger.Error("failed to download file", zap.String("objectKey", objectKey), zap.Error(err))
+		return fmt.Errorf("failed to download file: %w", err)
+	}
+	defer result.Body.Close()
+
+	// Create the destination file
+	file, err := os.Create(destinationPath)
+	if err != nil {
+		b.logger.Error("failed to create destination file", zap.String("destinationPath", destinationPath), zap.Error(err))
+		return fmt.Errorf("failed to create destination file: %w", err)
+	}
+	defer file.Close()
+
+	// Copy the content from the S3 object to the file
+	_, err = io.Copy(file, result.Body)
+	if err != nil {
+		b.logger.Error("failed to write to destination file", zap.String("destinationPath", destinationPath), zap.Error(err))
+		return fmt.Errorf("failed to write to destination file: %w", err)
+	}
+
 	return nil
 }
 
 func (b *B2Client) DeleteFile(ctx context.Context, objectKey string) error {
-	// Implement the delete logic here
+	_, err := b.client.DeleteObject(ctx, &s3.DeleteObjectInput{
+		Bucket: aws.String(b.bucketName),
+		Key:    aws.String(objectKey),
+	})
+	if err != nil {
+		b.logger.Error("failed to delete file", zap.String("objectKey", objectKey), zap.Error(err))
+		return fmt.Errorf("failed to delete file: %w", err)
+	}
+
 	return nil
 }
 
 func (b *B2Client) ListFiles(ctx context.Context, prefix string) ([]string, error) {
-	// Implement the list files logic here
-	return nil, nil
+	input := &s3.ListObjectsV2Input{
+		Bucket: aws.String(b.bucketName),
+	}
+
+	if prefix != "" {
+		input.Prefix = aws.String(prefix)
+	}
+
+	var fileKeys []string
+	paginator := s3.NewListObjectsV2Paginator(b.client, input)
+
+	for paginator.HasMorePages() {
+		output, err := paginator.NextPage(ctx)
+		if err != nil {
+			b.logger.Error("failed to list files", zap.String("prefix", prefix), zap.Error(err))
+			return nil, fmt.Errorf("failed to list files: %w", err)
+		}
+
+		for _, object := range output.Contents {
+			fileKeys = append(fileKeys, *object.Key)
+		}
+	}
+
+	return fileKeys, nil
 }
 
 func (b *B2Client) GetFileURL(ctx context.Context, objectKey string) (string, error) {
-	// Implement the get file URL logic here
-	return "", nil
+	// Create a presign client
+	presignClient := s3.NewPresignClient(b.client)
+
+	// Create a presigned URL for GetObject with 15 minutes expiration
+	presignResult, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(b.bucketName),
+		Key:    aws.String(objectKey),
+	}, func(opts *s3.PresignOptions) {
+		opts.Expires = 15 * time.Minute
+	})
+
+	if err != nil {
+		b.logger.Error("failed to generate presigned URL", zap.String("objectKey", objectKey), zap.Error(err))
+		return "", fmt.Errorf("failed to generate presigned URL: %w", err)
+	}
+
+	return presignResult.URL, nil
 }
 
 func (b *B2Client) GetFileMetadata(ctx context.Context, objectKey string) (map[string]string, error) {
-	// Implement the get file metadata logic here
-	return nil, nil
+	result, err := b.client.HeadObject(ctx, &s3.HeadObjectInput{
+		Bucket: aws.String(b.bucketName),
+		Key:    aws.String(objectKey),
+	})
+	if err != nil {
+		b.logger.Error("failed to get file metadata", zap.String("objectKey", objectKey), zap.Error(err))
+		return nil, fmt.Errorf("failed to get file metadata: %w", err)
+	}
+
+	return result.Metadata, nil
 }

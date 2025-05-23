@@ -11,10 +11,10 @@ import (
 )
 
 type Service interface {
-	GetEndorsement(ctx context.Context, endorsementID string) (entities.Endorsement, error)
-	GetEndorsements(ctx context.Context, pageScope entities.PageScope) ([]entities.Endorsement, entities.PageScope, error)
-	CreateEndorsement(ctx context.Context, endorsement entities.Endorsement) (int64, error)
-	UpdateEndorsement(ctx context.Context, endorsement entities.Endorsement) error
+	GetEndorsement(ctx context.Context, endorsementID string) (entities.CourseRequest, error)
+	GetEndorsements(ctx context.Context, pageScope entities.PageScope) ([]entities.CourseRequest, entities.PageScope, error)
+	CreateEndorsement(ctx context.Context, endorsement entities.CourseRequest) (int64, error)
+	UpdateEndorsement(ctx context.Context, endorsement entities.CourseRequest) error
 	DeleteEndorsement(ctx context.Context, endorsementID string) error
 }
 

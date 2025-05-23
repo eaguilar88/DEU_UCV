@@ -6,7 +6,7 @@ import (
 )
 
 func EndorsementEntitiesToGetEndorsementsResponse(
-	endorsements []entities.Endorsement,
+	endorsements []entities.CourseRequest,
 ) []GetEndorsementResponse {
 	responses := make([]GetEndorsementResponse, 0, len(endorsements))
 	for _, endorsement := range endorsements {
@@ -16,7 +16,7 @@ func EndorsementEntitiesToGetEndorsementsResponse(
 }
 
 func EntitiesEndorsementToGetEndorsementResponse(
-	endorsement entities.Endorsement,
+	endorsement entities.CourseRequest,
 ) GetEndorsementResponse {
 	user := users.UserEntityToGetUserResponse(endorsement.User)
 	reviewer := users.UserEntityToGetUserResponse(endorsement.Reviewer)

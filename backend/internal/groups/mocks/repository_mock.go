@@ -127,12 +127,12 @@ func (_c *RepositoryMock_DeleteGroup_Call) RunAndReturn(run func(context.Context
 	return _c
 }
 
-// GetGroup provides a mock function with given fields: ctx, groupID
-func (_m *RepositoryMock) GetGroup(ctx context.Context, groupID string) (entities.ExtensionGroup, error) {
+// GetGroupByID provides a mock function with given fields: ctx, groupID
+func (_m *RepositoryMock) GetGroupByID(ctx context.Context, groupID string) (entities.ExtensionGroup, error) {
 	ret := _m.Called(ctx, groupID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetGroup")
+		panic("no return value specified for GetGroupByID")
 	}
 
 	var r0 entities.ExtensionGroup
@@ -155,31 +155,31 @@ func (_m *RepositoryMock) GetGroup(ctx context.Context, groupID string) (entitie
 	return r0, r1
 }
 
-// RepositoryMock_GetGroup_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetGroup'
-type RepositoryMock_GetGroup_Call struct {
+// RepositoryMock_GetGroupByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetGroupByID'
+type RepositoryMock_GetGroupByID_Call struct {
 	*mock.Call
 }
 
-// GetGroup is a helper method to define mock.On call
+// GetGroupByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - groupID string
-func (_e *RepositoryMock_Expecter) GetGroup(ctx interface{}, groupID interface{}) *RepositoryMock_GetGroup_Call {
-	return &RepositoryMock_GetGroup_Call{Call: _e.mock.On("GetGroup", ctx, groupID)}
+func (_e *RepositoryMock_Expecter) GetGroupByID(ctx interface{}, groupID interface{}) *RepositoryMock_GetGroupByID_Call {
+	return &RepositoryMock_GetGroupByID_Call{Call: _e.mock.On("GetGroupByID", ctx, groupID)}
 }
 
-func (_c *RepositoryMock_GetGroup_Call) Run(run func(ctx context.Context, groupID string)) *RepositoryMock_GetGroup_Call {
+func (_c *RepositoryMock_GetGroupByID_Call) Run(run func(ctx context.Context, groupID string)) *RepositoryMock_GetGroupByID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
 
-func (_c *RepositoryMock_GetGroup_Call) Return(_a0 entities.ExtensionGroup, _a1 error) *RepositoryMock_GetGroup_Call {
+func (_c *RepositoryMock_GetGroupByID_Call) Return(_a0 entities.ExtensionGroup, _a1 error) *RepositoryMock_GetGroupByID_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *RepositoryMock_GetGroup_Call) RunAndReturn(run func(context.Context, string) (entities.ExtensionGroup, error)) *RepositoryMock_GetGroup_Call {
+func (_c *RepositoryMock_GetGroupByID_Call) RunAndReturn(run func(context.Context, string) (entities.ExtensionGroup, error)) *RepositoryMock_GetGroupByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -250,17 +250,17 @@ func (_c *RepositoryMock_GetGroups_Call) RunAndReturn(run func(context.Context, 
 	return _c
 }
 
-// UpdateGroup provides a mock function with given fields: ctx, groupID, group
-func (_m *RepositoryMock) UpdateGroup(ctx context.Context, groupID string, group entities.ExtensionGroup) error {
-	ret := _m.Called(ctx, groupID, group)
+// UpdateGroup provides a mock function with given fields: ctx, group
+func (_m *RepositoryMock) UpdateGroup(ctx context.Context, group entities.ExtensionGroup) error {
+	ret := _m.Called(ctx, group)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateGroup")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, entities.ExtensionGroup) error); ok {
-		r0 = rf(ctx, groupID, group)
+	if rf, ok := ret.Get(0).(func(context.Context, entities.ExtensionGroup) error); ok {
+		r0 = rf(ctx, group)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -275,15 +275,14 @@ type RepositoryMock_UpdateGroup_Call struct {
 
 // UpdateGroup is a helper method to define mock.On call
 //   - ctx context.Context
-//   - groupID string
 //   - group entities.ExtensionGroup
-func (_e *RepositoryMock_Expecter) UpdateGroup(ctx interface{}, groupID interface{}, group interface{}) *RepositoryMock_UpdateGroup_Call {
-	return &RepositoryMock_UpdateGroup_Call{Call: _e.mock.On("UpdateGroup", ctx, groupID, group)}
+func (_e *RepositoryMock_Expecter) UpdateGroup(ctx interface{}, group interface{}) *RepositoryMock_UpdateGroup_Call {
+	return &RepositoryMock_UpdateGroup_Call{Call: _e.mock.On("UpdateGroup", ctx, group)}
 }
 
-func (_c *RepositoryMock_UpdateGroup_Call) Run(run func(ctx context.Context, groupID string, group entities.ExtensionGroup)) *RepositoryMock_UpdateGroup_Call {
+func (_c *RepositoryMock_UpdateGroup_Call) Run(run func(ctx context.Context, group entities.ExtensionGroup)) *RepositoryMock_UpdateGroup_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(entities.ExtensionGroup))
+		run(args[0].(context.Context), args[1].(entities.ExtensionGroup))
 	})
 	return _c
 }
@@ -293,7 +292,7 @@ func (_c *RepositoryMock_UpdateGroup_Call) Return(_a0 error) *RepositoryMock_Upd
 	return _c
 }
 
-func (_c *RepositoryMock_UpdateGroup_Call) RunAndReturn(run func(context.Context, string, entities.ExtensionGroup) error) *RepositoryMock_UpdateGroup_Call {
+func (_c *RepositoryMock_UpdateGroup_Call) RunAndReturn(run func(context.Context, entities.ExtensionGroup) error) *RepositoryMock_UpdateGroup_Call {
 	_c.Call.Return(run)
 	return _c
 }
