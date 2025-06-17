@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"mime/multipart"
-	"os"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -48,7 +46,7 @@ func NewB2Client(bucketName, keyID, applicationKey, endpoint, region string, log
 	}, nil
 }
 
-func (b *B2Client) UploadFile(ctx context.Context, file multipart.File, objectKey string, metadata map[string]string) error {
+func (b *B2Client) UploadFile(ctx context.Context, file io.Reader, objectKey string, metadata map[string]string) error {
 	_, err := b.client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket:   aws.String(b.bucketName),
 		Key:      aws.String(objectKey),
@@ -58,35 +56,6 @@ func (b *B2Client) UploadFile(ctx context.Context, file multipart.File, objectKe
 	if err != nil {
 		b.logger.Error("failed to upload file", zap.String("objectKey", objectKey), zap.Error(err))
 		return fmt.Errorf("failed to upload file: %w", err)
-	}
-
-	return nil
-}
-
-func (b *B2Client) DownloadFile(ctx context.Context, objectKey string, destinationPath string) error {
-	result, err := b.client.GetObject(ctx, &s3.GetObjectInput{
-		Bucket: aws.String(b.bucketName),
-		Key:    aws.String(objectKey),
-	})
-	if err != nil {
-		b.logger.Error("failed to download file", zap.String("objectKey", objectKey), zap.Error(err))
-		return fmt.Errorf("failed to download file: %w", err)
-	}
-	defer result.Body.Close()
-
-	// Create the destination file
-	file, err := os.Create(destinationPath)
-	if err != nil {
-		b.logger.Error("failed to create destination file", zap.String("destinationPath", destinationPath), zap.Error(err))
-		return fmt.Errorf("failed to create destination file: %w", err)
-	}
-	defer file.Close()
-
-	// Copy the content from the S3 object to the file
-	_, err = io.Copy(file, result.Body)
-	if err != nil {
-		b.logger.Error("failed to write to destination file", zap.String("destinationPath", destinationPath), zap.Error(err))
-		return fmt.Errorf("failed to write to destination file: %w", err)
 	}
 
 	return nil
@@ -103,33 +72,6 @@ func (b *B2Client) DeleteFile(ctx context.Context, objectKey string) error {
 	}
 
 	return nil
-}
-
-func (b *B2Client) ListFiles(ctx context.Context, prefix string) ([]string, error) {
-	input := &s3.ListObjectsV2Input{
-		Bucket: aws.String(b.bucketName),
-	}
-
-	if prefix != "" {
-		input.Prefix = aws.String(prefix)
-	}
-
-	var fileKeys []string
-	paginator := s3.NewListObjectsV2Paginator(b.client, input)
-
-	for paginator.HasMorePages() {
-		output, err := paginator.NextPage(ctx)
-		if err != nil {
-			b.logger.Error("failed to list files", zap.String("prefix", prefix), zap.Error(err))
-			return nil, fmt.Errorf("failed to list files: %w", err)
-		}
-
-		for _, object := range output.Contents {
-			fileKeys = append(fileKeys, *object.Key)
-		}
-	}
-
-	return fileKeys, nil
 }
 
 func (b *B2Client) GetFileURL(ctx context.Context, objectKey string) (string, error) {

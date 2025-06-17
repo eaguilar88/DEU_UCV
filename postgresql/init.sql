@@ -266,6 +266,7 @@ files (
   owner_type TEXT NOT NULL CHECK (owner_type IN ('course', 'group', 'group_activity', 'course_cycle', 'provider')),
   owner_id INTEGER NOT NULL,
   file_key TEXT NOT NULL,
+  purpose TEXT NOT NULL,
   public BOOLEAN DEFAULT false,
   metadata JSONB,
   uploaded_by INTEGER REFERENCES deu.users(id),

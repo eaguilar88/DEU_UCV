@@ -4,6 +4,6 @@
 [submodule "landing"]
 	path = landing
 	url = git@github.com:SoniAmira/DEUWEB.git
-[submodule "backend/grupos"]
-	path = backend/grupos
+[submodule "grupos"]
+	path = grupos
 	url = git@github.com:Kristian333/gsu_ucv.git
