@@ -1,6 +1,6 @@
 module github.com/eaguilar88/deu
 
-go 1.22
+go 1.23.0
 
 toolchain go1.24.2
 
@@ -19,7 +19,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/zap v1.27.0
-	golang.org/x/crypto v0.33.0
+	golang.org/x/crypto v0.35.0
 )
 
 require (
