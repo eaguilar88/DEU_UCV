@@ -47,9 +47,25 @@ services:
       - db
     labels:
       - "traefik.enable=true"                     # Enable Traefik for this service
-      - "traefik.http.routers.diplomados.rule=Host(`diplomados.localhost`)"  # Route based on hostname
-      - "traefik.http.routers.diplomados.entrypoints=web"  # Use the web entrypoint
-      - "traefik.http.services.diplomados.loadbalancer.server.port=80"  # Target container's port
+      - "traefik.http.routers.formacion.rule=Host(`formacion.extension.ucv.ve`)"  # Route based on hostname
+      - "traefik.http.routers.formacion.entrypoints=web"  # Use the web entrypoint
+      - "traefik.http.services.formacion.loadbalancer.server.port=80"  # Target container's port
+    networks:
+      - web
+  grupos:
+    container_name: "grupos-app"
+    build:
+      context: "./grupos/gsu_ucv"
+      dockerfile: "Dockerfile"
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - db
+    labels:
+      - "traefik.enable=true"                     # Enable Traefik for this service
+      - "traefik.http.routers.grupos.rule=Host(`grupos.extension.ucv.ve`)"  # Route based on hostname
+      - "traefik.http.routers.grupos.entrypoints=web"  # Use the web entrypoint
+      - "traefik.http.services.grupos.loadbalancer.server.port=80"  # Target container's port
     networks:
       - web
   backend:
@@ -90,6 +106,6 @@ networks:
     driver: bridge
 secrets:
   b2_key_id:
-    external: true
+    file: ./secrets/b2_key_id
   b2_application_id:
-    external: true
+    file: ./secrets/b2_application_id
