@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/caarlos0/env/v10"
 	"go.uber.org/zap"
@@ -86,5 +87,5 @@ func readSecret(filePath string) string {
 	if err != nil {
 		log.Fatalf("Failed to read secret from %s: %v", filePath, err)
 	}
-	return string(data)
+	return strings.TrimSpace(string(data))
 }
