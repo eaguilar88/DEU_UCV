@@ -75,3 +75,8 @@ func DeleteProvider(id string) sq.UpdateBuilder {
 		Set("is_active", false).
 		Where(sq.Eq{"id": id})
 }
+
+func HardDeleteProvider(id string) sq.DeleteBuilder {
+	return psql.Delete(providersTableName).
+		Where(sq.Eq{"id": id})
+}

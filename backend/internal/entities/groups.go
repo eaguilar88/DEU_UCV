@@ -1,5 +1,9 @@
 package entities
 
+const (
+	GroupFileTypeLogo = "logo"
+)
+
 type ExtensionGroup struct {
 	ID            string
 	Name          string

@@ -9,7 +9,6 @@ import (
 	"github.com/eaguilar88/deu/internal/auth"
 	"github.com/eaguilar88/deu/internal/config"
 	"github.com/eaguilar88/deu/internal/course_periods"
-	"github.com/eaguilar88/deu/internal/course_request"
 	"github.com/eaguilar88/deu/internal/courses"
 	"github.com/eaguilar88/deu/internal/groups"
 	"github.com/eaguilar88/deu/internal/jwt"
@@ -79,9 +78,6 @@ func main() {
 	providerService := providers.NewProvidersService(repository, bbClient, logger)
 	providerEndpoints := providers.MakeProviderEndpointsHandler(providerService, logger)
 
-	// courseRequestSvc := course_request.NewCourseRequestService(repository, bbClient, logger)
-	// courseRequestEndpoints := course_request.MakeCourseRequestEndpointsHandler(courseRequestSvc, logger)
-
 	courseSvc := courses.NewCoursesService(repository, logger)
 	courseEndpoints := courses.MakeCourseEndpointsHandler(courseSvc, logger)
 
@@ -103,7 +99,6 @@ func main() {
 	addAuthRoutes(e, authEndpoints)
 	addUserRoutes(e, userEndpoints, middlewares...)
 	addProviderRoutes(e, providerEndpoints, middlewares...)
-	// addCourseRequestRoutes(e, courseRequestEndpoints, middlewares...)
 	addCourseRoutes(e, courseEndpoints, middlewares...)
 	addCoursePeriodRoutes(e, cpEndpoints, middlewares...)
 	addGroupsRoutes(e, groupEndpoints, middlewares...)
@@ -148,15 +143,6 @@ func addUserRoutes(
 	g.POST("", endpoints.CreateUser)
 	g.PUT("/:id", endpoints.UpdateUser)
 	g.DELETE("/:id", endpoints.DeleteUser)
-}
-
-func addCourseRequestRoutes(e *echo.Echo, endpoints course_request.CourseRequestEndpointsHandler, middlewares ...echo.MiddlewareFunc) {
-	g := e.Group("/course-requests", middlewares...)
-	g.GET("/:id", endpoints.GetCourseRequest)
-	g.GET("", endpoints.GetCourseRequests)
-	g.POST("", endpoints.CreateCourseRequest)
-	g.PUT("/:id", endpoints.UpdateCourseRequest)
-	g.DELETE("/:id", endpoints.DeleteCourseRequest)
 }
 
 func addCourseRoutes(

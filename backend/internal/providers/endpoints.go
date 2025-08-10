@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/eaguilar88/deu/internal/entities"
+	"github.com/eaguilar88/deu/internal/utils"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
@@ -126,18 +127,18 @@ func (h *ProviderEndpointsHandler) DeleteProvider(c echo.Context) error {
 func makeProviderFromRequest(c echo.Context, userID string, logger *zap.Logger) (*entities.Provider, error) {
 	providerType := c.FormValue("provider_type")
 	isInternal := c.FormValue("is_internal")
-	ci, err := getFileFromForm(c, "ci", entities.ProviderFileTypeCI)
+	ci, err := utils.GetFileFromForm(c, "ci", entities.ProviderFileTypeCI)
 	if err != nil {
 		logger.Error("error getting ci", zap.Error(err))
 		return nil, errors.New("ci is required")
 	}
-	rif, err := getFileFromForm(c, "rif", entities.ProviderFileTypeRIF)
+	rif, err := utils.GetFileFromForm(c, "rif", entities.ProviderFileTypeRIF)
 	if err != nil {
 		logger.Error("error getting rif", zap.Error(err))
 		return nil, errors.New("rif is required")
 	}
 
-	islr, err := getFileFromForm(c, "islr", entities.ProviderFileTypeISLR)
+	islr, err := utils.GetFileFromForm(c, "islr", entities.ProviderFileTypeISLR)
 	if err != nil {
 		logger.Error("error getting islr", zap.Error(err))
 		return nil, errors.New("islr is required")
@@ -196,20 +197,4 @@ func makeProviderFromRequest(c echo.Context, userID string, logger *zap.Logger) 
 	provider.Files.Others = others
 
 	return provider, nil
-}
-
-func getFileFromForm(c echo.Context, name, purpose string) (*entities.File, error) {
-	file, err := c.FormFile(name)
-	if err != nil {
-		return nil, err
-	}
-	body, err := file.Open()
-	if err != nil {
-		return nil, err
-	}
-	return &entities.File{
-		Name:    file.Filename,
-		Body:    body,
-		Purpose: purpose,
-	}, nil
 }
