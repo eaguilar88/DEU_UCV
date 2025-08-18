@@ -12,7 +12,7 @@ type ProviderPrefix string
 type ProviderType string
 
 const (
-	//Provider code prefixes
+	// Provider code prefixes
 	CourseProvider ProviderPrefix = "ECP"
 	GroupProvider  ProviderPrefix = "GEX"
 

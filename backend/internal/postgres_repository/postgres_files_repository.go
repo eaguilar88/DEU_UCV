@@ -93,7 +93,7 @@ func (r *PostgresRepository) scanFile(rows scannable) (models.File, error) {
 }
 
 func newFileFromEntity(file entities.File) models.File {
-	var model = models.File{
+	model := models.File{
 		ID:         file.ID,
 		OwnerID:    file.OwnerID,
 		OwnerType:  string(file.OwnerType),
@@ -112,7 +112,7 @@ func newFileFromEntity(file entities.File) models.File {
 }
 
 func newFileFromModel(file models.File) *entities.File {
-	var model = &entities.File{
+	model := &entities.File{
 		ID:         file.ID,
 		OwnerID:    file.OwnerID,
 		OwnerType:  entities.OwnerType(file.OwnerType),

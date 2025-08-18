@@ -60,7 +60,7 @@ func (h *CourseRequestEndpointsHandler) GetCourseRequests(c echo.Context) error 
 
 	return c.JSON(http.StatusOK, GetCourseRequestsResponse{
 		CourseRequests: CourseRequestEntitiesToGetCourseRequestsResponse(courseRequests),
-		Pages:        pages,
+		Pages:          pages,
 	})
 }
 

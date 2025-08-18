@@ -85,7 +85,6 @@ func (b *B2Client) GetFileURL(ctx context.Context, objectKey string) (string, er
 	}, func(opts *s3.PresignOptions) {
 		opts.Expires = 15 * time.Minute
 	})
-
 	if err != nil {
 		b.logger.Error("failed to generate presigned URL", zap.String("objectKey", objectKey), zap.Error(err))
 		return "", fmt.Errorf("failed to generate presigned URL: %w", err)

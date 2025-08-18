@@ -50,7 +50,6 @@ func TestEntitiesCoursePeriodToGetCoursePeriodResponse(t *testing.T) {
 }
 
 func TestEntitiesCoursePeriodsToGetCoursePeriodsResponse(t *testing.T) {
-
 	type testCase struct {
 		name string
 		cps  []entities.CoursePeriod
