@@ -9,7 +9,7 @@ func createCourseRequestToEntitiesCourse(req CreateCourseRequest) entities.Cours
 		Owner: entities.User{
 			ID: req.UserID,
 		},
-		Endorsement: entities.Endorsement{
+		CourseRequest: entities.CourseRequest{
 			ID: req.EndorsementID,
 		},
 		Name:        req.Name,

@@ -14,10 +14,10 @@ var fileQuerySelectCommon = []string{
 	"f.owner_type",
 	"f.file_key",
 	"f.public",
+	"f.purpose",
 	"f.metadata",
 	"f.uploaded_by",
 	"f.created_at",
-	"f.updated_at",
 	"f.deleted_at",
 }
 
@@ -39,6 +39,7 @@ func InsertFile(files []models.File) sq.InsertBuilder {
 			"owner_id",
 			"owner_type",
 			"file_key",
+			"purpose",
 			"metadata",
 			"uploaded_by",
 		).
@@ -48,6 +49,7 @@ func InsertFile(files []models.File) sq.InsertBuilder {
 			file.OwnerID,
 			file.OwnerType,
 			file.FileKey,
+			file.Purpose,
 			marshalMetadata(file.Metadata),
 			file.UploadedBy,
 		)

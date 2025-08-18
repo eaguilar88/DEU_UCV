@@ -22,6 +22,7 @@ go.work
 
 .env
 .vscode
+.idea
 node_modules/
 
 docker-compose.dev.yml

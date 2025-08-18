@@ -24,7 +24,7 @@ func (_m *ServiceMock) EXPECT() *ServiceMock_Expecter {
 }
 
 // CreateEndorsement provides a mock function with given fields: ctx, endorsement
-func (_m *ServiceMock) CreateEndorsement(ctx context.Context, endorsement entities.Endorsement) (int64, error) {
+func (_m *ServiceMock) CreateEndorsement(ctx context.Context, endorsement entities.CourseRequest) (int64, error) {
 	ret := _m.Called(ctx, endorsement)
 
 	if len(ret) == 0 {
@@ -33,16 +33,16 @@ func (_m *ServiceMock) CreateEndorsement(ctx context.Context, endorsement entiti
 
 	var r0 int64
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, entities.Endorsement) (int64, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, entities.CourseRequest) (int64, error)); ok {
 		return rf(ctx, endorsement)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, entities.Endorsement) int64); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, entities.CourseRequest) int64); ok {
 		r0 = rf(ctx, endorsement)
 	} else {
 		r0 = ret.Get(0).(int64)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, entities.Endorsement) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, entities.CourseRequest) error); ok {
 		r1 = rf(ctx, endorsement)
 	} else {
 		r1 = ret.Error(1)
@@ -58,14 +58,14 @@ type ServiceMock_CreateEndorsement_Call struct {
 
 // CreateEndorsement is a helper method to define mock.On call
 //   - ctx context.Context
-//   - endorsement entities.Endorsement
+//   - endorsement entities.CourseRequest
 func (_e *ServiceMock_Expecter) CreateEndorsement(ctx interface{}, endorsement interface{}) *ServiceMock_CreateEndorsement_Call {
 	return &ServiceMock_CreateEndorsement_Call{Call: _e.mock.On("CreateEndorsement", ctx, endorsement)}
 }
 
-func (_c *ServiceMock_CreateEndorsement_Call) Run(run func(ctx context.Context, endorsement entities.Endorsement)) *ServiceMock_CreateEndorsement_Call {
+func (_c *ServiceMock_CreateEndorsement_Call) Run(run func(ctx context.Context, endorsement entities.CourseRequest)) *ServiceMock_CreateEndorsement_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(entities.Endorsement))
+		run(args[0].(context.Context), args[1].(entities.CourseRequest))
 	})
 	return _c
 }
@@ -75,7 +75,7 @@ func (_c *ServiceMock_CreateEndorsement_Call) Return(_a0 int64, _a1 error) *Serv
 	return _c
 }
 
-func (_c *ServiceMock_CreateEndorsement_Call) RunAndReturn(run func(context.Context, entities.Endorsement) (int64, error)) *ServiceMock_CreateEndorsement_Call {
+func (_c *ServiceMock_CreateEndorsement_Call) RunAndReturn(run func(context.Context, entities.CourseRequest) (int64, error)) *ServiceMock_CreateEndorsement_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -128,22 +128,22 @@ func (_c *ServiceMock_DeleteEndorsement_Call) RunAndReturn(run func(context.Cont
 }
 
 // GetEndorsement provides a mock function with given fields: ctx, endorsementID
-func (_m *ServiceMock) GetEndorsement(ctx context.Context, endorsementID string) (entities.Endorsement, error) {
+func (_m *ServiceMock) GetEndorsement(ctx context.Context, endorsementID string) (entities.CourseRequest, error) {
 	ret := _m.Called(ctx, endorsementID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetEndorsement")
 	}
 
-	var r0 entities.Endorsement
+	var r0 entities.CourseRequest
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (entities.Endorsement, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) (entities.CourseRequest, error)); ok {
 		return rf(ctx, endorsementID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) entities.Endorsement); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) entities.CourseRequest); ok {
 		r0 = rf(ctx, endorsementID)
 	} else {
-		r0 = ret.Get(0).(entities.Endorsement)
+		r0 = ret.Get(0).(entities.CourseRequest)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
@@ -174,35 +174,35 @@ func (_c *ServiceMock_GetEndorsement_Call) Run(run func(ctx context.Context, end
 	return _c
 }
 
-func (_c *ServiceMock_GetEndorsement_Call) Return(_a0 entities.Endorsement, _a1 error) *ServiceMock_GetEndorsement_Call {
+func (_c *ServiceMock_GetEndorsement_Call) Return(_a0 entities.CourseRequest, _a1 error) *ServiceMock_GetEndorsement_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *ServiceMock_GetEndorsement_Call) RunAndReturn(run func(context.Context, string) (entities.Endorsement, error)) *ServiceMock_GetEndorsement_Call {
+func (_c *ServiceMock_GetEndorsement_Call) RunAndReturn(run func(context.Context, string) (entities.CourseRequest, error)) *ServiceMock_GetEndorsement_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetEndorsements provides a mock function with given fields: ctx, pageScope
-func (_m *ServiceMock) GetEndorsements(ctx context.Context, pageScope entities.PageScope) ([]entities.Endorsement, entities.PageScope, error) {
+func (_m *ServiceMock) GetEndorsements(ctx context.Context, pageScope entities.PageScope) ([]entities.CourseRequest, entities.PageScope, error) {
 	ret := _m.Called(ctx, pageScope)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetEndorsements")
 	}
 
-	var r0 []entities.Endorsement
+	var r0 []entities.CourseRequest
 	var r1 entities.PageScope
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, entities.PageScope) ([]entities.Endorsement, entities.PageScope, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, entities.PageScope) ([]entities.CourseRequest, entities.PageScope, error)); ok {
 		return rf(ctx, pageScope)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, entities.PageScope) []entities.Endorsement); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, entities.PageScope) []entities.CourseRequest); ok {
 		r0 = rf(ctx, pageScope)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]entities.Endorsement)
+			r0 = ret.Get(0).([]entities.CourseRequest)
 		}
 	}
 
@@ -240,18 +240,18 @@ func (_c *ServiceMock_GetEndorsements_Call) Run(run func(ctx context.Context, pa
 	return _c
 }
 
-func (_c *ServiceMock_GetEndorsements_Call) Return(_a0 []entities.Endorsement, _a1 entities.PageScope, _a2 error) *ServiceMock_GetEndorsements_Call {
+func (_c *ServiceMock_GetEndorsements_Call) Return(_a0 []entities.CourseRequest, _a1 entities.PageScope, _a2 error) *ServiceMock_GetEndorsements_Call {
 	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *ServiceMock_GetEndorsements_Call) RunAndReturn(run func(context.Context, entities.PageScope) ([]entities.Endorsement, entities.PageScope, error)) *ServiceMock_GetEndorsements_Call {
+func (_c *ServiceMock_GetEndorsements_Call) RunAndReturn(run func(context.Context, entities.PageScope) ([]entities.CourseRequest, entities.PageScope, error)) *ServiceMock_GetEndorsements_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateEndorsement provides a mock function with given fields: ctx, endorsement
-func (_m *ServiceMock) UpdateEndorsement(ctx context.Context, endorsement entities.Endorsement) error {
+func (_m *ServiceMock) UpdateEndorsement(ctx context.Context, endorsement entities.CourseRequest) error {
 	ret := _m.Called(ctx, endorsement)
 
 	if len(ret) == 0 {
@@ -259,7 +259,7 @@ func (_m *ServiceMock) UpdateEndorsement(ctx context.Context, endorsement entiti
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, entities.Endorsement) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, entities.CourseRequest) error); ok {
 		r0 = rf(ctx, endorsement)
 	} else {
 		r0 = ret.Error(0)
@@ -275,14 +275,14 @@ type ServiceMock_UpdateEndorsement_Call struct {
 
 // UpdateEndorsement is a helper method to define mock.On call
 //   - ctx context.Context
-//   - endorsement entities.Endorsement
+//   - endorsement entities.CourseRequest
 func (_e *ServiceMock_Expecter) UpdateEndorsement(ctx interface{}, endorsement interface{}) *ServiceMock_UpdateEndorsement_Call {
 	return &ServiceMock_UpdateEndorsement_Call{Call: _e.mock.On("UpdateEndorsement", ctx, endorsement)}
 }
 
-func (_c *ServiceMock_UpdateEndorsement_Call) Run(run func(ctx context.Context, endorsement entities.Endorsement)) *ServiceMock_UpdateEndorsement_Call {
+func (_c *ServiceMock_UpdateEndorsement_Call) Run(run func(ctx context.Context, endorsement entities.CourseRequest)) *ServiceMock_UpdateEndorsement_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(entities.Endorsement))
+		run(args[0].(context.Context), args[1].(entities.CourseRequest))
 	})
 	return _c
 }
@@ -292,7 +292,7 @@ func (_c *ServiceMock_UpdateEndorsement_Call) Return(_a0 error) *ServiceMock_Upd
 	return _c
 }
 
-func (_c *ServiceMock_UpdateEndorsement_Call) RunAndReturn(run func(context.Context, entities.Endorsement) error) *ServiceMock_UpdateEndorsement_Call {
+func (_c *ServiceMock_UpdateEndorsement_Call) RunAndReturn(run func(context.Context, entities.CourseRequest) error) *ServiceMock_UpdateEndorsement_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -10,7 +10,6 @@ import (
 	"github.com/eaguilar88/deu/internal/config"
 	"github.com/eaguilar88/deu/internal/course_periods"
 	"github.com/eaguilar88/deu/internal/courses"
-	"github.com/eaguilar88/deu/internal/endorsements"
 	"github.com/eaguilar88/deu/internal/groups"
 	"github.com/eaguilar88/deu/internal/jwt"
 	repository "github.com/eaguilar88/deu/internal/postgres_repository"
@@ -76,8 +75,8 @@ func main() {
 	userSvc := users.NewUsersService(repository, logger)
 	userEndpoints := users.MakeUserEndpointsHandler(userSvc, logger)
 
-	endorsementSvc := endorsements.NewEndorsementsService(repository, bbClient, logger)
-	endorsementEndpoints := endorsements.MakeEndorsementEndpointsHandler(endorsementSvc, logger)
+	providerService := providers.NewProvidersService(repository, bbClient, logger)
+	providerEndpoints := providers.MakeProviderEndpointsHandler(providerService, logger)
 
 	courseSvc := courses.NewCoursesService(repository, logger)
 	courseEndpoints := courses.MakeCourseEndpointsHandler(courseSvc, logger)
@@ -87,9 +86,6 @@ func main() {
 
 	groupService := groups.NewGroupsService(repository, logger)
 	groupEndpoints := groups.MakeGroupEndpointsHandler(groupService, logger)
-
-	providerService := providers.NewProvidersService(repository, bbClient, logger)
-	providerEndpoints := providers.MakeProviderEndpointsHandler(providerService, logger)
 
 	e := echo.New()
 	e.Validator = security.NewCustomValidator()
@@ -102,11 +98,10 @@ func main() {
 	addHealthRoute(e)
 	addAuthRoutes(e, authEndpoints)
 	addUserRoutes(e, userEndpoints, middlewares...)
-	addEndorsementRoutes(e, endorsementEndpoints, middlewares...)
+	addProviderRoutes(e, providerEndpoints, middlewares...)
 	addCourseRoutes(e, courseEndpoints, middlewares...)
 	addCoursePeriodRoutes(e, cpEndpoints, middlewares...)
 	addGroupsRoutes(e, groupEndpoints, middlewares...)
-	addProviderRoutes(e, providerEndpoints, middlewares...)
 
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", config.HTTPPort)))
 }
@@ -148,19 +143,6 @@ func addUserRoutes(
 	g.POST("", endpoints.CreateUser)
 	g.PUT("/:id", endpoints.UpdateUser)
 	g.DELETE("/:id", endpoints.DeleteUser)
-}
-
-func addEndorsementRoutes(
-	e *echo.Echo,
-	endpoints endorsements.EndorsementEndpointsHandler,
-	middlewares ...echo.MiddlewareFunc,
-) {
-	g := e.Group("/endorsements", middlewares...)
-	g.GET("/:id", endpoints.GetEndorsement)
-	g.GET("", endpoints.GetEndorsements)
-	g.POST("", endpoints.CreateEndorsement)
-	g.PUT("/:id", endpoints.UpdateEndorsement)
-	g.DELETE("/:id", endpoints.DeleteEndorsement)
 }
 
 func addCourseRoutes(

@@ -176,7 +176,7 @@ func (r *PostgresRepository) UpdateUser(
 }
 
 func (r *PostgresRepository) DeleteUser(ctx context.Context, userID string) error {
-	sql, args, err := queries.DeleteUser(userID).ToSql()
+	sql, args, err := queries.SoftDeleteUser(userID).ToSql()
 	if err != nil {
 		return errs.NewBadQueryError(err)
 	}

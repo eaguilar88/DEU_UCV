@@ -176,7 +176,7 @@ func TestCoursePeriodEndpointsHandler_GetCoursePeriods(t *testing.T) {
 }
 
 func TestCoursePeriodEndpointsHandler_CreateCoursePeriod(t *testing.T) {
-	var userID = "1"
+	userID := "1"
 	type testCase struct {
 		name    string
 		svc     *mocks.ServiceMock
@@ -257,7 +257,7 @@ func TestCoursePeriodEndpointsHandler_CreateCoursePeriod(t *testing.T) {
 }
 
 func TestCoursePeriodEndpointsHandler_UpdateCoursePeriod(t *testing.T) {
-	var userID = "1"
+	userID := "1"
 	type testCase struct {
 		name    string
 		svc     *mocks.ServiceMock
@@ -336,7 +336,7 @@ func TestCoursePeriodEndpointsHandler_UpdateCoursePeriod(t *testing.T) {
 }
 
 func TestCoursePeriodEndpointsHandler_DeleteCoursePeriod(t *testing.T) {
-	var userID = "1"
+	userID := "1"
 	type testCase struct {
 		name    string
 		svc     *mocks.ServiceMock

@@ -6,12 +6,12 @@ import (
 
 func createEndorsementRequestToEntitiesEndorsement(
 	req CreateEndorsementRequest,
-) entities.Endorsement {
-	return entities.Endorsement{
+) entities.CourseRequest {
+	return entities.CourseRequest{
 		User: entities.User{
 			ID: req.UserID,
 		},
-		Status:      entities.EndorsementStatus(req.Status),
+		Status:      entities.CourseRequestStatus(req.Status),
 		Type:        req.Type,
 		Name:        req.Name,
 		Description: req.Description,
@@ -23,13 +23,13 @@ func createEndorsementRequestToEntitiesEndorsement(
 
 func updateEndorsementRequestToEntitiesEndorsement(
 	req UpdateEndorsementRequest,
-) entities.Endorsement {
-	return entities.Endorsement{
+) entities.CourseRequest {
+	return entities.CourseRequest{
 		ID: req.ID,
 		User: entities.User{
 			ID: req.UserID,
 		},
-		Status:      entities.EndorsementStatus(req.Status),
+		Status:      entities.CourseRequestStatus(req.Status),
 		Type:        req.Type,
 		Name:        req.Name,
 		Description: req.Description,

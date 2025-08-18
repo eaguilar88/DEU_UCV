@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/eaguilar88/deu/internal/entities"
+	"github.com/eaguilar88/deu/internal/utils"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
@@ -74,7 +75,7 @@ func (h *ProviderEndpointsHandler) CreateProvider(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "user missing from context")
 	}
 
-	provider, err := makeProviderFromRequest(c, userID)
+	provider, err := makeProviderFromRequest(c, userID, h.log)
 	if err != nil {
 		h.log.Error("error getting files", zap.Error(err))
 		return echo.NewHTTPError(http.StatusBadRequest, err)
@@ -97,7 +98,7 @@ func (h *ProviderEndpointsHandler) UpdateProvider(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "user missing from context")
 	}
 
-	provider, err := makeProviderFromRequest(c, userID)
+	provider, err := makeProviderFromRequest(c, userID, h.log)
 	if err != nil {
 		h.log.Error("error getting files", zap.Error(err))
 		return echo.NewHTTPError(http.StatusBadRequest, err)
@@ -123,21 +124,23 @@ func (h *ProviderEndpointsHandler) DeleteProvider(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-func makeProviderFromRequest(c echo.Context, userID string) (*entities.Provider, error) {
+func makeProviderFromRequest(c echo.Context, userID string, logger *zap.Logger) (*entities.Provider, error) {
 	providerType := c.FormValue("provider_type")
 	isInternal := c.FormValue("is_internal")
-	ci, err := c.FormFile("ci")
+	ci, err := utils.GetFileFromForm(c, "ci", entities.ProviderFileTypeCI)
 	if err != nil {
+		logger.Error("error getting ci", zap.Error(err))
 		return nil, errors.New("ci is required")
 	}
-
-	rif, err := c.FormFile("rif")
+	rif, err := utils.GetFileFromForm(c, "rif", entities.ProviderFileTypeRIF)
 	if err != nil {
+		logger.Error("error getting rif", zap.Error(err))
 		return nil, errors.New("rif is required")
 	}
 
-	islr, err := c.FormFile("islr")
+	islr, err := utils.GetFileFromForm(c, "islr", entities.ProviderFileTypeISLR)
 	if err != nil {
+		logger.Error("error getting islr", zap.Error(err))
 		return nil, errors.New("islr is required")
 	}
 
@@ -157,13 +160,41 @@ func makeProviderFromRequest(c echo.Context, userID string) (*entities.Provider,
 		},
 		Type:       entities.ProviderType(providerType),
 		IsInternal: isInternal == "true",
-		CI:         ci,
-		RIF:        rif,
-		ISLR:       islr,
+		Files: entities.ProviderFiles{
+			CI:   ci,
+			RIF:  rif,
+			ISLR: islr,
+		},
+	}
+	resumes := make([]*entities.File, 0, len(files["resumes"]))
+	for _, resume := range files["resumes"] {
+		file, err := resume.Open()
+		if err != nil {
+			logger.Error("error getting resume", zap.Error(err))
+			return nil, errors.New("error getting resume")
+		}
+		resumes = append(resumes, &entities.File{
+			Name:    resume.Filename,
+			Body:    file,
+			Purpose: entities.ProviderFileTypeResume,
+		})
+	}
+	others := make([]*entities.File, 0, len(files["others"]))
+	for _, other := range files["others"] {
+		file, err := other.Open()
+		if err != nil {
+			logger.Error("error getting other", zap.Error(err))
+			return nil, errors.New("error getting other")
+		}
+		others = append(others, &entities.File{
+			Name:    other.Filename,
+			Body:    file,
+			Purpose: entities.ProviderFileTypeOther,
+		})
 	}
 
-	provider.Resumes = append(provider.Resumes, files["resumes"]...)
-	provider.Others = append(provider.Others, files["others"]...)
+	provider.Files.Resumes = resumes
+	provider.Files.Others = others
 
 	return provider, nil
 }

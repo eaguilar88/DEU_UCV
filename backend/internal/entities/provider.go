@@ -2,7 +2,6 @@ package entities
 
 import (
 	"fmt"
-	"mime/multipart"
 	"strings"
 
 	"github.com/google/uuid"
@@ -13,11 +12,29 @@ type ProviderPrefix string
 type ProviderType string
 
 const (
-	CourseProvider     ProviderPrefix = "ECP"
-	GroupProvider      ProviderPrefix = "GEX"
-	CourseProviderType ProviderType   = "courses"
-	GroupProviderType  ProviderType   = "groups"
+	// Provider code prefixes
+	CourseProvider ProviderPrefix = "ECP"
+	GroupProvider  ProviderPrefix = "GEX"
+
+	// Provider types
+	CourseProviderType ProviderType = "courses"
+	GroupProviderType  ProviderType = "groups"
+
+	// File types for providers
+	ProviderFileTypeCI     = "ci"
+	ProviderFileTypeRIF    = "rif"
+	ProviderFileTypeISLR   = "islr"
+	ProviderFileTypeResume = "resume"
+	ProviderFileTypeOther  = "other"
 )
+
+type ProviderFiles struct {
+	CI      *File
+	RIF     *File
+	ISLR    *File
+	Resumes []*File
+	Others  []*File
+}
 
 type Provider struct {
 	ID         string
@@ -25,11 +42,7 @@ type Provider struct {
 	Type       ProviderType
 	IsInternal bool
 	Code       string
-	CI         *multipart.FileHeader
-	RIF        *multipart.FileHeader
-	ISLR       *multipart.FileHeader
-	Resumes    []*multipart.FileHeader
-	Others     []*multipart.FileHeader
+	Files      ProviderFiles
 	CreatedAt  string
 	UpdatedAt  string
 	DeletedAt  string

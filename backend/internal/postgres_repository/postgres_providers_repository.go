@@ -11,10 +11,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (r *PostgresRepository) GetProvider(
-	ctx context.Context,
-	providerID string,
-) (entities.Provider, error) {
+func (r *PostgresRepository) GetProvider(ctx context.Context, providerID string) (entities.Provider, error) {
 	query := queries.GetProviderByID(providerID, true, false)
 	sql, args, err := query.ToSql()
 	if err != nil {
@@ -34,10 +31,7 @@ func (r *PostgresRepository) GetProvider(
 	return newProviderFromModel(provider), nil
 }
 
-func (r *PostgresRepository) GetProviderByCode(
-	ctx context.Context,
-	code string,
-) (entities.Provider, error) {
+func (r *PostgresRepository) GetProviderByCode(ctx context.Context, code string) (entities.Provider, error) {
 	query := queries.GetProviderByCode(code)
 	sql, args, err := query.ToSql()
 	if err != nil {
@@ -57,10 +51,7 @@ func (r *PostgresRepository) GetProviderByCode(
 	return newProviderFromModel(provider), nil
 }
 
-func (r *PostgresRepository) GetProviders(
-	ctx context.Context,
-	pageScope entities.PageScope,
-) ([]entities.Provider, entities.PageScope, error) {
+func (r *PostgresRepository) GetProviders(ctx context.Context, pageScope entities.PageScope) ([]entities.Provider, entities.PageScope, error) {
 	sql, args, err := queries.GetProviders(pageScope.PerPage, pageScope.Offset()).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
@@ -86,10 +77,7 @@ func (r *PostgresRepository) GetProviders(
 	return providers, pageScope, nil
 }
 
-func (r *PostgresRepository) CreateProvider(
-	ctx context.Context,
-	provider entities.Provider,
-) (int64, error) {
+func (r *PostgresRepository) CreateProvider(ctx context.Context, provider entities.Provider) (int64, error) {
 	sql, args, err := queries.CreateProvider(newProviderModelFromEntities(provider)).ToSql()
 	if err != nil {
 		r.logger.Error("error creating query", zap.Error(err))
@@ -114,11 +102,7 @@ func (r *PostgresRepository) CreateProvider(
 	return lastInsertedID, nil
 }
 
-func (r *PostgresRepository) UpdateProvider(
-	ctx context.Context,
-	providerID string,
-	provider entities.Provider,
-) error {
+func (r *PostgresRepository) UpdateProvider(ctx context.Context, providerID string, provider entities.Provider) error {
 	sql, args, err := queries.UpdateProvider(newProviderModelFromEntities(provider)).ToSql()
 	if err != nil {
 		return errs.NewBadQueryError(err)
@@ -190,8 +174,7 @@ func newProviderFromModel(provider models.Provider) entities.Provider {
 			FirstName: provider.FirstName,
 			LastName:  provider.LastName,
 		},
-		Code: provider.Code,
-
+		Code:      provider.Code,
 		CreatedAt: provider.CreatedAt,
 		UpdatedAt: provider.UpdatedAt,
 	}

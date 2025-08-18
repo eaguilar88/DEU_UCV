@@ -6,17 +6,17 @@ import (
 )
 
 type GetEndorsementResponse struct {
-	ID          string                     `json:"id,omitempty"`
-	User        *users.GetUserResponse     `json:"user,omitempty"`
-	Reviewer    *users.GetUserResponse     `json:"reviewer,omitempty"`
-	Status      entities.EndorsementStatus `json:"status,omitempty"`
-	Type        string                     `json:"type,omitempty"`
-	Name        string                     `json:"name,omitempty"`
-	Description string                     `json:"description,omitempty"`
-	Comments    string                     `json:"comments,omitempty"`
-	ReviewedAt  string                     `json:"reviewed_at,omitempty"`
-	CreatedAt   string                     `json:"created_at,omitempty"`
-	UpdatedAtAt string                     `json:"updated_at_at,omitempty"`
+	ID          string                       `json:"id,omitempty"`
+	User        *users.GetUserResponse       `json:"user,omitempty"`
+	Reviewer    *users.GetUserResponse       `json:"reviewer,omitempty"`
+	Status      entities.CourseRequestStatus `json:"status,omitempty"`
+	Type        string                       `json:"type,omitempty"`
+	Name        string                       `json:"name,omitempty"`
+	Description string                       `json:"description,omitempty"`
+	Comments    string                       `json:"comments,omitempty"`
+	ReviewedAt  string                       `json:"reviewed_at,omitempty"`
+	CreatedAt   string                       `json:"created_at,omitempty"`
+	UpdatedAtAt string                       `json:"updated_at_at,omitempty"`
 }
 
 type GetEndorsementsResponse struct {

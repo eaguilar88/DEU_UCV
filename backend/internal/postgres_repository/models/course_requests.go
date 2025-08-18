@@ -2,7 +2,7 @@ package models
 
 import "database/sql"
 
-type EndorsementRequest struct {
+type CourseRequest struct {
 	ID                string
 	UserID            string
 	UserFirstName     string

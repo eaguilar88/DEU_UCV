@@ -11,7 +11,7 @@ var groupQuerySelectCommon = []string{
 	"g.id",
 	"g.name",
 	"g.description",
-	"g.endorsement_id",
+	"g.request_id",
 	"owner.id",
 	"owner.first_name",
 	"owner.last_name",
@@ -28,7 +28,7 @@ var groupQuerySelectCommon = []string{
 func GetGroupByID(groupID string) sq.SelectBuilder {
 	return psql.Select(groupQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS g", groupsTableName)).
-		Join(fmt.Sprintf("%s AS r ON g.endorsement_id = r.id", endorsementsTableName)).
+		Join(fmt.Sprintf("%s AS r ON g.request_id = r.id", courseRequestsTableName)).
 		Join(fmt.Sprintf("%s AS owner ON g.user_id = owner.id", usersTableName)).
 		Join(fmt.Sprintf("%s AS reviewer ON r.reviewer_id = reviewer.id", usersTableName)).
 		Where(sq.Eq{"g.id": groupID})
@@ -47,7 +47,7 @@ func InsertGroup(group models.ExtensionGroup) sq.InsertBuilder {
 			"name",
 			"description",
 			"user_id",
-			"endorsement_id",
+			"request_id",
 			"objective",
 			"location",
 		).
@@ -55,7 +55,7 @@ func InsertGroup(group models.ExtensionGroup) sq.InsertBuilder {
 			group.Name,
 			group.Description,
 			group.OwnerID,
-			group.EndorsementID,
+			group.RequestID,
 			group.Objective,
 			group.Location,
 			sq.Expr("NOW()"),
@@ -67,7 +67,7 @@ func UpdateGroup(group models.ExtensionGroup) sq.UpdateBuilder {
 	return psql.Update(groupsTableName).
 		Set("name", group.Name).
 		Set("description", group.Description).
-		Set("endorsement_id", group.EndorsementID).
+		Set("request_id", group.RequestID).
 		Set("objective", group.Objective).
 		Set("location", group.Location).
 		Set("updated_at", sq.Expr("NOW()")).

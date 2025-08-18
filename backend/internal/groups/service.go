@@ -2,6 +2,7 @@ package groups
 
 import (
 	"context"
+	"io"
 
 	"github.com/eaguilar88/deu/internal/entities"
 	"go.uber.org/zap"
@@ -14,6 +15,17 @@ type Repository interface {
 	CreateGroup(ctx context.Context, group entities.ExtensionGroup) (int64, error)
 	UpdateGroup(ctx context.Context, group entities.ExtensionGroup) error
 	DeleteGroup(ctx context.Context, groupID string) error
+
+	// Files
+	GetFilesByOwner(ctx context.Context, ownerID string) (entities.GroupedFiles, error)
+	SaveFilesToDB(ctx context.Context, file []*entities.File) error
+}
+
+type StorageClient interface {
+	UploadFile(ctx context.Context, file io.Reader, objectKey string, metadata map[string]string) error
+	DeleteFile(ctx context.Context, objectKey string) error
+	GetFileURL(ctx context.Context, objectKey string) (string, error)
+	GetFileMetadata(ctx context.Context, objectKey string) (map[string]string, error)
 }
 
 type GroupService struct {

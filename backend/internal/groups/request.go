@@ -63,7 +63,7 @@ func createGroupEntityFromRequest(req CreateGroupRequest) entities.ExtensionGrou
 		Owner: entities.User{
 			ID: req.OwnerID,
 		},
-		Endorsement: entities.Endorsement{
+		CourseRequest: entities.CourseRequest{
 			ID: req.EndorsementID,
 		},
 		Objective: req.Objective,
@@ -80,7 +80,7 @@ func updateGroupEntityFromRequest(req UpdateGroupRequest) entities.ExtensionGrou
 		Owner: entities.User{
 			ID: req.OwnerID,
 		},
-		Endorsement: entities.Endorsement{
+		CourseRequest: entities.CourseRequest{
 			ID: req.EndorsementID,
 		},
 		Objective: req.Objective,

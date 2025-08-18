@@ -75,7 +75,6 @@ func TestCoursePeriodService_GetCoursePeriod(t *testing.T) {
 			repoMock: &mocks.RepositoryMock{},
 			prepare: func(ctx context.Context, tc *testCase) {
 				tc.repoMock.On("GetCoursePeriodByID", ctx, tc.periodID).Return(entities.CoursePeriod{}, errors.New("error getting course period"))
-
 			},
 			want:    entities.CoursePeriod{},
 			wantErr: errors.New("error getting course period"),
@@ -156,7 +155,6 @@ func TestCoursePeriodService_GetCoursePeriods(t *testing.T) {
 			prepare: func(ctx context.Context, tc *testCase) {
 				tc.repoMock.On("GetCoursePeriods", ctx, mock.AnythingOfType("string"), mock.AnythingOfType("entities.PageScope")).
 					Return(nil, entities.PageScope{}, errors.New("error getting course period"))
-
 			},
 			wantErr: errors.New("error getting course period"),
 		},

@@ -81,17 +81,17 @@ func (_c *ServiceMock_CreateGroup_Call) RunAndReturn(run func(context.Context, e
 	return _c
 }
 
-// DeleteGroup provides a mock function with given fields: ctx, groupID
-func (_m *ServiceMock) DeleteGroup(ctx context.Context, groupID string) error {
-	ret := _m.Called(ctx, groupID)
+// DeleteGroup provides a mock function with given fields: ctx, groupID, userID
+func (_m *ServiceMock) DeleteGroup(ctx context.Context, groupID string, userID string) error {
+	ret := _m.Called(ctx, groupID, userID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteGroup")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, groupID)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = rf(ctx, groupID, userID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -107,13 +107,14 @@ type ServiceMock_DeleteGroup_Call struct {
 // DeleteGroup is a helper method to define mock.On call
 //   - ctx context.Context
 //   - groupID string
-func (_e *ServiceMock_Expecter) DeleteGroup(ctx interface{}, groupID interface{}) *ServiceMock_DeleteGroup_Call {
-	return &ServiceMock_DeleteGroup_Call{Call: _e.mock.On("DeleteGroup", ctx, groupID)}
+//   - userID string
+func (_e *ServiceMock_Expecter) DeleteGroup(ctx interface{}, groupID interface{}, userID interface{}) *ServiceMock_DeleteGroup_Call {
+	return &ServiceMock_DeleteGroup_Call{Call: _e.mock.On("DeleteGroup", ctx, groupID, userID)}
 }
 
-func (_c *ServiceMock_DeleteGroup_Call) Run(run func(ctx context.Context, groupID string)) *ServiceMock_DeleteGroup_Call {
+func (_c *ServiceMock_DeleteGroup_Call) Run(run func(ctx context.Context, groupID string, userID string)) *ServiceMock_DeleteGroup_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(string), args[2].(string))
 	})
 	return _c
 }
@@ -123,7 +124,7 @@ func (_c *ServiceMock_DeleteGroup_Call) Return(_a0 error) *ServiceMock_DeleteGro
 	return _c
 }
 
-func (_c *ServiceMock_DeleteGroup_Call) RunAndReturn(run func(context.Context, string) error) *ServiceMock_DeleteGroup_Call {
+func (_c *ServiceMock_DeleteGroup_Call) RunAndReturn(run func(context.Context, string, string) error) *ServiceMock_DeleteGroup_Call {
 	_c.Call.Return(run)
 	return _c
 }

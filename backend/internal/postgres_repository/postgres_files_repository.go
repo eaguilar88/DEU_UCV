@@ -2,16 +2,17 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/postgres_repository/models"
 	"github.com/eaguilar88/deu/internal/postgres_repository/queries"
 )
 
-func (r *PostgresRepository) SaveFilesToDB(ctx context.Context, files []entities.File) error {
+func (r *PostgresRepository) SaveFilesToDB(ctx context.Context, files []*entities.File) error {
 	models := make([]models.File, 0, len(files))
 	for _, f := range files {
-		m := newFileFromEntity(f)
+		m := newFileFromEntity(*f)
 		models = append(models, m)
 	}
 	sql, args, err := queries.InsertFile(models).ToSql()
@@ -31,7 +32,7 @@ func (r *PostgresRepository) SaveFilesToDB(ctx context.Context, files []entities
 	return nil
 }
 
-func (r *PostgresRepository) GetFilesByOwner(ctx context.Context, ownerID string) ([]entities.File, error) {
+func (r *PostgresRepository) GetFilesByOwner(ctx context.Context, ownerID string) (entities.GroupedFiles, error) {
 	sql, args, err := queries.GetFilesByOwner(ownerID, string(entities.OwnerTypeProvider)).ToSql()
 	if err != nil {
 		return nil, err
@@ -47,14 +48,18 @@ func (r *PostgresRepository) GetFilesByOwner(ctx context.Context, ownerID string
 	}
 	defer rows.Close()
 
-	files := make([]entities.File, 0)
+	files := make(entities.GroupedFiles)
 
 	for rows.Next() {
 		file, err := r.scanFile(rows)
 		if err != nil {
 			return nil, err
 		}
-		files = append(files, newFileFromModel(file))
+		files[file.Purpose] = append(files[file.Purpose], newFileFromModel(file))
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 
 	return files, nil
@@ -62,47 +67,66 @@ func (r *PostgresRepository) GetFilesByOwner(ctx context.Context, ownerID string
 
 func (r *PostgresRepository) scanFile(rows scannable) (models.File, error) {
 	var file models.File
+	var metadataBytes []byte
 
 	err := rows.Scan(
 		&file.ID,
 		&file.OwnerID,
 		&file.OwnerType,
-		&file.Public,
-		&file.Metadata,
-		&file.UploadedBy,
 		&file.FileKey,
-		&file.DeletedAt,
+		&file.Public,
+		&file.Purpose,
+		&metadataBytes,
+		&file.UploadedBy,
 		&file.CreatedAt,
-		&file.UpdatedAt,
+		&file.DeletedAt,
 	)
-	return file, err
+	if err != nil {
+		return file, err
+	}
+	var md map[string]string
+	if err := json.Unmarshal(metadataBytes, &md); err != nil {
+		return file, err
+	}
+	file.Metadata = md
+	return file, nil
 }
 
 func newFileFromEntity(file entities.File) models.File {
-	return models.File{
+	model := models.File{
 		ID:         file.ID,
 		OwnerID:    file.OwnerID,
 		OwnerType:  string(file.OwnerType),
 		FileKey:    file.Key,
 		Public:     file.Public,
+		Purpose:    file.Purpose,
 		Metadata:   file.MetaData,
 		UploadedBy: file.UploadedBy,
-		DeletedAt:  file.DeletedAt,
 		CreatedAt:  file.CreatedAt,
 	}
+	if file.DeletedAt != "" {
+		model.DeletedAt.Valid = true
+		model.DeletedAt.String = file.DeletedAt
+	}
+	return model
 }
 
-func newFileFromModel(file models.File) entities.File {
-	return entities.File{
+func newFileFromModel(file models.File) *entities.File {
+	model := &entities.File{
 		ID:         file.ID,
 		OwnerID:    file.OwnerID,
 		OwnerType:  entities.OwnerType(file.OwnerType),
 		Public:     file.Public,
+		Purpose:    file.Purpose,
 		MetaData:   file.Metadata,
 		Key:        file.FileKey,
 		UploadedBy: file.UploadedBy,
 		CreatedAt:  file.CreatedAt,
-		DeletedAt:  file.DeletedAt,
-		UpdatedAt:  file.UpdatedAt,
 	}
+
+	if file.DeletedAt.Valid {
+		model.DeletedAt = file.DeletedAt.String
+	}
+
+	return model
 }

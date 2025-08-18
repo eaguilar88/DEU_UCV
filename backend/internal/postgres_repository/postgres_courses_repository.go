@@ -150,13 +150,13 @@ func scanCourse(row scannable) (models.Course, error) {
 		&course.ID,
 		&course.Name,
 		&course.Description,
-		&course.EndorsementID,
+		&course.RequestID,
 		&course.OwnerID,
 		&course.OwnerFirstName,
 		&course.OwnerLastName,
-		&course.EndorserID,
-		&course.EndorserFirstName,
-		&course.EndorserLastName,
+		&course.RequesterID,
+		&course.RequesterFirstName,
+		&course.RequesterLastName,
 		&course.Content,
 		&course.Objectives,
 		&course.Cost,
@@ -172,12 +172,12 @@ func newCourseFromModel(course models.Course) entities.Course {
 	c := entities.Course{
 		ID:   course.ID,
 		Name: course.Name,
-		Endorsement: entities.Endorsement{
-			ID: course.EndorsementID,
+		CourseRequest: entities.CourseRequest{
+			ID: course.RequestID,
 			User: entities.User{
-				ID:        course.EndorserID,
-				FirstName: course.EndorserFirstName,
-				LastName:  course.EndorserLastName,
+				ID:        course.RequesterID,
+				FirstName: course.RequesterFirstName,
+				LastName:  course.RequesterLastName,
 			},
 		},
 		Owner: entities.User{
@@ -211,15 +211,15 @@ func newCourseFromModel(course models.Course) entities.Course {
 
 func newCourseModelFromEntities(course entities.Course) models.Course {
 	c := models.Course{
-		ID:                course.ID,
-		Name:              course.Name,
-		EndorsementID:     course.Endorsement.ID,
-		OwnerID:           course.Owner.ID,
-		OwnerFirstName:    course.Owner.FirstName,
-		OwnerLastName:     course.Owner.LastName,
-		EndorserID:        course.Endorsement.User.ID,
-		EndorserFirstName: course.Endorsement.User.FirstName,
-		EndorserLastName:  course.Endorsement.User.LastName,
+		ID:                 course.ID,
+		Name:               course.Name,
+		RequestID:          course.CourseRequest.ID,
+		OwnerID:            course.Owner.ID,
+		OwnerFirstName:     course.Owner.FirstName,
+		OwnerLastName:      course.Owner.LastName,
+		RequesterID:        course.CourseRequest.User.ID,
+		RequesterFirstName: course.CourseRequest.User.FirstName,
+		RequesterLastName:  course.CourseRequest.User.LastName,
 		Description: sql.NullString{
 			String: course.Description,
 			Valid:  true,
