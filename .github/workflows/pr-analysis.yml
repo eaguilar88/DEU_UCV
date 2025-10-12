@@ -1,0 +1,67 @@
+name: PR Analysis
+run-name: ${{github.actor}} is running Go app tests
+on:
+  push:
+    branches:
+      - 'feature/*'
+      - 'bugfix/*'
+      - development
+
+jobs:
+  lint:
+    name: Go Linters Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: backend/go.mod
+          cache: true
+
+      - name: Verify Go version
+        run: go version
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: v2.0
+          working-directory: backend
+          args: --verbose --timeout=5m
+
+  run-with-coverage:
+    name: Run Go Tests with Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version-file: backend/go.mod
+
+    - name: Run tests
+      run: |
+        cd backend
+        go test ./... -race -coverprofile=./coverage.tmp.out -covermode=atomic -coverpkg=./... -count=1
+
+    - name: Install bc
+      run: sudo apt update && sudo apt install bc
+
+    - name: Check Coverage Threshold
+      run: |
+        cd backend
+        $GITHUB_WORKSPACE/.github/workflows/gh-scripts/check-coverage.sh
+
+    # - name: Set status
+    #   if: ${{ github.ref == 'refs/heads/development' }}
+    #   uses: marocchino/sticky-pull-request-comment@v2
+    #   with:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #     message: |
+    #       Go tests status: ${{ job.status }}

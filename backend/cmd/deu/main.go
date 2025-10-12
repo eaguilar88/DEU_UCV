@@ -1,91 +1,136 @@
 package main
 
 import (
-	"context"
+	"database/sql"
 	"fmt"
 	"net/http"
 	"os"
 
-	"database/sql"
-
-	"github.com/eaguilar88/deu/docs"
-	"github.com/eaguilar88/deu/pkg/auth"
-	"github.com/eaguilar88/deu/pkg/config"
-	"github.com/eaguilar88/deu/pkg/repository"
-	"github.com/eaguilar88/deu/pkg/transport"
-	"github.com/eaguilar88/deu/pkg/users"
-	kitJWT "github.com/go-kit/kit/auth/jwt"
-	kitHTTP "github.com/go-kit/kit/transport/http"
-	"github.com/oklog/oklog/pkg/group"
-
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
-	"github.com/gorilla/mux"
+	"github.com/eaguilar88/deu/internal/auth"
+	"github.com/eaguilar88/deu/internal/config"
+	"github.com/eaguilar88/deu/internal/course_periods"
+	"github.com/eaguilar88/deu/internal/courses"
+	"github.com/eaguilar88/deu/internal/group_requests"
+	"github.com/eaguilar88/deu/internal/groups"
+	"github.com/eaguilar88/deu/internal/jwt"
+	repository "github.com/eaguilar88/deu/internal/postgres_repository"
+	"github.com/eaguilar88/deu/internal/providers"
+	"github.com/eaguilar88/deu/internal/security"
+	"github.com/eaguilar88/deu/internal/storage"
+	"github.com/eaguilar88/deu/internal/users"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	_ "github.com/lib/pq"
+	"go.uber.org/zap"
 )
 
 const (
-	docsSource          = "./docs/openapi/service.yaml"
-	noVersionDefinedYet = "Version to be defined"
+// docsSource          = "./docs/openapi/service.yaml"
+// noVersionDefinedYet = "Version to be defined"
 )
 
+type RegisterAdminEndpoints func(g *echo.Group)
+
 func main() {
-	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
-	logger = log.With(logger, "ts", log.DefaultTimestampUTC, "caller", log.DefaultCaller)
+	logger, err := config.NewLogger()
+	if err != nil {
+		os.Exit(1)
+	}
 
-	var g group.Group
-
+	defer logger.Sync() //nolint: errcheck
 	config, err := config.Read(logger)
 	if err != nil {
-		level.Error(logger).Log("error parsing configuration.")
+		logger.Error("error parsing configuration.")
 		os.Exit(1)
 	}
 
 	postgres, err := mustConnectToDB(config.Database)
 	if err != nil {
-		level.Error(logger).Log("message", "error connecting to the db", "error", err)
+		logger.Error("error connecting to the db", zap.Error(err))
 		os.Exit(1)
 	}
-	defer postgres.Close()
 
-	r := mux.NewRouter()
-	// authService := auth.NewAuthService()
-	// addDocsRoute(r, docsSource, logger)
-	// addAuthRoutes(ctx, authService, r)
+	defer postgres.Close()
+	logger.Info("connected to the db", zap.String("db", config.Database.String()))
+	if err := postgres.Ping(); err != nil {
+		logger.Error("error pinging the db", zap.Error(err))
+		os.Exit(1)
+	}
+
+	signer := jwt.NewJWTSigner(config.JWTEncryptionKey, config.TTL, logger)
+	bbClient, err := storage.NewB2Client(
+		config.BlackBlazeB2.BucketName,
+		config.BlackBlazeB2.KeyID,
+		config.BlackBlazeB2.ApplicationKey,
+		config.BlackBlazeB2.Endpoint,
+		config.BlackBlazeB2.Region,
+		logger,
+	)
+	if err != nil {
+		logger.Error("error creating b2 client", zap.Error(err))
+		os.Exit(1)
+	}
 
 	repository := repository.NewRepository(postgres, config.FilePath, logger)
-	userSvc := users.NewUsersService(repository, logger)
-	userEndpoints := users.MakeEndpoints(userSvc, logger, nil)
+	authService := auth.NewAuthService(repository, signer, logger)
+	authEndpoints := auth.MakeAuthEndpointsHandler(authService, logger)
 
-	commonHTTPOptions := []kitHTTP.ServerOption{
-		kitHTTP.ServerBefore(kitJWT.HTTPToContext()),
-		kitHTTP.ServerErrorEncoder(transport.MakeHTTPErrorEncoder(logger)),
+	userSvc := users.NewUsersService(repository, logger)
+	userEndpoints := users.MakeUserEndpointsHandler(userSvc, logger)
+
+	providerService := providers.NewProvidersService(repository, bbClient, logger)
+	providerEndpoints := providers.MakeProviderEndpointsHandler(providerService, logger)
+
+	courseSvc := courses.NewCoursesService(repository, logger)
+	courseEndpoints := courses.MakeCourseEndpointsHandler(courseSvc, logger)
+
+	cpService := course_periods.NewCoursePeriodsService(repository, logger)
+	cpEndpoints := course_periods.MakeCoursePeriodEndpointsHandler(cpService, logger)
+
+	groupService := groups.NewGroupsService(repository, logger)
+	groupEndpoints := groups.MakeGroupEndpointsHandler(groupService, logger)
+
+	groupRequestService := group_requests.NewGroupRequestService(repository, logger)
+	groupRequestEndpoints := group_requests.MakeGroupRequestEndpointsHandler(groupRequestService, logger)
+
+	e := echo.New()
+	e.Validator = security.NewCustomValidator()
+	e.Use(middleware.Recover())
+	e.Use(middleware.CORS())
+	middlewares := []echo.MiddlewareFunc{
+		jwt.JWTMiddleware(signer, logger),
 	}
-	addUserRoutes(r, userEndpoints, commonHTTPOptions)
-	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%d", config.HTTPPort),
-		Handler: r,
-	}
-	{
-		g.Add(func() error {
-			fmt.Printf("Server listening in port: %d\n", config.HTTPPort)
-			return srv.ListenAndServe()
-		}, func(err error) {
-			level.Error(logger).Log("error", err, "message", "error booting up the server. closing connection")
-			srv.Close()
-		})
-	}
-	if err = g.Run(); err != nil {
-		os.Exit(1)
-	}
+
+	addHealthRoute(e)
+	addAuthRoutes(e, authEndpoints)
+	addUserRoutes(e, userEndpoints, middlewares...)
+	addProviderRoutes(e, providerEndpoints, middlewares...)
+	addCourseRoutes(e, courseEndpoints, middlewares...)
+	addCoursePeriodRoutes(e, cpEndpoints, middlewares...)
+	addGroupsRoutes(e, groupEndpoints, middlewares...)
+
+	addAdminRoutes(e, middlewares,
+		groupRequestEndpoints.RegisterGroupRequestAdminEndpoints,
+	)
+
+	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", config.HTTPPort)))
 }
 
-func addDocsRoute(r *mux.Router, docsRoute string, log log.Logger) {
-	r.HandleFunc("/docs", docs.DocsHandler(r, docsRoute, log)).Methods("GET")
+func addHealthRoute(e *echo.Echo) {
+	e.GET("/health", func(c echo.Context) error {
+		return c.String(http.StatusOK, "Ok")
+	})
 }
 
 func mustConnectToDB(conf config.DatabaseConfig) (*sql.DB, error) {
-	connection := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable", conf.User, conf.Password, conf.Hostname, conf.Port, conf.Name)
+	connection := fmt.Sprintf(
+		"postgres://%s:%s@%s:%d/%s?sslmode=disable",
+		conf.User,
+		conf.Password,
+		conf.Hostname,
+		conf.Port,
+		conf.Name,
+	)
 	db, err := sql.Open("postgres", connection)
 	if err != nil {
 		return nil, err
@@ -93,32 +138,61 @@ func mustConnectToDB(conf config.DatabaseConfig) (*sql.DB, error) {
 	return db, nil
 }
 
-func addAuthRoutes(ctx context.Context, service *auth.AuthService, r *mux.Router) {
-	r.HandleFunc("/health", transport.HealthHandler).Methods("GET")
-	r.HandleFunc("/login", transport.LoginHandler(ctx, service)).Methods("POST")
+func addAuthRoutes(e *echo.Echo, endpoints auth.AuthEndpointsHandler) {
+	e.POST("/auth/login", endpoints.LoginHandleHTTP)
 }
 
-func addUserRoutes(r *mux.Router, endpoints users.Endpoints, options []kitHTTP.ServerOption) {
-	//Get User Endpoint
-	getUserHandler := transport.GetUserHandleHTTP(endpoints.GetUser, options)
-	path := fmt.Sprintf(transport.FormatUsers, transport.ParamUserID)
-	r.Methods(http.MethodGet).Path(path).Handler(getUserHandler)
+func addAdminRoutes(e *echo.Echo, middlewares []echo.MiddlewareFunc, handlers ...RegisterAdminEndpoints) {
+	g := e.Group("/admin", middlewares...)
+	for _, handler := range handlers {
+		handler(g)
+	}
+}
 
-	//Get Users Endpoint
-	getUsersHandler := transport.GetUsersHandleHTTP(endpoints.GetUsers, options)
-	r.Methods(http.MethodGet).Path(transport.PathUsers).Handler(getUsersHandler)
+func addUserRoutes(e *echo.Echo, endpoints users.UserEndpointsHandler, middlewares ...echo.MiddlewareFunc) {
+	g := e.Group("/users", middlewares...)
+	g.GET("/:id", endpoints.GetUser)
+	g.GET("", endpoints.GetUsers)
+	g.POST("", endpoints.CreateUser)
+	g.PUT("/:id", endpoints.UpdateUser)
+	g.DELETE("/:id", endpoints.DeleteUser)
+}
 
-	//Create User Endpoint
-	createUserHandler := transport.CreateUserHandleHTTP(endpoints.CreateUser, options)
-	r.Methods(http.MethodPost).Path(transport.PathUsers).Handler(createUserHandler)
+func addCourseRoutes(e *echo.Echo, endpoints courses.CourseEndpointsHandler, middlewares ...echo.MiddlewareFunc) {
+	publicGroup := e.Group("/courses")
+	publicGroup.GET("/:id", endpoints.GetCourse)
+	publicGroup.GET("", endpoints.GetCourses)
+	protectedGroup := e.Group("/courses", middlewares...)
+	protectedGroup.POST("", endpoints.CreateCourse)
+	protectedGroup.PUT("/:id", endpoints.UpdateCourse)
+	protectedGroup.DELETE("/:id", endpoints.DeleteCourse)
+}
 
-	//Update User Endpoint
-	updateUserHandler := transport.UpdateUserHandleHTTP(endpoints.UpdateUser, options)
-	path = fmt.Sprintf(transport.FormatUsers, transport.ParamUserID)
-	r.Methods(http.MethodPut).Path(path).Handler(updateUserHandler)
+func addCoursePeriodRoutes(e *echo.Echo, endpoints course_periods.CoursePeriodEndpointsHandler, middlewares ...echo.MiddlewareFunc) {
+	publicGroup := e.Group("/courses/:course_id/periods")
+	publicGroup.GET("/:id", endpoints.GetCoursePeriod)
+	publicGroup.GET("", endpoints.GetCoursePeriods)
+	protectedGroup := e.Group("/courses/:course_id/periods", middlewares...)
+	protectedGroup.POST("", endpoints.CreateCoursePeriod)
+	protectedGroup.PUT("/:id", endpoints.UpdateCoursePeriod)
+	protectedGroup.DELETE("/:id", endpoints.DeleteCoursePeriod)
+}
 
-	//Delete User Endpoint
-	deleteUserHandler := transport.DeleteUserHandleHTTP(endpoints.DeleteUser, options)
-	path = fmt.Sprintf(transport.FormatUsers, transport.ParamUserID)
-	r.Methods(http.MethodDelete).Path(path).Handler(deleteUserHandler)
+func addGroupsRoutes(e *echo.Echo, endpoints groups.GroupEndpointsHandler, middlewares ...echo.MiddlewareFunc) {
+	publicGroup := e.Group("/groups")
+	publicGroup.GET("/:id", endpoints.GetGroup)
+	publicGroup.GET("", endpoints.GetGroups)
+	protectedGroup := e.Group("/groups/requests", middlewares...)
+	protectedGroup.POST("", endpoints.CreateGroup)
+	protectedGroup.PUT("/:id", endpoints.UpdateGroup)
+	protectedGroup.DELETE("/:id", endpoints.DeleteGroup)
+}
+
+func addProviderRoutes(e *echo.Echo, endpoints providers.ProviderEndpointsHandler, middlewares ...echo.MiddlewareFunc) {
+	group := e.Group("/providers", middlewares...)
+	group.GET("/:id", endpoints.GetProvider)
+	group.GET("", endpoints.GetProviders)
+	group.POST("", endpoints.CreateProvider)
+	group.PUT("/:id", endpoints.UpdateProvider)
+	group.DELETE("/:id", endpoints.DeleteProvider)
 }

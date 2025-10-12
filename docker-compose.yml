@@ -1,46 +1,25 @@
-version: '3'
-
 services:
-  # vuejs:
-  #   container_name: "deu-vuejs"
-  #   image: "deu_vuejs"
-  #   build:
-  #     context: "frontend"
-  #     dockerfile: "Dockerfile"
-  #   depends_on:
-  #     - "go-deu"
-  #     - "postgres16"
-
-  # go-deu:
-  #   container_name: "backend"
-  #   image: "deu_golang"
-  #   build:
-  #     context: "backend"
-  #     dockerfile: "./Dockerfile"
-  #   env_file:
-  #     - ${PWD}/.env
-  #   ports:
-  #     - 8085:8085
-  #   links:
-  #     - "postgres16"
-  #   volumes:
-  #     - ./backend/:/app
-  postgres16:
-    container_name: "postgres16"
-    image: postgres:16-alpine
+  go-deu:
+    container_name: "boh-go"
     build:
-      context: "postgresql"
-      dockerfile: Dockerfile
-    restart: "unless-stopped"
+      context: "./backend"
+      dockerfile: "Dockerfile"
+    env_file:
+      - .env
     ports:
-      - 5432:5432
-    environment:
-      TIMEZONE: "GMT-4"
-      POSTGRES_DB: "${POSTGRES_DB}"
-      POSTGRES_USER: "${POSTGRES_USERNAME}"
-      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      - ${HTTP_SERVE_PORT}:${HTTP_SERVE_PORT}
+    links:
+      - "db"
+  db:
+    container_name: "pg16"
+    image: postgres:16-alpine
+    restart: "unless-stopped"
     volumes:
-      - ./postgresql/sql-scripts:/docker-entrypoint-initdb.d
-      - postgres_data:/var/lib/postgresql/data
+      - ./postgresql:/docker-entrypoint-initdb.d
+    ports:
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
+    env_file:
+      - .env
 volumes:
   postgres_data:
+  uploads:
