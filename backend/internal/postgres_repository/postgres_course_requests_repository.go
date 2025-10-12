@@ -113,7 +113,7 @@ func newCourseRequestFromModel(request models.CourseRequest) entities.CourseRequ
 			FirstName: request.ReviewerFirstName,
 			LastName:  request.ReviewerLastName,
 		},
-		Status:      entities.CourseRequestStatus(request.Status),
+		Status:      entities.RequestStatus(request.Status),
 		Type:        request.Type,
 		ReviewedAt:  request.ReviewedAt,
 		CreatedAt:   request.CreatedAt,

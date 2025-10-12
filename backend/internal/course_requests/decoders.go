@@ -1,4 +1,4 @@
-package course_request
+package course_requests
 
 import (
 	"github.com/eaguilar88/deu/internal/entities"
@@ -11,7 +11,7 @@ func createCourseRequestRequestToEntitiesCourseRequest(
 		User: entities.User{
 			ID: req.UserID,
 		},
-		Status:      entities.CourseRequestStatus(req.Status),
+		Status:      entities.RequestStatus(req.Status),
 		Type:        req.Type,
 		Name:        req.Name,
 		Description: req.Description,
@@ -29,7 +29,7 @@ func updateCourseRequestRequestToEntitiesCourseRequest(
 		User: entities.User{
 			ID: req.UserID,
 		},
-		Status:      entities.CourseRequestStatus(req.Status),
+		Status:      entities.RequestStatus(req.Status),
 		Type:        req.Type,
 		Name:        req.Name,
 		Description: req.Description,

@@ -14,17 +14,6 @@ type GetProvidersRequest struct {
 	PageScope entities.PageScope
 }
 
-type CreateProviderRequest struct {
-	UserID     string
-	Type       string
-	IsInternal bool
-	CI         *multipart.FileHeader
-	RIF        *multipart.FileHeader
-	ISLR       *multipart.FileHeader
-	Resumes    []*multipart.FileHeader
-	Others     []*multipart.FileHeader
-}
-
 type UpdateProviderRequest struct {
 	ID         string
 	UserID     string

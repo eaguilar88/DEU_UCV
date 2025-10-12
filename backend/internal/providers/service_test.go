@@ -277,7 +277,7 @@ func TestProvidersService_uploadAndSave(t *testing.T) {
 				storage: tt.fields.storage,
 				logger:  tt.fields.logger,
 			}
-			if err := s.uploadAndSave(tt.args.ctx, tt.args.files); (err != nil) != tt.wantErr {
+			if err := s.storage.UploadFile(tt.args.ctx, tt.args.files); (err != nil) != tt.wantErr {
 				t.Errorf("ProvidersService.uploadAndSave() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})

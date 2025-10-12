@@ -2,14 +2,15 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"io"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/eaguilar88/deu/internal/entities"
 	"go.uber.org/zap"
 )
 
@@ -46,16 +47,38 @@ func NewB2Client(bucketName, keyID, applicationKey, endpoint, region string, log
 	}, nil
 }
 
-func (b *B2Client) UploadFile(ctx context.Context, file io.Reader, objectKey string, metadata map[string]string) error {
-	_, err := b.client.PutObject(ctx, &s3.PutObjectInput{
-		Bucket:   aws.String(b.bucketName),
-		Key:      aws.String(objectKey),
-		Body:     file,
-		Metadata: metadata,
-	})
-	if err != nil {
-		b.logger.Error("failed to upload file", zap.String("objectKey", objectKey), zap.Error(err))
-		return fmt.Errorf("failed to upload file: %w", err)
+func (b *B2Client) UploadFile(ctx context.Context, files []*entities.File) error {
+	if len(files) == 0 {
+		return nil
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	b.logger.Debug("starting file upload and save",
+		zap.Int("file_count", len(files)),
+		zap.String("action", "upload_and_save"),
+	)
+
+	for _, file := range files {
+		if err := validateFile(file); err != nil {
+			b.logger.Error("invalid file",
+				zap.Error(err),
+				zap.String("file_key", file.Key),
+				zap.String("action", "validate_file"),
+			)
+			return fmt.Errorf("invalid file %s: %w", file.Key, err)
+		}
+		_, err := b.client.PutObject(ctx, &s3.PutObjectInput{
+			Bucket:   aws.String(b.bucketName),
+			Key:      aws.String(file.Key),
+			Body:     file.Body,
+			Metadata: file.MetaData,
+		})
+		if err != nil {
+			b.logger.Error("failed to upload file", zap.String("objectKey", file.Key), zap.Error(err))
+			return fmt.Errorf("failed to upload file: %w", err)
+		}
 	}
 
 	return nil
@@ -104,4 +127,23 @@ func (b *B2Client) GetFileMetadata(ctx context.Context, objectKey string) (map[s
 	}
 
 	return result.Metadata, nil
+}
+
+func validateFile(file *entities.File) error {
+	if file == nil {
+		return errors.New("file is nil")
+	}
+	if file.Body == nil {
+		return errors.New("file body is nil")
+	}
+	if file.Key == "" {
+		return errors.New("file key is empty")
+	}
+	if file.Name == "" {
+		return errors.New("file name is empty")
+	}
+	if file.Purpose == "" {
+		return errors.New("file purpose is empty")
+	}
+	return nil
 }

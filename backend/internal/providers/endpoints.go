@@ -20,7 +20,6 @@ type Service interface {
 	DeleteProvider(ctx context.Context, providerID string) error
 }
 
-// TODO: Implement endpoints.go logic
 type ProviderEndpointsHandler struct {
 	svc Service
 	log *zap.Logger
@@ -127,18 +126,18 @@ func (h *ProviderEndpointsHandler) DeleteProvider(c echo.Context) error {
 func makeProviderFromRequest(c echo.Context, userID string, logger *zap.Logger) (*entities.Provider, error) {
 	providerType := c.FormValue("provider_type")
 	isInternal := c.FormValue("is_internal")
-	ci, err := utils.GetFileFromForm(c, "ci", entities.ProviderFileTypeCI)
+	ci, err := utils.GetFileFromForm(c, entities.ProviderFileTypeCI)
 	if err != nil {
 		logger.Error("error getting ci", zap.Error(err))
 		return nil, errors.New("ci is required")
 	}
-	rif, err := utils.GetFileFromForm(c, "rif", entities.ProviderFileTypeRIF)
+	rif, err := utils.GetFileFromForm(c, entities.ProviderFileTypeRIF)
 	if err != nil {
 		logger.Error("error getting rif", zap.Error(err))
 		return nil, errors.New("rif is required")
 	}
 
-	islr, err := utils.GetFileFromForm(c, "islr", entities.ProviderFileTypeISLR)
+	islr, err := utils.GetFileFromForm(c, entities.ProviderFileTypeISLR)
 	if err != nil {
 		logger.Error("error getting islr", zap.Error(err))
 		return nil, errors.New("islr is required")

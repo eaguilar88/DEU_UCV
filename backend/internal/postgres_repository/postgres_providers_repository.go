@@ -74,6 +74,7 @@ func (r *PostgresRepository) GetProviders(ctx context.Context, pageScope entitie
 		}
 		providers = append(providers, newProviderFromModel(provider))
 	}
+	pageScope.Count = len(providers)
 	return providers, pageScope, nil
 }
 

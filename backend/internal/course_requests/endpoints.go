@@ -1,4 +1,4 @@
-package course_request
+package course_requests
 
 import (
 	"context"

@@ -3,17 +3,17 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"strconv"
 
 	"github.com/eaguilar88/deu/internal/entities"
 	errs "github.com/eaguilar88/deu/internal/errors"
 	"github.com/eaguilar88/deu/internal/postgres_repository/models"
 	"github.com/eaguilar88/deu/internal/postgres_repository/queries"
+	"github.com/lib/pq"
+	"go.uber.org/zap"
 )
 
-func (r *PostgresRepository) GetGroupByID(
-	ctx context.Context,
-	groupID string,
-) (entities.ExtensionGroup, error) {
+func (r *PostgresRepository) GetGroupByID(ctx context.Context, groupID string) (entities.ExtensionGroup, error) {
 	sql, args, err := queries.GetGroupByID(groupID).ToSql()
 	if err != nil {
 		return entities.ExtensionGroup{}, err
@@ -32,10 +32,7 @@ func (r *PostgresRepository) GetGroupByID(
 	return newGroupFromModel(group), nil
 }
 
-func (r *PostgresRepository) GetGroups(
-	ctx context.Context,
-	pageScope entities.PageScope,
-) ([]entities.ExtensionGroup, entities.PageScope, error) {
+func (r *PostgresRepository) GetGroups(ctx context.Context, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error) {
 	sql, args, err := queries.GetGroups(pageScope.PerPage, pageScope.Offset()).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
@@ -61,11 +58,14 @@ func (r *PostgresRepository) GetGroups(
 	return groups, pageScope, nil
 }
 
-func (r *PostgresRepository) CreateGroup(
-	ctx context.Context,
-	group entities.ExtensionGroup,
-) (int64, error) {
-	sql, args, err := queries.InsertGroup(newGroupToModel(group)).ToSql()
+func (r *PostgresRepository) CreateGroup(ctx context.Context, gr entities.ExtensionGroup) (int64, error) {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return -1, err
+	}
+	defer tx.Rollback()
+
+	sql, args, err := queries.InsertGroup(newGroupToModel(gr)).ToSql()
 	if err != nil {
 		return 0, err
 	}
@@ -74,11 +74,17 @@ func (r *PostgresRepository) CreateGroup(
 		return 0, err
 	}
 	defer stmt.Close()
-	result, err := stmt.ExecContext(ctx, args...)
+	var lastInsertedID int64
+	err = stmt.QueryRowContext(ctx, args...).Scan(&lastInsertedID)
 	if err != nil {
-		return 0, err
+		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == pgErrorCodeUniqueViolation {
+			r.logger.Error("error inserting group", zap.Error(err))
+			return -1, errs.NewDuplicateEntryError(err)
+		}
+		r.logger.Error("error inserting group", zap.Error(err))
+		return -1, errs.NewInternalError(err)
 	}
-	return result.LastInsertId()
+	return lastInsertedID, nil
 }
 
 func (r *PostgresRepository) UpdateGroup(ctx context.Context, group entities.ExtensionGroup) error {
@@ -121,19 +127,57 @@ func (r *PostgresRepository) DeleteGroup(ctx context.Context, groupID string) er
 	return nil
 }
 
+func (r *PostgresRepository) CreateGroupRequest(ctx context.Context, req entities.GroupAuthRequest) (int64, error) {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return -1, err
+	}
+	defer tx.Rollback()
+
+	groupID, err := strconv.Atoi(req.GroupID)
+	if err != nil {
+		r.logger.Warn("Non numeric group_id", zap.String("group_id", req.GroupID), zap.Error(err))
+		return -1, err
+	}
+
+	sql, args, err := queries.InsertGroupRequest(models.GroupAuthRequest{
+		GroupID:  int64(groupID),
+		Status:   string(req.Status),
+		Faculty:  string(req.Faculty),
+		Comments: req.Comments,
+	}).ToSql()
+	if err != nil {
+		return -1, err
+	}
+	stmt, err := r.db.PrepareContext(ctx, sql)
+	if err != nil {
+		return -1, err
+	}
+	defer stmt.Close()
+	var lastInsertedID int64
+	err = stmt.QueryRowContext(ctx, args...).Scan(&lastInsertedID)
+	if err != nil {
+		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == pgErrorCodeUniqueViolation {
+			r.logger.Error("error inserting group request", zap.Error(err), zap.String("group_id", req.GroupID))
+			return -1, errs.NewDuplicateEntryError(err)
+		}
+		r.logger.Error("error inserting group request", zap.Error(err), zap.String("group_id", req.GroupID))
+		return -1, errs.NewInternalError(err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return -1, err
+	}
+	return lastInsertedID, nil
+}
+
 func scanGroup(row scannable) (models.ExtensionGroup, error) {
 	var group models.ExtensionGroup
 	err := row.Scan(
 		&group.ID,
 		&group.Name,
 		&group.Description,
-		&group.OwnerID,
-		&group.OwnerFirstName,
-		&group.OwnerLastName,
-		&group.RequestID,
-		&group.RequesterID,
-		&group.RequesterFirstName,
-		&group.RequesterLastName,
+		&group.Faculty,
 		&group.Objective,
 		&group.Location,
 		&group.IsActive,
@@ -155,12 +199,9 @@ func newGroupToModel(group entities.ExtensionGroup) models.ExtensionGroup {
 			String: group.Description,
 			Valid:  true,
 		},
-		OwnerID:   group.Owner.ID,
-		RequestID: group.CourseRequest.ID,
-		Objective: sql.NullString{
-			String: group.Objective,
-			Valid:  true,
-		},
+		Faculty:   group.Faculty.String(),
+		UserID:    group.Owner.ID,
+		Objective: group.Objective,
 		Location: sql.NullString{
 			String: group.Location,
 			Valid:  true,
@@ -176,9 +217,7 @@ func newGroupFromModel(group models.ExtensionGroup) entities.ExtensionGroup {
 	if group.Description.Valid {
 		description = group.Description.String
 	}
-	if group.Objective.Valid {
-		objective = group.Objective.String
-	}
+
 	if group.Location.Valid {
 		location = group.Location.String
 	}
@@ -187,18 +226,8 @@ func newGroupFromModel(group models.ExtensionGroup) entities.ExtensionGroup {
 		ID:          group.ID,
 		Name:        group.Name,
 		Description: description,
-		Owner: entities.User{
-			ID:        group.OwnerID,
-			FirstName: group.OwnerFirstName,
-			LastName:  group.OwnerLastName,
-		},
-		CourseRequest: entities.CourseRequest{
-			ID: group.RequestID,
-			User: entities.User{
-				ID:        group.RequesterID,
-				FirstName: group.RequesterFirstName,
-				LastName:  group.RequesterLastName,
-			},
+		Owner: &entities.User{
+			ID: group.UserID,
 		},
 		Objective: objective,
 		Location:  location,

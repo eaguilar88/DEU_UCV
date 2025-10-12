@@ -1,11 +1,11 @@
-package endorsements
+package course_requests
 
 import (
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/users"
 )
 
-type GetEndorsementResponse struct {
+type GetCourseRequestResponse struct {
 	ID          string                 `json:"id,omitempty"`
 	User        *users.GetUserResponse `json:"user,omitempty"`
 	Reviewer    *users.GetUserResponse `json:"reviewer,omitempty"`
@@ -19,11 +19,11 @@ type GetEndorsementResponse struct {
 	UpdatedAtAt string                 `json:"updated_at_at,omitempty"`
 }
 
-type GetEndorsementsResponse struct {
-	Endorsements []GetEndorsementResponse `json:"requests"`
-	Pages        entities.PageScope       `json:"pages"`
+type GetCourseRequestsResponse struct {
+	CourseRequests []GetCourseRequestResponse `json:"requests"`
+	Pages          entities.PageScope         `json:"pages"`
 }
 
-type CreateEndorsementResponse struct {
+type CreateCourseRequestResponse struct {
 	ID string `json:"id,omitempty"`
 }

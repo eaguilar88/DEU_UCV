@@ -1,7 +1,7 @@
 package courses
 
 import (
-	"github.com/eaguilar88/deu/internal/course_request"
+	"github.com/eaguilar88/deu/internal/course_requests"
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/users"
 )
@@ -16,7 +16,7 @@ func EntitiesCoursesToGetCoursesResponse(courses []entities.Course) []GetCourseR
 
 func EntitiesCourseToGetCourseResponse(course entities.Course) GetCourseResponse {
 	// Using the new course_request package
-	endorsement := course_request.EntitiesCourseRequestToGetCourseRequestResponse(entities.CourseRequest{
+	endorsement := course_requests.EntitiesCourseRequestToGetCourseRequestResponse(entities.CourseRequest{
 		ID:          course.CourseRequest.ID,
 		User:        course.CourseRequest.User,
 		Reviewer:    course.CourseRequest.Reviewer,

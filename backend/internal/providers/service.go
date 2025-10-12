@@ -2,8 +2,8 @@ package providers
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"io"
 	"strconv"
 	"sync"
 	"time"
@@ -12,7 +12,14 @@ import (
 	"go.uber.org/zap"
 )
 
-// TODO: Implement service.go logic
+// Custom domain errors
+var (
+	ErrProviderNotFound = errors.New("provider not found")
+	ErrInvalidProvider  = errors.New("invalid provider data")
+	ErrProviderExists   = errors.New("provider already exists")
+	ErrFileUploadFailed = errors.New("failed to upload file")
+	ErrFileNotFound     = errors.New("file not found")
+)
 
 type Repository interface {
 	GetProvider(ctx context.Context, providerID string) (entities.Provider, error)
@@ -28,7 +35,7 @@ type Repository interface {
 }
 
 type StorageClient interface {
-	UploadFile(ctx context.Context, file io.Reader, objectKey string, metadata map[string]string) error
+	UploadFile(ctx context.Context, file []*entities.File) error
 	DeleteFile(ctx context.Context, objectKey string) error
 	GetFileURL(ctx context.Context, objectKey string) (string, error)
 	GetFileMetadata(ctx context.Context, objectKey string) (map[string]string, error)
@@ -49,21 +56,44 @@ func NewProvidersService(repo Repository, storage StorageClient, logger *zap.Log
 }
 
 func (s *ProvidersService) GetProvider(ctx context.Context, providerID string) (entities.Provider, error) {
-	ctx, cancel := context.WithCancel(ctx)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	var provider entities.Provider
+
+	s.logger.Debug("getting provider",
+		zap.String("provider_id", providerID),
+		zap.String("action", "get_provider"),
+	)
+
 	provider, err := s.repo.GetProvider(ctx, providerID)
 	if err != nil {
-		s.logger.Error("failed to get provider by ID", zap.Error(err), zap.String("provider_id", providerID))
+		s.logger.Error("failed to get provider by ID",
+			zap.Error(err),
+			zap.String("provider_id", providerID),
+			zap.String("action", "get_provider"),
+		)
+		if errors.Is(err, ErrProviderNotFound) {
+			return entities.Provider{}, ErrProviderNotFound
+		}
 		return entities.Provider{}, fmt.Errorf("failed to get provider by ID: %w", err)
 	}
 
 	files, err := s.getFilesForProvider(ctx, providerID)
 	if err != nil {
-		return entities.Provider{}, err
+		s.logger.Error("failed to get provider files",
+			zap.Error(err),
+			zap.String("provider_id", providerID),
+			zap.String("action", "get_provider_files"),
+		)
+		return entities.Provider{}, fmt.Errorf("failed to get provider files: %w", err)
 	}
 
 	provider.Files = files
+
+	s.logger.Debug("provider retrieved successfully",
+		zap.String("provider_id", providerID),
+		zap.String("action", "get_provider"),
+	)
+
 	return provider, nil
 }
 
@@ -131,10 +161,29 @@ func (s *ProvidersService) CreateProvider(ctx context.Context, provider *entitie
 		s.logger.Error("failed to prepare files map", zap.Error(err))
 		return -1, err
 	}
-	if err = s.uploadAndSave(ctx, files); err != nil {
+	if err = s.storage.UploadFile(ctx, files); err != nil {
 		s.logger.Error("failed to upload files file", zap.Error(err))
 		return -1, err
 	}
+
+	// Save metadata to database
+	s.logger.Debug("saving file metadata to database",
+		zap.Int("file_count", len(files)),
+		zap.String("action", "save_metadata"),
+	)
+
+	if err := s.repo.SaveFilesToDB(ctx, files); err != nil {
+		s.logger.Error("failed to save file metadata to database",
+			zap.Error(err),
+			zap.String("action", "save_metadata"),
+		)
+		return -1, fmt.Errorf("failed to save file metadata: %w", err)
+	}
+
+	s.logger.Debug("successfully uploaded and saved files",
+		zap.Int("file_count", len(files)),
+		zap.String("action", "upload_and_save"),
+	)
 
 	return createdProviderID, nil
 }
@@ -162,10 +211,28 @@ func (s *ProvidersService) UpdateProvider(ctx context.Context, providerID string
 		s.logger.Error("failed to prepare files map", zap.Error(err))
 		return err
 	}
-	if err = s.uploadAndSave(ctx, files); err != nil {
+	if err = s.storage.UploadFile(ctx, files); err != nil {
 		s.logger.Error("failed to upload files file", zap.Error(err))
 		return err
 	}
+	// Save metadata to database
+	s.logger.Debug("saving file metadata to database",
+		zap.Int("file_count", len(files)),
+		zap.String("action", "save_metadata"),
+	)
+
+	if err := s.repo.SaveFilesToDB(ctx, files); err != nil {
+		s.logger.Error("failed to save file metadata to database",
+			zap.Error(err),
+			zap.String("action", "save_metadata"),
+		)
+		return fmt.Errorf("failed to save file metadata: %w", err)
+	}
+
+	s.logger.Debug("successfully uploaded and saved files",
+		zap.Int("file_count", len(files)),
+		zap.String("action", "upload_and_save"),
+	)
 	return nil
 }
 
@@ -173,23 +240,6 @@ func (s *ProvidersService) DeleteProvider(ctx context.Context, providerID string
 	err := s.repo.DeleteProvider(ctx, providerID)
 	if err != nil {
 		s.logger.Error("failed to delete provider", zap.Error(err))
-		return err
-	}
-	return nil
-}
-
-func (s *ProvidersService) uploadAndSave(ctx context.Context, files []*entities.File) error {
-	for _, file := range files {
-		file.MetaData["file_purpose"] = string(file.Purpose)
-		if err := s.storage.UploadFile(ctx, file.Body, file.Key, file.MetaData); err != nil {
-			s.logger.Error("failed to upload file", zap.Error(err), zap.String("file_key", file.Key))
-			return err
-		}
-	}
-
-	err := s.repo.SaveFilesToDB(ctx, files)
-	if err != nil {
-		s.logger.Error("failed to save file metadata to database", zap.Error(err))
 		return err
 	}
 	return nil
@@ -224,35 +274,81 @@ func makeFileEntityFromFilePointer(file *entities.File, providerID int64, upload
 
 // getFilesForProvider retrieves and populates file URLs for a provider.
 func (s *ProvidersService) getFilesForProvider(ctx context.Context, providerID string) (entities.ProviderFiles, error) {
+	s.logger.Debug("getting files for provider",
+		zap.String("provider_id", providerID),
+		zap.String("action", "get_files"),
+	)
+
 	files, err := s.repo.GetFilesByOwner(ctx, providerID)
 	if err != nil {
-		s.logger.Error("failed to get files by owner", zap.Error(err), zap.String("provider_id", providerID))
+		s.logger.Error("failed to get files by owner",
+			zap.Error(err),
+			zap.String("provider_id", providerID),
+			zap.String("action", "get_files"),
+		)
+		if errors.Is(err, ErrFileNotFound) {
+			return entities.ProviderFiles{}, ErrFileNotFound
+		}
 		return entities.ProviderFiles{}, fmt.Errorf("failed to get files by owner: %w", err)
 	}
 
+	allFiles := files.GetAllFiles()
+	errChan := make(chan error, len(allFiles))
 	var wgFiles sync.WaitGroup
-	for _, file := range files.GetAllFiles() {
+
+	for _, file := range allFiles {
 		if file == nil {
 			continue
 		}
 		wgFiles.Add(1)
 		go func(f *entities.File) {
 			defer wgFiles.Done()
-			url, err := s.storage.GetFileURL(ctx, f.Key)
+
+			// Create timeout context for URL fetch
+			urlCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+			defer cancel()
+
+			url, err := s.storage.GetFileURL(urlCtx, f.Key)
 			if err != nil {
-				s.logger.Error("failed to get file URL", zap.Error(err), zap.String("provider_id", providerID), zap.String("file_key", f.Key))
+				s.logger.Error("failed to get file URL",
+					zap.Error(err),
+					zap.String("provider_id", providerID),
+					zap.String("file_key", f.Key),
+					zap.String("action", "get_file_url"),
+				)
+				errChan <- fmt.Errorf("failed to get URL for file %s: %w", f.Key, err)
 				return
 			}
 			f.URL = url
 		}(file)
 	}
-	wgFiles.Wait()
 
-	return entities.ProviderFiles{
+	wgFiles.Wait()
+	close(errChan)
+
+	// Check for errors
+	if len(errChan) > 0 {
+		// Collect all errors
+		var errMsgs []string
+		for err := range errChan {
+			errMsgs = append(errMsgs, err.Error())
+		}
+		return entities.ProviderFiles{}, fmt.Errorf("failed to get URLs for some files: %v", errMsgs)
+	}
+
+	result := entities.ProviderFiles{
 		CI:      files.GetSingleFile(entities.ProviderFileTypeCI),
 		RIF:     files.GetSingleFile(entities.ProviderFileTypeRIF),
 		ISLR:    files.GetSingleFile(entities.ProviderFileTypeISLR),
 		Resumes: files.GetMultipleFiles(entities.ProviderFileTypeResume),
 		Others:  files.GetMultipleFiles(entities.ProviderFileTypeOther),
-	}, nil
+	}
+
+	s.logger.Debug("files retrieved successfully",
+		zap.String("provider_id", providerID),
+		zap.String("action", "get_files"),
+		zap.Int("total_files", len(allFiles)),
+	)
+
+	return result, nil
 }

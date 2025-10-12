@@ -1,6 +1,5 @@
 package course_periods
 
-// TODO: Implement service.go logic
 import (
 	"context"
 	"sync"

@@ -44,20 +44,30 @@ func GetGroups(limit, offset int) sq.SelectBuilder {
 func InsertGroup(group models.ExtensionGroup) sq.InsertBuilder {
 	return psql.Insert(groupsTableName).
 		Columns(
+			"user_id",
 			"name",
 			"description",
-			"user_id",
-			"request_id",
+			"faculty",
 			"objective",
+			"code",
+			"group_director",
+			"type",
 			"location",
+			"is_active",
+			"created_at",
+			"updated_at",
 		).
 		Values(
+			group.UserID,
 			group.Name,
 			group.Description,
-			group.OwnerID,
-			group.RequestID,
+			group.Faculty,
 			group.Objective,
+			group.Code,
+			group.Director,
+			group.Type,
 			group.Location,
+			group.IsActive,
 			sq.Expr("NOW()"),
 			sq.Expr("NOW()"),
 		).Suffix("RETURNING id")
@@ -67,9 +77,13 @@ func UpdateGroup(group models.ExtensionGroup) sq.UpdateBuilder {
 	return psql.Update(groupsTableName).
 		Set("name", group.Name).
 		Set("description", group.Description).
-		Set("request_id", group.RequestID).
+		Set("faculty", group.Faculty).
 		Set("objective", group.Objective).
+		Set("code", group.Code).
+		Set("group_director", group.Director).
+		Set("type", group.Type).
 		Set("location", group.Location).
+		Set("is_active", group.IsActive).
 		Set("updated_at", sq.Expr("NOW()")).
 		Where(sq.Eq{"id": group.ID})
 }

@@ -57,7 +57,7 @@ func InsertCourseRequest(request models.CourseRequest) sq.InsertBuilder {
 			request.Type,
 			request.Name.String,
 			request.Description.String,
-			entities.CourseRequestStatus_CREATED,
+			entities.RequestStatus_CREATED,
 		).Suffix("RETURNING id")
 }
 

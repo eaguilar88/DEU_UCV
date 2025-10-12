@@ -7,8 +7,8 @@ import (
 
 func NewLogger() (*zap.Logger, error) {
 	logConfig := zap.Config{
-		Level:            zap.NewAtomicLevelAt(zap.InfoLevel), // Adjust log level as needed
-		Encoding:         "json",                              // Use "console" for human-readable logs
+		Level:            zap.NewAtomicLevelAt(zap.DebugLevel), // Adjust log level as needed
+		Encoding:         "json",                               // Use "console" for human-readable logs
 		OutputPaths:      []string{"stdout"},
 		ErrorOutputPaths: []string{"stderr"},
 		EncoderConfig: zapcore.EncoderConfig{

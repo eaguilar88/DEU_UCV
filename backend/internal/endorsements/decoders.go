@@ -11,7 +11,7 @@ func createEndorsementRequestToEntitiesEndorsement(
 		User: entities.User{
 			ID: req.UserID,
 		},
-		Status:      entities.CourseRequestStatus(req.Status),
+		Status:      entities.RequestStatus(req.Status),
 		Type:        req.Type,
 		Name:        req.Name,
 		Description: req.Description,
@@ -29,7 +29,7 @@ func updateEndorsementRequestToEntitiesEndorsement(
 		User: entities.User{
 			ID: req.UserID,
 		},
-		Status:      entities.CourseRequestStatus(req.Status),
+		Status:      entities.RequestStatus(req.Status),
 		Type:        req.Type,
 		Name:        req.Name,
 		Description: req.Description,

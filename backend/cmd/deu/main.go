@@ -10,6 +10,7 @@ import (
 	"github.com/eaguilar88/deu/internal/config"
 	"github.com/eaguilar88/deu/internal/course_periods"
 	"github.com/eaguilar88/deu/internal/courses"
+	"github.com/eaguilar88/deu/internal/group_requests"
 	"github.com/eaguilar88/deu/internal/groups"
 	"github.com/eaguilar88/deu/internal/jwt"
 	repository "github.com/eaguilar88/deu/internal/postgres_repository"
@@ -28,12 +29,14 @@ const (
 // noVersionDefinedYet = "Version to be defined"
 )
 
+type RegisterAdminEndpoints func(g *echo.Group)
+
 func main() {
 	logger, err := config.NewLogger()
 	if err != nil {
 		os.Exit(1)
 	}
-	//nolint:errcheck
+
 	defer logger.Sync()
 	config, err := config.Read(logger)
 	if err != nil {
@@ -46,7 +49,7 @@ func main() {
 		logger.Error("error connecting to the db", zap.Error(err))
 		os.Exit(1)
 	}
-	//nolint:errcheck
+
 	defer postgres.Close()
 	logger.Info("connected to the db", zap.String("db", config.Database.String()))
 	if err := postgres.Ping(); err != nil {
@@ -87,6 +90,9 @@ func main() {
 	groupService := groups.NewGroupsService(repository, logger)
 	groupEndpoints := groups.MakeGroupEndpointsHandler(groupService, logger)
 
+	groupRequestService := group_requests.NewGroupRequestService(repository, logger)
+	groupRequestEndpoints := group_requests.MakeGroupRequestEndpointsHandler(groupRequestService, logger)
+
 	e := echo.New()
 	e.Validator = security.NewCustomValidator()
 	e.Use(middleware.Recover())
@@ -102,6 +108,10 @@ func main() {
 	addCourseRoutes(e, courseEndpoints, middlewares...)
 	addCoursePeriodRoutes(e, cpEndpoints, middlewares...)
 	addGroupsRoutes(e, groupEndpoints, middlewares...)
+
+	addAdminRoutes(e, middlewares,
+		groupRequestEndpoints.RegisterGroupRequestAdminEndpoints,
+	)
 
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", config.HTTPPort)))
 }
@@ -132,11 +142,14 @@ func addAuthRoutes(e *echo.Echo, endpoints auth.AuthEndpointsHandler) {
 	e.POST("/auth/login", endpoints.LoginHandleHTTP)
 }
 
-func addUserRoutes(
-	e *echo.Echo,
-	endpoints users.UserEndpointsHandler,
-	middlewares ...echo.MiddlewareFunc,
-) {
+func addAdminRoutes(e *echo.Echo, middlewares []echo.MiddlewareFunc, handlers ...RegisterAdminEndpoints) {
+	g := e.Group("/admin", middlewares...)
+	for _, handler := range handlers {
+		handler(g)
+	}
+}
+
+func addUserRoutes(e *echo.Echo, endpoints users.UserEndpointsHandler, middlewares ...echo.MiddlewareFunc) {
 	g := e.Group("/users", middlewares...)
 	g.GET("/:id", endpoints.GetUser)
 	g.GET("", endpoints.GetUsers)
@@ -145,11 +158,7 @@ func addUserRoutes(
 	g.DELETE("/:id", endpoints.DeleteUser)
 }
 
-func addCourseRoutes(
-	e *echo.Echo,
-	endpoints courses.CourseEndpointsHandler,
-	middlewares ...echo.MiddlewareFunc,
-) {
+func addCourseRoutes(e *echo.Echo, endpoints courses.CourseEndpointsHandler, middlewares ...echo.MiddlewareFunc) {
 	publicGroup := e.Group("/courses")
 	publicGroup.GET("/:id", endpoints.GetCourse)
 	publicGroup.GET("", endpoints.GetCourses)
@@ -159,11 +168,7 @@ func addCourseRoutes(
 	protectedGroup.DELETE("/:id", endpoints.DeleteCourse)
 }
 
-func addCoursePeriodRoutes(
-	e *echo.Echo,
-	endpoints course_periods.CoursePeriodEndpointsHandler,
-	middlewares ...echo.MiddlewareFunc,
-) {
+func addCoursePeriodRoutes(e *echo.Echo, endpoints course_periods.CoursePeriodEndpointsHandler, middlewares ...echo.MiddlewareFunc) {
 	publicGroup := e.Group("/courses/:course_id/periods")
 	publicGroup.GET("/:id", endpoints.GetCoursePeriod)
 	publicGroup.GET("", endpoints.GetCoursePeriods)
@@ -173,25 +178,17 @@ func addCoursePeriodRoutes(
 	protectedGroup.DELETE("/:id", endpoints.DeleteCoursePeriod)
 }
 
-func addGroupsRoutes(
-	e *echo.Echo,
-	endpoints groups.GroupEndpointsHandler,
-	middlewares ...echo.MiddlewareFunc,
-) {
-	publicGroup := e.Group("/groups/:group_id")
+func addGroupsRoutes(e *echo.Echo, endpoints groups.GroupEndpointsHandler, middlewares ...echo.MiddlewareFunc) {
+	publicGroup := e.Group("/groups")
 	publicGroup.GET("/:id", endpoints.GetGroup)
 	publicGroup.GET("", endpoints.GetGroups)
-	protectedGroup := e.Group("/groups/:group_id", middlewares...)
+	protectedGroup := e.Group("/groups/requests", middlewares...)
 	protectedGroup.POST("", endpoints.CreateGroup)
 	protectedGroup.PUT("/:id", endpoints.UpdateGroup)
 	protectedGroup.DELETE("/:id", endpoints.DeleteGroup)
 }
 
-func addProviderRoutes(
-	e *echo.Echo,
-	endpoints providers.ProviderEndpointsHandler,
-	middlewares ...echo.MiddlewareFunc,
-) {
+func addProviderRoutes(e *echo.Echo, endpoints providers.ProviderEndpointsHandler, middlewares ...echo.MiddlewareFunc) {
 	group := e.Group("/providers", middlewares...)
 	group.GET("/:id", endpoints.GetProvider)
 	group.GET("", endpoints.GetProviders)

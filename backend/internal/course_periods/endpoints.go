@@ -1,7 +1,5 @@
 package course_periods
 
-// TODO: Implement endpoints.go logic
-
 import (
 	"context"
 	"fmt"

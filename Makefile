@@ -33,3 +33,5 @@ go-test:
 git-pull:
 	git submodule update --recursive --remote
 	git pull
+
+refresh: stop-db start-db

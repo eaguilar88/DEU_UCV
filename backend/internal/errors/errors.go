@@ -14,7 +14,9 @@ var (
 	errNotFound        = errors.New("rows not found")
 	errInvalidPassword = errors.New("invalid password")
 	errInternal        = errors.New("internal error")
+	ErrNotFound        = NewNotFoundError(errors.New("resource not found"))
 	ErrMissingClaims   = NewCustomError(http.StatusUnauthorized, errors.New("missing claims"))
+	ErrBadFaculty      = NewBadRequestError(errors.New("el nombre de la facultad es inválido"))
 )
 
 type CustomError interface {
