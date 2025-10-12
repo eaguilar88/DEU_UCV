@@ -5,16 +5,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
-
-type claims struct {
-	UserID  string           `json:"userID"`
-	Roles   []string         `json:"roles"`
-	Faculty entities.Faculty `json:"faculty"`
-}
 
 // JWTMiddleware checks for the existence and validity of a JWT in the context.
 func JWTMiddleware(signer Signer, logger *zap.Logger) echo.MiddlewareFunc {

@@ -28,6 +28,8 @@ linters:
         - (*database/sql.Stmt).Close
         - (*database/sql.Rows).Close
         - (*database/sql.Tx).Rollback
+        - (*database/sql.Conn).Close
+        - (*zap.Logger).Sync
 formatters:
   enable:
     - gci
