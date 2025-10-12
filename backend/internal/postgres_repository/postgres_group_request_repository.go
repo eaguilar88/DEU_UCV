@@ -73,6 +73,7 @@ func (r *PostgresRepository) GetGroupRequestsByFaculty(ctx context.Context, facu
 	scope.Count = total
 	return requests, scope, nil
 }
+
 func (r *PostgresRepository) ApproveGroupRequest(ctx context.Context, reqID string) error {
 	sql, args, err := queries.ApproveGroupRequest(reqID).ToSql()
 	if err != nil {

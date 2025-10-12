@@ -37,7 +37,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	defer logger.Sync()
+	defer logger.Sync() //nolint: errcheck
 	config, err := config.Read(logger)
 	if err != nil {
 		logger.Error("error parsing configuration.")

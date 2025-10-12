@@ -34,4 +34,12 @@ git-pull:
 	git submodule update --recursive --remote
 	git pull
 
+quality:
+	cd backend && \
+	go vet ./... && \
+	go fmt ./... && \
+	golangci-lint run && \
+	go mod tidy && \
+	go test -count=1 -short -cover ./...
+
 refresh: stop-db start-db

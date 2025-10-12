@@ -29,6 +29,7 @@ linters:
         - (*database/sql.Rows).Close
         - (*database/sql.Tx).Rollback
         - (*database/sql.Conn).Close
+        - (*database/sql.DB).Close
         - (*zap.Logger).Sync
 formatters:
   enable:
