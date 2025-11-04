@@ -18,14 +18,14 @@ const (
 )
 
 type DeuConfig struct {
-	HTTPPort         int                `env:"HTTP_SERVE_PORT"          envDefault:"80"   envWhitelisted:"true"`
+	HTTPPort         int                `env:"HTTP_SERVE_PORT" envDefault:"80" envWhitelisted:"true"`
 	JWTEncryptionKey string             `env:"JWT_SIGNING_KEY,required"`
 	FilePath         string             `env:"FILE_PATH,required"`
-	TTL              uint32             `env:"TOKEN_TTL"                envDefault:"3600"`
-	Flavor           string             `env:"FLAVOR"                   envDefault:"dev"`
-	Database         DatabaseConfig     `                                                                       envPrefix:"POSTGRES_"`
-	Email            EmailConfig        `                                                                       envPrefix:"EMAIL_"`
-	BlackBlazeB2     BlackBlazeB2Config `                                                                       envPrefix:"BLACKBLAZE_B2_"`
+	TTL              uint32             `env:"TOKEN_TTL" envDefault:"3600"`
+	Flavor           string             `env:"FLAVOR" envDefault:"dev"`
+	Database         DatabaseConfig     `envPrefix:"POSTGRES_"`
+	Email            EmailConfig        `envPrefix:"EMAIL_"`
+	BlackBlazeB2     BlackBlazeB2Config `envPrefix:"BLACKBLAZE_B2_"`
 }
 
 func (s *DeuConfig) IsProd() bool {
