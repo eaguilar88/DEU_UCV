@@ -24,12 +24,13 @@ func TestMakeCoursePeriodEndpointsHandler(t *testing.T) {
 		log  *zap.Logger
 		want CoursePeriodEndpointsHandler
 	}
+	s := mocks.NewMockService(t)
 	tc := testCase{
 		name: "success",
-		svc:  &mocks.ServiceMock{},
+		svc:  s,
 		log:  zap.NewNop(),
 		want: CoursePeriodEndpointsHandler{
-			svc: &mocks.ServiceMock{},
+			svc: s,
 			log: zap.NewNop(),
 		},
 	}
@@ -42,7 +43,7 @@ func TestMakeCoursePeriodEndpointsHandler(t *testing.T) {
 func TestCoursePeriodEndpointsHandler_GetCoursePeriod(t *testing.T) {
 	type testCase struct {
 		name    string
-		svc     *mocks.ServiceMock
+		svc     *mocks.MockService
 		prepare func(ctx echo.Context, tc *testCase)
 		req     any
 		resp    any
@@ -52,7 +53,7 @@ func TestCoursePeriodEndpointsHandler_GetCoursePeriod(t *testing.T) {
 	tests := []testCase{
 		{
 			name: "success",
-			svc:  &mocks.ServiceMock{},
+			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
 				tc.svc.On("GetCoursePeriod", ctx.Request().Context(), mock.AnythingOfType("string")).
 					Return(entities.CoursePeriod{ID: "1"}, tc.wantErr)
@@ -65,7 +66,7 @@ func TestCoursePeriodEndpointsHandler_GetCoursePeriod(t *testing.T) {
 		},
 		{
 			name: "error getting course period",
-			svc:  &mocks.ServiceMock{},
+			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
 				tc.svc.On("GetCoursePeriod", ctx.Request().Context(), mock.AnythingOfType("string")).
 					Return(entities.CoursePeriod{}, errors.New("cannot get course period"))
@@ -76,7 +77,7 @@ func TestCoursePeriodEndpointsHandler_GetCoursePeriod(t *testing.T) {
 		},
 		{
 			name:    "error cannot bind",
-			svc:     &mocks.ServiceMock{},
+			svc:     &mocks.MockService{},
 			req:     "bad request",
 			wantErr: echo.NewHTTPError(http.StatusBadRequest, "Bad Request"),
 		},
@@ -112,7 +113,7 @@ func TestCoursePeriodEndpointsHandler_GetCoursePeriod(t *testing.T) {
 func TestCoursePeriodEndpointsHandler_GetCoursePeriods(t *testing.T) {
 	type testCase struct {
 		name    string
-		svc     *mocks.ServiceMock
+		svc     *mocks.MockService
 		prepare func(ctx echo.Context, tc *testCase)
 		req     any
 		resp    any
@@ -121,7 +122,7 @@ func TestCoursePeriodEndpointsHandler_GetCoursePeriods(t *testing.T) {
 	tests := []testCase{
 		{
 			name: "success",
-			svc:  &mocks.ServiceMock{},
+			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
 				tc.svc.On("GetCoursePeriods", ctx.Request().Context(), mock.AnythingOfType("string"), mock.AnythingOfType("entities.PageScope")).
 					Return([]entities.CoursePeriod{{ID: "1"}}, entities.PageScope{}, nil)
@@ -137,7 +138,7 @@ func TestCoursePeriodEndpointsHandler_GetCoursePeriods(t *testing.T) {
 		},
 		{
 			name: "error getting course periods",
-			svc:  &mocks.ServiceMock{},
+			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
 				tc.svc.On("GetCoursePeriods", ctx.Request().Context(), mock.AnythingOfType("string"), mock.AnythingOfType("entities.PageScope")).
 					Return([]entities.CoursePeriod{}, entities.PageScope{}, echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error"))
@@ -179,7 +180,7 @@ func TestCoursePeriodEndpointsHandler_CreateCoursePeriod(t *testing.T) {
 	userID := "1"
 	type testCase struct {
 		name    string
-		svc     *mocks.ServiceMock
+		svc     *mocks.MockService
 		prepare func(ctx echo.Context, tc *testCase)
 		userID  *string
 		req     any
@@ -190,7 +191,7 @@ func TestCoursePeriodEndpointsHandler_CreateCoursePeriod(t *testing.T) {
 	tests := []testCase{
 		{
 			name: "success",
-			svc:  &mocks.ServiceMock{},
+			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
 				tc.svc.On("CreateCoursePeriod", ctx.Request().Context(), mock.AnythingOfType("entities.CoursePeriod")).
 					Return(int64(1), nil)
@@ -203,7 +204,7 @@ func TestCoursePeriodEndpointsHandler_CreateCoursePeriod(t *testing.T) {
 		},
 		{
 			name: "error creating course period",
-			svc:  &mocks.ServiceMock{},
+			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
 				tc.svc.On("CreateCoursePeriod", ctx.Request().Context(), mock.AnythingOfType("entities.CoursePeriod")).
 					Return(int64(-1), echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error"))
@@ -214,13 +215,13 @@ func TestCoursePeriodEndpointsHandler_CreateCoursePeriod(t *testing.T) {
 		},
 		{
 			name:    "error cannot find userID in context",
-			svc:     &mocks.ServiceMock{},
+			svc:     &mocks.MockService{},
 			req:     CreateCoursePeriodRequest{},
 			wantErr: echo.NewHTTPError(http.StatusBadRequest, "Bad Request"),
 		},
 		{
 			name:    "error cannot bind",
-			svc:     &mocks.ServiceMock{},
+			svc:     &mocks.MockService{},
 			req:     "bad request",
 			wantErr: echo.NewHTTPError(http.StatusBadRequest, "Bad Request"),
 		},
@@ -260,7 +261,7 @@ func TestCoursePeriodEndpointsHandler_UpdateCoursePeriod(t *testing.T) {
 	userID := "1"
 	type testCase struct {
 		name    string
-		svc     *mocks.ServiceMock
+		svc     *mocks.MockService
 		prepare func(ctx echo.Context, tc *testCase)
 		userID  *string
 		req     any
@@ -271,7 +272,7 @@ func TestCoursePeriodEndpointsHandler_UpdateCoursePeriod(t *testing.T) {
 	tests := []testCase{
 		{
 			name: "success",
-			svc:  &mocks.ServiceMock{},
+			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
 				tc.svc.On("UpdateCoursePeriod", ctx.Request().Context(), mock.AnythingOfType("string"), mock.AnythingOfType("entities.CoursePeriod")).
 					Return(nil)
@@ -282,7 +283,7 @@ func TestCoursePeriodEndpointsHandler_UpdateCoursePeriod(t *testing.T) {
 		},
 		{
 			name: "error updating course period",
-			svc:  &mocks.ServiceMock{},
+			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
 				tc.svc.On("UpdateCoursePeriod", ctx.Request().Context(), mock.AnythingOfType("string"), mock.AnythingOfType("entities.CoursePeriod")).
 					Return(errors.New("cannot update course period"))
@@ -293,13 +294,13 @@ func TestCoursePeriodEndpointsHandler_UpdateCoursePeriod(t *testing.T) {
 		},
 		{
 			name:    "error cannot find userID in context",
-			svc:     &mocks.ServiceMock{},
+			svc:     &mocks.MockService{},
 			req:     UpdateCoursePeriodRequest{},
 			wantErr: echo.NewHTTPError(http.StatusBadRequest, "Bad Request"),
 		},
 		{
 			name:    "error cannot bind",
-			svc:     &mocks.ServiceMock{},
+			svc:     &mocks.MockService{},
 			req:     "bad request",
 			wantErr: echo.NewHTTPError(http.StatusBadRequest, "Bad Request"),
 		},
@@ -339,7 +340,7 @@ func TestCoursePeriodEndpointsHandler_DeleteCoursePeriod(t *testing.T) {
 	userID := "1"
 	type testCase struct {
 		name    string
-		svc     *mocks.ServiceMock
+		svc     *mocks.MockService
 		prepare func(ctx echo.Context, tc *testCase)
 		userID  *string
 		req     any
@@ -350,7 +351,7 @@ func TestCoursePeriodEndpointsHandler_DeleteCoursePeriod(t *testing.T) {
 	tests := []testCase{
 		{
 			name: "success",
-			svc:  &mocks.ServiceMock{},
+			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
 				tc.svc.On("DeleteCoursePeriod", ctx.Request().Context(), mock.AnythingOfType("string"), mock.AnythingOfType("string")).
 					Return(nil)
@@ -361,7 +362,7 @@ func TestCoursePeriodEndpointsHandler_DeleteCoursePeriod(t *testing.T) {
 		},
 		{
 			name: "error deleting course period",
-			svc:  &mocks.ServiceMock{},
+			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
 				tc.svc.On("DeleteCoursePeriod", ctx.Request().Context(), mock.AnythingOfType("string"), mock.AnythingOfType("string")).
 					Return(errors.New("cannot delete course period"))
@@ -372,13 +373,13 @@ func TestCoursePeriodEndpointsHandler_DeleteCoursePeriod(t *testing.T) {
 		},
 		{
 			name:    "error cannot find userID in context",
-			svc:     &mocks.ServiceMock{},
+			svc:     &mocks.MockService{},
 			req:     DeleteCoursePeriodRequest{},
 			wantErr: echo.NewHTTPError(http.StatusBadRequest, "Bad Request"),
 		},
 		{
 			name:    "error cannot bind",
-			svc:     &mocks.ServiceMock{},
+			svc:     &mocks.MockService{},
 			req:     "bad request",
 			wantErr: echo.NewHTTPError(http.StatusBadRequest, "Bad Request"),
 		},

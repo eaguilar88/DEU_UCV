@@ -9,6 +9,6 @@ pkgname: "mocks"
 recursive: true
 template: testify
 packages:
-  github.com/mytheresa/go-hiring-challenge:
+  github.com/eaguilar88/deu:
     config:
       all: true  

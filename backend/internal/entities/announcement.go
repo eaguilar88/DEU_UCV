@@ -8,4 +8,3 @@ type Announcement struct {
 	UpdatedAt string
 	DeletedAt string
 }
-

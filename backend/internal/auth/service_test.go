@@ -14,8 +14,8 @@ import (
 func TestAuthService_Login(t *testing.T) {
 	type testCase struct {
 		name     string
-		repo     *mocks.RepositoryMock
-		signer   *jwtMock.SignerMock
+		repo     *mocks.MockRepository
+		signer   *jwtMock.MockSigner
 		username string
 		password string
 		prepare  func(ctx context.Context, tc *testCase)
@@ -29,8 +29,8 @@ func TestAuthService_Login(t *testing.T) {
 			name:     "success",
 			username: "jon.doe@email.com",
 			password: "nolodire",
-			repo:     &mocks.RepositoryMock{},
-			signer:   &jwtMock.SignerMock{},
+			repo:     &mocks.MockRepository{},
+			signer:   &jwtMock.MockSigner{},
 			prepare: func(ctx context.Context, tc *testCase) {
 				tc.repo.On("GetUserByUsername", ctx, tc.username).Return(*tc.user, nil)
 				tc.repo.On("GetUserRoles", ctx, tc.user.ID).Return([]string{"admin"}, nil)

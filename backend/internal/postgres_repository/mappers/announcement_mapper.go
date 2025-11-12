@@ -23,4 +23,3 @@ func AnnouncementModelsToEntities(models []models.Announcement) []entities.Annou
 	}
 	return entities
 }
-

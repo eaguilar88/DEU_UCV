@@ -11,4 +11,3 @@ type Announcement struct {
 	UpdatedAt     string
 	DeletedAt     sql.NullString
 }
-
