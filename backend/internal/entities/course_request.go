@@ -5,11 +5,9 @@ type CourseRequest struct {
 	User        User
 	Reviewer    User
 	Status      RequestStatus
-	Type        string
-	Name        string
-	Description string
 	Comments    string
 	ReviewedAt  string
 	CreatedAt   string
 	UpdatedAtAt string
+	Course      *Course // Associated course information
 }

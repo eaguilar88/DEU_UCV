@@ -1,11 +1,11 @@
 package auth
 
 type LoginRequest struct {
-	Username string `json:"username"`
+	Username string `json:"usuario"`
 	Password string `json:"password"`
 }
 
 type RegisterRequest struct {
-	Username string `json:"username"`
+	Username string `json:"usuario"`
 	Password string `json:"password"`
 }

@@ -80,6 +80,128 @@ func (_c *RepositoryMock_CreateGroup_Call) RunAndReturn(run func(context.Context
 	return _c
 }
 
+// CreateGroupRequest provides a mock function with given fields: ctx, req
+func (_m *RepositoryMock) CreateGroupRequest(ctx context.Context, req entities.GroupAuthRequest) (int64, error) {
+	ret := _m.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateGroupRequest")
+	}
+
+	var r0 int64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, entities.GroupAuthRequest) (int64, error)); ok {
+		return rf(ctx, req)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, entities.GroupAuthRequest) int64); ok {
+		r0 = rf(ctx, req)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, entities.GroupAuthRequest) error); ok {
+		r1 = rf(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// RepositoryMock_CreateGroupRequest_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateGroupRequest'
+type RepositoryMock_CreateGroupRequest_Call struct {
+	*mock.Call
+}
+
+// CreateGroupRequest is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req entities.GroupAuthRequest
+func (_e *RepositoryMock_Expecter) CreateGroupRequest(ctx interface{}, req interface{}) *RepositoryMock_CreateGroupRequest_Call {
+	return &RepositoryMock_CreateGroupRequest_Call{Call: _e.mock.On("CreateGroupRequest", ctx, req)}
+}
+
+func (_c *RepositoryMock_CreateGroupRequest_Call) Run(run func(ctx context.Context, req entities.GroupAuthRequest)) *RepositoryMock_CreateGroupRequest_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(entities.GroupAuthRequest))
+	})
+	return _c
+}
+
+func (_c *RepositoryMock_CreateGroupRequest_Call) Return(_a0 int64, _a1 error) *RepositoryMock_CreateGroupRequest_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *RepositoryMock_CreateGroupRequest_Call) RunAndReturn(run func(context.Context, entities.GroupAuthRequest) (int64, error)) *RepositoryMock_CreateGroupRequest_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CreateGroupWithRequest provides a mock function with given fields: ctx, group, request
+func (_m *RepositoryMock) CreateGroupWithRequest(ctx context.Context, group entities.ExtensionGroup, request entities.GroupAuthRequest) (int64, int64, error) {
+	ret := _m.Called(ctx, group, request)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateGroupWithRequest")
+	}
+
+	var r0 int64
+	var r1 int64
+	var r2 error
+	if rf, ok := ret.Get(0).(func(context.Context, entities.ExtensionGroup, entities.GroupAuthRequest) (int64, int64, error)); ok {
+		return rf(ctx, group, request)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, entities.ExtensionGroup, entities.GroupAuthRequest) int64); ok {
+		r0 = rf(ctx, group, request)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, entities.ExtensionGroup, entities.GroupAuthRequest) int64); ok {
+		r1 = rf(ctx, group, request)
+	} else {
+		r1 = ret.Get(1).(int64)
+	}
+
+	if rf, ok := ret.Get(2).(func(context.Context, entities.ExtensionGroup, entities.GroupAuthRequest) error); ok {
+		r2 = rf(ctx, group, request)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
+}
+
+// RepositoryMock_CreateGroupWithRequest_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateGroupWithRequest'
+type RepositoryMock_CreateGroupWithRequest_Call struct {
+	*mock.Call
+}
+
+// CreateGroupWithRequest is a helper method to define mock.On call
+//   - ctx context.Context
+//   - group entities.ExtensionGroup
+//   - request entities.GroupAuthRequest
+func (_e *RepositoryMock_Expecter) CreateGroupWithRequest(ctx interface{}, group interface{}, request interface{}) *RepositoryMock_CreateGroupWithRequest_Call {
+	return &RepositoryMock_CreateGroupWithRequest_Call{Call: _e.mock.On("CreateGroupWithRequest", ctx, group, request)}
+}
+
+func (_c *RepositoryMock_CreateGroupWithRequest_Call) Run(run func(ctx context.Context, group entities.ExtensionGroup, request entities.GroupAuthRequest)) *RepositoryMock_CreateGroupWithRequest_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(entities.ExtensionGroup), args[2].(entities.GroupAuthRequest))
+	})
+	return _c
+}
+
+func (_c *RepositoryMock_CreateGroupWithRequest_Call) Return(groupID int64, requestID int64, err error) *RepositoryMock_CreateGroupWithRequest_Call {
+	_c.Call.Return(groupID, requestID, err)
+	return _c
+}
+
+func (_c *RepositoryMock_CreateGroupWithRequest_Call) RunAndReturn(run func(context.Context, entities.ExtensionGroup, entities.GroupAuthRequest) (int64, int64, error)) *RepositoryMock_CreateGroupWithRequest_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteGroup provides a mock function with given fields: ctx, groupID
 func (_m *RepositoryMock) DeleteGroup(ctx context.Context, groupID string) error {
 	ret := _m.Called(ctx, groupID)
@@ -123,6 +245,65 @@ func (_c *RepositoryMock_DeleteGroup_Call) Return(_a0 error) *RepositoryMock_Del
 }
 
 func (_c *RepositoryMock_DeleteGroup_Call) RunAndReturn(run func(context.Context, string) error) *RepositoryMock_DeleteGroup_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetFilesByOwner provides a mock function with given fields: ctx, ownerID
+func (_m *RepositoryMock) GetFilesByOwner(ctx context.Context, ownerID string) (entities.GroupedFiles, error) {
+	ret := _m.Called(ctx, ownerID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetFilesByOwner")
+	}
+
+	var r0 entities.GroupedFiles
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (entities.GroupedFiles, error)); ok {
+		return rf(ctx, ownerID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) entities.GroupedFiles); ok {
+		r0 = rf(ctx, ownerID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(entities.GroupedFiles)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, ownerID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// RepositoryMock_GetFilesByOwner_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetFilesByOwner'
+type RepositoryMock_GetFilesByOwner_Call struct {
+	*mock.Call
+}
+
+// GetFilesByOwner is a helper method to define mock.On call
+//   - ctx context.Context
+//   - ownerID string
+func (_e *RepositoryMock_Expecter) GetFilesByOwner(ctx interface{}, ownerID interface{}) *RepositoryMock_GetFilesByOwner_Call {
+	return &RepositoryMock_GetFilesByOwner_Call{Call: _e.mock.On("GetFilesByOwner", ctx, ownerID)}
+}
+
+func (_c *RepositoryMock_GetFilesByOwner_Call) Run(run func(ctx context.Context, ownerID string)) *RepositoryMock_GetFilesByOwner_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *RepositoryMock_GetFilesByOwner_Call) Return(_a0 entities.GroupedFiles, _a1 error) *RepositoryMock_GetFilesByOwner_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *RepositoryMock_GetFilesByOwner_Call) RunAndReturn(run func(context.Context, string) (entities.GroupedFiles, error)) *RepositoryMock_GetFilesByOwner_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -246,6 +427,53 @@ func (_c *RepositoryMock_GetGroups_Call) Return(_a0 []entities.ExtensionGroup, _
 }
 
 func (_c *RepositoryMock_GetGroups_Call) RunAndReturn(run func(context.Context, entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error)) *RepositoryMock_GetGroups_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SaveFilesToDB provides a mock function with given fields: ctx, file
+func (_m *RepositoryMock) SaveFilesToDB(ctx context.Context, file []*entities.File) error {
+	ret := _m.Called(ctx, file)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SaveFilesToDB")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, []*entities.File) error); ok {
+		r0 = rf(ctx, file)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// RepositoryMock_SaveFilesToDB_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SaveFilesToDB'
+type RepositoryMock_SaveFilesToDB_Call struct {
+	*mock.Call
+}
+
+// SaveFilesToDB is a helper method to define mock.On call
+//   - ctx context.Context
+//   - file []*entities.File
+func (_e *RepositoryMock_Expecter) SaveFilesToDB(ctx interface{}, file interface{}) *RepositoryMock_SaveFilesToDB_Call {
+	return &RepositoryMock_SaveFilesToDB_Call{Call: _e.mock.On("SaveFilesToDB", ctx, file)}
+}
+
+func (_c *RepositoryMock_SaveFilesToDB_Call) Run(run func(ctx context.Context, file []*entities.File)) *RepositoryMock_SaveFilesToDB_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].([]*entities.File))
+	})
+	return _c
+}
+
+func (_c *RepositoryMock_SaveFilesToDB_Call) Return(_a0 error) *RepositoryMock_SaveFilesToDB_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *RepositoryMock_SaveFilesToDB_Call) RunAndReturn(run func(context.Context, []*entities.File) error) *RepositoryMock_SaveFilesToDB_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -80,6 +80,127 @@ func (_c *RepositoryMock_CreateCourse_Call) RunAndReturn(run func(context.Contex
 	return _c
 }
 
+// CreateCourseRequest provides a mock function with given fields: ctx, request
+func (_m *RepositoryMock) CreateCourseRequest(ctx context.Context, request entities.CourseRequest) (int64, error) {
+	ret := _m.Called(ctx, request)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateCourseRequest")
+	}
+
+	var r0 int64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, entities.CourseRequest) (int64, error)); ok {
+		return rf(ctx, request)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, entities.CourseRequest) int64); ok {
+		r0 = rf(ctx, request)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, entities.CourseRequest) error); ok {
+		r1 = rf(ctx, request)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// RepositoryMock_CreateCourseRequest_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateCourseRequest'
+type RepositoryMock_CreateCourseRequest_Call struct {
+	*mock.Call
+}
+
+// CreateCourseRequest is a helper method to define mock.On call
+//   - ctx context.Context
+//   - request entities.CourseRequest
+func (_e *RepositoryMock_Expecter) CreateCourseRequest(ctx interface{}, request interface{}) *RepositoryMock_CreateCourseRequest_Call {
+	return &RepositoryMock_CreateCourseRequest_Call{Call: _e.mock.On("CreateCourseRequest", ctx, request)}
+}
+
+func (_c *RepositoryMock_CreateCourseRequest_Call) Run(run func(ctx context.Context, request entities.CourseRequest)) *RepositoryMock_CreateCourseRequest_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(entities.CourseRequest))
+	})
+	return _c
+}
+
+func (_c *RepositoryMock_CreateCourseRequest_Call) Return(_a0 int64, _a1 error) *RepositoryMock_CreateCourseRequest_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *RepositoryMock_CreateCourseRequest_Call) RunAndReturn(run func(context.Context, entities.CourseRequest) (int64, error)) *RepositoryMock_CreateCourseRequest_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CreateCourseWithRequest provides a mock function with given fields: ctx, course
+func (_m *RepositoryMock) CreateCourseWithRequest(ctx context.Context, course entities.Course) (int64, int64, error) {
+	ret := _m.Called(ctx, course)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateCourseWithRequest")
+	}
+
+	var r0 int64
+	var r1 int64
+	var r2 error
+	if rf, ok := ret.Get(0).(func(context.Context, entities.Course) (int64, int64, error)); ok {
+		return rf(ctx, course)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, entities.Course) int64); ok {
+		r0 = rf(ctx, course)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, entities.Course) int64); ok {
+		r1 = rf(ctx, course)
+	} else {
+		r1 = ret.Get(1).(int64)
+	}
+
+	if rf, ok := ret.Get(2).(func(context.Context, entities.Course) error); ok {
+		r2 = rf(ctx, course)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
+}
+
+// RepositoryMock_CreateCourseWithRequest_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateCourseWithRequest'
+type RepositoryMock_CreateCourseWithRequest_Call struct {
+	*mock.Call
+}
+
+// CreateCourseWithRequest is a helper method to define mock.On call
+//   - ctx context.Context
+//   - course entities.Course
+func (_e *RepositoryMock_Expecter) CreateCourseWithRequest(ctx interface{}, course interface{}) *RepositoryMock_CreateCourseWithRequest_Call {
+	return &RepositoryMock_CreateCourseWithRequest_Call{Call: _e.mock.On("CreateCourseWithRequest", ctx, course)}
+}
+
+func (_c *RepositoryMock_CreateCourseWithRequest_Call) Run(run func(ctx context.Context, course entities.Course)) *RepositoryMock_CreateCourseWithRequest_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(entities.Course))
+	})
+	return _c
+}
+
+func (_c *RepositoryMock_CreateCourseWithRequest_Call) Return(courseID int64, requestID int64, err error) *RepositoryMock_CreateCourseWithRequest_Call {
+	_c.Call.Return(courseID, requestID, err)
+	return _c
+}
+
+func (_c *RepositoryMock_CreateCourseWithRequest_Call) RunAndReturn(run func(context.Context, entities.Course) (int64, int64, error)) *RepositoryMock_CreateCourseWithRequest_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteCourse provides a mock function with given fields: ctx, courseID
 func (_m *RepositoryMock) DeleteCourse(ctx context.Context, courseID string) error {
 	ret := _m.Called(ctx, courseID)
@@ -246,6 +367,120 @@ func (_c *RepositoryMock_GetCourses_Call) Return(_a0 []entities.Course, _a1 enti
 }
 
 func (_c *RepositoryMock_GetCourses_Call) RunAndReturn(run func(context.Context, entities.PageScope) ([]entities.Course, entities.PageScope, error)) *RepositoryMock_GetCourses_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetLatestCoursePeriod provides a mock function with given fields: ctx, courseID
+func (_m *RepositoryMock) GetLatestCoursePeriod(ctx context.Context, courseID string) (entities.CoursePeriod, error) {
+	ret := _m.Called(ctx, courseID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetLatestCoursePeriod")
+	}
+
+	var r0 entities.CoursePeriod
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (entities.CoursePeriod, error)); ok {
+		return rf(ctx, courseID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) entities.CoursePeriod); ok {
+		r0 = rf(ctx, courseID)
+	} else {
+		r0 = ret.Get(0).(entities.CoursePeriod)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, courseID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// RepositoryMock_GetLatestCoursePeriod_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetLatestCoursePeriod'
+type RepositoryMock_GetLatestCoursePeriod_Call struct {
+	*mock.Call
+}
+
+// GetLatestCoursePeriod is a helper method to define mock.On call
+//   - ctx context.Context
+//   - courseID string
+func (_e *RepositoryMock_Expecter) GetLatestCoursePeriod(ctx interface{}, courseID interface{}) *RepositoryMock_GetLatestCoursePeriod_Call {
+	return &RepositoryMock_GetLatestCoursePeriod_Call{Call: _e.mock.On("GetLatestCoursePeriod", ctx, courseID)}
+}
+
+func (_c *RepositoryMock_GetLatestCoursePeriod_Call) Run(run func(ctx context.Context, courseID string)) *RepositoryMock_GetLatestCoursePeriod_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *RepositoryMock_GetLatestCoursePeriod_Call) Return(_a0 entities.CoursePeriod, _a1 error) *RepositoryMock_GetLatestCoursePeriod_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *RepositoryMock_GetLatestCoursePeriod_Call) RunAndReturn(run func(context.Context, string) (entities.CoursePeriod, error)) *RepositoryMock_GetLatestCoursePeriod_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetProviderByUserID provides a mock function with given fields: ctx, userID
+func (_m *RepositoryMock) GetProviderByUserID(ctx context.Context, userID string) (entities.Provider, error) {
+	ret := _m.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetProviderByUserID")
+	}
+
+	var r0 entities.Provider
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (entities.Provider, error)); ok {
+		return rf(ctx, userID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) entities.Provider); ok {
+		r0 = rf(ctx, userID)
+	} else {
+		r0 = ret.Get(0).(entities.Provider)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// RepositoryMock_GetProviderByUserID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetProviderByUserID'
+type RepositoryMock_GetProviderByUserID_Call struct {
+	*mock.Call
+}
+
+// GetProviderByUserID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID string
+func (_e *RepositoryMock_Expecter) GetProviderByUserID(ctx interface{}, userID interface{}) *RepositoryMock_GetProviderByUserID_Call {
+	return &RepositoryMock_GetProviderByUserID_Call{Call: _e.mock.On("GetProviderByUserID", ctx, userID)}
+}
+
+func (_c *RepositoryMock_GetProviderByUserID_Call) Run(run func(ctx context.Context, userID string)) *RepositoryMock_GetProviderByUserID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *RepositoryMock_GetProviderByUserID_Call) Return(_a0 entities.Provider, _a1 error) *RepositoryMock_GetProviderByUserID_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *RepositoryMock_GetProviderByUserID_Call) RunAndReturn(run func(context.Context, string) (entities.Provider, error)) *RepositoryMock_GetProviderByUserID_Call {
 	_c.Call.Return(run)
 	return _c
 }

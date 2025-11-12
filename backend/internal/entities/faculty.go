@@ -22,7 +22,7 @@ const (
 	FacultyIngenieria                 Faculty = "Ingeniería"
 	FacultyMedicina                   Faculty = "Medicina"
 	FacultyOdontologia                Faculty = "Odontología"
-	FacultyDEU                        Faculty = "Multidisciplinario" // DEU (Dirección de Extensión Universitaria
+	FacultyDEU                        Faculty = "DEU" // DEU (Dirección de Extensión Universitaria
 )
 
 // ValidFaculties contains all valid faculty values

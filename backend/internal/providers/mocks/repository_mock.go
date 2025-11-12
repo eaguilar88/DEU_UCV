@@ -127,23 +127,23 @@ func (_c *RepositoryMock_DeleteProvider_Call) RunAndReturn(run func(context.Cont
 }
 
 // GetFilesByOwner provides a mock function with given fields: ctx, ownerID
-func (_m *RepositoryMock) GetFilesByOwner(ctx context.Context, ownerID string) ([]entities.File, error) {
+func (_m *RepositoryMock) GetFilesByOwner(ctx context.Context, ownerID string) (entities.GroupedFiles, error) {
 	ret := _m.Called(ctx, ownerID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetFilesByOwner")
 	}
 
-	var r0 []entities.File
+	var r0 entities.GroupedFiles
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) ([]entities.File, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) (entities.GroupedFiles, error)); ok {
 		return rf(ctx, ownerID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) []entities.File); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) entities.GroupedFiles); ok {
 		r0 = rf(ctx, ownerID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]entities.File)
+			r0 = ret.Get(0).(entities.GroupedFiles)
 		}
 	}
 
@@ -175,12 +175,12 @@ func (_c *RepositoryMock_GetFilesByOwner_Call) Run(run func(ctx context.Context,
 	return _c
 }
 
-func (_c *RepositoryMock_GetFilesByOwner_Call) Return(_a0 []entities.File, _a1 error) *RepositoryMock_GetFilesByOwner_Call {
+func (_c *RepositoryMock_GetFilesByOwner_Call) Return(_a0 entities.GroupedFiles, _a1 error) *RepositoryMock_GetFilesByOwner_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *RepositoryMock_GetFilesByOwner_Call) RunAndReturn(run func(context.Context, string) ([]entities.File, error)) *RepositoryMock_GetFilesByOwner_Call {
+func (_c *RepositoryMock_GetFilesByOwner_Call) RunAndReturn(run func(context.Context, string) (entities.GroupedFiles, error)) *RepositoryMock_GetFilesByOwner_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -366,7 +366,7 @@ func (_c *RepositoryMock_GetProviders_Call) RunAndReturn(run func(context.Contex
 }
 
 // SaveFilesToDB provides a mock function with given fields: ctx, file
-func (_m *RepositoryMock) SaveFilesToDB(ctx context.Context, file []entities.File) error {
+func (_m *RepositoryMock) SaveFilesToDB(ctx context.Context, file []*entities.File) error {
 	ret := _m.Called(ctx, file)
 
 	if len(ret) == 0 {
@@ -374,7 +374,7 @@ func (_m *RepositoryMock) SaveFilesToDB(ctx context.Context, file []entities.Fil
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, []entities.File) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []*entities.File) error); ok {
 		r0 = rf(ctx, file)
 	} else {
 		r0 = ret.Error(0)
@@ -390,14 +390,14 @@ type RepositoryMock_SaveFilesToDB_Call struct {
 
 // SaveFilesToDB is a helper method to define mock.On call
 //   - ctx context.Context
-//   - file []entities.File
+//   - file []*entities.File
 func (_e *RepositoryMock_Expecter) SaveFilesToDB(ctx interface{}, file interface{}) *RepositoryMock_SaveFilesToDB_Call {
 	return &RepositoryMock_SaveFilesToDB_Call{Call: _e.mock.On("SaveFilesToDB", ctx, file)}
 }
 
-func (_c *RepositoryMock_SaveFilesToDB_Call) Run(run func(ctx context.Context, file []entities.File)) *RepositoryMock_SaveFilesToDB_Call {
+func (_c *RepositoryMock_SaveFilesToDB_Call) Run(run func(ctx context.Context, file []*entities.File)) *RepositoryMock_SaveFilesToDB_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]entities.File))
+		run(args[0].(context.Context), args[1].([]*entities.File))
 	})
 	return _c
 }
@@ -407,7 +407,7 @@ func (_c *RepositoryMock_SaveFilesToDB_Call) Return(_a0 error) *RepositoryMock_S
 	return _c
 }
 
-func (_c *RepositoryMock_SaveFilesToDB_Call) RunAndReturn(run func(context.Context, []entities.File) error) *RepositoryMock_SaveFilesToDB_Call {
+func (_c *RepositoryMock_SaveFilesToDB_Call) RunAndReturn(run func(context.Context, []*entities.File) error) *RepositoryMock_SaveFilesToDB_Call {
 	_c.Call.Return(run)
 	return _c
 }

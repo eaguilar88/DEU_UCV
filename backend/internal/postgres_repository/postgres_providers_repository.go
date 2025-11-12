@@ -51,6 +51,26 @@ func (r *PostgresRepository) GetProviderByCode(ctx context.Context, code string)
 	return newProviderFromModel(provider), nil
 }
 
+func (r *PostgresRepository) GetProviderByUserID(ctx context.Context, userID string) (entities.Provider, error) {
+	query := queries.GetProviderByUserID(userID)
+	sql, args, err := query.ToSql()
+	if err != nil {
+		return entities.Provider{}, err
+	}
+	stmt, err := r.db.PrepareContext(ctx, sql)
+	if err != nil {
+		return entities.Provider{}, err
+	}
+	defer stmt.Close()
+	var provider models.Provider
+	row := stmt.QueryRowContext(ctx, args...)
+	provider, err = scanProvider(row)
+	if err != nil {
+		return entities.Provider{}, err
+	}
+	return newProviderFromModel(provider), nil
+}
+
 func (r *PostgresRepository) GetProviders(ctx context.Context, pageScope entities.PageScope) ([]entities.Provider, entities.PageScope, error) {
 	sql, args, err := queries.GetProviders(pageScope.PerPage, pageScope.Offset()).ToSql()
 	if err != nil {
@@ -156,29 +176,38 @@ func scanProvider(row scannable) (models.Provider, error) {
 	err := row.Scan(
 		&provider.ID,
 		&provider.UserID,
-		&provider.FirstName,
-		&provider.LastName,
 		&provider.Code,
 		&provider.Active,
 		&provider.CreatedAt,
 		&provider.UpdatedAt,
+		&provider.DeletedAt,
 	)
 
 	return provider, err
 }
 
 func newProviderFromModel(provider models.Provider) entities.Provider {
-	return entities.Provider{
+	p := entities.Provider{
 		ID: provider.ID,
 		User: entities.User{
 			ID:        provider.UserID,
 			FirstName: provider.FirstName,
 			LastName:  provider.LastName,
 		},
-		Code:      provider.Code,
-		CreatedAt: provider.CreatedAt,
-		UpdatedAt: provider.UpdatedAt,
+		Code: provider.Code,
 	}
+	if provider.CreatedAt.Valid {
+		p.CreatedAt = provider.CreatedAt.String
+	}
+
+	if provider.UpdatedAt.Valid {
+		p.UpdatedAt = provider.UpdatedAt.String
+	}
+
+	if provider.DeletedAt.Valid {
+		p.DeletedAt = provider.DeletedAt.String
+	}
+	return p
 }
 
 func newProviderModelFromEntities(provider entities.Provider) models.Provider {

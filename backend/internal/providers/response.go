@@ -3,25 +3,25 @@ package providers
 import "github.com/eaguilar88/deu/internal/entities"
 
 type GetProviderResponse struct {
-	ID       string        `json:"provider_id"`
-	User     ProviderUser  `json:"user"`
-	Internal bool          `json:"internal"`
-	Code     string        `json:"provider_code"`
-	Files    ProviderFiles `json:"files"`
-	Active   bool          `json:"active"`
+	ID       string        `json:"proveedor_id"`
+	User     ProviderUser  `json:"usuario"`
+	Internal bool          `json:"interno"`
+	Code     string        `json:"codigo_proveedor"`
+	Files    ProviderFiles `json:"archivos"`
+	Active   bool          `json:"activo"`
 }
 
 type ProviderUser struct {
-	ID   string `json:"user_id"`
-	Name string `json:"name"`
+	ID   string `json:"usuario_id"`
+	Name string `json:"nombre"`
 }
 
 type ProviderFiles struct {
 	CI      string   `json:"ci,omitempty"`
 	RIF     string   `json:"rif,omitempty"`
 	ISLR    string   `json:"islr,omitempty"`
-	Resumes []string `json:"resumes,omitempty"`
-	Others  []string `json:"others,omitempty"`
+	Resumes []string `json:"resumenes,omitempty"`
+	Others  []string `json:"otros,omitempty"`
 }
 
 func ProviderEntityToGetProviderResponse(entity entities.Provider) GetProviderResponse {
@@ -65,8 +65,8 @@ func ProviderEntityToGetProviderResponse(entity entities.Provider) GetProviderRe
 }
 
 type GenProvidersResponse struct {
-	Providers []GetProviderResponse `json:"providers"`
-	Pages     entities.PageScope    `json:"pages"`
+	Providers []GetProviderResponse `json:"proveedores"`
+	Pages     entities.PageScope    `json:"paginas"`
 }
 
 func ProvidersEntityToGetProvidersResponse(providers []entities.Provider, pageScope entities.PageScope) GenProvidersResponse {

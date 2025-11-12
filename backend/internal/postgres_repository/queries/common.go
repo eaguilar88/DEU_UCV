@@ -25,4 +25,5 @@ var (
 	periodsTableName        = fmt.Sprintf("%s.course_cycles", schema)
 	participantsTableName   = fmt.Sprintf("%s.course_participants", schema)
 	filesTableName          = fmt.Sprintf("%s.files", schema)
+	announcementsTableName  = fmt.Sprintf("%s.course_cycle_announcements", schema)
 )

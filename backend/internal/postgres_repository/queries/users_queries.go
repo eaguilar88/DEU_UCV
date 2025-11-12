@@ -9,7 +9,18 @@ import (
 )
 
 var userQuerySelectCommon = []string{
-	"u.id", "u.ci", "u.email", "u.first_name", "u.last_name", "u.date_of_birth", "u.gender", "u.education", "u.address", "u.created_at", "p.code",
+	"u.id",
+	"u.ci",
+	"u.email",
+	"u.first_name",
+	"u.last_name",
+	"u.date_of_birth",
+	"u.gender",
+	"u.education",
+	"u.address",
+	"u.created_at",
+	"u.updated_at",
+	"u.deleted_at",
 }
 
 func GetRolesByUserID(userID string) sq.SelectBuilder {

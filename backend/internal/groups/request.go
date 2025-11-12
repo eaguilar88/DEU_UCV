@@ -10,38 +10,38 @@ type GetGroupRequest struct {
 	ID string `param:"id" validate:"required"`
 }
 type GetGroupsRequest struct {
-	Page    int `query:"page"     validate:"required"`
+	Page    int `query:"page" validate:"required"`
 	PerPage int `query:"per_page" validate:"required"`
 }
 type CreateGroupRequest struct {
-	Name        string           `validate:"required" form:"name"`
-	Description string           `                    form:"description"`
-	LeaderName  string           `validate:"required" form:"leader_name"`
-	Type        string           `validate:"required" form:"type"`
-	Faculty     string           `validate:"required" form:"faculty"`
-	Objective   string           `validate:"required" form:"objective"`
-	Location    string           `validate:"required" form:"location"`
-	Members     []GroupMemberDTO `                    form:"members"`
+	Name        string           `validate:"required" form:"nombre"`
+	Description string           `form:"descripcion"`
+	LeaderName  string           `validate:"required" form:"nombre_lider"`
+	Type        string           `validate:"required" form:"tipo"`
+	Faculty     string           `validate:"required" form:"facultad"`
+	Objective   string           `validate:"required" form:"objetivo"`
+	Location    string           `validate:"required" form:"ubicacion"`
+	Members     []GroupMemberDTO `form:"miembros"`
 }
 
 type UpdateGroupRequest struct {
 	ID            string           `param:"id" validate:"required"`
-	OwnerID       string           `           validate:"required"`
-	Name          string           `           validate:"required" form:"name"`
-	Description   string           `                               form:"description"`
-	EndorsementID string           `           validate:"required" form:"endorsement_id"`
-	Objective     string           `           validate:"required" form:"objective"`
-	Location      string           `           validate:"required" form:"location"`
-	Members       []GroupMemberDTO `                               form:"members"`
+	OwnerID       string           `validate:"required"`
+	Name          string           `validate:"required" form:"nombre"`
+	Description   string           `form:"descripcion"`
+	EndorsementID string           `validate:"required" form:"aval_id"`
+	Objective     string           `validate:"required" form:"objetivo"`
+	Location      string           `validate:"required" form:"ubicacion"`
+	Members       []GroupMemberDTO `form:"miembros"`
 }
 type DeleteGroupRequest struct {
 	ID      string `param:"id" validate:"required"`
-	OwnerID string `           validate:"required"`
+	OwnerID string `validate:"required"`
 }
 
 type GroupMemberDTO struct {
 	ID    string `json:"id"`
-	Name  string `json:"name"  validate:"required"`
+	Name  string `json:"nombre" validate:"required"`
 	Email string `json:"email" validate:"required,email"`
 }
 

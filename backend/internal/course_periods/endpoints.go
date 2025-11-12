@@ -16,6 +16,10 @@ type Service interface {
 	CreateCoursePeriod(ctx context.Context, period entities.CoursePeriod) (int64, error)
 	UpdateCoursePeriod(ctx context.Context, periodID string, period entities.CoursePeriod) error
 	DeleteCoursePeriod(ctx context.Context, periodID, userID string) error
+	GetAnnouncement(ctx context.Context, announcementID string) (entities.Announcement, error)
+	CreateAnnouncement(ctx context.Context, periodID string, announcement entities.Announcement) (int64, error)
+	UpdateAnnouncement(ctx context.Context, announcementID string, announcement entities.Announcement) error
+	DeleteAnnouncement(ctx context.Context, announcementID string) error
 }
 
 type CoursePeriodEndpointsHandler struct {
@@ -85,10 +89,7 @@ func (h *CoursePeriodEndpointsHandler) CreateCoursePeriod(c echo.Context) error 
 		return echo.ErrBadRequest
 	}
 
-	periodID, err := h.svc.CreateCoursePeriod(
-		ctx,
-		createCoursePeriodRequestToEntitiesCoursePeriod(req, userID),
-	)
+	periodID, err := h.svc.CreateCoursePeriod(ctx, createCoursePeriodRequestToEntitiesCoursePeriod(req, userID))
 	if err != nil {
 		h.log.Error("could not decode", zap.Error(err))
 		return echo.ErrInternalServerError
@@ -139,6 +140,89 @@ func (h *CoursePeriodEndpointsHandler) DeleteCoursePeriod(c echo.Context) error 
 	err := h.svc.DeleteCoursePeriod(ctx, req.ID, userID)
 	if err != nil {
 		h.log.Error("could not decode", zap.Error(err))
+		return echo.ErrUnprocessableEntity
+	}
+
+	return c.JSON(http.StatusAccepted, nil)
+}
+
+// Announcement handlers
+func (h *CoursePeriodEndpointsHandler) GetAnnouncement(c echo.Context) error {
+	ctx := c.Request().Context()
+	var req GetAnnouncementRequest
+	if err := c.Bind(&req); err != nil {
+		h.log.Error("could not decode", zap.Error(err))
+		return echo.ErrBadRequest
+	}
+
+	announcement, err := h.svc.GetAnnouncement(ctx, req.ID)
+	if err != nil {
+		h.log.Error(fmt.Sprintf("error getting announcement with ID: %s", req.ID), zap.Error(err))
+		return echo.ErrInternalServerError
+	}
+
+	return c.JSON(http.StatusOK, EntitiesAnnouncementToGetAnnouncementResponse(announcement))
+}
+
+func (h *CoursePeriodEndpointsHandler) CreateAnnouncement(c echo.Context) error {
+	ctx := c.Request().Context()
+	var req CreateAnnouncementRequest
+	if err := c.Bind(&req); err != nil {
+		h.log.Error("could not decode", zap.Error(err))
+		return echo.ErrBadRequest
+	}
+
+	if err := c.Validate(&req); err != nil {
+		h.log.Error("validation failed", zap.Error(err))
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	announcement := createAnnouncementRequestToEntitiesAnnouncement(req)
+	announcementID, err := h.svc.CreateAnnouncement(ctx, req.PeriodID, announcement)
+	if err != nil {
+		h.log.Error("could not create announcement", zap.Error(err))
+		return echo.ErrInternalServerError
+	}
+
+	return c.JSON(http.StatusCreated, CreateAnnouncementResponse{
+		ID: fmt.Sprintf("%d", announcementID),
+	})
+}
+
+func (h *CoursePeriodEndpointsHandler) UpdateAnnouncement(c echo.Context) error {
+	ctx := c.Request().Context()
+	var req UpdateAnnouncementRequest
+	if err := c.Bind(&req); err != nil {
+		h.log.Error("could not decode", zap.Error(err), zap.Any("request", req))
+		return echo.ErrBadRequest
+	}
+
+	if err := c.Validate(&req); err != nil {
+		h.log.Error("validation failed", zap.Error(err))
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	announcement := updateAnnouncementRequestToEntitiesAnnouncement(req)
+	err := h.svc.UpdateAnnouncement(ctx, req.ID, announcement)
+	if err != nil {
+		h.log.Error("could not update announcement", zap.Error(err))
+		return echo.ErrUnprocessableEntity
+	}
+
+	return c.JSON(http.StatusAccepted, nil)
+}
+
+func (h *CoursePeriodEndpointsHandler) DeleteAnnouncement(c echo.Context) error {
+	ctx := c.Request().Context()
+	var req DeleteAnnouncementRequest
+	if err := c.Bind(&req); err != nil {
+		h.log.Error("could not decode", zap.Error(err), zap.Any("request", req))
+		return echo.ErrBadRequest
+	}
+
+	err := h.svc.DeleteAnnouncement(ctx, req.ID)
+	if err != nil {
+		h.log.Error("could not delete announcement", zap.Error(err))
 		return echo.ErrUnprocessableEntity
 	}
 

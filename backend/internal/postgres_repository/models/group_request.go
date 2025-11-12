@@ -12,7 +12,14 @@ type GroupAuthRequest struct {
 	Faculty    string         `db:"faculty"`
 	ReviewerID sql.NullInt64  `db:"reviewer_id"`
 	ReviewedAt sql.NullString `db:"reviewed_at"`
-	Comments   string         `db:"comments"`
+	Comments   sql.NullString `db:"comments"`
 	CreatedAt  time.Time      `db:"created_at"`
 	UpdatedAt  time.Time      `db:"updated_at"`
+}
+
+func (m *GroupAuthRequest) GetComments() string {
+	if m.Comments.Valid {
+		return m.Comments.String
+	}
+	return ""
 }

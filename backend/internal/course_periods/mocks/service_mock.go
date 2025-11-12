@@ -23,6 +23,64 @@ func (_m *ServiceMock) EXPECT() *ServiceMock_Expecter {
 	return &ServiceMock_Expecter{mock: &_m.Mock}
 }
 
+// CreateAnnouncement provides a mock function with given fields: ctx, periodID, announcement
+func (_m *ServiceMock) CreateAnnouncement(ctx context.Context, periodID string, announcement entities.Announcement) (int64, error) {
+	ret := _m.Called(ctx, periodID, announcement)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateAnnouncement")
+	}
+
+	var r0 int64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, entities.Announcement) (int64, error)); ok {
+		return rf(ctx, periodID, announcement)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, entities.Announcement) int64); ok {
+		r0 = rf(ctx, periodID, announcement)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, entities.Announcement) error); ok {
+		r1 = rf(ctx, periodID, announcement)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ServiceMock_CreateAnnouncement_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateAnnouncement'
+type ServiceMock_CreateAnnouncement_Call struct {
+	*mock.Call
+}
+
+// CreateAnnouncement is a helper method to define mock.On call
+//   - ctx context.Context
+//   - periodID string
+//   - announcement entities.Announcement
+func (_e *ServiceMock_Expecter) CreateAnnouncement(ctx interface{}, periodID interface{}, announcement interface{}) *ServiceMock_CreateAnnouncement_Call {
+	return &ServiceMock_CreateAnnouncement_Call{Call: _e.mock.On("CreateAnnouncement", ctx, periodID, announcement)}
+}
+
+func (_c *ServiceMock_CreateAnnouncement_Call) Run(run func(ctx context.Context, periodID string, announcement entities.Announcement)) *ServiceMock_CreateAnnouncement_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(entities.Announcement))
+	})
+	return _c
+}
+
+func (_c *ServiceMock_CreateAnnouncement_Call) Return(_a0 int64, _a1 error) *ServiceMock_CreateAnnouncement_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *ServiceMock_CreateAnnouncement_Call) RunAndReturn(run func(context.Context, string, entities.Announcement) (int64, error)) *ServiceMock_CreateAnnouncement_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // CreateCoursePeriod provides a mock function with given fields: ctx, period
 func (_m *ServiceMock) CreateCoursePeriod(ctx context.Context, period entities.CoursePeriod) (int64, error) {
 	ret := _m.Called(ctx, period)
@@ -80,6 +138,53 @@ func (_c *ServiceMock_CreateCoursePeriod_Call) RunAndReturn(run func(context.Con
 	return _c
 }
 
+// DeleteAnnouncement provides a mock function with given fields: ctx, announcementID
+func (_m *ServiceMock) DeleteAnnouncement(ctx context.Context, announcementID string) error {
+	ret := _m.Called(ctx, announcementID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteAnnouncement")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, announcementID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// ServiceMock_DeleteAnnouncement_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteAnnouncement'
+type ServiceMock_DeleteAnnouncement_Call struct {
+	*mock.Call
+}
+
+// DeleteAnnouncement is a helper method to define mock.On call
+//   - ctx context.Context
+//   - announcementID string
+func (_e *ServiceMock_Expecter) DeleteAnnouncement(ctx interface{}, announcementID interface{}) *ServiceMock_DeleteAnnouncement_Call {
+	return &ServiceMock_DeleteAnnouncement_Call{Call: _e.mock.On("DeleteAnnouncement", ctx, announcementID)}
+}
+
+func (_c *ServiceMock_DeleteAnnouncement_Call) Run(run func(ctx context.Context, announcementID string)) *ServiceMock_DeleteAnnouncement_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *ServiceMock_DeleteAnnouncement_Call) Return(_a0 error) *ServiceMock_DeleteAnnouncement_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *ServiceMock_DeleteAnnouncement_Call) RunAndReturn(run func(context.Context, string) error) *ServiceMock_DeleteAnnouncement_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteCoursePeriod provides a mock function with given fields: ctx, periodID, userID
 func (_m *ServiceMock) DeleteCoursePeriod(ctx context.Context, periodID string, userID string) error {
 	ret := _m.Called(ctx, periodID, userID)
@@ -124,6 +229,63 @@ func (_c *ServiceMock_DeleteCoursePeriod_Call) Return(_a0 error) *ServiceMock_De
 }
 
 func (_c *ServiceMock_DeleteCoursePeriod_Call) RunAndReturn(run func(context.Context, string, string) error) *ServiceMock_DeleteCoursePeriod_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetAnnouncement provides a mock function with given fields: ctx, announcementID
+func (_m *ServiceMock) GetAnnouncement(ctx context.Context, announcementID string) (entities.Announcement, error) {
+	ret := _m.Called(ctx, announcementID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAnnouncement")
+	}
+
+	var r0 entities.Announcement
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (entities.Announcement, error)); ok {
+		return rf(ctx, announcementID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) entities.Announcement); ok {
+		r0 = rf(ctx, announcementID)
+	} else {
+		r0 = ret.Get(0).(entities.Announcement)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, announcementID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ServiceMock_GetAnnouncement_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAnnouncement'
+type ServiceMock_GetAnnouncement_Call struct {
+	*mock.Call
+}
+
+// GetAnnouncement is a helper method to define mock.On call
+//   - ctx context.Context
+//   - announcementID string
+func (_e *ServiceMock_Expecter) GetAnnouncement(ctx interface{}, announcementID interface{}) *ServiceMock_GetAnnouncement_Call {
+	return &ServiceMock_GetAnnouncement_Call{Call: _e.mock.On("GetAnnouncement", ctx, announcementID)}
+}
+
+func (_c *ServiceMock_GetAnnouncement_Call) Run(run func(ctx context.Context, announcementID string)) *ServiceMock_GetAnnouncement_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *ServiceMock_GetAnnouncement_Call) Return(_a0 entities.Announcement, _a1 error) *ServiceMock_GetAnnouncement_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *ServiceMock_GetAnnouncement_Call) RunAndReturn(run func(context.Context, string) (entities.Announcement, error)) *ServiceMock_GetAnnouncement_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -248,6 +410,54 @@ func (_c *ServiceMock_GetCoursePeriods_Call) Return(_a0 []entities.CoursePeriod,
 }
 
 func (_c *ServiceMock_GetCoursePeriods_Call) RunAndReturn(run func(context.Context, string, entities.PageScope) ([]entities.CoursePeriod, entities.PageScope, error)) *ServiceMock_GetCoursePeriods_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateAnnouncement provides a mock function with given fields: ctx, announcementID, announcement
+func (_m *ServiceMock) UpdateAnnouncement(ctx context.Context, announcementID string, announcement entities.Announcement) error {
+	ret := _m.Called(ctx, announcementID, announcement)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateAnnouncement")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, entities.Announcement) error); ok {
+		r0 = rf(ctx, announcementID, announcement)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// ServiceMock_UpdateAnnouncement_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateAnnouncement'
+type ServiceMock_UpdateAnnouncement_Call struct {
+	*mock.Call
+}
+
+// UpdateAnnouncement is a helper method to define mock.On call
+//   - ctx context.Context
+//   - announcementID string
+//   - announcement entities.Announcement
+func (_e *ServiceMock_Expecter) UpdateAnnouncement(ctx interface{}, announcementID interface{}, announcement interface{}) *ServiceMock_UpdateAnnouncement_Call {
+	return &ServiceMock_UpdateAnnouncement_Call{Call: _e.mock.On("UpdateAnnouncement", ctx, announcementID, announcement)}
+}
+
+func (_c *ServiceMock_UpdateAnnouncement_Call) Run(run func(ctx context.Context, announcementID string, announcement entities.Announcement)) *ServiceMock_UpdateAnnouncement_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(entities.Announcement))
+	})
+	return _c
+}
+
+func (_c *ServiceMock_UpdateAnnouncement_Call) Return(_a0 error) *ServiceMock_UpdateAnnouncement_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *ServiceMock_UpdateAnnouncement_Call) RunAndReturn(run func(context.Context, string, entities.Announcement) error) *ServiceMock_UpdateAnnouncement_Call {
 	_c.Call.Return(run)
 	return _c
 }

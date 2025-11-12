@@ -23,6 +23,64 @@ func (_m *RepositoryMock) EXPECT() *RepositoryMock_Expecter {
 	return &RepositoryMock_Expecter{mock: &_m.Mock}
 }
 
+// CreateAnnouncement provides a mock function with given fields: ctx, periodID, announcement
+func (_m *RepositoryMock) CreateAnnouncement(ctx context.Context, periodID string, announcement entities.Announcement) (int64, error) {
+	ret := _m.Called(ctx, periodID, announcement)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateAnnouncement")
+	}
+
+	var r0 int64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, entities.Announcement) (int64, error)); ok {
+		return rf(ctx, periodID, announcement)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, entities.Announcement) int64); ok {
+		r0 = rf(ctx, periodID, announcement)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, entities.Announcement) error); ok {
+		r1 = rf(ctx, periodID, announcement)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// RepositoryMock_CreateAnnouncement_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateAnnouncement'
+type RepositoryMock_CreateAnnouncement_Call struct {
+	*mock.Call
+}
+
+// CreateAnnouncement is a helper method to define mock.On call
+//   - ctx context.Context
+//   - periodID string
+//   - announcement entities.Announcement
+func (_e *RepositoryMock_Expecter) CreateAnnouncement(ctx interface{}, periodID interface{}, announcement interface{}) *RepositoryMock_CreateAnnouncement_Call {
+	return &RepositoryMock_CreateAnnouncement_Call{Call: _e.mock.On("CreateAnnouncement", ctx, periodID, announcement)}
+}
+
+func (_c *RepositoryMock_CreateAnnouncement_Call) Run(run func(ctx context.Context, periodID string, announcement entities.Announcement)) *RepositoryMock_CreateAnnouncement_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(entities.Announcement))
+	})
+	return _c
+}
+
+func (_c *RepositoryMock_CreateAnnouncement_Call) Return(_a0 int64, _a1 error) *RepositoryMock_CreateAnnouncement_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *RepositoryMock_CreateAnnouncement_Call) RunAndReturn(run func(context.Context, string, entities.Announcement) (int64, error)) *RepositoryMock_CreateAnnouncement_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // CreateCoursePeriod provides a mock function with given fields: ctx, coursePeriod
 func (_m *RepositoryMock) CreateCoursePeriod(ctx context.Context, coursePeriod entities.CoursePeriod) (int64, error) {
 	ret := _m.Called(ctx, coursePeriod)
@@ -80,6 +138,53 @@ func (_c *RepositoryMock_CreateCoursePeriod_Call) RunAndReturn(run func(context.
 	return _c
 }
 
+// DeleteAnnouncement provides a mock function with given fields: ctx, announcementID
+func (_m *RepositoryMock) DeleteAnnouncement(ctx context.Context, announcementID string) error {
+	ret := _m.Called(ctx, announcementID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteAnnouncement")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, announcementID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// RepositoryMock_DeleteAnnouncement_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteAnnouncement'
+type RepositoryMock_DeleteAnnouncement_Call struct {
+	*mock.Call
+}
+
+// DeleteAnnouncement is a helper method to define mock.On call
+//   - ctx context.Context
+//   - announcementID string
+func (_e *RepositoryMock_Expecter) DeleteAnnouncement(ctx interface{}, announcementID interface{}) *RepositoryMock_DeleteAnnouncement_Call {
+	return &RepositoryMock_DeleteAnnouncement_Call{Call: _e.mock.On("DeleteAnnouncement", ctx, announcementID)}
+}
+
+func (_c *RepositoryMock_DeleteAnnouncement_Call) Run(run func(ctx context.Context, announcementID string)) *RepositoryMock_DeleteAnnouncement_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *RepositoryMock_DeleteAnnouncement_Call) Return(_a0 error) *RepositoryMock_DeleteAnnouncement_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *RepositoryMock_DeleteAnnouncement_Call) RunAndReturn(run func(context.Context, string) error) *RepositoryMock_DeleteAnnouncement_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteCoursePeriod provides a mock function with given fields: ctx, periodID
 func (_m *RepositoryMock) DeleteCoursePeriod(ctx context.Context, periodID string) error {
 	ret := _m.Called(ctx, periodID)
@@ -123,6 +228,122 @@ func (_c *RepositoryMock_DeleteCoursePeriod_Call) Return(_a0 error) *RepositoryM
 }
 
 func (_c *RepositoryMock_DeleteCoursePeriod_Call) RunAndReturn(run func(context.Context, string) error) *RepositoryMock_DeleteCoursePeriod_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetAnnouncementByID provides a mock function with given fields: ctx, announcementID
+func (_m *RepositoryMock) GetAnnouncementByID(ctx context.Context, announcementID string) (entities.Announcement, error) {
+	ret := _m.Called(ctx, announcementID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAnnouncementByID")
+	}
+
+	var r0 entities.Announcement
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (entities.Announcement, error)); ok {
+		return rf(ctx, announcementID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) entities.Announcement); ok {
+		r0 = rf(ctx, announcementID)
+	} else {
+		r0 = ret.Get(0).(entities.Announcement)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, announcementID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// RepositoryMock_GetAnnouncementByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAnnouncementByID'
+type RepositoryMock_GetAnnouncementByID_Call struct {
+	*mock.Call
+}
+
+// GetAnnouncementByID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - announcementID string
+func (_e *RepositoryMock_Expecter) GetAnnouncementByID(ctx interface{}, announcementID interface{}) *RepositoryMock_GetAnnouncementByID_Call {
+	return &RepositoryMock_GetAnnouncementByID_Call{Call: _e.mock.On("GetAnnouncementByID", ctx, announcementID)}
+}
+
+func (_c *RepositoryMock_GetAnnouncementByID_Call) Run(run func(ctx context.Context, announcementID string)) *RepositoryMock_GetAnnouncementByID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *RepositoryMock_GetAnnouncementByID_Call) Return(_a0 entities.Announcement, _a1 error) *RepositoryMock_GetAnnouncementByID_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *RepositoryMock_GetAnnouncementByID_Call) RunAndReturn(run func(context.Context, string) (entities.Announcement, error)) *RepositoryMock_GetAnnouncementByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetAnnouncementsByCoursePeriodID provides a mock function with given fields: ctx, periodID
+func (_m *RepositoryMock) GetAnnouncementsByCoursePeriodID(ctx context.Context, periodID string) ([]entities.Announcement, error) {
+	ret := _m.Called(ctx, periodID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAnnouncementsByCoursePeriodID")
+	}
+
+	var r0 []entities.Announcement
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]entities.Announcement, error)); ok {
+		return rf(ctx, periodID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) []entities.Announcement); ok {
+		r0 = rf(ctx, periodID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]entities.Announcement)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, periodID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// RepositoryMock_GetAnnouncementsByCoursePeriodID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAnnouncementsByCoursePeriodID'
+type RepositoryMock_GetAnnouncementsByCoursePeriodID_Call struct {
+	*mock.Call
+}
+
+// GetAnnouncementsByCoursePeriodID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - periodID string
+func (_e *RepositoryMock_Expecter) GetAnnouncementsByCoursePeriodID(ctx interface{}, periodID interface{}) *RepositoryMock_GetAnnouncementsByCoursePeriodID_Call {
+	return &RepositoryMock_GetAnnouncementsByCoursePeriodID_Call{Call: _e.mock.On("GetAnnouncementsByCoursePeriodID", ctx, periodID)}
+}
+
+func (_c *RepositoryMock_GetAnnouncementsByCoursePeriodID_Call) Run(run func(ctx context.Context, periodID string)) *RepositoryMock_GetAnnouncementsByCoursePeriodID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *RepositoryMock_GetAnnouncementsByCoursePeriodID_Call) Return(_a0 []entities.Announcement, _a1 error) *RepositoryMock_GetAnnouncementsByCoursePeriodID_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *RepositoryMock_GetAnnouncementsByCoursePeriodID_Call) RunAndReturn(run func(context.Context, string) ([]entities.Announcement, error)) *RepositoryMock_GetAnnouncementsByCoursePeriodID_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -306,6 +527,54 @@ func (_c *RepositoryMock_GetUsersByCoursePeriodID_Call) Return(_a0 []entities.Us
 }
 
 func (_c *RepositoryMock_GetUsersByCoursePeriodID_Call) RunAndReturn(run func(context.Context, string) ([]entities.User, error)) *RepositoryMock_GetUsersByCoursePeriodID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateAnnouncement provides a mock function with given fields: ctx, announcementID, announcement
+func (_m *RepositoryMock) UpdateAnnouncement(ctx context.Context, announcementID string, announcement entities.Announcement) error {
+	ret := _m.Called(ctx, announcementID, announcement)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateAnnouncement")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, entities.Announcement) error); ok {
+		r0 = rf(ctx, announcementID, announcement)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// RepositoryMock_UpdateAnnouncement_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateAnnouncement'
+type RepositoryMock_UpdateAnnouncement_Call struct {
+	*mock.Call
+}
+
+// UpdateAnnouncement is a helper method to define mock.On call
+//   - ctx context.Context
+//   - announcementID string
+//   - announcement entities.Announcement
+func (_e *RepositoryMock_Expecter) UpdateAnnouncement(ctx interface{}, announcementID interface{}, announcement interface{}) *RepositoryMock_UpdateAnnouncement_Call {
+	return &RepositoryMock_UpdateAnnouncement_Call{Call: _e.mock.On("UpdateAnnouncement", ctx, announcementID, announcement)}
+}
+
+func (_c *RepositoryMock_UpdateAnnouncement_Call) Run(run func(ctx context.Context, announcementID string, announcement entities.Announcement)) *RepositoryMock_UpdateAnnouncement_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(entities.Announcement))
+	})
+	return _c
+}
+
+func (_c *RepositoryMock_UpdateAnnouncement_Call) Return(_a0 error) *RepositoryMock_UpdateAnnouncement_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *RepositoryMock_UpdateAnnouncement_Call) RunAndReturn(run func(context.Context, string, entities.Announcement) error) *RepositoryMock_UpdateAnnouncement_Call {
 	_c.Call.Return(run)
 	return _c
 }

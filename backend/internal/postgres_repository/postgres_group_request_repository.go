@@ -128,7 +128,7 @@ func newGroupRequestFromModel(m models.GroupAuthRequest) entities.GroupAuthReque
 		GroupID:   fmt.Sprintf("%d", m.GroupID),
 		Faculty:   entities.Faculty(m.Faculty),
 		Status:    entities.RequestStatus(m.Status),
-		Comments:  m.Comments,
+		Comments:  m.GetComments(),
 		CreatedAt: m.CreatedAt.Format(time.RFC3339),
 		UpdatedAt: m.UpdatedAt.Format(time.RFC3339),
 	}

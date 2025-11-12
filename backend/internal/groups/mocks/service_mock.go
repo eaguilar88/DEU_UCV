@@ -23,32 +23,39 @@ func (_m *ServiceMock) EXPECT() *ServiceMock_Expecter {
 	return &ServiceMock_Expecter{mock: &_m.Mock}
 }
 
-// CreateGroup provides a mock function with given fields: ctx, group, userID
-func (_m *ServiceMock) CreateGroup(ctx context.Context, group entities.ExtensionGroup, userID string) (int64, error) {
-	ret := _m.Called(ctx, group, userID)
+// CreateGroup provides a mock function with given fields: ctx, group
+func (_m *ServiceMock) CreateGroup(ctx context.Context, group entities.ExtensionGroup) (int64, string, error) {
+	ret := _m.Called(ctx, group)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateGroup")
 	}
 
 	var r0 int64
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, entities.ExtensionGroup, string) (int64, error)); ok {
-		return rf(ctx, group, userID)
+	var r1 string
+	var r2 error
+	if rf, ok := ret.Get(0).(func(context.Context, entities.ExtensionGroup) (int64, string, error)); ok {
+		return rf(ctx, group)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, entities.ExtensionGroup, string) int64); ok {
-		r0 = rf(ctx, group, userID)
+	if rf, ok := ret.Get(0).(func(context.Context, entities.ExtensionGroup) int64); ok {
+		r0 = rf(ctx, group)
 	} else {
 		r0 = ret.Get(0).(int64)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, entities.ExtensionGroup, string) error); ok {
-		r1 = rf(ctx, group, userID)
+	if rf, ok := ret.Get(1).(func(context.Context, entities.ExtensionGroup) string); ok {
+		r1 = rf(ctx, group)
 	} else {
-		r1 = ret.Error(1)
+		r1 = ret.Get(1).(string)
 	}
 
-	return r0, r1
+	if rf, ok := ret.Get(2).(func(context.Context, entities.ExtensionGroup) error); ok {
+		r2 = rf(ctx, group)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // ServiceMock_CreateGroup_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateGroup'
@@ -59,24 +66,23 @@ type ServiceMock_CreateGroup_Call struct {
 // CreateGroup is a helper method to define mock.On call
 //   - ctx context.Context
 //   - group entities.ExtensionGroup
-//   - userID string
-func (_e *ServiceMock_Expecter) CreateGroup(ctx interface{}, group interface{}, userID interface{}) *ServiceMock_CreateGroup_Call {
-	return &ServiceMock_CreateGroup_Call{Call: _e.mock.On("CreateGroup", ctx, group, userID)}
+func (_e *ServiceMock_Expecter) CreateGroup(ctx interface{}, group interface{}) *ServiceMock_CreateGroup_Call {
+	return &ServiceMock_CreateGroup_Call{Call: _e.mock.On("CreateGroup", ctx, group)}
 }
 
-func (_c *ServiceMock_CreateGroup_Call) Run(run func(ctx context.Context, group entities.ExtensionGroup, userID string)) *ServiceMock_CreateGroup_Call {
+func (_c *ServiceMock_CreateGroup_Call) Run(run func(ctx context.Context, group entities.ExtensionGroup)) *ServiceMock_CreateGroup_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(entities.ExtensionGroup), args[2].(string))
+		run(args[0].(context.Context), args[1].(entities.ExtensionGroup))
 	})
 	return _c
 }
 
-func (_c *ServiceMock_CreateGroup_Call) Return(_a0 int64, _a1 error) *ServiceMock_CreateGroup_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *ServiceMock_CreateGroup_Call) Return(_a0 int64, _a1 string, _a2 error) *ServiceMock_CreateGroup_Call {
+	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *ServiceMock_CreateGroup_Call) RunAndReturn(run func(context.Context, entities.ExtensionGroup, string) (int64, error)) *ServiceMock_CreateGroup_Call {
+func (_c *ServiceMock_CreateGroup_Call) RunAndReturn(run func(context.Context, entities.ExtensionGroup) (int64, string, error)) *ServiceMock_CreateGroup_Call {
 	_c.Call.Return(run)
 	return _c
 }

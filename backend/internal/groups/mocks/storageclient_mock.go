@@ -5,7 +5,8 @@ package mocks
 import (
 	context "context"
 
-	entities "github.com/eaguilar88/deu/internal/entities"
+	io "io"
+
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -185,17 +186,17 @@ func (_c *StorageClientMock_GetFileURL_Call) RunAndReturn(run func(context.Conte
 	return _c
 }
 
-// UploadFile provides a mock function with given fields: ctx, file
-func (_m *StorageClientMock) UploadFile(ctx context.Context, file []*entities.File) error {
-	ret := _m.Called(ctx, file)
+// UploadFile provides a mock function with given fields: ctx, file, objectKey, metadata
+func (_m *StorageClientMock) UploadFile(ctx context.Context, file io.Reader, objectKey string, metadata map[string]string) error {
+	ret := _m.Called(ctx, file, objectKey, metadata)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UploadFile")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, []*entities.File) error); ok {
-		r0 = rf(ctx, file)
+	if rf, ok := ret.Get(0).(func(context.Context, io.Reader, string, map[string]string) error); ok {
+		r0 = rf(ctx, file, objectKey, metadata)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -210,14 +211,16 @@ type StorageClientMock_UploadFile_Call struct {
 
 // UploadFile is a helper method to define mock.On call
 //   - ctx context.Context
-//   - file []*entities.File
-func (_e *StorageClientMock_Expecter) UploadFile(ctx interface{}, file interface{}) *StorageClientMock_UploadFile_Call {
-	return &StorageClientMock_UploadFile_Call{Call: _e.mock.On("UploadFile", ctx, file)}
+//   - file io.Reader
+//   - objectKey string
+//   - metadata map[string]string
+func (_e *StorageClientMock_Expecter) UploadFile(ctx interface{}, file interface{}, objectKey interface{}, metadata interface{}) *StorageClientMock_UploadFile_Call {
+	return &StorageClientMock_UploadFile_Call{Call: _e.mock.On("UploadFile", ctx, file, objectKey, metadata)}
 }
 
-func (_c *StorageClientMock_UploadFile_Call) Run(run func(ctx context.Context, file []*entities.File)) *StorageClientMock_UploadFile_Call {
+func (_c *StorageClientMock_UploadFile_Call) Run(run func(ctx context.Context, file io.Reader, objectKey string, metadata map[string]string)) *StorageClientMock_UploadFile_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]*entities.File))
+		run(args[0].(context.Context), args[1].(io.Reader), args[2].(string), args[3].(map[string]string))
 	})
 	return _c
 }
@@ -227,7 +230,7 @@ func (_c *StorageClientMock_UploadFile_Call) Return(_a0 error) *StorageClientMoc
 	return _c
 }
 
-func (_c *StorageClientMock_UploadFile_Call) RunAndReturn(run func(context.Context, []*entities.File) error) *StorageClientMock_UploadFile_Call {
+func (_c *StorageClientMock_UploadFile_Call) RunAndReturn(run func(context.Context, io.Reader, string, map[string]string) error) *StorageClientMock_UploadFile_Call {
 	_c.Call.Return(run)
 	return _c
 }

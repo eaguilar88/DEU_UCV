@@ -1,5 +1,7 @@
 package models
 
+import "database/sql"
+
 type Provider struct {
 	ID        string
 	UserID    string
@@ -8,7 +10,7 @@ type Provider struct {
 	Code      string
 	Active    bool
 	Files     []*File
-	CreatedAt string
-	UpdatedAt string
-	DeletedAt string
+	CreatedAt sql.NullString
+	UpdatedAt sql.NullString
+	DeletedAt sql.NullString
 }

@@ -23,9 +23,9 @@ func (_m *ServiceMock) EXPECT() *ServiceMock_Expecter {
 	return &ServiceMock_Expecter{mock: &_m.Mock}
 }
 
-// CreateCourse provides a mock function with given fields: ctx, course
-func (_m *ServiceMock) CreateCourse(ctx context.Context, course entities.Course) (int64, error) {
-	ret := _m.Called(ctx, course)
+// CreateCourse provides a mock function with given fields: ctx, userID, course
+func (_m *ServiceMock) CreateCourse(ctx context.Context, userID string, course entities.Course) (int64, error) {
+	ret := _m.Called(ctx, userID, course)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateCourse")
@@ -33,17 +33,17 @@ func (_m *ServiceMock) CreateCourse(ctx context.Context, course entities.Course)
 
 	var r0 int64
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, entities.Course) (int64, error)); ok {
-		return rf(ctx, course)
+	if rf, ok := ret.Get(0).(func(context.Context, string, entities.Course) (int64, error)); ok {
+		return rf(ctx, userID, course)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, entities.Course) int64); ok {
-		r0 = rf(ctx, course)
+	if rf, ok := ret.Get(0).(func(context.Context, string, entities.Course) int64); ok {
+		r0 = rf(ctx, userID, course)
 	} else {
 		r0 = ret.Get(0).(int64)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, entities.Course) error); ok {
-		r1 = rf(ctx, course)
+	if rf, ok := ret.Get(1).(func(context.Context, string, entities.Course) error); ok {
+		r1 = rf(ctx, userID, course)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -58,14 +58,15 @@ type ServiceMock_CreateCourse_Call struct {
 
 // CreateCourse is a helper method to define mock.On call
 //   - ctx context.Context
+//   - userID string
 //   - course entities.Course
-func (_e *ServiceMock_Expecter) CreateCourse(ctx interface{}, course interface{}) *ServiceMock_CreateCourse_Call {
-	return &ServiceMock_CreateCourse_Call{Call: _e.mock.On("CreateCourse", ctx, course)}
+func (_e *ServiceMock_Expecter) CreateCourse(ctx interface{}, userID interface{}, course interface{}) *ServiceMock_CreateCourse_Call {
+	return &ServiceMock_CreateCourse_Call{Call: _e.mock.On("CreateCourse", ctx, userID, course)}
 }
 
-func (_c *ServiceMock_CreateCourse_Call) Run(run func(ctx context.Context, course entities.Course)) *ServiceMock_CreateCourse_Call {
+func (_c *ServiceMock_CreateCourse_Call) Run(run func(ctx context.Context, userID string, course entities.Course)) *ServiceMock_CreateCourse_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(entities.Course))
+		run(args[0].(context.Context), args[1].(string), args[2].(entities.Course))
 	})
 	return _c
 }
@@ -75,7 +76,7 @@ func (_c *ServiceMock_CreateCourse_Call) Return(_a0 int64, _a1 error) *ServiceMo
 	return _c
 }
 
-func (_c *ServiceMock_CreateCourse_Call) RunAndReturn(run func(context.Context, entities.Course) (int64, error)) *ServiceMock_CreateCourse_Call {
+func (_c *ServiceMock_CreateCourse_Call) RunAndReturn(run func(context.Context, string, entities.Course) (int64, error)) *ServiceMock_CreateCourse_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -246,6 +247,63 @@ func (_c *ServiceMock_GetCourses_Call) Return(_a0 []entities.Course, _a1 entitie
 }
 
 func (_c *ServiceMock_GetCourses_Call) RunAndReturn(run func(context.Context, entities.PageScope) ([]entities.Course, entities.PageScope, error)) *ServiceMock_GetCourses_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetLatestCoursePeriod provides a mock function with given fields: ctx, courseID
+func (_m *ServiceMock) GetLatestCoursePeriod(ctx context.Context, courseID string) (entities.CoursePeriod, error) {
+	ret := _m.Called(ctx, courseID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetLatestCoursePeriod")
+	}
+
+	var r0 entities.CoursePeriod
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (entities.CoursePeriod, error)); ok {
+		return rf(ctx, courseID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) entities.CoursePeriod); ok {
+		r0 = rf(ctx, courseID)
+	} else {
+		r0 = ret.Get(0).(entities.CoursePeriod)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, courseID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ServiceMock_GetLatestCoursePeriod_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetLatestCoursePeriod'
+type ServiceMock_GetLatestCoursePeriod_Call struct {
+	*mock.Call
+}
+
+// GetLatestCoursePeriod is a helper method to define mock.On call
+//   - ctx context.Context
+//   - courseID string
+func (_e *ServiceMock_Expecter) GetLatestCoursePeriod(ctx interface{}, courseID interface{}) *ServiceMock_GetLatestCoursePeriod_Call {
+	return &ServiceMock_GetLatestCoursePeriod_Call{Call: _e.mock.On("GetLatestCoursePeriod", ctx, courseID)}
+}
+
+func (_c *ServiceMock_GetLatestCoursePeriod_Call) Run(run func(ctx context.Context, courseID string)) *ServiceMock_GetLatestCoursePeriod_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *ServiceMock_GetLatestCoursePeriod_Call) Return(_a0 entities.CoursePeriod, _a1 error) *ServiceMock_GetLatestCoursePeriod_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *ServiceMock_GetLatestCoursePeriod_Call) RunAndReturn(run func(context.Context, string) (entities.CoursePeriod, error)) *ServiceMock_GetLatestCoursePeriod_Call {
 	_c.Call.Return(run)
 	return _c
 }
