@@ -64,17 +64,22 @@ func ProviderEntityToGetProviderResponse(entity entities.Provider) GetProviderRe
 	return response
 }
 
-type GenProvidersResponse struct {
+type CreateProviderResponse struct {
+	ID   string `json:"id"`
+	Code string `json:"codigo_proveedor"`
+}
+
+type GetProvidersResponse struct {
 	Providers []GetProviderResponse `json:"proveedores"`
 	Pages     entities.PageScope    `json:"paginas"`
 }
 
-func ProvidersEntityToGetProvidersResponse(providers []entities.Provider, pageScope entities.PageScope) GenProvidersResponse {
+func ProvidersEntityToGetProvidersResponse(providers []entities.Provider, pageScope entities.PageScope) GetProvidersResponse {
 	var responseProviders []GetProviderResponse
 	for _, provider := range providers {
 		responseProviders = append(responseProviders, ProviderEntityToGetProviderResponse(provider))
 	}
-	return GenProvidersResponse{
+	return GetProvidersResponse{
 		Providers: responseProviders,
 		Pages:     pageScope,
 	}

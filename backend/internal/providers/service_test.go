@@ -175,7 +175,7 @@ func TestProvidersService_CreateProvider(t *testing.T) {
 				storage: tt.fields.storage,
 				logger:  tt.fields.logger,
 			}
-			got, err := s.CreateProvider(tt.args.ctx, tt.args.provider)
+			got, _, err := s.CreateProvider(tt.args.ctx, tt.args.provider)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ProvidersService.CreateProvider() error = %v, wantErr %v", err, tt.wantErr)
 				return

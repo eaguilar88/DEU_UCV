@@ -137,17 +137,17 @@ func (s *ProvidersService) GetProviders(ctx context.Context, pageScope entities.
 	return providers, pageScope, nil
 }
 
-func (s *ProvidersService) CreateProvider(ctx context.Context, provider *entities.Provider) (int64, error) {
+func (s *ProvidersService) CreateProvider(ctx context.Context, provider *entities.Provider) (int64, string, error) {
 	code, err := entities.GenerateProviderCode(provider.Type)
 	if err != nil {
 		s.logger.Error("failed to generate provider code", zap.Error(err))
-		return -1, err
+		return -1, "", err
 	}
 	provider.Code = code
 	createdProviderID, err := s.repo.CreateProvider(ctx, *provider)
 	if err != nil {
 		s.logger.Error("failed to create provider", zap.Error(err))
-		return -1, err
+		return -1, "", err
 	}
 
 	commonMetadata := map[string]string{
@@ -159,11 +159,11 @@ func (s *ProvidersService) CreateProvider(ctx context.Context, provider *entitie
 	files, err := prepareFilesSlice(provider, createdProviderID, commonMetadata)
 	if err != nil {
 		s.logger.Error("failed to prepare files map", zap.Error(err))
-		return -1, err
+		return -1, "", err
 	}
 	if err = s.storage.UploadFile(ctx, files); err != nil {
 		s.logger.Error("failed to upload files file", zap.Error(err))
-		return -1, err
+		return -1, "", err
 	}
 
 	// Save metadata to database
@@ -177,7 +177,7 @@ func (s *ProvidersService) CreateProvider(ctx context.Context, provider *entitie
 			zap.Error(err),
 			zap.String("action", "save_metadata"),
 		)
-		return -1, fmt.Errorf("failed to save file metadata: %w", err)
+		return -1, "", fmt.Errorf("failed to save file metadata: %w", err)
 	}
 
 	s.logger.Debug("successfully uploaded and saved files",
@@ -185,7 +185,7 @@ func (s *ProvidersService) CreateProvider(ctx context.Context, provider *entitie
 		zap.String("action", "upload_and_save"),
 	)
 
-	return createdProviderID, nil
+	return createdProviderID, code, nil
 }
 
 func (s *ProvidersService) UpdateProvider(ctx context.Context, providerID string, provider *entities.Provider) error {

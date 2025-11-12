@@ -1,11 +1,14 @@
-with-expecter: true
 all: true
 dir: "{{.InterfaceDir}}/mocks"
-mockname: "{{.InterfaceName}}Mock"
-outpkg: "mocks"
-filename: "{{.InterfaceName | lower | snakecase}}_mock.go"
+filename: "{{ .InterfaceName | snakecase | lower }}_mock.go"
+force-file-write: true
+formatter: goimports
+log-level: info
+structname: '{{.Mock}}{{.InterfaceName}}'
+pkgname: "mocks"
+recursive: true
+template: testify
 packages:
-  github.com/eaguilar88/deu:
+  github.com/mytheresa/go-hiring-challenge:
     config:
-      recursive: true
-      
+      all: true  

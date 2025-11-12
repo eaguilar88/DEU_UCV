@@ -23,7 +23,7 @@ func (_m *ServiceMock) EXPECT() *ServiceMock_Expecter {
 }
 
 // CreateProvider provides a mock function with given fields: ctx, provider
-func (_m *ServiceMock) CreateProvider(ctx context.Context, provider *entities.Provider) (int64, error) {
+func (_m *ServiceMock) CreateProvider(ctx context.Context, provider *entities.Provider) (int64, string, error) {
 	ret := _m.Called(ctx, provider)
 
 	if len(ret) == 0 {
@@ -31,8 +31,9 @@ func (_m *ServiceMock) CreateProvider(ctx context.Context, provider *entities.Pr
 	}
 
 	var r0 int64
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *entities.Provider) (int64, error)); ok {
+	var r1 string
+	var r2 error
+	if rf, ok := ret.Get(0).(func(context.Context, *entities.Provider) (int64, string, error)); ok {
 		return rf(ctx, provider)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, *entities.Provider) int64); ok {
@@ -41,13 +42,19 @@ func (_m *ServiceMock) CreateProvider(ctx context.Context, provider *entities.Pr
 		r0 = ret.Get(0).(int64)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *entities.Provider) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *entities.Provider) string); ok {
 		r1 = rf(ctx, provider)
 	} else {
-		r1 = ret.Error(1)
+		r1 = ret.Get(1).(string)
 	}
 
-	return r0, r1
+	if rf, ok := ret.Get(2).(func(context.Context, *entities.Provider) error); ok {
+		r2 = rf(ctx, provider)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // ServiceMock_CreateProvider_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateProvider'
@@ -69,12 +76,12 @@ func (_c *ServiceMock_CreateProvider_Call) Run(run func(ctx context.Context, pro
 	return _c
 }
 
-func (_c *ServiceMock_CreateProvider_Call) Return(_a0 int64, _a1 error) *ServiceMock_CreateProvider_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *ServiceMock_CreateProvider_Call) Return(_a0 int64, _a1 string, _a2 error) *ServiceMock_CreateProvider_Call {
+	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *ServiceMock_CreateProvider_Call) RunAndReturn(run func(context.Context, *entities.Provider) (int64, error)) *ServiceMock_CreateProvider_Call {
+func (_c *ServiceMock_CreateProvider_Call) RunAndReturn(run func(context.Context, *entities.Provider) (int64, string, error)) *ServiceMock_CreateProvider_Call {
 	_c.Call.Return(run)
 	return _c
 }
