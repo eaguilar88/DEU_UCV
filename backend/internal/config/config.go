@@ -53,8 +53,8 @@ type BlackBlazeB2Config struct {
 	Endpoint       string `env:"ENDPOINT"                 envDefault:"s3.us-west-002.backblazeb2.com"`
 	KeyName        string `env:"KEY_NAME"                 envDefault:"deu"`
 	Region         string `env:"REGION"                   envDefault:"us-west-002"`
-	ApplicationKey string `env:"APPLICATION_KEY,required"`
-	KeyID          string `env:"KEY_ID,required"`
+	ApplicationKey string `env:"APPLICATION_KEY"`
+	KeyID          string `env:"KEY_ID"`
 }
 
 func (cfg DatabaseConfig) String() string {
@@ -72,10 +72,8 @@ func Read(logger *zap.Logger) (DeuConfig, error) {
 	}
 
 	if config.IsProd() {
-		config.BlackBlazeB2.ApplicationKey = readSecret(
-			"/run/secrets/blackblaze_b2_application_key",
-		)
-		config.BlackBlazeB2.KeyID = readSecret("/run/secrets/blackblaze_b2_key_id")
+		config.BlackBlazeB2.ApplicationKey = readSecret("/run/secrets/b2_application_key")
+		config.BlackBlazeB2.KeyID = readSecret("/run/secrets/b2_key_id")
 	}
 
 	return config, nil
