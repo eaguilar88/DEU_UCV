@@ -40,6 +40,6 @@ quality:
 	go fmt ./... && \
 	golangci-lint run && \
 	go mod tidy && \
-	go test -count=1 -short -cover ./...
+	go test -count=1 -race -short -cover ./...
 
 refresh: stop-db start-db
