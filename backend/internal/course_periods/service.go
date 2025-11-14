@@ -2,10 +2,10 @@ package course_periods
 
 import (
 	"context"
-	"sync"
 
 	"github.com/eaguilar88/deu/internal/entities"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 )
 
 type Repository interface {
@@ -40,18 +40,9 @@ func (s *CoursePeriodService) GetCoursePeriod(ctx context.Context, periodID stri
 		return entities.CoursePeriod{}, err
 	}
 
-	// Get announcements in goroutine
-	errCh := make(chan error)
 	var announcements []entities.Announcement
-
-	go func() {
-		var err error
-		announcements, err = s.repo.GetAnnouncementsByCoursePeriodID(ctx, periodID)
-		errCh <- err
-	}()
-
-	// Wait for announcements
-	if err := <-errCh; err != nil {
+	announcements, err = s.repo.GetAnnouncementsByCoursePeriodID(ctx, periodID)
+	if err != nil {
 		s.log.Warn("could not get announcements for course period", zap.String("periodID", periodID), zap.Error(err))
 	} else {
 		period.Announcements = announcements
@@ -66,32 +57,20 @@ func (s *CoursePeriodService) GetCoursePeriods(ctx context.Context, courseID str
 		return nil, entities.PageScope{}, err
 	}
 
-	// Get announcements for each period using goroutines
-	var wg sync.WaitGroup
-	errCh := make(chan error)
-
-	// Goroutine to collect errors
-	go func() {
-		wg.Wait()
-		close(errCh)
-	}()
-
+	g, ctx := errgroup.WithContext(ctx)
 	for i := range periods {
-		wg.Add(1)
-		go func(i int) {
-			defer wg.Done()
+		i := i
+		g.Go(func() error {
 			announcements, err := s.repo.GetAnnouncementsByCoursePeriodID(ctx, periods[i].ID)
 			if err != nil {
-				errCh <- err
-				return
+				return err
 			}
 			periods[i].Announcements = announcements
-		}(i)
+			return nil
+		})
 	}
-
-	// Log any errors but don't fail the request
-	for err := range errCh {
-		s.log.Warn("could not get announcements for course period", zap.Error(err))
+	if err := g.Wait(); err != nil {
+		return nil, entities.PageScope{}, err
 	}
 
 	return periods, page, nil

@@ -45,11 +45,11 @@ func TestCoursePeriodService_GetCoursePeriod(t *testing.T) {
 			name:     "success",
 			periodID: "period-id",
 			prepare: func(ctx context.Context, repoMock *mocks.MockRepository, periodID string) {
-				repoMock.EXPECT().GetCoursePeriodByID(ctx, periodID).RunAndReturn(
+				repoMock.EXPECT().GetCoursePeriodByID(mock.Anything, periodID).RunAndReturn(
 					func(ctx context.Context, id string) (entities.CoursePeriod, error) {
 						return entities.CoursePeriod{ID: "period-id"}, nil
 					})
-				repoMock.EXPECT().GetAnnouncementsByCoursePeriodID(ctx, periodID).RunAndReturn(
+				repoMock.EXPECT().GetAnnouncementsByCoursePeriodID(mock.Anything, periodID).RunAndReturn(
 					func(ctx context.Context, id string) ([]entities.Announcement, error) {
 						return []entities.Announcement{{ID: "announcement-id"}}, nil
 					})
@@ -68,7 +68,7 @@ func TestCoursePeriodService_GetCoursePeriod(t *testing.T) {
 			name:     "error getting course period",
 			periodID: "period-id",
 			prepare: func(ctx context.Context, repoMock *mocks.MockRepository, periodID string) {
-				repoMock.EXPECT().GetCoursePeriodByID(ctx, periodID).RunAndReturn(
+				repoMock.EXPECT().GetCoursePeriodByID(mock.Anything, periodID).RunAndReturn(
 					func(ctx context.Context, id string) (entities.CoursePeriod, error) {
 						return entities.CoursePeriod{}, errors.New("error getting course period")
 					})
@@ -112,11 +112,11 @@ func TestCoursePeriodService_GetCoursePeriods(t *testing.T) {
 			name:     "success",
 			periodID: "period-id",
 			prepare: func(ctx context.Context, repoMock *mocks.MockRepository, periodID string, pageScope entities.PageScope) {
-				repoMock.EXPECT().GetCoursePeriods(ctx, periodID, pageScope).RunAndReturn(
+				repoMock.EXPECT().GetCoursePeriods(mock.Anything, periodID, pageScope).RunAndReturn(
 					func(ctx context.Context, courseID string, ps entities.PageScope) ([]entities.CoursePeriod, entities.PageScope, error) {
 						return []entities.CoursePeriod{{ID: periodID}}, pageScope, nil
 					})
-				repoMock.EXPECT().GetAnnouncementsByCoursePeriodID(ctx, periodID).RunAndReturn(
+				repoMock.EXPECT().GetAnnouncementsByCoursePeriodID(mock.Anything, periodID).RunAndReturn(
 					func(ctx context.Context, id string) ([]entities.Announcement, error) {
 						return []entities.Announcement{{ID: "announcement-id"}}, nil
 					})
@@ -138,7 +138,7 @@ func TestCoursePeriodService_GetCoursePeriods(t *testing.T) {
 			name:     "error getting course period",
 			periodID: "period-id",
 			prepare: func(ctx context.Context, repoMock *mocks.MockRepository, periodID string, pageScope entities.PageScope) {
-				repoMock.EXPECT().GetCoursePeriods(ctx, periodID, pageScope).RunAndReturn(
+				repoMock.EXPECT().GetCoursePeriods(mock.Anything, periodID, pageScope).RunAndReturn(
 					func(ctx context.Context, courseID string, ps entities.PageScope) ([]entities.CoursePeriod, entities.PageScope, error) {
 						return nil, entities.PageScope{}, errors.New("error getting course period")
 					})
