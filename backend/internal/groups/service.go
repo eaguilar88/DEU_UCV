@@ -13,6 +13,11 @@ import (
 type Repository interface {
 	GetGroupByID(ctx context.Context, groupID string) (entities.ExtensionGroup, error)
 	GetGroups(ctx context.Context, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error)
+
+	// Unit of Work: Atomic operations
+	CreateGroupWithRequest(ctx context.Context, group entities.ExtensionGroup, request entities.GroupAuthRequest) (groupID int64, requestID int64, err error)
+
+	// Individual operations (for flexibility)
 	CreateGroup(ctx context.Context, group entities.ExtensionGroup) (int64, error)
 	UpdateGroup(ctx context.Context, group entities.ExtensionGroup) error
 	DeleteGroup(ctx context.Context, groupID string) error
@@ -71,79 +76,55 @@ func (s *GroupService) CreateGroup(ctx context.Context, group entities.Extension
 		return -1, "", fmt.Errorf("failed to generate provider code: %w", err)
 	}
 
-	// Create group in database
-	id, err := s.repo.CreateGroup(ctx, group)
-	if err != nil {
-		s.log.Error("failed to create group",
-			zap.Error(err),
-			zap.String("action", "create_group"),
-			zap.String("group_name", group.Name),
-		)
-		return -1, "", fmt.Errorf("failed to create group: %w", err)
-	}
-
 	// Create a group authorization request
 	groupReq := entities.GroupAuthRequest{
-		GroupID:   fmt.Sprintf("%d", id),
 		Faculty:   group.Faculty,
 		Status:    entities.RequestStatus_UNDER_REVIEW,
 		Comments:  "New group creation request",
 		CreatedAt: time.Now().Format(time.RFC3339),
 		UpdatedAt: time.Now().Format(time.RFC3339),
 	}
+
+	// Create group and request in a single transaction
+	groupID, requestID, err := s.repo.CreateGroupWithRequest(ctx, group, groupReq)
+	if err != nil {
+		s.log.Error("failed to create group with request",
+			zap.Error(err),
+			zap.String("action", "create_group_with_request"),
+			zap.String("group_name", group.Name),
+		)
+		return -1, "", fmt.Errorf("failed to create group with request: %w", err)
+	}
+
 	// Prepare files metadata
 	commonMetadata := map[string]string{
 		"group_owner":   group.ID,
-		"group_id":      fmt.Sprintf("%d", id),
+		"group_id":      fmt.Sprintf("%d", groupID),
 		"group_name":    group.Name,
 		"provider_code": providerCode,
 	}
 
 	files := []*entities.File{
-		makeFileEntityFromFilePointer(group.Files.Logo, id, userID, entities.OwnerTypeExtensionGroup, commonMetadata),
-		makeFileEntityFromFilePointer(group.Files.FinancingPlan, id, userID, entities.OwnerTypeExtensionGroup, commonMetadata),
-		makeFileEntityFromFilePointer(group.Files.GroupProject, id, userID, entities.OwnerTypeExtensionGroup, commonMetadata),
+		makeFileEntityFromFilePointer(group.Files.Logo, groupID, userID, entities.OwnerTypeExtensionGroup, commonMetadata),
+		makeFileEntityFromFilePointer(group.Files.FinancingPlan, groupID, userID, entities.OwnerTypeExtensionGroup, commonMetadata),
+		makeFileEntityFromFilePointer(group.Files.GroupProject, groupID, userID, entities.OwnerTypeExtensionGroup, commonMetadata),
 	}
 
 	if err := s.repo.SaveFilesToDB(ctx, files); err != nil {
 		s.log.Error("failed to save files",
 			zap.Error(err),
-			zap.String("group_id", fmt.Sprintf("%d", id)),
+			zap.String("group_id", fmt.Sprintf("%d", groupID)),
 			zap.String("action", "save_files"),
 		)
 		return -1, "", fmt.Errorf("failed to save files: %w", err)
 	}
 
-	// Save metadata to database
-	s.log.Debug("saving file metadata to database",
-		zap.Int("file_count", len(files)),
-		zap.String("action", "save_metadata"),
-	)
+	s.log.Info("group, request, and files created successfully",
+		zap.Int64("group_id", groupID),
+		zap.Int64("request_id", requestID),
+		zap.Int("file_count", len(files)))
 
-	if err := s.repo.SaveFilesToDB(ctx, files); err != nil {
-		s.log.Error("failed to save file metadata to database",
-			zap.Error(err),
-			zap.String("action", "save_metadata"),
-		)
-		return -1, "", fmt.Errorf("failed to save file metadata: %w", err)
-	}
-
-	s.log.Debug("successfully uploaded and saved files",
-		zap.Int("file_count", len(files)),
-		zap.String("action", "upload_and_save"),
-	)
-
-	grID, err := s.repo.CreateGroupRequest(ctx, groupReq)
-	if err != nil {
-		s.log.Error("failed to create group request",
-			zap.Error(err),
-			zap.String("action", "create_group_request"),
-			zap.String("group_id", fmt.Sprintf("%d", id)),
-		)
-		return -1, "", fmt.Errorf("failed to create group request: %w", err)
-	}
-
-	return grID, providerCode, nil
+	return groupID, providerCode, nil
 }
 
 func (s *GroupService) UpdateGroup(ctx context.Context, groupID string, group entities.ExtensionGroup) error {

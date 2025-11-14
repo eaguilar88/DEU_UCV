@@ -12,11 +12,9 @@ import (
 
 type Service interface {
 	GetCourse(ctx context.Context, courseID string) (entities.Course, error)
-	GetCourses(
-		ctx context.Context,
-		pageScope entities.PageScope,
-	) ([]entities.Course, entities.PageScope, error)
-	CreateCourse(ctx context.Context, course entities.Course) (int64, error)
+	GetCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error)
+	GetLatestCoursePeriod(ctx context.Context, courseID string) (entities.CoursePeriod, error)
+	CreateCourse(ctx context.Context, userID string, course entities.Course) (int64, error)
 	UpdateCourse(ctx context.Context, courseID string, user entities.Course) error
 	DeleteCourse(ctx context.Context, courseID string) error
 }
@@ -42,7 +40,22 @@ func (h *CourseEndpointsHandler) GetCourse(c echo.Context) error {
 		return echo.ErrInternalServerError
 	}
 
-	return c.JSON(http.StatusOK, EntitiesCourseToGetCourseResponse(course))
+	response := EntitiesCourseToGetCourseResponse(course)
+
+	// Get latest course period
+	latestPeriod, err := h.svc.GetLatestCoursePeriod(ctx, req.ID)
+	if err != nil {
+		h.log.Warn("could not get latest course period", zap.Error(err), zap.String("course_id", req.ID))
+	} else if latestPeriod.ID != "" {
+		response.LatestPeriod = &LatestCoursePeriodInfo{
+			ID:              latestPeriod.ID,
+			StartDate:       latestPeriod.StartDate,
+			EndDate:         latestPeriod.EndDate,
+			InscriptionDate: latestPeriod.InscriptionDate,
+		}
+	}
+
+	return c.JSON(http.StatusOK, response)
 }
 
 func (h *CourseEndpointsHandler) GetCourses(c echo.Context) error {
@@ -70,15 +83,28 @@ func (h *CourseEndpointsHandler) GetCourses(c echo.Context) error {
 
 func (h *CourseEndpointsHandler) CreateCourse(c echo.Context) error {
 	ctx := c.Request().Context()
+
+	userID, ok := c.Get("userID").(string)
+	if !ok {
+		h.log.Error("no user ID found in context")
+		return echo.NewHTTPError(http.StatusUnauthorized, "user missing from context")
+	}
+
 	var req CreateCourseRequest
 	if err := c.Bind(&req); err != nil {
 		h.log.Error("could not decode", zap.Error(err))
 		return echo.ErrBadRequest
 	}
 
-	courseID, err := h.svc.CreateCourse(ctx, createCourseRequestToEntitiesCourse(req))
+	course, err := createCourseRequestToEntitiesCourse(req)
 	if err != nil {
-		h.log.Error("could not decode", zap.Error(err))
+		h.log.Error("could not convert request to entity", zap.Error(err))
+		return echo.ErrBadRequest
+	}
+
+	courseID, err := h.svc.CreateCourse(ctx, userID, course)
+	if err != nil {
+		h.log.Error("could not create course", zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 

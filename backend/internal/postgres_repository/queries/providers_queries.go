@@ -9,13 +9,12 @@ import (
 
 var providerQuerySelectCommon = []string{
 	"p.id",
-	"u.id",
-	"u.first_name",
-	"u.last_name",
+	"p.user_id",
 	"p.code",
 	"p.is_active",
 	"p.created_at",
 	"p.updated_at",
+	"p.deleted_at",
 }
 
 func GetProviderByID(id string, status, isDeleted bool) sq.SelectBuilder {
@@ -36,6 +35,12 @@ func GetProviderByCode(code string) sq.SelectBuilder {
 		From(fmt.Sprintf("%s AS p", providersTableName)).
 		Join(fmt.Sprintf("%s AS u ON u.id = p.user_id", usersTableName)).
 		Where(sq.Eq{"p.code": code})
+}
+
+func GetProviderByUserID(userID string) sq.SelectBuilder {
+	return psql.Select(providerQuerySelectCommon...).
+		From(fmt.Sprintf("%s AS p", providersTableName)).
+		Where(sq.Eq{"p.user_id": userID})
 }
 
 func GetProviders(limit, offset int) sq.SelectBuilder {

@@ -2,75 +2,76 @@ package course_requests
 
 import (
 	"context"
-	"mime/multipart"
+	"errors"
 
 	"github.com/eaguilar88/deu/internal/entities"
 	"go.uber.org/zap"
 )
 
-type Repository interface {
-	GetCourseRequest(ctx context.Context, courseRequestID string) (entities.CourseRequest, error)
-	GetCourseRequests(ctx context.Context, pageScope entities.PageScope) ([]entities.CourseRequest, entities.PageScope, error)
-	CreateCourseRequest(ctx context.Context, courseRequest entities.CourseRequest) (int64, error)
-	UpdateCourseRequest(ctx context.Context, courseRequestID string, courseRequest entities.CourseRequest) error
-	DeleteCourseRequest(ctx context.Context, courseRequestID string) error
-}
+var (
+	ErrRequestIsProcessed = errors.New("esta solicitud ya ha sido procesada por un administrador")
+)
 
-type StorageClient interface {
-	UploadFile(ctx context.Context, file multipart.File, objectKey string, metadata map[string]string) error
-	DownloadFile(ctx context.Context, objectKey string, destinationPath string) error
-	DeleteFile(ctx context.Context, objectKey string) error
-	GetFileURL(ctx context.Context, objectKey string) (string, error)
+type Repository interface {
+	ApproveCourseRequest(ctx context.Context, reqID, reviewerID, courseType, comments string) error
+	RejectCourseRequest(ctx context.Context, reqID, reviewerID, comments string) error
+	RedirectCourseRequest(ctx context.Context, reqID, reviewerID string, faculty entities.Faculty, reason string) error
+	GetCourseRequestsByFaculty(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.CourseRequest, entities.PageScope, error)
+	GetCourseRequestByID(ctx context.Context, reqID string) (entities.CourseRequest, error)
 }
 
 type CourseRequestService struct {
-	repo    Repository
-	storage StorageClient
-	log     *zap.Logger
+	repo   Repository
+	logger *zap.Logger
 }
 
-func NewCourseRequestService(repository Repository, s3 StorageClient, logger *zap.Logger) *CourseRequestService {
+func NewCourseRequestService(repo Repository, logger *zap.Logger) *CourseRequestService {
 	return &CourseRequestService{
-		repo:    repository,
-		storage: s3,
-		log:     logger,
+		repo:   repo,
+		logger: logger,
 	}
 }
 
-func (s *CourseRequestService) GetCourseRequest(ctx context.Context, courseRequestID string) (entities.CourseRequest, error) {
-	user, err := s.repo.GetCourseRequest(ctx, courseRequestID)
-	if err != nil {
-		return entities.CourseRequest{}, err
+func (s *CourseRequestService) ApproveCourseRequest(ctx context.Context, request entities.CourseRequest, courseType entities.CourseType) error {
+	if existingRequest, err := s.repo.GetCourseRequestByID(ctx, request.ID); err != nil {
+		return err
+	} else if existingRequest.Status != entities.RequestStatus_UNDER_REVIEW {
+		return ErrRequestIsProcessed
 	}
-	return user, nil
+
+	return s.repo.ApproveCourseRequest(ctx, request.ID, request.Reviewer.ID, courseType.String(), request.Comments)
 }
 
-func (s *CourseRequestService) GetCourseRequests(ctx context.Context, pageScope entities.PageScope) ([]entities.CourseRequest, entities.PageScope, error) {
-	users, page, err := s.repo.GetCourseRequests(ctx, pageScope)
+func (s *CourseRequestService) RejectCourseRequest(ctx context.Context, reqID, reviewerID, comments string) error {
+	if existingRequest, err := s.repo.GetCourseRequestByID(ctx, reqID); err != nil {
+		return err
+	} else if existingRequest.Status != entities.RequestStatus_UNDER_REVIEW {
+		return ErrRequestIsProcessed
+	}
+
+	return s.repo.RejectCourseRequest(ctx, reqID, reviewerID, comments)
+}
+
+func (s *CourseRequestService) RedirectCourseRequest(ctx context.Context, reqID, reviewerID string, faculty entities.Faculty, reason string) error {
+	if existingRequest, err := s.repo.GetCourseRequestByID(ctx, reqID); err != nil {
+		return err
+	} else if existingRequest.Status != entities.RequestStatus_UNDER_REVIEW {
+		return ErrRequestIsProcessed
+	}
+
+	return s.repo.RedirectCourseRequest(ctx, reqID, reviewerID, faculty, reason)
+}
+
+func (s *CourseRequestService) GetCourseRequestsByFaculty(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.CourseRequest, entities.PageScope, error) {
+	cr, ps, err := s.repo.GetCourseRequestsByFaculty(ctx, faculty, pageScope)
 	if err != nil {
+		s.logger.Error("failed to get course requests by faculty", zap.Error(err))
 		return nil, entities.PageScope{}, err
 	}
-	return users, page, nil
+
+	return cr, ps, nil
 }
 
-func (s *CourseRequestService) CreateCourseRequest(ctx context.Context, courseRequest entities.CourseRequest) (int64, error) {
-	id, err := s.repo.CreateCourseRequest(ctx, courseRequest)
-	if err != nil {
-		return -1, err
-	}
-	return id, nil
-}
-
-func (s *CourseRequestService) UpdateCourseRequest(ctx context.Context, courseRequest entities.CourseRequest) error {
-	if err := s.repo.UpdateCourseRequest(ctx, courseRequest.ID, courseRequest); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *CourseRequestService) DeleteCourseRequest(ctx context.Context, courseRequestID string) error {
-	if err := s.repo.DeleteCourseRequest(ctx, courseRequestID); err != nil {
-		return err
-	}
-	return nil
+func (s *CourseRequestService) GetCourseRequestByID(ctx context.Context, reqID string) (entities.CourseRequest, error) {
+	return s.repo.GetCourseRequestByID(ctx, reqID)
 }

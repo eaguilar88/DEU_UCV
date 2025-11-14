@@ -11,17 +11,15 @@ var courseQuerySelectCommon = []string{
 	"c.id",
 	"c.name",
 	"c.description",
-	"c.request_id",
-	"requester.id",
-	"requester.first_name",
-	"requester.last_name",
-	"reviewer.id",
-	"reviewer.first_name",
-	"reviewer.last_name",
-	"c.content",
+	"c.provider_id",
 	"c.objectives",
+	"c.duration",
+	"c.content",
+	"c.type",
+	"c.faculty",
 	"c.cost",
 	"c.location",
+	"c.is_active",
 	"c.created_at",
 	"c.updated_at",
 	"c.deleted_at",
@@ -30,31 +28,30 @@ var courseQuerySelectCommon = []string{
 func GetCourseByID(courseID string) sq.SelectBuilder {
 	return psql.Select(courseQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS c", coursesTableName)).
-		Join(fmt.Sprintf("%s AS r ON c.request_id = r.id", courseRequestsTableName)).
-		Join(fmt.Sprintf("%s AS requester ON c.user_id = requester.id", usersTableName)).
-		Join(fmt.Sprintf("%s AS reviewer ON r.reviewer_id = reviewer.id", usersTableName)).
-		Where(sq.Eq{"e.id": courseID})
+		Where(sq.Eq{"c.deleted_at": nil}).
+		Where(sq.Eq{"c.is_active": true}).
+		Where(sq.Eq{"c.id": courseID})
 }
 
 func GetCourses(limit, offset int) sq.SelectBuilder {
 	return psql.Select(courseQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS c", coursesTableName)).
-		Join(fmt.Sprintf("%s AS r ON c.request_id = r.id", courseRequestsTableName)).
-		Join(fmt.Sprintf("%s AS requester ON r.user_id = requester.id", usersTableName)).
-		Join(fmt.Sprintf("%s AS reviewer ON r.reviewer_id = reviewer.id", usersTableName)).
+		Where(sq.Eq{"c.deleted_at": nil}).
+		Where(sq.Eq{"c.is_active": true}).
 		Limit(uint64(limit)).
 		Offset(uint64(offset))
 }
 
 func InsertCourse(course models.Course) sq.InsertBuilder {
-	return psql.Insert(entitiesTableName).
+	return psql.Insert(coursesTableName).
 		Columns(
 			"name",
 			"description",
-			"user_id",
-			"request_id",
+			"provider_id",
 			"objectives",
+			"duration",
 			"content",
+			"faculty",
 			"cost",
 			"location",
 		).
@@ -62,9 +59,10 @@ func InsertCourse(course models.Course) sq.InsertBuilder {
 			course.Name,
 			course.Description,
 			course.OwnerID,
-			course.RequestID,
 			course.Objectives,
+			course.Duration,
 			course.Content,
+			course.Faculty,
 			course.Cost,
 			course.Location,
 		).Suffix("RETURNING id")
@@ -75,7 +73,10 @@ func UpdateCourse(courseID string, course models.Course) sq.UpdateBuilder {
 		Set("name", course.Name).
 		Set("description", course.Description.String).
 		Set("objectives", course.Objectives.String).
+		Set("duration", course.Duration).
 		Set("content", course.Content).
+		Set("type", course.Type).
+		Set("faculty", course.Faculty).
 		Set("cost", course.Cost).
 		Set("location", course.Location).
 		Where(sq.Eq{"id": courseID})

@@ -7,23 +7,23 @@ import (
 
 type GetGroupResponse struct {
 	ID          string                 `json:"id,omitempty"`
-	Name        string                 `json:"name,omitempty"`
-	Description string                 `json:"description,omitempty"`
-	Owner       *users.GetUserResponse `json:"owner,omitempty"`
-	Objective   string                 `json:"objective,omitempty"`
-	Location    string                 `json:"location,omitempty"`
-	Active      bool                   `json:"active,omitempty"`
-	CreatedAt   string                 `json:"created_at,omitempty"`
-	UpdatedAt   string                 `json:"updated_at,omitempty"`
-	DeletedAt   string                 `json:"deleted_at,omitempty"`
+	Name        string                 `json:"nombre,omitempty"`
+	Description string                 `json:"descripcion,omitempty"`
+	Owner       *users.GetUserResponse `json:"propietario,omitempty"`
+	Objective   string                 `json:"objetivo,omitempty"`
+	Location    string                 `json:"ubicacion,omitempty"`
+	Active      bool                   `json:"activo,omitempty"`
+	CreatedAt   string                 `json:"creado_en,omitempty"`
+	UpdatedAt   string                 `json:"actualizado_en,omitempty"`
+	DeletedAt   string                 `json:"eliminado_en,omitempty"`
 }
 type GetGroupsResponse struct {
-	Groups    []GetGroupResponse `json:"groups"`
-	PageScope entities.PageScope `json:"page"`
+	Groups    []GetGroupResponse `json:"grupos"`
+	PageScope entities.PageScope `json:"pagina"`
 }
 type CreateGroupResponse struct {
 	ID   string `json:"id"`
-	Code string `json:"provider_code"`
+	Code string `json:"codigo_proveedor"`
 }
 type UpdateGroupResponse struct{}
 

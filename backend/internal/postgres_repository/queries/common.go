@@ -16,7 +16,6 @@ var (
 	usersTableName          = fmt.Sprintf("%s.users", schema)
 	rolesTableName          = fmt.Sprintf("%s.roles", schema)
 	pivotTableName          = fmt.Sprintf("%s.user_roles", schema)
-	entitiesTableName       = fmt.Sprintf("%s.entities", schema)
 	coursesTableName        = fmt.Sprintf("%s.courses", schema)
 	providersTableName      = fmt.Sprintf("%s.providers", schema)
 	courseRequestsTableName = fmt.Sprintf("%s.course_auth_requests", schema)
@@ -25,4 +24,5 @@ var (
 	periodsTableName        = fmt.Sprintf("%s.course_cycles", schema)
 	participantsTableName   = fmt.Sprintf("%s.course_participants", schema)
 	filesTableName          = fmt.Sprintf("%s.files", schema)
+	announcementsTableName  = fmt.Sprintf("%s.course_cycle_announcements", schema)
 )

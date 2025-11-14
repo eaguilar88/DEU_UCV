@@ -3,6 +3,8 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"strconv"
 
 	"github.com/eaguilar88/deu/internal/entities"
 	errs "github.com/eaguilar88/deu/internal/errors"
@@ -12,10 +14,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (r *PostgresRepository) GetCourse(
-	ctx context.Context,
-	courseID string,
-) (entities.Course, error) {
+func (r *PostgresRepository) GetCourse(ctx context.Context, courseID string) (entities.Course, error) {
 	query := queries.GetCourseByID(courseID)
 	sql, args, err := query.ToSql()
 	if err != nil {
@@ -35,10 +34,7 @@ func (r *PostgresRepository) GetCourse(
 	return newCourseFromModel(course), nil
 }
 
-func (r *PostgresRepository) GetCourses(
-	ctx context.Context,
-	pageScope entities.PageScope,
-) ([]entities.Course, entities.PageScope, error) {
+func (r *PostgresRepository) GetCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error) {
 	sql, args, err := queries.GetCourses(pageScope.PerPage, pageScope.Offset()).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
@@ -64,10 +60,7 @@ func (r *PostgresRepository) GetCourses(
 	return courses, pageScope, nil
 }
 
-func (r *PostgresRepository) CreateCourse(
-	ctx context.Context,
-	course entities.Course,
-) (int64, error) {
+func (r *PostgresRepository) CreateCourse(ctx context.Context, course entities.Course) (int64, error) {
 	sql, args, err := queries.InsertCourse(newCourseModelFromEntities(course)).ToSql()
 	if err != nil {
 		r.logger.Error("error creating query", zap.Error(err))
@@ -92,11 +85,75 @@ func (r *PostgresRepository) CreateCourse(
 	return lastInsertedID, nil
 }
 
-func (r *PostgresRepository) UpdateCourse(
-	ctx context.Context,
-	courseID string,
-	course entities.Course,
-) error {
+// CreateCourseWithRequest creates a course and its authorization request in a single transaction
+func (r *PostgresRepository) CreateCourseWithRequest(ctx context.Context, course entities.Course) (courseID int64, requestID int64, err error) {
+	// Begin transaction
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		r.logger.Error("failed to begin transaction", zap.Error(err))
+		return -1, -1, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	courseSQL, courseArgs, err := queries.InsertCourse(newCourseModelFromEntities(course)).ToSql()
+	if err != nil {
+		r.logger.Error("failed to build course query", zap.Error(err))
+		return -1, -1, fmt.Errorf("failed to build course query: %w", err)
+	}
+
+	stmt, err := tx.PrepareContext(ctx, courseSQL)
+	if err != nil {
+		r.logger.Error("failed to prepare course statement", zap.Error(err))
+		return -1, -1, fmt.Errorf("failed to prepare course statement: %w", err)
+	}
+	defer stmt.Close()
+
+	err = stmt.QueryRowContext(ctx, courseArgs...).Scan(&courseID)
+	if err != nil {
+		r.logger.Error("failed to insert course", zap.Error(err))
+		return -1, -1, fmt.Errorf("failed to insert course: %w", err)
+	}
+
+	// 2. Create the course authorization request
+	courseRequest := entities.CourseRequest{
+		Course: &entities.Course{
+			ID: strconv.FormatInt(courseID, 10),
+		},
+		Status: entities.RequestStatus_UNDER_REVIEW,
+	}
+
+	requestSQL, requestArgs, err := queries.InsertCourseRequest(newCourseRequestModelFromEntities(courseRequest)).ToSql()
+	if err != nil {
+		r.logger.Error("failed to build request query", zap.Error(err))
+		return -1, -1, fmt.Errorf("failed to build request query: %w", err)
+	}
+
+	stmt2, err := tx.PrepareContext(ctx, requestSQL)
+	if err != nil {
+		r.logger.Error("failed to prepare request statement", zap.Error(err))
+		return -1, -1, fmt.Errorf("failed to prepare request statement: %w", err)
+	}
+	defer stmt2.Close()
+
+	err = stmt2.QueryRowContext(ctx, requestArgs...).Scan(&requestID)
+	if err != nil {
+		r.logger.Error("failed to insert course request", zap.Error(err))
+		return -1, -1, fmt.Errorf("failed to insert course request: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		r.logger.Error("failed to commit transaction", zap.Error(err))
+		return -1, -1, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	r.logger.Info("course and request created successfully",
+		zap.Int64("course_id", courseID),
+		zap.Int64("request_id", requestID))
+
+	return courseID, requestID, nil
+}
+
+func (r *PostgresRepository) UpdateCourse(ctx context.Context, courseID string, course entities.Course) error {
 	sql, args, err := queries.UpdateCourse(courseID, newCourseModelFromEntities(course)).ToSql()
 	if err != nil {
 		return errs.NewBadQueryError(err)
@@ -150,19 +207,18 @@ func scanCourse(row scannable) (models.Course, error) {
 		&course.ID,
 		&course.Name,
 		&course.Description,
-		&course.RequestID,
 		&course.OwnerID,
-		&course.OwnerFirstName,
-		&course.OwnerLastName,
-		&course.RequesterID,
-		&course.RequesterFirstName,
-		&course.RequesterLastName,
-		&course.Content,
 		&course.Objectives,
+		&course.Duration,
+		&course.Content,
+		&course.Type,
+		&course.Faculty,
 		&course.Cost,
 		&course.Location,
+		&course.IsActive,
 		&course.CreatedAt,
 		&course.UpdatedAt,
+		&course.DeletedAt,
 	)
 
 	return course, err
@@ -170,21 +226,8 @@ func scanCourse(row scannable) (models.Course, error) {
 
 func newCourseFromModel(course models.Course) entities.Course {
 	c := entities.Course{
-		ID:   course.ID,
-		Name: course.Name,
-		CourseRequest: entities.CourseRequest{
-			ID: course.RequestID,
-			User: entities.User{
-				ID:        course.RequesterID,
-				FirstName: course.RequesterFirstName,
-				LastName:  course.RequesterLastName,
-			},
-		},
-		Owner: entities.User{
-			ID:        course.OwnerID,
-			FirstName: course.OwnerFirstName,
-			LastName:  course.OwnerLastName,
-		},
+		ID:        course.ID,
+		Name:      course.Name,
 		Content:   course.Content,
 		CreatedAt: course.CreatedAt,
 		UpdatedAt: course.UpdatedAt,
@@ -196,6 +239,21 @@ func newCourseFromModel(course models.Course) entities.Course {
 
 	if course.Objectives.Valid {
 		c.Objectives = course.Objectives.String
+	}
+
+	if course.Duration.Valid {
+		c.Duration = int(course.Duration.Int64)
+	}
+
+	if course.Type.Valid {
+		c.Type = entities.FromStringCourseType(course.Type.String)
+	}
+
+	if course.Faculty.Valid {
+		faculty, err := entities.FromString(course.Faculty.String)
+		if err == nil {
+			c.Faculty = faculty
+		}
 	}
 
 	if course.Cost.Valid {
@@ -211,32 +269,39 @@ func newCourseFromModel(course models.Course) entities.Course {
 
 func newCourseModelFromEntities(course entities.Course) models.Course {
 	c := models.Course{
-		ID:                 course.ID,
-		Name:               course.Name,
-		RequestID:          course.CourseRequest.ID,
-		OwnerID:            course.Owner.ID,
-		OwnerFirstName:     course.Owner.FirstName,
-		OwnerLastName:      course.Owner.LastName,
-		RequesterID:        course.CourseRequest.User.ID,
-		RequesterFirstName: course.CourseRequest.User.FirstName,
-		RequesterLastName:  course.CourseRequest.User.LastName,
+		ID:      course.ID,
+		Name:    course.Name,
+		OwnerID: course.Owner.ID,
 		Description: sql.NullString{
 			String: course.Description,
-			Valid:  true,
+			Valid:  course.Description != "",
 		},
 		Objectives: sql.NullString{
 			String: course.Objectives,
-			Valid:  true,
+			Valid:  course.Objectives != "",
+		},
+		Duration: sql.NullInt64{
+			Int64: int64(course.Duration),
+			Valid: course.Duration > 0,
+		},
+		Type: sql.NullString{
+			String: string(entities.CourseType_Undefined),
+			Valid:  course.Type != "",
+		},
+		Faculty: sql.NullString{
+			String: string(course.Faculty),
+			Valid:  course.Faculty != "",
 		},
 		Cost: sql.NullFloat64{
 			Float64: course.Cost,
-			Valid:   true,
+			Valid:   course.Cost > 0,
 		},
 		Location: sql.NullString{
 			String: course.Location,
-			Valid:  true,
+			Valid:  course.Location != "",
 		},
 		Content:   course.Content,
+		IsActive:  false,
 		CreatedAt: course.CreatedAt,
 		UpdatedAt: course.UpdatedAt,
 	}

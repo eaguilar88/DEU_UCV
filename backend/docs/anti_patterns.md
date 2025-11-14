@@ -98,45 +98,6 @@ func (s *CoursePeriodService) GetCoursePeriod(ctx context.Context, periodID stri
 }
 ```
 
-### 1.4 Validación Insuficiente en Endpoints
-```go
-// Anti-pattern actual
-var req CreateCoursePeriodRequest
-if err := c.Bind(&req); err != nil {
-    h.log.Error("could not decode", zap.Error(err))
-    return echo.ErrBadRequest
-}
-```
-
-**Recomendación:**
-```go
-func (h *CoursePeriodEndpointsHandler) CreateCoursePeriod(c echo.Context) error {
-    var req CreateCoursePeriodRequest
-    if err := c.Bind(&req); err != nil {
-        h.log.Error("could not decode request", zap.Error(err))
-        return echo.NewHTTPError(http.StatusBadRequest, "invalid request format")
-    }
-
-    if err := req.Validate(); err != nil {
-        h.log.Error("invalid request", zap.Error(err))
-        return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-    }
-
-    // ... resto del código
-}
-
-func (r *CreateCoursePeriodRequest) Validate() error {
-    if r.StartDate.After(r.EndDate) {
-        return errors.New("start date must be before end date")
-    }
-    if r.Capacity < 0 {
-        return errors.New("capacity must be non-negative")
-    }
-    // más validaciones...
-    return nil
-}
-```
-
 ### 1.5 Logging sin Contexto Suficiente
 ```go
 // Anti-pattern actual

@@ -3,6 +3,7 @@ package providers
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/eaguilar88/deu/internal/entities"
@@ -15,7 +16,7 @@ type Service interface {
 	GetProvider(ctx context.Context, providerID string) (entities.Provider, error)
 	GetProviderByCode(ctx context.Context, providerCode string) (entities.Provider, error)
 	GetProviders(ctx context.Context, pageScope entities.PageScope) ([]entities.Provider, entities.PageScope, error)
-	CreateProvider(ctx context.Context, provider *entities.Provider) (int64, error)
+	CreateProvider(ctx context.Context, provider *entities.Provider) (int64, string, error)
 	UpdateProvider(ctx context.Context, providerID string, provider *entities.Provider) error
 	DeleteProvider(ctx context.Context, providerID string) error
 }
@@ -80,13 +81,16 @@ func (h *ProviderEndpointsHandler) CreateProvider(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	id, err := h.svc.CreateProvider(ctx, provider)
+	id, code, err := h.svc.CreateProvider(ctx, provider)
 	if err != nil {
 		h.log.Error("error creating provider", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 
-	return c.JSON(http.StatusCreated, id)
+	return c.JSON(http.StatusCreated, CreateProviderResponse{
+		ID:   fmt.Sprintf("%d", id),
+		Code: code,
+	})
 }
 
 func (h *ProviderEndpointsHandler) UpdateProvider(c echo.Context) error {

@@ -25,7 +25,7 @@ stop-db:
 	docker compose -f docker-compose.dev.yml down
 
 generate-mocks:
-	docker run --user 1000:1000 --rm -v ${PWD}/backend:/src -w /src vektra/mockery:v2.53 --config .mockery.yaml
+	docker run --user 1000:1000 --rm -v ${PWD}/backend:/src -w /src vektra/mockery:v3 --config .mockery.yaml
 
 go-test:
 	cd backend && go test -count=1 -short -cover ./...

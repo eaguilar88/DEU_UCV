@@ -4,6 +4,7 @@ type CoursePeriod struct {
 	ID              string
 	Course          Course
 	Participants    []User
+	Announcements   []Announcement
 	StartDate       string
 	EndDate         string
 	InscriptionDate string

@@ -11,14 +11,14 @@ type GetCourseRequest struct {
 }
 
 type CreateCourseRequest struct {
-	UserID        string
-	EndorsementID string  `json:"request_id"`
-	Name          string  `json:"name"`
-	Description   string  `json:"description"`
-	Objectives    string  `json:"objectives"`
-	Content       string  `json:"content"`
-	Cost          float64 `json:"cost"`
-	Location      string  `json:"location"`
+	Name        string  `json:"nombre"`
+	Description string  `json:"descripcion"`
+	Objectives  string  `json:"objetivos"`
+	Duration    int     `json:"duracion_horas"`
+	Content     string  `json:"contenido"`
+	Faculty     string  `json:"facultad"`
+	Cost        float64 `json:"costo"`
+	Location    string  `json:"ubicacion"`
 }
 
 type DeleteCourseRequest struct {
@@ -27,10 +27,10 @@ type DeleteCourseRequest struct {
 
 type UpdateCourseRequest struct {
 	ID          string  `path:"id"`
-	Name        string  `json:"name"`
-	Description string  `json:"description"`
-	Objectives  string  `json:"objectives"`
-	Content     string  `json:"content"`
-	Cost        float64 `json:"cost"`
-	Location    string  `json:"location"`
+	Name        string  `form:"nombre"`
+	Description string  `form:"descripcion"`
+	Objectives  string  `form:"objetivos"`
+	Content     string  `form:"contenido"`
+	Cost        float64 `form:"costo"`
+	Location    string  `form:"ubicacion"`
 }

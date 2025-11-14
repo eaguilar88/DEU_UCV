@@ -9,6 +9,7 @@ import (
 	"github.com/eaguilar88/deu/internal/auth"
 	"github.com/eaguilar88/deu/internal/config"
 	"github.com/eaguilar88/deu/internal/course_periods"
+	"github.com/eaguilar88/deu/internal/course_requests"
 	"github.com/eaguilar88/deu/internal/courses"
 	"github.com/eaguilar88/deu/internal/group_requests"
 	"github.com/eaguilar88/deu/internal/groups"
@@ -93,6 +94,9 @@ func main() {
 	groupRequestService := group_requests.NewGroupRequestService(repository, logger)
 	groupRequestEndpoints := group_requests.MakeGroupRequestEndpointsHandler(groupRequestService, logger)
 
+	courseRequestService := course_requests.NewCourseRequestService(repository, logger)
+	courseRequestEndpoints := course_requests.MakeCourseRequestEndpointsHandler(courseRequestService, logger)
+
 	e := echo.New()
 	e.Validator = security.NewCustomValidator()
 	e.Use(middleware.Recover())
@@ -111,6 +115,7 @@ func main() {
 
 	addAdminRoutes(e, middlewares,
 		groupRequestEndpoints.RegisterGroupRequestAdminEndpoints,
+		courseRequestEndpoints.RegisterCourseRequestAdminEndpoints,
 	)
 
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", config.HTTPPort)))
@@ -176,6 +181,14 @@ func addCoursePeriodRoutes(e *echo.Echo, endpoints course_periods.CoursePeriodEn
 	protectedGroup.POST("", endpoints.CreateCoursePeriod)
 	protectedGroup.PUT("/:id", endpoints.UpdateCoursePeriod)
 	protectedGroup.DELETE("/:id", endpoints.DeleteCoursePeriod)
+
+	// Announcement routes
+	publicAnnouncementGroup := e.Group("/course-periods/:period_id/announcements")
+	publicAnnouncementGroup.GET("/:id", endpoints.GetAnnouncement)
+	protectedAnnouncementGroup := e.Group("/course-periods/:period_id/announcements", middlewares...)
+	protectedAnnouncementGroup.POST("", endpoints.CreateAnnouncement)
+	protectedAnnouncementGroup.PUT("/:id", endpoints.UpdateAnnouncement)
+	protectedAnnouncementGroup.DELETE("/:id", endpoints.DeleteAnnouncement)
 }
 
 func addGroupsRoutes(e *echo.Echo, endpoints groups.GroupEndpointsHandler, middlewares ...echo.MiddlewareFunc) {

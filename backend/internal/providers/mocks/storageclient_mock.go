@@ -4,8 +4,8 @@ package mocks
 
 import (
 	context "context"
-	multipart "mime/multipart"
 
+	entities "github.com/eaguilar88/deu/internal/entities"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -69,50 +69,61 @@ func (_c *StorageClientMock_DeleteFile_Call) RunAndReturn(run func(context.Conte
 	return _c
 }
 
-// DownloadFile provides a mock function with given fields: ctx, objectKey, destinationPath
-func (_m *StorageClientMock) DownloadFile(ctx context.Context, objectKey string, destinationPath string) error {
-	ret := _m.Called(ctx, objectKey, destinationPath)
+// GetFileMetadata provides a mock function with given fields: ctx, objectKey
+func (_m *StorageClientMock) GetFileMetadata(ctx context.Context, objectKey string) (map[string]string, error) {
+	ret := _m.Called(ctx, objectKey)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DownloadFile")
+		panic("no return value specified for GetFileMetadata")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
-		r0 = rf(ctx, objectKey, destinationPath)
+	var r0 map[string]string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (map[string]string, error)); ok {
+		return rf(ctx, objectKey)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) map[string]string); ok {
+		r0 = rf(ctx, objectKey)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[string]string)
+		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, objectKey)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
-// StorageClientMock_DownloadFile_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DownloadFile'
-type StorageClientMock_DownloadFile_Call struct {
+// StorageClientMock_GetFileMetadata_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetFileMetadata'
+type StorageClientMock_GetFileMetadata_Call struct {
 	*mock.Call
 }
 
-// DownloadFile is a helper method to define mock.On call
+// GetFileMetadata is a helper method to define mock.On call
 //   - ctx context.Context
 //   - objectKey string
-//   - destinationPath string
-func (_e *StorageClientMock_Expecter) DownloadFile(ctx interface{}, objectKey interface{}, destinationPath interface{}) *StorageClientMock_DownloadFile_Call {
-	return &StorageClientMock_DownloadFile_Call{Call: _e.mock.On("DownloadFile", ctx, objectKey, destinationPath)}
+func (_e *StorageClientMock_Expecter) GetFileMetadata(ctx interface{}, objectKey interface{}) *StorageClientMock_GetFileMetadata_Call {
+	return &StorageClientMock_GetFileMetadata_Call{Call: _e.mock.On("GetFileMetadata", ctx, objectKey)}
 }
 
-func (_c *StorageClientMock_DownloadFile_Call) Run(run func(ctx context.Context, objectKey string, destinationPath string)) *StorageClientMock_DownloadFile_Call {
+func (_c *StorageClientMock_GetFileMetadata_Call) Run(run func(ctx context.Context, objectKey string)) *StorageClientMock_GetFileMetadata_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
 
-func (_c *StorageClientMock_DownloadFile_Call) Return(_a0 error) *StorageClientMock_DownloadFile_Call {
-	_c.Call.Return(_a0)
+func (_c *StorageClientMock_GetFileMetadata_Call) Return(_a0 map[string]string, _a1 error) *StorageClientMock_GetFileMetadata_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *StorageClientMock_DownloadFile_Call) RunAndReturn(run func(context.Context, string, string) error) *StorageClientMock_DownloadFile_Call {
+func (_c *StorageClientMock_GetFileMetadata_Call) RunAndReturn(run func(context.Context, string) (map[string]string, error)) *StorageClientMock_GetFileMetadata_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -174,17 +185,17 @@ func (_c *StorageClientMock_GetFileURL_Call) RunAndReturn(run func(context.Conte
 	return _c
 }
 
-// UploadFile provides a mock function with given fields: ctx, file, objectKey, metadata
-func (_m *StorageClientMock) UploadFile(ctx context.Context, file multipart.File, objectKey string, metadata map[string]string) error {
-	ret := _m.Called(ctx, file, objectKey, metadata)
+// UploadFile provides a mock function with given fields: ctx, file
+func (_m *StorageClientMock) UploadFile(ctx context.Context, file []*entities.File) error {
+	ret := _m.Called(ctx, file)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UploadFile")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, multipart.File, string, map[string]string) error); ok {
-		r0 = rf(ctx, file, objectKey, metadata)
+	if rf, ok := ret.Get(0).(func(context.Context, []*entities.File) error); ok {
+		r0 = rf(ctx, file)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -199,16 +210,14 @@ type StorageClientMock_UploadFile_Call struct {
 
 // UploadFile is a helper method to define mock.On call
 //   - ctx context.Context
-//   - file multipart.File
-//   - objectKey string
-//   - metadata map[string]string
-func (_e *StorageClientMock_Expecter) UploadFile(ctx interface{}, file interface{}, objectKey interface{}, metadata interface{}) *StorageClientMock_UploadFile_Call {
-	return &StorageClientMock_UploadFile_Call{Call: _e.mock.On("UploadFile", ctx, file, objectKey, metadata)}
+//   - file []*entities.File
+func (_e *StorageClientMock_Expecter) UploadFile(ctx interface{}, file interface{}) *StorageClientMock_UploadFile_Call {
+	return &StorageClientMock_UploadFile_Call{Call: _e.mock.On("UploadFile", ctx, file)}
 }
 
-func (_c *StorageClientMock_UploadFile_Call) Run(run func(ctx context.Context, file multipart.File, objectKey string, metadata map[string]string)) *StorageClientMock_UploadFile_Call {
+func (_c *StorageClientMock_UploadFile_Call) Run(run func(ctx context.Context, file []*entities.File)) *StorageClientMock_UploadFile_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(multipart.File), args[2].(string), args[3].(map[string]string))
+		run(args[0].(context.Context), args[1].([]*entities.File))
 	})
 	return _c
 }
@@ -218,7 +227,7 @@ func (_c *StorageClientMock_UploadFile_Call) Return(_a0 error) *StorageClientMoc
 	return _c
 }
 
-func (_c *StorageClientMock_UploadFile_Call) RunAndReturn(run func(context.Context, multipart.File, string, map[string]string) error) *StorageClientMock_UploadFile_Call {
+func (_c *StorageClientMock_UploadFile_Call) RunAndReturn(run func(context.Context, []*entities.File) error) *StorageClientMock_UploadFile_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -26,3 +26,5 @@ go.work
 node_modules/
 
 docker-compose.dev.yml
+.augment
+.clauderc.md

@@ -12,14 +12,14 @@ type GetUserRequest struct {
 
 type CreateUserRequest struct {
 	Document       string `json:"ci"`
-	Username       string `json:"username"        validate:"required,email"`
-	FirstName      string `json:"first_name"      validate:"required"`
-	LastName       string `json:"last_name"       validate:"required"`
-	Role           string `json:"role"            validate:"required"`
-	DateOfBirth    string `json:"date_of_birth"`
-	Gender         string `json:"gender"`
-	EducationLevel string `json:"education_level"`
-	Address        string `json:"address"`
+	Username       string `json:"nombre_usuario" validate:"required,email"`
+	FirstName      string `json:"primer_nombre" validate:"required"`
+	LastName       string `json:"apellido" validate:"required"`
+	Role           string `json:"rol" validate:"required"`
+	DateOfBirth    string `json:"fecha_nacimiento"`
+	Gender         string `json:"genero"`
+	EducationLevel string `json:"nivel_educacion"`
+	Address        string `json:"direccion"`
 	Password       string `json:"password"`
 }
 
@@ -29,12 +29,12 @@ type DeleteUserRequest struct {
 
 type UpdateUserRequest struct {
 	ID             string `param:"id" validate:"required"`
-	Document       string `                               json:"ci"`
-	FirstName      string `                               json:"first_name"`
-	LastName       string `                               json:"last_name"`
-	DateOfBirth    string `                               json:"date_of_birth"`
-	Gender         string `                               json:"gender"`
-	EducationLevel string `                               json:"education_level"`
-	Address        string `                               json:"address"`
-	Password       string `                               json:"password"`
+	Document       string `json:"ci"`
+	FirstName      string `json:"primer_nombre"`
+	LastName       string `json:"apellido"`
+	DateOfBirth    string `json:"fecha_nacimiento"`
+	Gender         string `json:"genero"`
+	EducationLevel string `json:"nivel_educacion"`
+	Address        string `json:"direccion"`
+	Password       string `json:"password"`
 }

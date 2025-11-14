@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"strconv"
 
 	"github.com/eaguilar88/deu/internal/entities"
@@ -59,12 +60,6 @@ func (r *PostgresRepository) GetGroups(ctx context.Context, pageScope entities.P
 }
 
 func (r *PostgresRepository) CreateGroup(ctx context.Context, gr entities.ExtensionGroup) (int64, error) {
-	tx, err := r.db.BeginTx(ctx, nil)
-	if err != nil {
-		return -1, err
-	}
-	defer tx.Rollback()
-
 	sql, args, err := queries.InsertGroup(newGroupToModel(gr)).ToSql()
 	if err != nil {
 		return 0, err
@@ -85,6 +80,85 @@ func (r *PostgresRepository) CreateGroup(ctx context.Context, gr entities.Extens
 		return -1, errs.NewInternalError(err)
 	}
 	return lastInsertedID, nil
+}
+
+// CreateGroupWithRequest creates a group and its authorization request in a single transaction
+func (r *PostgresRepository) CreateGroupWithRequest(ctx context.Context, group entities.ExtensionGroup, request entities.GroupAuthRequest) (groupID int64, requestID int64, err error) {
+	// Begin transaction
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		r.logger.Error("failed to begin transaction", zap.Error(err))
+		return -1, -1, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback() // Rollback if commit is not called
+
+	// 1. Create the group
+	groupSQL, groupArgs, err := queries.InsertGroup(newGroupToModel(group)).ToSql()
+	if err != nil {
+		r.logger.Error("failed to build group query", zap.Error(err))
+		return -1, -1, fmt.Errorf("failed to build group query: %w", err)
+	}
+
+	stmt, err := tx.PrepareContext(ctx, groupSQL)
+	if err != nil {
+		r.logger.Error("failed to prepare group statement", zap.Error(err))
+		return -1, -1, fmt.Errorf("failed to prepare group statement: %w", err)
+	}
+	defer stmt.Close()
+
+	err = stmt.QueryRowContext(ctx, groupArgs...).Scan(&groupID)
+	if err != nil {
+		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == pgErrorCodeUniqueViolation {
+			r.logger.Error("duplicate group entry", zap.Error(err))
+			return -1, -1, errs.NewDuplicateEntryError(err)
+		}
+		r.logger.Error("failed to insert group", zap.Error(err))
+		return -1, -1, fmt.Errorf("failed to insert group: %w", err)
+	}
+
+	// 2. Create the group authorization request
+	requestSQL, requestArgs, err := queries.InsertGroupRequest(models.GroupAuthRequest{
+		GroupID: groupID,
+		Status:  string(request.Status),
+		Faculty: string(request.Faculty),
+		Comments: sql.NullString{
+			String: request.Comments,
+			Valid:  request.Comments != "",
+		},
+	}).ToSql()
+	if err != nil {
+		r.logger.Error("failed to build request query", zap.Error(err))
+		return -1, -1, fmt.Errorf("failed to build request query: %w", err)
+	}
+
+	stmt2, err := tx.PrepareContext(ctx, requestSQL)
+	if err != nil {
+		r.logger.Error("failed to prepare request statement", zap.Error(err))
+		return -1, -1, fmt.Errorf("failed to prepare request statement: %w", err)
+	}
+	defer stmt2.Close()
+
+	err = stmt2.QueryRowContext(ctx, requestArgs...).Scan(&requestID)
+	if err != nil {
+		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == pgErrorCodeUniqueViolation {
+			r.logger.Error("duplicate group request entry", zap.Error(err))
+			return -1, -1, errs.NewDuplicateEntryError(err)
+		}
+		r.logger.Error("failed to insert group request", zap.Error(err))
+		return -1, -1, fmt.Errorf("failed to insert group request: %w", err)
+	}
+
+	// 3. Commit the transaction
+	if err := tx.Commit(); err != nil {
+		r.logger.Error("failed to commit transaction", zap.Error(err))
+		return -1, -1, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	r.logger.Info("group and request created successfully",
+		zap.Int64("group_id", groupID),
+		zap.Int64("request_id", requestID))
+
+	return groupID, requestID, nil
 }
 
 func (r *PostgresRepository) UpdateGroup(ctx context.Context, group entities.ExtensionGroup) error {
@@ -141,10 +215,13 @@ func (r *PostgresRepository) CreateGroupRequest(ctx context.Context, req entitie
 	}
 
 	sql, args, err := queries.InsertGroupRequest(models.GroupAuthRequest{
-		GroupID:  int64(groupID),
-		Status:   string(req.Status),
-		Faculty:  string(req.Faculty),
-		Comments: req.Comments,
+		GroupID: int64(groupID),
+		Status:  string(req.Status),
+		Faculty: string(req.Faculty),
+		Comments: sql.NullString{
+			String: req.Comments,
+			Valid:  req.Comments != "",
+		},
 	}).ToSql()
 	if err != nil {
 		return -1, err

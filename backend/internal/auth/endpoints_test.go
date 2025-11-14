@@ -25,10 +25,10 @@ func TestMakeAuthEndpointsHandler(t *testing.T) {
 	}
 	tc := testCase{
 		name: "success",
-		svc:  &mocks.ServiceMock{},
+		svc:  &mocks.MockService{},
 		log:  zap.NewNop(),
 		want: AuthEndpointsHandler{
-			svc: &mocks.ServiceMock{},
+			svc: &mocks.MockService{},
 			log: zap.NewNop(),
 		},
 	}
@@ -41,7 +41,7 @@ func TestMakeAuthEndpointsHandler(t *testing.T) {
 func TestAuthEndpointsHandler_LoginHandleHTTP(t *testing.T) {
 	type testCase struct {
 		name    string
-		svc     *mocks.ServiceMock
+		svc     *mocks.MockService
 		prepare func(ctx echo.Context, tc *testCase)
 		req     any
 		token   string
@@ -51,7 +51,7 @@ func TestAuthEndpointsHandler_LoginHandleHTTP(t *testing.T) {
 	tests := []testCase{
 		{
 			name: "success",
-			svc:  &mocks.ServiceMock{},
+			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
 				tc.svc.On("Login", ctx.Request().Context(), mock.AnythingOfType("string"), mock.AnythingOfType("string")).
 					Return(tc.token, &entities.User{}, tc.wantErr)
@@ -62,7 +62,7 @@ func TestAuthEndpointsHandler_LoginHandleHTTP(t *testing.T) {
 		},
 		{
 			name: "error login failed",
-			svc:  &mocks.ServiceMock{},
+			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
 				tc.svc.On("Login", ctx.Request().Context(), mock.AnythingOfType("string"), mock.AnythingOfType("string")).
 					Return(tc.token, nil, tc.wantErr)
@@ -73,7 +73,7 @@ func TestAuthEndpointsHandler_LoginHandleHTTP(t *testing.T) {
 		},
 		{
 			name:    "error cannot bind request",
-			svc:     &mocks.ServiceMock{},
+			svc:     &mocks.MockService{},
 			req:     "invalid request",
 			token:   "",
 			wantErr: echo.NewHTTPError(http.StatusUnauthorized, "Unauthorized"),
