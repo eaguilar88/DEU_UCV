@@ -40,38 +40,21 @@ func (s *CoursePeriodService) GetCoursePeriod(ctx context.Context, periodID stri
 		return entities.CoursePeriod{}, err
 	}
 
-	var wg sync.WaitGroup
-	errCh := make(chan error, 2)
+	// Get announcements in goroutine
+	errCh := make(chan error)
+	var announcements []entities.Announcement
 
-	// Get participants
-	wg.Add(1)
 	go func() {
-		defer wg.Done()
-		users, err := s.repo.GetUsersByCoursePeriodID(ctx, periodID)
-		if err != nil {
-			errCh <- err
-			return
-		}
-		period.Participants = users
+		var err error
+		announcements, err = s.repo.GetAnnouncementsByCoursePeriodID(ctx, periodID)
+		errCh <- err
 	}()
 
-	// Get announcements
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		announcements, err := s.repo.GetAnnouncementsByCoursePeriodID(ctx, periodID)
-		if err != nil {
-			errCh <- err
-			return
-		}
+	// Wait for announcements
+	if err := <-errCh; err != nil {
+		s.log.Warn("could not get announcements for course period", zap.String("periodID", periodID), zap.Error(err))
+	} else {
 		period.Announcements = announcements
-	}()
-
-	wg.Wait()
-	close(errCh)
-
-	if len(errCh) > 0 {
-		return entities.CoursePeriod{}, <-errCh
 	}
 
 	return period, nil
@@ -82,24 +65,33 @@ func (s *CoursePeriodService) GetCoursePeriods(ctx context.Context, courseID str
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
+
+	// Get announcements for each period using goroutines
 	var wg sync.WaitGroup
-	errCh := make(chan error, len(periods))
+	errCh := make(chan error)
+
+	// Goroutine to collect errors
+	go func() {
+		wg.Wait()
+		close(errCh)
+	}()
+
 	for i := range periods {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-			participants, err := s.repo.GetUsersByCoursePeriodID(ctx, periods[i].ID)
+			announcements, err := s.repo.GetAnnouncementsByCoursePeriodID(ctx, periods[i].ID)
 			if err != nil {
 				errCh <- err
 				return
 			}
-			periods[i].Participants = participants
+			periods[i].Announcements = announcements
 		}(i)
 	}
-	wg.Wait()
-	close(errCh)
-	if len(errCh) > 0 {
-		return nil, entities.PageScope{}, <-errCh // Return the first error
+
+	// Log any errors but don't fail the request
+	for err := range errCh {
+		s.log.Warn("could not get announcements for course period", zap.Error(err))
 	}
 
 	return periods, page, nil
