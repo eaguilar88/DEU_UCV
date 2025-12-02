@@ -147,11 +147,7 @@ func (r *PostgresRepository) CreateUser(ctx context.Context, user entities.User)
 	return lastInsertedID, nil
 }
 
-func (r *PostgresRepository) UpdateUser(
-	ctx context.Context,
-	userID string,
-	user entities.User,
-) error {
+func (r *PostgresRepository) UpdateUser(ctx context.Context, userID string, user entities.User) error {
 	sql, args, err := queries.UpdateUserInfo(user, userID).ToSql()
 	if err != nil {
 		return errs.NewBadQueryError(err)
@@ -229,12 +225,7 @@ func (r *PostgresRepository) GetUserRoles(ctx context.Context, userID string) ([
 	return roles, nil
 }
 
-func (r *PostgresRepository) AddRoleToUser(
-	ctx context.Context,
-	tx *sql.Tx,
-	userID string,
-	role int,
-) error {
+func (r *PostgresRepository) AddRoleToUser(ctx context.Context, tx *sql.Tx, userID string, role int) error {
 	sql, args, err := queries.AddRoleToUser(userID, role).ToSql()
 	if err != nil {
 		return err

@@ -155,12 +155,13 @@ func addAdminRoutes(e *echo.Echo, middlewares []echo.MiddlewareFunc, handlers ..
 }
 
 func addUserRoutes(e *echo.Echo, endpoints users.UserEndpointsHandler, middlewares ...echo.MiddlewareFunc) {
-	g := e.Group("/users", middlewares...)
-	g.GET("/:id", endpoints.GetUser)
-	g.GET("", endpoints.GetUsers)
-	g.POST("", endpoints.CreateUser)
-	g.PUT("/:id", endpoints.UpdateUser)
-	g.DELETE("/:id", endpoints.DeleteUser)
+	public := e.Group("/users")
+	public.GET("/:id", endpoints.GetUser)
+	public.POST("", endpoints.CreateUser)
+	protected := e.Group("/users", middlewares...)
+	protected.GET("", endpoints.GetUsers)
+	protected.PUT("/:id", endpoints.UpdateUser)
+	protected.DELETE("/:id", endpoints.DeleteUser)
 }
 
 func addCourseRoutes(e *echo.Echo, endpoints courses.CourseEndpointsHandler, middlewares ...echo.MiddlewareFunc) {

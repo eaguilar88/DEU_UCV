@@ -22,7 +22,7 @@ func createUserRequestToEntitiesUser(req CreateUserRequest) (entities.User, erro
 		Address:        req.Address,
 		Password:       password,
 		Roles: []string{
-			req.Role,
+			entities.RoleNameFromID(entities.RoleCoordinador),
 		},
 	}, nil
 }

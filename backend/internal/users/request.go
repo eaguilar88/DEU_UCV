@@ -11,11 +11,10 @@ type GetUserRequest struct {
 }
 
 type CreateUserRequest struct {
-	Document       string `json:"ci"`
+	Document       string `json:"documento_identidad" validate:"required"`
 	Username       string `json:"nombre_usuario" validate:"required,email"`
 	FirstName      string `json:"primer_nombre" validate:"required"`
 	LastName       string `json:"apellido" validate:"required"`
-	Role           string `json:"rol" validate:"required"`
 	DateOfBirth    string `json:"fecha_nacimiento"`
 	Gender         string `json:"genero"`
 	EducationLevel string `json:"nivel_educacion"`

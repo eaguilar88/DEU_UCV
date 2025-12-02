@@ -35,7 +35,7 @@ func GetGroupByID(groupID string) sq.SelectBuilder {
 
 func GetGroups(limit, offset int) sq.SelectBuilder {
 	return psql.Select(groupQuerySelectCommon...).
-		From(groupsTableName).
+		From(fmt.Sprintf("%s AS g", groupsTableName)).
 		Limit(uint64(limit)).
 		Offset(uint64(offset))
 }

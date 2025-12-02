@@ -19,8 +19,7 @@ var userQuerySelectCommon = []string{
 	"u.education",
 	"u.address",
 	"u.created_at",
-	"u.updated_at",
-	"u.deleted_at",
+	"p.code",
 }
 
 func GetRolesByUserID(userID string) sq.SelectBuilder {
@@ -95,8 +94,8 @@ func InsertUser(user models.User) sq.InsertBuilder {
 
 func AddRoleToUser(userID string, role int) sq.InsertBuilder {
 	return psql.Insert(pivotTableName).
-		Columns("user_id", "role_id").
-		Values(userID, role).
+		Columns("user_id", "role_id", "domain_type").
+		Values(userID, role, "course").
 		Suffix("RETURNING id")
 }
 

@@ -9,9 +9,7 @@ const (
 	AcademicGroupType = "academic"
 
 	// File types for groups
-	GroupFileTypeLogo          = "logo"
-	GroupFileTypeFinancingPlan = "financing_plan"
-	GroupFileTypeGroupProject  = "group_project"
+	GroupFileTypeLogo = "logo"
 )
 
 type ExtensionGroup struct {
@@ -39,7 +37,7 @@ type GroupMember struct {
 }
 
 type GroupFiles struct {
-	Logo          *File
-	FinancingPlan *File
-	GroupProject  *File
+	Logo *File
+	// FinancingPlan *File
+	// GroupProject  *File
 }
