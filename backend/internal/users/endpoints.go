@@ -2,6 +2,7 @@ package users
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -82,13 +83,13 @@ func (h *UserEndpointsHandler) CreateUser(c echo.Context) error {
 	newUser, err := createUserRequestToEntitiesUser(req)
 	if err != nil {
 		h.log.Error("error creating new user entity", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, err)
+		return c.JSON(http.StatusBadRequest, err)
 	}
 
 	userID, err := h.svc.CreateUser(ctx, newUser)
 	if err != nil {
 		h.log.Error("error creating new user", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, err)
+		return h.handleError(c, err)
 	}
 
 	return c.JSON(http.StatusCreated, CreateUsersResponse{
@@ -129,4 +130,15 @@ func (h *UserEndpointsHandler) DeleteUser(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusAccepted, nil)
+}
+
+func (h *UserEndpointsHandler) handleError(c echo.Context, err error) error {
+	switch {
+	case errors.Is(err, ErrUserNotFound):
+		return c.JSON(http.StatusNotFound, err)
+	case errors.Is(err, ErrUserAlreadyExists):
+		return c.JSON(http.StatusConflict, err)
+	default:
+		return c.JSON(http.StatusInternalServerError, err)
+	}
 }
