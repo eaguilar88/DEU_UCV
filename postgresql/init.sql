@@ -381,9 +381,9 @@ VALUES
 
   -- Insert mock data for extension_groups
   INSERT INTO
-    deu.extension_groups (name, user_id, description, faculty, objective, location, is_active)
+    deu.extension_groups (name, user_id, description, faculty, objective, code, group_director, type, location, is_active)
   VALUES
-    ('Group 1', 11, 'Description for Group 1', 'Humanidades y Educación', 'Objective for Group 1', 'Location 1', TRUE);
+    ('Group 1', 11, 'Description for Group 1', 'Humanidades y Educación', 'Objective for Group 1', 'GEX-1234', 'John Doe', 'cultural', 'Location 1', TRUE);
 
   -- Insert mock data for group_auth_requests
   INSERT INTO

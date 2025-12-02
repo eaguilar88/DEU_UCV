@@ -5,11 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"slices"
-	"strconv"
 
 	"github.com/eaguilar88/deu/internal/entities"
-	errs "github.com/eaguilar88/deu/internal/errors"
 	"go.uber.org/zap"
 )
 
@@ -57,45 +54,19 @@ func (s *UserService) GetUsers(
 
 func (s *UserService) CreateUser(ctx context.Context, user entities.User) (int64, error) {
 	existingUser, err := s.repo.GetUserByUsername(ctx, user.Username)
-	if err != nil {
-		if !errs.IsNotFoundError(err) {
-			return -1, err
-		}
-		id, err := s.repo.CreateUser(ctx, user)
-		if err != nil {
-			return -1, err
-		}
-
-		return id, nil
+	if err != nil && !errors.Is(err, ErrUserNotFound) {
+		return -1, fmt.Errorf("failed to check existing user: %w", err)
 	}
 
-	// User exists, now handle roles
-	roles, err := s.repo.GetUserRoles(ctx, existingUser.ID)
-	if err != nil {
-		s.log.Error("error getting user roles", zap.Error(err))
-		return -1, err
+	if existingUser.ID != "" {
+		return -1, ErrUserAlreadyExists
 	}
 
-	if slices.Contains(roles, user.Roles[0]) {
-		s.log.Warn(
-			fmt.Sprintf("user %s already has the role %s", existingUser.Username, user.Roles[0]),
-		)
-		return -1, errs.NewBadRequestError(
-			errs.NewDuplicateEntryError(errors.New("user already has the role")),
-		)
-	}
-
-	err = s.repo.AddRoleToUser(ctx, nil, existingUser.ID, entities.RoleIDFromName(user.Roles[0]))
+	id, err := s.repo.CreateUser(ctx, user)
 	if err != nil {
-		s.log.Error("error adding role to user", zap.Error(err))
-		return -1, err
+		return -1, fmt.Errorf("error creating new user: %w", err)
 	}
-	existingUserID, err := strconv.Atoi(existingUser.ID)
-	if err != nil {
-		s.log.Error("error converting user ID to int", zap.Error(err))
-		return -1, err
-	}
-	return int64(existingUserID), nil
+	return id, nil
 }
 
 func (s *UserService) UpdateUser(ctx context.Context, userID string, user entities.User) error {
