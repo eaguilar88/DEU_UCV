@@ -1,7 +1,6 @@
 services:
   traefik:
     image: traefik:v3.3
-    container_name: traefik
     restart: unless-stopped
     command:
       - "--api.dashboard=true"                  # Enable the dashboard
@@ -20,7 +19,6 @@ services:
     networks:
       - web
   landing:
-    container_name: "landing-app"
     build:
       context: "./landing"
       dockerfile: "Dockerfile"
@@ -36,7 +34,6 @@ services:
     networks:
       - web
   diplomados:
-    container_name: "diplomados-app"
     build:
       context: "./diplomados"
       dockerfile: "Dockerfile"
@@ -52,7 +49,6 @@ services:
     networks:
       - web
   grupos:
-    container_name: "grupos-app"
     build:
       context: "./grupos/gsu_ucv"
       dockerfile: "Dockerfile"
@@ -68,7 +64,6 @@ services:
     networks:
       - web
   backend:
-    container_name: "backend-go"
     build:
       context: "./backend"
       dockerfile: "Dockerfile"

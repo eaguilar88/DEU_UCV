@@ -252,10 +252,14 @@ func scanGroup(row scannable) (models.ExtensionGroup, error) {
 	var group models.ExtensionGroup
 	err := row.Scan(
 		&group.ID,
+		&group.UserID,
 		&group.Name,
 		&group.Description,
 		&group.Faculty,
 		&group.Objective,
+		&group.Code,
+		&group.Director,
+		&group.Type,
 		&group.Location,
 		&group.IsActive,
 		&group.CreatedAt,
@@ -311,6 +315,6 @@ func newGroupFromModel(group models.ExtensionGroup) entities.ExtensionGroup {
 		Active:    group.IsActive,
 		CreatedAt: group.CreatedAt,
 		UpdatedAt: group.UpdatedAt,
-		DeletedAt: group.DeletedAt,
+		DeletedAt: group.DeletedAt.String,
 	}
 }

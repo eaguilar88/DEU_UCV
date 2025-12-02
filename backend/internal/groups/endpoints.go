@@ -46,15 +46,14 @@ func (h *GroupEndpointsHandler) GetGroup(c echo.Context) error {
 
 func (h *GroupEndpointsHandler) GetGroups(c echo.Context) error {
 	ctx := c.Request().Context()
-	var req GetGroupsRequest
-	if err := c.Bind(&req); err != nil {
-		h.log.Error("error binding request", zap.Error(err))
-		return echo.ErrBadRequest
-	}
-	groups, pageScope, err := h.svc.GetGroups(ctx, entities.PageScope{
-		Page:    req.Page,
-		PerPage: req.PerPage,
-	})
+	scope := entities.PageScope{}
+
+	//nolint:errcheck
+	scope.GetPageFromVars(c.QueryParam("page"))
+	//nolint:errcheck
+	scope.GetPerPageFromVars(c.QueryParam("per_page"))
+
+	groups, pageScope, err := h.svc.GetGroups(ctx, scope)
 	if err != nil {
 		h.log.Error("error getting groups", zap.Error(err))
 		return echo.ErrInternalServerError
@@ -163,24 +162,24 @@ func makeGroupRequestFromContext(c echo.Context, userID string, log *zap.Logger)
 		return entities.ExtensionGroup{}, errors.New("logo is required")
 	}
 
-	fp, err := utils.GetFileFromForm(c, entities.GroupFileTypeFinancingPlan)
-	if err != nil {
-		log.Error("error getting financing plan", zap.Error(err))
-		return entities.ExtensionGroup{}, errors.New("financing plan is required")
-	}
+	// fp, err := utils.GetFileFromForm(c, entities.GroupFileTypeFinancingPlan)
+	// if err != nil {
+	// 	log.Error("error getting financing plan", zap.Error(err))
+	// 	return entities.ExtensionGroup{}, errors.New("financing plan is required")
+	// }
 
-	gp, err := utils.GetFileFromForm(c, entities.GroupFileTypeGroupProject)
-	if err != nil {
-		log.Error("error getting group project", zap.Error(err))
-		return entities.ExtensionGroup{}, errors.New("group project is required")
-	}
+	// gp, err := utils.GetFileFromForm(c, entities.GroupFileTypeGroupProject)
+	// if err != nil {
+	// 	log.Error("error getting group project", zap.Error(err))
+	// 	return entities.ExtensionGroup{}, errors.New("group project is required")
+	// }
 
 	group := createGroupEntityFromRequest(req, userID, req.Faculty)
 
 	group.Files = &entities.GroupFiles{
-		Logo:          logo,
-		FinancingPlan: fp,
-		GroupProject:  gp,
+		Logo: logo,
+		// FinancingPlan: fp,
+		// GroupProject:  gp,
 	}
 	return group, nil
 }

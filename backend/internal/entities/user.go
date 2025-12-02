@@ -43,6 +43,7 @@ type Role struct {
 const (
 	RoleRoot = iota + 1
 	RoleAdmin
+	RoleFacultyAdmin
 	RoleCoordinador
 	RoleFacilitador
 	RoleParticipante
@@ -52,6 +53,7 @@ const (
 var roleNames = map[int]string{
 	RoleRoot:         "root",
 	RoleAdmin:        "admin",
+	RoleFacultyAdmin: "administrador_facultad",
 	RoleCoordinador:  "coordinador",
 	RoleFacilitador:  "facilitador",
 	RoleParticipante: "participante",
@@ -59,12 +61,13 @@ var roleNames = map[int]string{
 }
 
 var roleIDs = map[string]int{
-	"root":         RoleRoot,
-	"admin":        RoleAdmin,
-	"coordinador":  RoleCoordinador,
-	"facilitador":  RoleFacilitador,
-	"participante": RoleParticipante,
-	"extensión":    RoleExtension,
+	"root":                   RoleRoot,
+	"admin":                  RoleAdmin,
+	"administrador_facultad": RoleFacultyAdmin,
+	"coordinador":            RoleCoordinador,
+	"facilitador":            RoleFacilitador,
+	"participante":           RoleParticipante,
+	"extensión":              RoleExtension,
 }
 
 // RoleNameFromID returns the role name for a given ID.

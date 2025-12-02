@@ -16,5 +16,5 @@ type ExtensionGroup struct {
 	IsActive    bool
 	CreatedAt   string
 	UpdatedAt   string
-	DeletedAt   string
+	DeletedAt   sql.NullString
 }
