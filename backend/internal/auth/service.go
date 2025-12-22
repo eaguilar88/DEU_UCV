@@ -10,7 +10,7 @@ import (
 )
 
 type Repository interface {
-	GetUserByUsername(ctx context.Context, username string) (entities.User, error)
+	GetUserByUsername(ctx context.Context, username string) (*entities.User, error)
 	GetUserRoles(ctx context.Context, userID string) ([]string, error)
 }
 
@@ -52,5 +52,5 @@ func (s *AuthService) Login(ctx context.Context, username, password string) (str
 		return "", nil, err
 	}
 
-	return tokenString, &user, nil
+	return tokenString, user, nil
 }

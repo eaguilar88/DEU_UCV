@@ -11,6 +11,7 @@ import (
 	"github.com/eaguilar88/deu/internal/course_periods"
 	"github.com/eaguilar88/deu/internal/course_requests"
 	"github.com/eaguilar88/deu/internal/courses"
+	"github.com/eaguilar88/deu/internal/email"
 	"github.com/eaguilar88/deu/internal/group_requests"
 	"github.com/eaguilar88/deu/internal/groups"
 	"github.com/eaguilar88/deu/internal/jwt"
@@ -75,8 +76,8 @@ func main() {
 	repository := repository.NewRepository(postgres, config.FilePath, logger)
 	authService := auth.NewAuthService(repository, signer, logger)
 	authEndpoints := auth.MakeAuthEndpointsHandler(authService, logger)
-
-	userSvc := users.NewUsersService(repository, logger)
+	mailClient := email.NewMailgunClient(config.Email, logger)
+	userSvc := users.NewUsersService(repository, mailClient, logger)
 	userEndpoints := users.MakeUserEndpointsHandler(userSvc, logger)
 
 	providerService := providers.NewProvidersService(repository, bbClient, logger)

@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 
 	"go.uber.org/zap"
 )
@@ -10,6 +11,12 @@ import (
 const (
 	pgErrorCodeUniqueViolation = "23505"
 	pgErrorCodeNoData          = "02000"
+)
+
+var (
+	ErrDatabaseError = errors.New("database error")
+	ErrScanError     = errors.New("scan error")
+	ErrInvalidQuery  = errors.New("invalid query")
 )
 
 type scannable interface {
