@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/eaguilar88/deu/internal/entities"
+	"github.com/eaguilar88/deu/internal/providers/mocks"
 	"go.uber.org/zap"
 )
 
@@ -24,7 +25,8 @@ func TestNewProvidersService(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewProvidersService(tt.args.repo, tt.args.storage, tt.args.logger); !reflect.DeepEqual(got, tt.want) {
+			emailMock := mocks.NewMockMailClient(t)
+			if got := NewProvidersService(tt.args.repo, tt.args.storage, emailMock, tt.args.logger); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("NewProvidersService() = %v, want %v", got, tt.want)
 			}
 		})
@@ -256,6 +258,7 @@ func TestProvidersService_uploadAndSave(t *testing.T) {
 	type fields struct {
 		repo    Repository
 		storage StorageClient
+		email   MailClient
 		logger  *zap.Logger
 	}
 	type args struct {
@@ -273,9 +276,10 @@ func TestProvidersService_uploadAndSave(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &ProvidersService{
-				repo:    tt.fields.repo,
-				storage: tt.fields.storage,
-				logger:  tt.fields.logger,
+				repo:        tt.fields.repo,
+				storage:     tt.fields.storage,
+				emailClient: tt.fields.email,
+				logger:      tt.fields.logger,
 			}
 			if err := s.storage.UploadFile(tt.args.ctx, tt.args.files); (err != nil) != tt.wantErr {
 				t.Errorf("ProvidersService.uploadAndSave() error = %v, wantErr %v", err, tt.wantErr)
