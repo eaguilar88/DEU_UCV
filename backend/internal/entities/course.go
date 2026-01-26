@@ -17,14 +17,16 @@ var (
 
 type Course struct {
 	ID            string
-	Content       string
-	Cost          float64
+	Slug          string
+	Name          string
 	Description   string
+	Logo          string
+	Content       string
+	Cost          string
 	CourseRequest CourseRequest
 	Duration      int
 	Faculty       Faculty
 	Location      string
-	Name          string
 	Objectives    string
 	Owner         User
 	Periods       []CoursePeriod

@@ -34,6 +34,10 @@ type Repository interface {
 	SaveFilesToDB(ctx context.Context, file []*entities.File) error
 }
 
+type MailClient interface {
+	Send(ctx context.Context, to string, subject string, body string) error
+}
+
 type StorageClient interface {
 	UploadFile(ctx context.Context, file []*entities.File) error
 	DeleteFile(ctx context.Context, objectKey string) error
@@ -42,16 +46,18 @@ type StorageClient interface {
 }
 
 type ProvidersService struct {
-	repo    Repository
-	storage StorageClient
-	logger  *zap.Logger
+	repo        Repository
+	storage     StorageClient
+	emailClient MailClient
+	logger      *zap.Logger
 }
 
-func NewProvidersService(repo Repository, storage StorageClient, logger *zap.Logger) *ProvidersService {
+func NewProvidersService(repo Repository, storage StorageClient, emailClient MailClient, logger *zap.Logger) *ProvidersService {
 	return &ProvidersService{
-		repo:    repo,
-		storage: storage,
-		logger:  logger,
+		repo:        repo,
+		storage:     storage,
+		emailClient: emailClient,
+		logger:      logger,
 	}
 }
 
@@ -184,6 +190,15 @@ func (s *ProvidersService) CreateProvider(ctx context.Context, provider *entitie
 		zap.Int("file_count", len(files)),
 		zap.String("action", "upload_and_save"),
 	)
+
+	if err := s.emailClient.Send(ctx, provider.User.Username, "Provider Registration Successful", fmt.Sprintf("Your provider registration is complete. Your provider code is: %s", code)); err != nil {
+		s.logger.Error("failed to send provider registration email",
+			zap.Error(err),
+			zap.String("provider_code", code),
+			zap.String("action", "send_email"),
+		)
+		return -1, "", fmt.Errorf("error sending provider registration email: %w", err)
+	}
 
 	return createdProviderID, code, nil
 }

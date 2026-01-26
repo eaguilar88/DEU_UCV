@@ -80,7 +80,7 @@ func main() {
 	userSvc := users.NewUsersService(repository, mailClient, logger)
 	userEndpoints := users.MakeUserEndpointsHandler(userSvc, logger)
 
-	providerService := providers.NewProvidersService(repository, bbClient, logger)
+	providerService := providers.NewProvidersService(repository, bbClient, mailClient, logger)
 	providerEndpoints := providers.MakeProviderEndpointsHandler(providerService, logger)
 
 	courseSvc := courses.NewCoursesService(repository, logger)

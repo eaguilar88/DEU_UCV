@@ -12,7 +12,7 @@ type Course struct {
 	Duration    sql.NullInt64
 	Type        sql.NullString
 	Faculty     sql.NullString
-	Cost        sql.NullFloat64
+	Cost        sql.NullString
 	Location    sql.NullString
 	IsActive    bool
 	CreatedAt   string

@@ -257,7 +257,7 @@ func newCourseFromModel(course models.Course) entities.Course {
 	}
 
 	if course.Cost.Valid {
-		c.Cost = course.Cost.Float64
+		c.Cost = course.Cost.String
 	}
 
 	if course.Location.Valid {
@@ -292,9 +292,9 @@ func newCourseModelFromEntities(course entities.Course) models.Course {
 			String: string(course.Faculty),
 			Valid:  course.Faculty != "",
 		},
-		Cost: sql.NullFloat64{
-			Float64: course.Cost,
-			Valid:   course.Cost > 0,
+		Cost: sql.NullString{
+			String: course.Cost,
+			Valid:  course.Cost != "",
 		},
 		Location: sql.NullString{
 			String: course.Location,

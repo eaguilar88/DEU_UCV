@@ -112,11 +112,17 @@ CREATE TABLE
     description TEXT, --Denominación del curso
     provider_id INTEGER NOT NULL REFERENCES deu.providers (id) ON DELETE CASCADE, -- ID del proveedor que creó esta entidad de solicitud
     objectives TEXT, --Propósitos del curso
-    duration INTEGER, -- Duración del curso en horas
-    content TEXT, -- Estructura de contenidos por competencia
+    rationale TEXT, -- Fundamentación del curso
+    duration VARCHAR, -- Duración del curso en horas
+    cost VARCHAR, -- Estructura de costos
+    instructor_profile TEXT, -- Perfil del instructor
+    profiles TEXT, -- Perfiles de los participantes
+    requirements TEXT, -- Requisitos de los participantes
+    content TEXT, -- Estructura de curricular por competencia
+    evaluation TEXT, -- Estructura de evaluación
+    schedule TEXT, -- Cronograma de contenidos
     type course_type_enum DEFAULT 'unassigned', -- Tipo de curso (Formación para el trabajo, Formación técnica/profesional, Formación para toda la vida)
     faculty faculty_enum DEFAULT 'DEU', -- Facultad responsable del curso
-    cost FLOAT,
     location course_location_enum, -- Ubicación del curso (online o presencial)
     is_active BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT NOW (),

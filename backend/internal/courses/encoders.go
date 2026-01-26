@@ -2,7 +2,6 @@ package courses
 
 import (
 	"github.com/eaguilar88/deu/internal/entities"
-	"github.com/eaguilar88/deu/internal/users"
 )
 
 func EntitiesCoursesToGetCoursesResponse(courses []entities.Course) []GetCourseResponse {
@@ -14,8 +13,6 @@ func EntitiesCoursesToGetCoursesResponse(courses []entities.Course) []GetCourseR
 }
 
 func EntitiesCourseToGetCourseResponse(course entities.Course) GetCourseResponse {
-	// Using the new course_request package
-	owner := users.UserEntityToGetUserResponse(course.Owner)
 	return GetCourseResponse{
 		ID:          course.ID,
 		Content:     course.Content,
@@ -24,10 +21,8 @@ func EntitiesCourseToGetCourseResponse(course entities.Course) GetCourseResponse
 		Description: course.Description,
 		Duration:    course.Duration,
 		Faculty:     string(course.Faculty),
-		Location:    course.Location,
 		Name:        course.Name,
 		Objectives:  course.Objectives,
-		Owner:       &owner,
 		Type:        course.Type.String(),
 		UpdatedAt:   course.UpdatedAt,
 	}
