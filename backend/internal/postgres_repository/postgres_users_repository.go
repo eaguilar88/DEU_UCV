@@ -111,12 +111,12 @@ func (r *PostgresRepository) CreateUser(ctx context.Context, user entities.User)
 	sql, args, err := queries.InsertUser(userModel).ToSql()
 	if err != nil {
 		r.logger.Error("error formatting query", zap.Error(err))
-		return -1, fmt.Errorf("dabatse error: %w", err)
+		return -1, fmt.Errorf("database error: %w", err)
 	}
 
 	stmt, err := tx.PrepareContext(ctx, sql)
 	if err != nil {
-		return -1, fmt.Errorf("dabatse error: %w", err)
+		return -1, fmt.Errorf("database error: %w", err)
 	}
 	defer stmt.Close()
 
@@ -128,7 +128,7 @@ func (r *PostgresRepository) CreateUser(ctx context.Context, user entities.User)
 			return -1, fmt.Errorf("%w: %w", users.ErrUserAlreadyExists, err)
 		}
 		r.logger.Error("error inserting user", zap.Error(err))
-		return -1, fmt.Errorf("dabatse error: %w", err)
+		return -1, fmt.Errorf("database error: %w", err)
 	}
 	err = r.AddRoleToUser(
 		ctx,
@@ -137,7 +137,7 @@ func (r *PostgresRepository) CreateUser(ctx context.Context, user entities.User)
 		entities.RoleIDFromName(user.Roles[0]),
 	)
 	if err != nil {
-		return -1, fmt.Errorf("dabatse error: %w", err)
+		return -1, fmt.Errorf("database error: %w", err)
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -290,7 +290,7 @@ func prepareAndExecute(
 	_, err = stmt.ExecContext(ctx, args...)
 	if err != nil {
 		log.Error("error executing", zap.Error(err))
-		return fmt.Errorf("dabatse error: %w", err)
+		return fmt.Errorf("database error: %w", err)
 	}
 	return nil
 }
@@ -322,7 +322,7 @@ func newUserFromEntity(user entities.User, isUpdate bool) models.User {
 	model := models.User{
 		ID:        user.ID,
 		CI:        ci,
-		Email:     user.Username,
+		Email:     user.Email,
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
 		DateOfBirth: sql.NullString{
@@ -352,7 +352,7 @@ func newUserFromModel(user models.User) *entities.User {
 	entity := &entities.User{
 		ID:             user.ID,
 		CI:             fmt.Sprintf("%d", user.CI),
-		Username:       user.Email,
+		Email:          user.Email,
 		FirstName:      user.FirstName,
 		LastName:       user.LastName,
 		EducationLevel: user.EducationLevel,

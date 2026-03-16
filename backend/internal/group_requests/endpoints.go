@@ -13,23 +13,23 @@ import (
 type Service interface {
 	ApproveGroupRequest(ctx context.Context, reqID string) error
 	RejectGroupRequest(ctx context.Context, reqID string) error
-	GetGroupRequestsByFaculty(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.GroupAuthRequest, entities.PageScope, error)
-	GetGroupRequestByID(ctx context.Context, reqID string) (entities.GroupAuthRequest, error)
+	GetGroupRequestsByFaculty(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.GroupRequest, entities.PageScope, error)
+	GetGroupRequestByID(ctx context.Context, reqID string) (entities.GroupRequest, error)
 }
 
-type GroupRequestEndpointsHandler struct {
+type Handler struct {
 	svc Service
 	log *zap.Logger
 }
 
-func MakeGroupRequestEndpointsHandler(svc Service, log *zap.Logger) *GroupRequestEndpointsHandler {
-	return &GroupRequestEndpointsHandler{
+func NewHandler(svc Service, log *zap.Logger) *Handler {
+	return &Handler{
 		svc: svc,
 		log: log,
 	}
 }
 
-func (h *GroupRequestEndpointsHandler) RegisterGroupRequestAdminEndpoints(g *echo.Group) {
+func (h *Handler) RegisterGroupRequestAdminEndpoints(g *echo.Group) {
 	gr := g.Group("/group-requests")
 	gr.GET("", h.GetGroupRequestsByFaculty)
 	gr.GET("/:id", h.GetGroupRequestByID)
@@ -37,7 +37,7 @@ func (h *GroupRequestEndpointsHandler) RegisterGroupRequestAdminEndpoints(g *ech
 	gr.POST("/:id/reject", h.RejectGroupRequest)
 }
 
-func (h *GroupRequestEndpointsHandler) ApproveGroupRequest(c echo.Context) error {
+func (h *Handler) ApproveGroupRequest(c echo.Context) error {
 	ctx := c.Request().Context()
 	reqID := c.Param("id")
 	if reqID == "" {
@@ -52,7 +52,7 @@ func (h *GroupRequestEndpointsHandler) ApproveGroupRequest(c echo.Context) error
 	return c.NoContent(http.StatusAccepted)
 }
 
-func (h *GroupRequestEndpointsHandler) RejectGroupRequest(c echo.Context) error {
+func (h *Handler) RejectGroupRequest(c echo.Context) error {
 	ctx := c.Request().Context()
 	reqID := c.Param("id")
 	if reqID == "" {
@@ -67,7 +67,7 @@ func (h *GroupRequestEndpointsHandler) RejectGroupRequest(c echo.Context) error 
 	return c.NoContent(http.StatusAccepted)
 }
 
-func (h *GroupRequestEndpointsHandler) GetGroupRequestsByFaculty(c echo.Context) error {
+func (h *Handler) GetGroupRequestsByFaculty(c echo.Context) error {
 	ctx := c.Request().Context()
 	faculty, err := entities.FromString(c.QueryParam("faculty"))
 	if err != nil {
@@ -108,7 +108,7 @@ func (h *GroupRequestEndpointsHandler) GetGroupRequestsByFaculty(c echo.Context)
 	return c.JSON(http.StatusOK, response)
 }
 
-func (h *GroupRequestEndpointsHandler) GetGroupRequestByID(c echo.Context) error {
+func (h *Handler) GetGroupRequestByID(c echo.Context) error {
 	ctx := c.Request().Context()
 	reqID := c.Param("id")
 	if reqID == "" {

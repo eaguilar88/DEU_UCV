@@ -19,24 +19,24 @@ type Service interface {
 	DeleteCourse(ctx context.Context, courseID string) error
 }
 
-type CourseEndpointsHandler struct {
+type Handler struct {
 	svc Service
 	log *zap.Logger
 }
 
-func MakeCourseEndpointsHandler(svc Service, log *zap.Logger) CourseEndpointsHandler {
-	return CourseEndpointsHandler{
+func NewHandler(svc Service, log *zap.Logger) *Handler {
+	return &Handler{
 		svc: svc,
 		log: log,
 	}
 }
 
-func (h *CourseEndpointsHandler) GetCourse(c echo.Context) error {
+func (h *Handler) GetCourse(c echo.Context) error {
 	ctx := c.Request().Context()
 	req := GetCourseRequest{ID: c.Param("id")}
 	course, err := h.svc.GetCourse(ctx, req.ID)
 	if err != nil {
-		h.log.Error(fmt.Sprintf("error getting course with ID: %s", req.ID), zap.Error(err))
+		h.log.Error("error getting course", zap.String("id", req.ID), zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 
@@ -58,7 +58,7 @@ func (h *CourseEndpointsHandler) GetCourse(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-func (h *CourseEndpointsHandler) GetCourses(c echo.Context) error {
+func (h *Handler) GetCourses(c echo.Context) error {
 	ctx := c.Request().Context()
 	scope := entities.PageScope{}
 
@@ -81,7 +81,7 @@ func (h *CourseEndpointsHandler) GetCourses(c echo.Context) error {
 	})
 }
 
-func (h *CourseEndpointsHandler) CreateCourse(c echo.Context) error {
+func (h *Handler) CreateCourse(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	userID, ok := c.Get("userID").(string)
@@ -113,7 +113,7 @@ func (h *CourseEndpointsHandler) CreateCourse(c echo.Context) error {
 	})
 }
 
-func (h *CourseEndpointsHandler) UpdateCourse(c echo.Context) error {
+func (h *Handler) UpdateCourse(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req UpdateCourseRequest
 	if err := c.Bind(&req); err != nil {
@@ -131,7 +131,7 @@ func (h *CourseEndpointsHandler) UpdateCourse(c echo.Context) error {
 	return c.JSON(http.StatusAccepted, nil)
 }
 
-func (h *CourseEndpointsHandler) DeleteCourse(c echo.Context) error {
+func (h *Handler) DeleteCourse(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req DeleteCourseRequest
 	if err := c.Bind(&req); err != nil {

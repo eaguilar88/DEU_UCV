@@ -4,16 +4,18 @@ import "github.com/eaguilar88/deu/internal/entities"
 
 type GetProviderResponse struct {
 	ID       string        `json:"proveedor_id"`
-	User     ProviderUser  `json:"usuario"`
+	UserID   string        `json:"usuario_id"`
+	Name     string        `json:"nombre_proveedor"`
+	Bio      string        `json:"biografia,omitempty"`
 	Internal bool          `json:"interno"`
 	Code     string        `json:"codigo_proveedor"`
 	Files    ProviderFiles `json:"archivos"`
+	Logo     string        `json:"provider_avatar_url,omitempty"`
+	Type     string        `json:"tipo,omitempty"`
+	Contact  []string      `json:"emails_contacto,omitempty"`
+	Phones   []string      `json:"telefonos_contacto,omitempty"`
+	Webpage  string        `json:"sitio_web,omitempty"`
 	Active   bool          `json:"activo"`
-}
-
-type ProviderUser struct {
-	ID   string `json:"usuario_id"`
-	Name string `json:"nombre"`
 }
 
 type ProviderFiles struct {
@@ -26,14 +28,13 @@ type ProviderFiles struct {
 
 func ProviderEntityToGetProviderResponse(entity entities.Provider) GetProviderResponse {
 	response := GetProviderResponse{
-		ID: entity.ID,
-		User: ProviderUser{
-			ID:   entity.User.ID,
-			Name: entity.User.FirstName + " " + entity.User.LastName,
-		},
+		ID:       entity.ID,
+		UserID:   entity.User.ID,
+		Name:     entity.User.FirstName + " " + entity.User.LastName,
 		Internal: entity.IsInternal,
 		Code:     entity.Code,
 		Active:   entity.DeletedAt == "",
+		Bio:      "", //TODO add bio to provider entity
 	}
 
 	files := ProviderFiles{}

@@ -32,7 +32,7 @@ func TestAuthService_Login(t *testing.T) {
 			repo:     &mocks.MockRepository{},
 			signer:   &jwtMock.MockSigner{},
 			prepare: func(ctx context.Context, tc *testCase) {
-				tc.repo.On("GetUserByUsername", ctx, tc.username).Return(*tc.user, nil)
+				tc.repo.On("GetUserByUsername", ctx, tc.username).Return(tc.user, nil)
 				tc.repo.On("GetUserRoles", ctx, tc.user.ID).Return([]string{"admin"}, nil)
 				tc.signer.On("GenerateJWT", "1", []string{"admin"}).Return(tc.token, nil)
 			},
@@ -57,7 +57,7 @@ func TestAuthService_Login(t *testing.T) {
 			if tt.prepare != nil {
 				tt.prepare(ctx, &tt)
 			}
-			s := NewAuthService(tt.repo, tt.signer, loggerMock)
+			s := NewService(tt.repo, tt.signer, loggerMock)
 			got, got1, err := s.Login(ctx, tt.username, tt.password)
 			assert.Equal(t, tt.token, got)
 			assert.Equal(t, tt.user, got1)

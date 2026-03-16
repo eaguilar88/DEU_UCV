@@ -13,7 +13,7 @@ func createUserRequestToEntitiesUser(req CreateUserRequest) (entities.User, erro
 
 	return entities.User{
 		CI:             req.Document,
-		Username:       req.Username,
+		Email:          req.Email,
 		FirstName:      req.FirstName,
 		LastName:       req.LastName,
 		DateOfBirth:    req.DateOfBirth,

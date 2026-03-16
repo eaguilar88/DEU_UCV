@@ -74,29 +74,29 @@ func main() {
 	}
 
 	repository := repository.NewRepository(postgres, config.FilePath, logger)
-	authService := auth.NewAuthService(repository, signer, logger)
-	authEndpoints := auth.MakeAuthEndpointsHandler(authService, logger)
+	authService := auth.NewService(repository, signer, logger)
+	authEndpoints := auth.NewHandler(authService, logger)
 	mailClient := email.NewMailgunClient(config.Email, logger)
-	userSvc := users.NewUsersService(repository, mailClient, logger)
-	userEndpoints := users.MakeUserEndpointsHandler(userSvc, logger)
+	userSvc := users.NewService(repository, mailClient, logger)
+	userEndpoints := users.NewHandler(userSvc, logger)
 
-	providerService := providers.NewProvidersService(repository, bbClient, mailClient, logger)
-	providerEndpoints := providers.MakeProviderEndpointsHandler(providerService, logger)
+	providerService := providers.NewService(repository, bbClient, mailClient, logger)
+	providerEndpoints := providers.NewHandler(providerService, logger)
 
-	courseSvc := courses.NewCoursesService(repository, logger)
-	courseEndpoints := courses.MakeCourseEndpointsHandler(courseSvc, logger)
+	courseSvc := courses.NewService(repository, logger)
+	courseEndpoints := courses.NewHandler(courseSvc, logger)
 
-	cpService := course_periods.NewCoursePeriodsService(repository, logger)
-	cpEndpoints := course_periods.MakeCoursePeriodEndpointsHandler(cpService, logger)
+	cpService := course_periods.NewService(repository, logger)
+	cpEndpoints := course_periods.NewHandler(cpService, logger)
 
-	groupService := groups.NewGroupsService(repository, logger)
-	groupEndpoints := groups.MakeGroupEndpointsHandler(groupService, logger)
+	groupService := groups.NewService(repository, logger)
+	groupEndpoints := groups.NewHandler(groupService, logger)
 
-	groupRequestService := group_requests.NewGroupRequestService(repository, logger)
-	groupRequestEndpoints := group_requests.MakeGroupRequestEndpointsHandler(groupRequestService, logger)
+	groupRequestService := group_requests.NewService(repository, logger)
+	groupRequestEndpoints := group_requests.NewHandler(groupRequestService, logger)
 
-	courseRequestService := course_requests.NewCourseRequestService(repository, logger)
-	courseRequestEndpoints := course_requests.MakeCourseRequestEndpointsHandler(courseRequestService, logger)
+	courseRequestService := course_requests.NewService(repository, logger)
+	courseRequestEndpoints := course_requests.NewHandler(courseRequestService, logger)
 
 	e := echo.New()
 	e.Validator = security.NewCustomValidator()
@@ -144,7 +144,7 @@ func mustConnectToDB(conf config.DatabaseConfig) (*sql.DB, error) {
 	return db, nil
 }
 
-func addAuthRoutes(e *echo.Echo, endpoints auth.AuthEndpointsHandler) {
+func addAuthRoutes(e *echo.Echo, endpoints *auth.Handler) {
 	e.POST("/auth/login", endpoints.LoginHandleHTTP)
 }
 
@@ -155,7 +155,7 @@ func addAdminRoutes(e *echo.Echo, middlewares []echo.MiddlewareFunc, handlers ..
 	}
 }
 
-func addUserRoutes(e *echo.Echo, endpoints users.UserEndpointsHandler, middlewares ...echo.MiddlewareFunc) {
+func addUserRoutes(e *echo.Echo, endpoints *users.Handler, middlewares ...echo.MiddlewareFunc) {
 	public := e.Group("/users")
 	public.GET("/:id", endpoints.GetUser)
 	public.POST("", endpoints.CreateUser)
@@ -165,7 +165,7 @@ func addUserRoutes(e *echo.Echo, endpoints users.UserEndpointsHandler, middlewar
 	protected.DELETE("/:id", endpoints.DeleteUser)
 }
 
-func addCourseRoutes(e *echo.Echo, endpoints courses.CourseEndpointsHandler, middlewares ...echo.MiddlewareFunc) {
+func addCourseRoutes(e *echo.Echo, endpoints *courses.Handler, middlewares ...echo.MiddlewareFunc) {
 	publicGroup := e.Group("/courses")
 	publicGroup.GET("/:id", endpoints.GetCourse)
 	publicGroup.GET("", endpoints.GetCourses)
@@ -175,7 +175,7 @@ func addCourseRoutes(e *echo.Echo, endpoints courses.CourseEndpointsHandler, mid
 	protectedGroup.DELETE("/:id", endpoints.DeleteCourse)
 }
 
-func addCoursePeriodRoutes(e *echo.Echo, endpoints course_periods.CoursePeriodEndpointsHandler, middlewares ...echo.MiddlewareFunc) {
+func addCoursePeriodRoutes(e *echo.Echo, endpoints *course_periods.Handler, middlewares ...echo.MiddlewareFunc) {
 	publicGroup := e.Group("/courses/:course_id/periods")
 	publicGroup.GET("/:id", endpoints.GetCoursePeriod)
 	publicGroup.GET("", endpoints.GetCoursePeriods)
@@ -193,7 +193,7 @@ func addCoursePeriodRoutes(e *echo.Echo, endpoints course_periods.CoursePeriodEn
 	protectedAnnouncementGroup.DELETE("/:id", endpoints.DeleteAnnouncement)
 }
 
-func addGroupsRoutes(e *echo.Echo, endpoints groups.GroupEndpointsHandler, middlewares ...echo.MiddlewareFunc) {
+func addGroupsRoutes(e *echo.Echo, endpoints *groups.Handler, middlewares ...echo.MiddlewareFunc) {
 	publicGroup := e.Group("/groups")
 	publicGroup.GET("/:id", endpoints.GetGroup)
 	publicGroup.GET("", endpoints.GetGroups)
@@ -203,7 +203,7 @@ func addGroupsRoutes(e *echo.Echo, endpoints groups.GroupEndpointsHandler, middl
 	protectedGroup.DELETE("/:id", endpoints.DeleteGroup)
 }
 
-func addProviderRoutes(e *echo.Echo, endpoints providers.ProviderEndpointsHandler, middlewares ...echo.MiddlewareFunc) {
+func addProviderRoutes(e *echo.Echo, endpoints *providers.Handler, middlewares ...echo.MiddlewareFunc) {
 	group := e.Group("/providers", middlewares...)
 	group.GET("/:id", endpoints.GetProvider)
 	group.GET("", endpoints.GetProviders)

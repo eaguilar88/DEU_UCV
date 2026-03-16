@@ -322,7 +322,7 @@ func newCourseRequestFromModel(request models.CourseRequest) entities.CourseRequ
 		ID:          request.ID,
 		Status:      entities.RequestStatus(request.Status),
 		CreatedAt:   request.CreatedAt,
-		UpdatedAtAt: request.UpdatedAt,
+		UpdatedAt: request.UpdatedAt,
 	}
 
 	if request.ReviewerID.Valid {
@@ -364,6 +364,6 @@ func newCourseRequestModelFromEntities(request entities.CourseRequest) models.Co
 			Valid:  request.ReviewedAt != "",
 		},
 		CreatedAt: request.CreatedAt,
-		UpdatedAt: request.UpdatedAtAt,
+		UpdatedAt: request.UpdatedAt,
 	}
 }

@@ -15,7 +15,7 @@ type Repository interface {
 	GetGroups(ctx context.Context, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error)
 
 	// Unit of Work: Atomic operations
-	CreateGroupWithRequest(ctx context.Context, group entities.ExtensionGroup, request entities.GroupAuthRequest) (groupID int64, requestID int64, err error)
+	CreateGroupWithRequest(ctx context.Context, group entities.ExtensionGroup, request entities.GroupRequest) (groupID int64, requestID int64, err error)
 
 	// Individual operations (for flexibility)
 	CreateGroup(ctx context.Context, group entities.ExtensionGroup) (int64, error)
@@ -23,7 +23,7 @@ type Repository interface {
 	DeleteGroup(ctx context.Context, groupID string) error
 
 	// Requests
-	CreateGroupRequest(ctx context.Context, req entities.GroupAuthRequest) (int64, error)
+	CreateGroupRequest(ctx context.Context, req entities.GroupRequest) (int64, error)
 
 	// Files
 	GetFilesByOwner(ctx context.Context, ownerID string) (entities.GroupedFiles, error)
@@ -37,19 +37,19 @@ type StorageClient interface {
 	GetFileMetadata(ctx context.Context, objectKey string) (map[string]string, error)
 }
 
-type GroupService struct {
+type service struct {
 	repo Repository
 	log  *zap.Logger
 }
 
-func NewGroupsService(repository Repository, logger *zap.Logger) *GroupService {
-	return &GroupService{
+func NewService(repository Repository, logger *zap.Logger) Service {
+	return &service{
 		repo: repository,
 		log:  logger,
 	}
 }
 
-func (s *GroupService) GetGroup(ctx context.Context, groupID string) (entities.ExtensionGroup, error) {
+func (s *service) GetGroup(ctx context.Context, groupID string) (entities.ExtensionGroup, error) {
 	group, err := s.repo.GetGroupByID(ctx, groupID)
 	if err != nil {
 		return entities.ExtensionGroup{}, err
@@ -57,7 +57,7 @@ func (s *GroupService) GetGroup(ctx context.Context, groupID string) (entities.E
 	return group, nil
 }
 
-func (s *GroupService) GetGroups(ctx context.Context, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error) {
+func (s *service) GetGroups(ctx context.Context, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error) {
 	groups, page, err := s.repo.GetGroups(ctx, pageScope)
 	if err != nil {
 		return nil, entities.PageScope{}, err
@@ -65,7 +65,7 @@ func (s *GroupService) GetGroups(ctx context.Context, pageScope entities.PageSco
 	return groups, page, nil
 }
 
-func (s *GroupService) CreateGroup(ctx context.Context, group entities.ExtensionGroup) (int64, string, error) {
+func (s *service) CreateGroup(ctx context.Context, group entities.ExtensionGroup) (int64, string, error) {
 	userID := group.Owner.ID
 	providerCode, err := entities.GenerateProviderCode(entities.GroupProviderType)
 	if err != nil {
@@ -77,7 +77,7 @@ func (s *GroupService) CreateGroup(ctx context.Context, group entities.Extension
 	}
 
 	// Create a group authorization request
-	groupReq := entities.GroupAuthRequest{
+	groupReq := entities.GroupRequest{
 		Faculty:   group.Faculty,
 		Status:    entities.RequestStatus_UNDER_REVIEW,
 		Comments:  "New group creation request",
@@ -127,18 +127,12 @@ func (s *GroupService) CreateGroup(ctx context.Context, group entities.Extension
 	return groupID, providerCode, nil
 }
 
-func (s *GroupService) UpdateGroup(ctx context.Context, groupID string, group entities.ExtensionGroup) error {
-	if err := s.repo.UpdateGroup(ctx, group); err != nil {
-		return err
-	}
-	return nil
+func (s *service) UpdateGroup(ctx context.Context, groupID string, group entities.ExtensionGroup) error {
+	return s.repo.UpdateGroup(ctx, group)
 }
 
-func (s *GroupService) DeleteGroup(ctx context.Context, groupID, userID string) error {
-	if err := s.repo.DeleteGroup(ctx, groupID); err != nil {
-		return err
-	}
-	return nil
+func (s *service) DeleteGroup(ctx context.Context, groupID, userID string) error {
+	return s.repo.DeleteGroup(ctx, groupID)
 }
 
 func makeFileEntityFromFilePointer(file *entities.File, groupID int64, uploadedBy string, ownerType entities.OwnerType, metadata map[string]string) *entities.File {

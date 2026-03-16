@@ -2,7 +2,6 @@ package course_periods
 
 import (
 	"github.com/eaguilar88/deu/internal/entities"
-	"github.com/eaguilar88/deu/internal/users"
 )
 
 type AnnouncementInfo struct {
@@ -14,15 +13,14 @@ type AnnouncementInfo struct {
 }
 
 type GetCoursePeriodResponse struct {
-	ID              string                  `json:"id"`
-	Participans     []users.GetUserResponse `json:"participantes,omitempty"`
-	Announcements   []AnnouncementInfo      `json:"anuncios,omitempty"`
-	StartDate       string                  `json:"fecha_inicio"`
-	EndDate         string                  `json:"fecha_fin"`
-	InscriptionDate string                  `json:"fecha_inscripcion"`
-	CreatedAt       string                  `json:"creado_el"`
-	UpdatedAt       string                  `json:"actualizado_el"`
-	DeletedAt       string                  `json:"eliminado_en,omitempty"`
+	ID              string             `json:"id"`
+	Announcements   []AnnouncementInfo `json:"publicaciones,omitempty"`
+	StartDate       string             `json:"fecha_inicio"`
+	EndDate         string             `json:"fecha_fin"`
+	InscriptionDate string             `json:"fecha_inscripcion"`
+	CreatedAt       string             `json:"creado_el"`
+	UpdatedAt       string             `json:"actualizado_el"`
+	DeletedAt       string             `json:"eliminado_en,omitempty"`
 }
 
 func EntitiesCoursePeriodToGetCoursePeriodResponse(
@@ -41,7 +39,6 @@ func EntitiesCoursePeriodToGetCoursePeriodResponse(
 
 	return GetCoursePeriodResponse{
 		ID:              coursePeriod.ID,
-		Participans:     users.UserEntitiesToGetUserResponse(coursePeriod.Participants),
 		Announcements:   announcements,
 		StartDate:       coursePeriod.StartDate,
 		EndDate:         coursePeriod.EndDate,

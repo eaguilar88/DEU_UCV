@@ -11,13 +11,13 @@ type GetUserRequest struct {
 }
 
 type CreateUserRequest struct {
-	Document       string `json:"documento_identidad" validate:"required"`
-	Username       string `json:"nombre_usuario" validate:"required,email"`
-	FirstName      string `json:"primer_nombre" validate:"required"`
-	LastName       string `json:"apellido" validate:"required"`
-	DateOfBirth    string `json:"fecha_nacimiento"`
+	Document       string `json:"cedula" validate:"required"`
+	Email          string `json:"email" validate:"required,email"`
+	FirstName      string `json:"nombres" validate:"required"`
+	LastName       string `json:"apellidos" validate:"required"`
+	DateOfBirth    string `json:"fecha_de_nacimiento"`
 	Gender         string `json:"genero"`
-	EducationLevel string `json:"nivel_educacion"`
+	EducationLevel string `json:"nivel_educativo"`
 	Address        string `json:"direccion"`
 	Password       string `json:"password"`
 }

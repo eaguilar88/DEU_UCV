@@ -105,7 +105,7 @@ func (_c *MockRepository_CreateGroup_Call) RunAndReturn(run func(ctx context.Con
 }
 
 // CreateGroupRequest provides a mock function for the type MockRepository
-func (_mock *MockRepository) CreateGroupRequest(ctx context.Context, req entities.GroupAuthRequest) (int64, error) {
+func (_mock *MockRepository) CreateGroupRequest(ctx context.Context, req entities.GroupRequest) (int64, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -114,15 +114,15 @@ func (_mock *MockRepository) CreateGroupRequest(ctx context.Context, req entitie
 
 	var r0 int64
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.GroupAuthRequest) (int64, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.GroupRequest) (int64, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.GroupAuthRequest) int64); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.GroupRequest) int64); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		r0 = ret.Get(0).(int64)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.GroupAuthRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.GroupRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -137,20 +137,20 @@ type MockRepository_CreateGroupRequest_Call struct {
 
 // CreateGroupRequest is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req entities.GroupAuthRequest
+//   - req entities.GroupRequest
 func (_e *MockRepository_Expecter) CreateGroupRequest(ctx interface{}, req interface{}) *MockRepository_CreateGroupRequest_Call {
 	return &MockRepository_CreateGroupRequest_Call{Call: _e.mock.On("CreateGroupRequest", ctx, req)}
 }
 
-func (_c *MockRepository_CreateGroupRequest_Call) Run(run func(ctx context.Context, req entities.GroupAuthRequest)) *MockRepository_CreateGroupRequest_Call {
+func (_c *MockRepository_CreateGroupRequest_Call) Run(run func(ctx context.Context, req entities.GroupRequest)) *MockRepository_CreateGroupRequest_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 entities.GroupAuthRequest
+		var arg1 entities.GroupRequest
 		if args[1] != nil {
-			arg1 = args[1].(entities.GroupAuthRequest)
+			arg1 = args[1].(entities.GroupRequest)
 		}
 		run(
 			arg0,
@@ -165,13 +165,13 @@ func (_c *MockRepository_CreateGroupRequest_Call) Return(n int64, err error) *Mo
 	return _c
 }
 
-func (_c *MockRepository_CreateGroupRequest_Call) RunAndReturn(run func(ctx context.Context, req entities.GroupAuthRequest) (int64, error)) *MockRepository_CreateGroupRequest_Call {
+func (_c *MockRepository_CreateGroupRequest_Call) RunAndReturn(run func(ctx context.Context, req entities.GroupRequest) (int64, error)) *MockRepository_CreateGroupRequest_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CreateGroupWithRequest provides a mock function for the type MockRepository
-func (_mock *MockRepository) CreateGroupWithRequest(ctx context.Context, group entities.ExtensionGroup, request entities.GroupAuthRequest) (int64, int64, error) {
+func (_mock *MockRepository) CreateGroupWithRequest(ctx context.Context, group entities.ExtensionGroup, request entities.GroupRequest) (int64, int64, error) {
 	ret := _mock.Called(ctx, group, request)
 
 	if len(ret) == 0 {
@@ -181,20 +181,20 @@ func (_mock *MockRepository) CreateGroupWithRequest(ctx context.Context, group e
 	var r0 int64
 	var r1 int64
 	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.ExtensionGroup, entities.GroupAuthRequest) (int64, int64, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.ExtensionGroup, entities.GroupRequest) (int64, int64, error)); ok {
 		return returnFunc(ctx, group, request)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.ExtensionGroup, entities.GroupAuthRequest) int64); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.ExtensionGroup, entities.GroupRequest) int64); ok {
 		r0 = returnFunc(ctx, group, request)
 	} else {
 		r0 = ret.Get(0).(int64)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.ExtensionGroup, entities.GroupAuthRequest) int64); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.ExtensionGroup, entities.GroupRequest) int64); ok {
 		r1 = returnFunc(ctx, group, request)
 	} else {
 		r1 = ret.Get(1).(int64)
 	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, entities.ExtensionGroup, entities.GroupAuthRequest) error); ok {
+	if returnFunc, ok := ret.Get(2).(func(context.Context, entities.ExtensionGroup, entities.GroupRequest) error); ok {
 		r2 = returnFunc(ctx, group, request)
 	} else {
 		r2 = ret.Error(2)
@@ -210,12 +210,12 @@ type MockRepository_CreateGroupWithRequest_Call struct {
 // CreateGroupWithRequest is a helper method to define mock.On call
 //   - ctx context.Context
 //   - group entities.ExtensionGroup
-//   - request entities.GroupAuthRequest
+//   - request entities.GroupRequest
 func (_e *MockRepository_Expecter) CreateGroupWithRequest(ctx interface{}, group interface{}, request interface{}) *MockRepository_CreateGroupWithRequest_Call {
 	return &MockRepository_CreateGroupWithRequest_Call{Call: _e.mock.On("CreateGroupWithRequest", ctx, group, request)}
 }
 
-func (_c *MockRepository_CreateGroupWithRequest_Call) Run(run func(ctx context.Context, group entities.ExtensionGroup, request entities.GroupAuthRequest)) *MockRepository_CreateGroupWithRequest_Call {
+func (_c *MockRepository_CreateGroupWithRequest_Call) Run(run func(ctx context.Context, group entities.ExtensionGroup, request entities.GroupRequest)) *MockRepository_CreateGroupWithRequest_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -225,9 +225,9 @@ func (_c *MockRepository_CreateGroupWithRequest_Call) Run(run func(ctx context.C
 		if args[1] != nil {
 			arg1 = args[1].(entities.ExtensionGroup)
 		}
-		var arg2 entities.GroupAuthRequest
+		var arg2 entities.GroupRequest
 		if args[2] != nil {
-			arg2 = args[2].(entities.GroupAuthRequest)
+			arg2 = args[2].(entities.GroupRequest)
 		}
 		run(
 			arg0,
@@ -243,7 +243,7 @@ func (_c *MockRepository_CreateGroupWithRequest_Call) Return(groupID int64, requ
 	return _c
 }
 
-func (_c *MockRepository_CreateGroupWithRequest_Call) RunAndReturn(run func(ctx context.Context, group entities.ExtensionGroup, request entities.GroupAuthRequest) (int64, int64, error)) *MockRepository_CreateGroupWithRequest_Call {
+func (_c *MockRepository_CreateGroupWithRequest_Call) RunAndReturn(run func(ctx context.Context, group entities.ExtensionGroup, request entities.GroupRequest) (int64, int64, error)) *MockRepository_CreateGroupWithRequest_Call {
 	_c.Call.Return(run)
 	return _c
 }

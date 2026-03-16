@@ -8,6 +8,6 @@ type CourseRequest struct {
 	Comments    string
 	ReviewedAt  string
 	CreatedAt   string
-	UpdatedAtAt string
+	UpdatedAt string
 	Course      *Course // Associated course information
 }

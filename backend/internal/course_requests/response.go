@@ -26,7 +26,7 @@ type GetCourseRequestResponse struct {
 	Comments    string                 `json:"comentarios,omitempty"`
 	ReviewedAt  string                 `json:"revisado_en,omitempty"`
 	CreatedAt   string                 `json:"creado_en,omitempty"`
-	UpdatedAtAt string                 `json:"actualizado_en,omitempty"`
+	UpdatedAt string                 `json:"actualizado_en,omitempty"`
 	Course      *CourseInfo            `json:"curso,omitempty"`
 }
 

@@ -12,33 +12,33 @@ import (
 	"go.uber.org/zap"
 )
 
-func (r *PostgresRepository) GetGroupRequestByID(ctx context.Context, requestID string) (entities.GroupAuthRequest, error) {
+func (r *PostgresRepository) GetGroupRequestByID(ctx context.Context, requestID string) (entities.GroupRequest, error) {
 	sql, args, err := queries.GetGroupRequestByID(requestID).ToSql()
 	if err != nil {
-		return entities.GroupAuthRequest{}, err
+		return entities.GroupRequest{}, err
 	}
 
 	stmt, err := r.db.PrepareContext(ctx, sql)
 	if err != nil {
-		return entities.GroupAuthRequest{}, err
+		return entities.GroupRequest{}, err
 	}
 	defer stmt.Close()
 	rows, err := stmt.QueryContext(ctx, args...)
 	if err != nil {
-		return entities.GroupAuthRequest{}, err
+		return entities.GroupRequest{}, err
 	}
 	defer rows.Close()
-	var request models.GroupAuthRequest
+	var request models.GroupRequest
 	for rows.Next() {
 		request, err = scanGroupRequest(rows)
 		if err != nil {
-			return entities.GroupAuthRequest{}, err
+			return entities.GroupRequest{}, err
 		}
 	}
 	return newGroupRequestFromModel(request), nil
 }
 
-func (r *PostgresRepository) GetGroupRequestsByFaculty(ctx context.Context, faculty entities.Faculty, scope entities.PageScope) ([]entities.GroupAuthRequest, entities.PageScope, error) {
+func (r *PostgresRepository) GetGroupRequestsByFaculty(ctx context.Context, faculty entities.Faculty, scope entities.PageScope) ([]entities.GroupRequest, entities.PageScope, error) {
 	sql, args, err := queries.GetGroupRequestsByFaculty(faculty.String(), scope.PerPage, scope.Offset()).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
@@ -54,7 +54,7 @@ func (r *PostgresRepository) GetGroupRequestsByFaculty(ctx context.Context, facu
 		return nil, entities.PageScope{}, err
 	}
 	defer rows.Close()
-	var requests []entities.GroupAuthRequest
+	var requests []entities.GroupRequest
 	for rows.Next() {
 		model, err := scanGroupRequest(rows)
 		if err != nil {
@@ -122,8 +122,8 @@ func (r *PostgresRepository) RejectGroupRequest(ctx context.Context, reqID strin
 	return nil
 }
 
-func newGroupRequestFromModel(m models.GroupAuthRequest) entities.GroupAuthRequest {
-	gar := entities.GroupAuthRequest{
+func newGroupRequestFromModel(m models.GroupRequest) entities.GroupRequest {
+	gar := entities.GroupRequest{
 		ID:        fmt.Sprintf("%d", m.ID),
 		GroupID:   fmt.Sprintf("%d", m.GroupID),
 		Faculty:   entities.Faculty(m.Faculty),
@@ -142,8 +142,8 @@ func newGroupRequestFromModel(m models.GroupAuthRequest) entities.GroupAuthReque
 	return gar
 }
 
-func scanGroupRequest(row scannable) (models.GroupAuthRequest, error) {
-	result := models.GroupAuthRequest{}
+func scanGroupRequest(row scannable) (models.GroupRequest, error) {
+	result := models.GroupRequest{}
 	err := row.Scan(
 		&result.ID,
 		&result.GroupID,
@@ -156,7 +156,7 @@ func scanGroupRequest(row scannable) (models.GroupAuthRequest, error) {
 		&result.ReviewedAt,
 	)
 	if err != nil {
-		return models.GroupAuthRequest{}, err
+		return models.GroupRequest{}, err
 	}
 	return result, nil
 }

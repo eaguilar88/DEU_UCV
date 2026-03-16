@@ -14,21 +14,21 @@ type Repository interface {
 	GetUserRoles(ctx context.Context, userID string) ([]string, error)
 }
 
-type AuthService struct {
+type service struct {
 	repository Repository
 	signer     jwt.Signer
 	logger     *zap.Logger
 }
 
-func NewAuthService(repo Repository, signer jwt.Signer, logger *zap.Logger) *AuthService {
-	return &AuthService{
+func NewService(repo Repository, signer jwt.Signer, logger *zap.Logger) Service {
+	return &service{
 		repository: repo,
 		signer:     signer,
 		logger:     logger,
 	}
 }
 
-func (s *AuthService) Login(ctx context.Context, username, password string) (string, *entities.User, error) {
+func (s *service) Login(ctx context.Context, username, password string) (string, *entities.User, error) {
 	user, err := s.repository.GetUserByUsername(ctx, username)
 	if err != nil {
 		return "", nil, err

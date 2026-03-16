@@ -11,6 +11,8 @@ type ProviderPrefix string
 
 type ProviderType string
 
+type ProviderPartyType string
+
 const (
 	// Provider code prefixes
 	CourseProvider ProviderPrefix = "ECP"
@@ -26,9 +28,15 @@ const (
 	ProviderFileTypeISLR   = "islr"
 	ProviderFileTypeResume = "resume"
 	ProviderFileTypeOther  = "other"
+	ProviderFileTypeLogo   = "logo"
+
+	// Legal identity types
+	PartyTypeNatural   ProviderPartyType = "natural"
+	PartyTypeJuridical ProviderPartyType = "juridical"
 )
 
 type ProviderFiles struct {
+	Logo    *File
 	CI      *File
 	RIF     *File
 	ISLR    *File
@@ -39,9 +47,13 @@ type ProviderFiles struct {
 type Provider struct {
 	ID         string
 	User       User
+	Name       string // Provider's display name (e.g., business name for juridical providers)
 	Type       ProviderType
+	PartyType  ProviderPartyType
 	IsInternal bool
+	Bio        string
 	Code       string
+	IsActive   bool
 	Files      ProviderFiles
 	CreatedAt  string
 	UpdatedAt  string

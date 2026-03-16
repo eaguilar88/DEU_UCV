@@ -40,3 +40,20 @@ func NewRepository(connection *sql.DB, directory string, logger *zap.Logger) *Po
 		logger:       logger,
 	}
 }
+
+// toNullString converts a string to sql.NullString.
+// Returns a valid NullString if the value is non-empty.
+func toNullString(s string) sql.NullString {
+	return sql.NullString{
+		String: s,
+		Valid:  s != "",
+	}
+}
+
+// toNullBool converts a bool to sql.NullBool with Valid always true.
+func toNullBool(b bool) sql.NullBool {
+	return sql.NullBool{
+		Bool:  b,
+		Valid: true,
+	}
+}

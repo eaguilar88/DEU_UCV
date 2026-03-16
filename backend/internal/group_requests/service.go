@@ -10,30 +10,30 @@ import (
 type Repository interface {
 	ApproveGroupRequest(ctx context.Context, reqID string) error
 	RejectGroupRequest(ctx context.Context, reqID string) error
-	GetGroupRequestsByFaculty(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.GroupAuthRequest, entities.PageScope, error)
-	GetGroupRequestByID(ctx context.Context, reqID string) (entities.GroupAuthRequest, error)
+	GetGroupRequestsByFaculty(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.GroupRequest, entities.PageScope, error)
+	GetGroupRequestByID(ctx context.Context, reqID string) (entities.GroupRequest, error)
 }
-type GroupRequestService struct {
+type service struct {
 	repo   Repository
 	logger *zap.Logger
 }
 
-func NewGroupRequestService(repo Repository, logger *zap.Logger) *GroupRequestService {
-	return &GroupRequestService{
+func NewService(repo Repository, logger *zap.Logger) Service {
+	return &service{
 		repo:   repo,
 		logger: logger,
 	}
 }
 
-func (s *GroupRequestService) ApproveGroupRequest(ctx context.Context, reqID string) error {
+func (s *service) ApproveGroupRequest(ctx context.Context, reqID string) error {
 	return s.repo.ApproveGroupRequest(ctx, reqID)
 }
 
-func (s *GroupRequestService) RejectGroupRequest(ctx context.Context, reqID string) error {
+func (s *service) RejectGroupRequest(ctx context.Context, reqID string) error {
 	return s.repo.RejectGroupRequest(ctx, reqID)
 }
 
-func (s *GroupRequestService) GetGroupRequestsByFaculty(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.GroupAuthRequest, entities.PageScope, error) {
+func (s *service) GetGroupRequestsByFaculty(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.GroupRequest, entities.PageScope, error) {
 	cr, ps, err := s.repo.GetGroupRequestsByFaculty(ctx, faculty, pageScope)
 	if err != nil {
 		s.logger.Error("failed to get group requests by faculty", zap.Error(err))
@@ -43,6 +43,6 @@ func (s *GroupRequestService) GetGroupRequestsByFaculty(ctx context.Context, fac
 	return cr, ps, nil
 }
 
-func (s *GroupRequestService) GetGroupRequestByID(ctx context.Context, reqID string) (entities.GroupAuthRequest, error) {
+func (s *service) GetGroupRequestByID(ctx context.Context, reqID string) (entities.GroupRequest, error) {
 	return s.repo.GetGroupRequestByID(ctx, reqID)
 }

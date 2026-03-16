@@ -17,30 +17,30 @@ import (
 	"go.uber.org/zap"
 )
 
-func TestMakeCoursePeriodEndpointsHandler(t *testing.T) {
+func TestNewHandler(t *testing.T) {
 	type testCase struct {
 		name string
 		svc  Service
 		log  *zap.Logger
-		want CoursePeriodEndpointsHandler
+		want Handler
 	}
 	s := mocks.NewMockService(t)
 	tc := testCase{
 		name: "success",
 		svc:  s,
 		log:  zap.NewNop(),
-		want: CoursePeriodEndpointsHandler{
+		want: Handler{
 			svc: s,
 			log: zap.NewNop(),
 		},
 	}
 	t.Run(tc.name, func(t *testing.T) {
-		got := MakeCoursePeriodEndpointsHandler(tc.svc, tc.log)
+		got := NewHandler(tc.svc, tc.log)
 		assert.Equal(t, tc.want.svc, got.svc)
 	})
 }
 
-func TestCoursePeriodEndpointsHandler_GetCoursePeriod(t *testing.T) {
+func TestHandler_GetCoursePeriod(t *testing.T) {
 	type testCase struct {
 		name    string
 		svc     *mocks.MockService
@@ -96,7 +96,7 @@ func TestCoursePeriodEndpointsHandler_GetCoursePeriod(t *testing.T) {
 			if tt.prepare != nil {
 				tt.prepare(ctx, &tt)
 			}
-			h := MakeCoursePeriodEndpointsHandler(tt.svc, loggerMock)
+			h := NewHandler(tt.svc, loggerMock)
 			err = h.GetCoursePeriod(ctx)
 			assert.Equal(t, tt.wantErr, err)
 			if tt.wantErr == nil {
@@ -110,7 +110,7 @@ func TestCoursePeriodEndpointsHandler_GetCoursePeriod(t *testing.T) {
 	}
 }
 
-func TestCoursePeriodEndpointsHandler_GetCoursePeriods(t *testing.T) {
+func TestHandler_GetCoursePeriods(t *testing.T) {
 	type testCase struct {
 		name    string
 		svc     *mocks.MockService
@@ -162,7 +162,7 @@ func TestCoursePeriodEndpointsHandler_GetCoursePeriods(t *testing.T) {
 			if tt.prepare != nil {
 				tt.prepare(ctx, &tt)
 			}
-			h := MakeCoursePeriodEndpointsHandler(tt.svc, loggerMock)
+			h := NewHandler(tt.svc, loggerMock)
 			err = h.GetCoursePeriods(ctx)
 			assert.Equal(t, tt.wantErr, err)
 			if tt.wantErr == nil {
@@ -176,7 +176,7 @@ func TestCoursePeriodEndpointsHandler_GetCoursePeriods(t *testing.T) {
 	}
 }
 
-func TestCoursePeriodEndpointsHandler_CreateCoursePeriod(t *testing.T) {
+func TestHandler_CreateCoursePeriod(t *testing.T) {
 	userID := "1"
 	type testCase struct {
 		name    string
@@ -243,7 +243,7 @@ func TestCoursePeriodEndpointsHandler_CreateCoursePeriod(t *testing.T) {
 			if tt.prepare != nil {
 				tt.prepare(ctx, &tt)
 			}
-			h := MakeCoursePeriodEndpointsHandler(tt.svc, loggerMock)
+			h := NewHandler(tt.svc, loggerMock)
 			err = h.CreateCoursePeriod(ctx)
 			assert.Equal(t, tt.wantErr, err)
 			if tt.wantErr == nil {
@@ -257,7 +257,7 @@ func TestCoursePeriodEndpointsHandler_CreateCoursePeriod(t *testing.T) {
 	}
 }
 
-func TestCoursePeriodEndpointsHandler_UpdateCoursePeriod(t *testing.T) {
+func TestHandler_UpdateCoursePeriod(t *testing.T) {
 	userID := "1"
 	type testCase struct {
 		name    string
@@ -322,7 +322,7 @@ func TestCoursePeriodEndpointsHandler_UpdateCoursePeriod(t *testing.T) {
 			if tt.prepare != nil {
 				tt.prepare(ctx, &tt)
 			}
-			h := MakeCoursePeriodEndpointsHandler(tt.svc, loggerMock)
+			h := NewHandler(tt.svc, loggerMock)
 			err = h.UpdateCoursePeriod(ctx)
 			assert.Equal(t, tt.wantErr, err)
 			if tt.wantErr == nil {
@@ -336,7 +336,7 @@ func TestCoursePeriodEndpointsHandler_UpdateCoursePeriod(t *testing.T) {
 	}
 }
 
-func TestCoursePeriodEndpointsHandler_DeleteCoursePeriod(t *testing.T) {
+func TestHandler_DeleteCoursePeriod(t *testing.T) {
 	userID := "1"
 	type testCase struct {
 		name    string
@@ -401,7 +401,7 @@ func TestCoursePeriodEndpointsHandler_DeleteCoursePeriod(t *testing.T) {
 			if tt.prepare != nil {
 				tt.prepare(ctx, &tt)
 			}
-			h := MakeCoursePeriodEndpointsHandler(tt.svc, loggerMock)
+			h := NewHandler(tt.svc, loggerMock)
 			err = h.DeleteCoursePeriod(ctx)
 			assert.Equal(t, tt.wantErr, err)
 			if tt.wantErr == nil {

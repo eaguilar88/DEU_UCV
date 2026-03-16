@@ -22,19 +22,19 @@ type Service interface {
 	DeleteAnnouncement(ctx context.Context, announcementID string) error
 }
 
-type CoursePeriodEndpointsHandler struct {
+type Handler struct {
 	svc Service
 	log *zap.Logger
 }
 
-func MakeCoursePeriodEndpointsHandler(svc Service, log *zap.Logger) CoursePeriodEndpointsHandler {
-	return CoursePeriodEndpointsHandler{
+func NewHandler(svc Service, log *zap.Logger) *Handler {
+	return &Handler{
 		svc: svc,
 		log: log,
 	}
 }
 
-func (h *CoursePeriodEndpointsHandler) GetCoursePeriod(c echo.Context) error {
+func (h *Handler) GetCoursePeriod(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req GetCoursePeriodRequest
 	if err := c.Bind(&req); err != nil {
@@ -44,14 +44,14 @@ func (h *CoursePeriodEndpointsHandler) GetCoursePeriod(c echo.Context) error {
 
 	period, err := h.svc.GetCoursePeriod(ctx, req.ID)
 	if err != nil {
-		h.log.Error(fmt.Sprintf("error getting course period with ID: %s", req.ID), zap.Error(err))
+		h.log.Error("error getting course period", zap.String("id", req.ID), zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 
 	return c.JSON(http.StatusOK, EntitiesCoursePeriodToGetCoursePeriodResponse(period))
 }
 
-func (h *CoursePeriodEndpointsHandler) GetCoursePeriods(c echo.Context) error {
+func (h *Handler) GetCoursePeriods(c echo.Context) error {
 	ctx := c.Request().Context()
 	scope := entities.PageScope{}
 
@@ -75,7 +75,7 @@ func (h *CoursePeriodEndpointsHandler) GetCoursePeriods(c echo.Context) error {
 	})
 }
 
-func (h *CoursePeriodEndpointsHandler) CreateCoursePeriod(c echo.Context) error {
+func (h *Handler) CreateCoursePeriod(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	var req CreateCoursePeriodRequest
@@ -100,7 +100,7 @@ func (h *CoursePeriodEndpointsHandler) CreateCoursePeriod(c echo.Context) error 
 	})
 }
 
-func (h *CoursePeriodEndpointsHandler) UpdateCoursePeriod(c echo.Context) error {
+func (h *Handler) UpdateCoursePeriod(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req UpdateCoursePeriodRequest
 	if err := c.Bind(&req); err != nil {
@@ -124,7 +124,7 @@ func (h *CoursePeriodEndpointsHandler) UpdateCoursePeriod(c echo.Context) error 
 	return c.JSON(http.StatusAccepted, nil)
 }
 
-func (h *CoursePeriodEndpointsHandler) DeleteCoursePeriod(c echo.Context) error {
+func (h *Handler) DeleteCoursePeriod(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req DeleteCoursePeriodRequest
 	if err := c.Bind(&req); err != nil {
@@ -147,7 +147,7 @@ func (h *CoursePeriodEndpointsHandler) DeleteCoursePeriod(c echo.Context) error 
 }
 
 // Announcement handlers
-func (h *CoursePeriodEndpointsHandler) GetAnnouncement(c echo.Context) error {
+func (h *Handler) GetAnnouncement(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req GetAnnouncementRequest
 	if err := c.Bind(&req); err != nil {
@@ -157,14 +157,14 @@ func (h *CoursePeriodEndpointsHandler) GetAnnouncement(c echo.Context) error {
 
 	announcement, err := h.svc.GetAnnouncement(ctx, req.ID)
 	if err != nil {
-		h.log.Error(fmt.Sprintf("error getting announcement with ID: %s", req.ID), zap.Error(err))
+		h.log.Error("error getting announcement", zap.String("id", req.ID), zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 
 	return c.JSON(http.StatusOK, EntitiesAnnouncementToGetAnnouncementResponse(announcement))
 }
 
-func (h *CoursePeriodEndpointsHandler) CreateAnnouncement(c echo.Context) error {
+func (h *Handler) CreateAnnouncement(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req CreateAnnouncementRequest
 	if err := c.Bind(&req); err != nil {
@@ -189,7 +189,7 @@ func (h *CoursePeriodEndpointsHandler) CreateAnnouncement(c echo.Context) error 
 	})
 }
 
-func (h *CoursePeriodEndpointsHandler) UpdateAnnouncement(c echo.Context) error {
+func (h *Handler) UpdateAnnouncement(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req UpdateAnnouncementRequest
 	if err := c.Bind(&req); err != nil {
@@ -212,7 +212,7 @@ func (h *CoursePeriodEndpointsHandler) UpdateAnnouncement(c echo.Context) error 
 	return c.JSON(http.StatusAccepted, nil)
 }
 
-func (h *CoursePeriodEndpointsHandler) DeleteAnnouncement(c echo.Context) error {
+func (h *Handler) DeleteAnnouncement(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req DeleteAnnouncementRequest
 	if err := c.Bind(&req); err != nil {
