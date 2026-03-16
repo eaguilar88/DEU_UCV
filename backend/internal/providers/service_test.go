@@ -554,6 +554,10 @@ func TestService_uploadAndSave(t *testing.T) {
 					RunAndReturn(func(_ context.Context, _ []*entities.File) error { return nil })
 				repoMock.EXPECT().SaveFilesToDB(mock.Anything, mock.Anything).
 					RunAndReturn(func(_ context.Context, _ []*entities.File) error { return nil })
+				repoMock.EXPECT().GetProvider(mock.Anything, "1").
+					RunAndReturn(func(_ context.Context, _ string) (entities.Provider, error) {
+						return entities.Provider{User: entities.User{Email: "user@test.com", FirstName: "Test", LastName: "User"}}, nil
+					})
 				mailMock.EXPECT().Send(mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).
 					RunAndReturn(func(_ context.Context, _, _, _ string) error { return nil })
 			},
@@ -603,6 +607,10 @@ func TestService_uploadAndSave(t *testing.T) {
 					RunAndReturn(func(_ context.Context, _ []*entities.File) error { return nil })
 				repoMock.EXPECT().SaveFilesToDB(mock.Anything, mock.Anything).
 					RunAndReturn(func(_ context.Context, _ []*entities.File) error { return nil })
+				repoMock.EXPECT().GetProvider(mock.Anything, "1").
+					RunAndReturn(func(_ context.Context, _ string) (entities.Provider, error) {
+						return entities.Provider{User: entities.User{Email: "user@test.com", FirstName: "Test", LastName: "User"}}, nil
+					})
 				mailMock.EXPECT().Send(mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).
 					RunAndReturn(func(_ context.Context, _, _, _ string) error {
 						return errors.New("email failed")

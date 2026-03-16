@@ -25,5 +25,5 @@ type GetUsersResponse struct {
 }
 
 type CreateUsersResponse struct {
-	ID string `json:"id,"`
+	ID string `json:"id"`
 }

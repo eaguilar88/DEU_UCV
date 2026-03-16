@@ -319,9 +319,9 @@ func scanCourseRequestWithCourse(row scannable) (models.CourseRequest, error) {
 
 func newCourseRequestFromModel(request models.CourseRequest) entities.CourseRequest {
 	result := entities.CourseRequest{
-		ID:          request.ID,
-		Status:      entities.RequestStatus(request.Status),
-		CreatedAt:   request.CreatedAt,
+		ID:        request.ID,
+		Status:    entities.RequestStatus(request.Status),
+		CreatedAt: request.CreatedAt,
 		UpdatedAt: request.UpdatedAt,
 	}
 

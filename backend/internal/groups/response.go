@@ -13,17 +13,17 @@ type OwnerInfo struct {
 }
 
 type GetGroupResponse struct {
-	ID          string           `json:"id,omitempty"`
-	Name        string           `json:"nombre,omitempty"`
-	Description string           `json:"descripcion,omitempty"`
-	Owner       *OwnerInfo       `json:"propietario,omitempty"`
-	Objective   string           `json:"objetivo,omitempty"`
-	Location    string           `json:"ubicacion,omitempty"`
-	Active      bool             `json:"activo,omitempty"`
+	ID          string                 `json:"id,omitempty"`
+	Name        string                 `json:"nombre,omitempty"`
+	Description string                 `json:"descripcion,omitempty"`
+	Owner       *OwnerInfo             `json:"propietario,omitempty"`
+	Objective   string                 `json:"objetivo,omitempty"`
+	Location    string                 `json:"ubicacion,omitempty"`
+	Active      bool                   `json:"activo,omitempty"`
 	Members     []entities.GroupMember `json:"miembros,omitempty"`
-	CreatedAt   string           `json:"creado_en,omitempty"`
-	UpdatedAt   string           `json:"actualizado_en,omitempty"`
-	DeletedAt   string           `json:"eliminado_en,omitempty"`
+	CreatedAt   string                 `json:"creado_en,omitempty"`
+	UpdatedAt   string                 `json:"actualizado_en,omitempty"`
+	DeletedAt   string                 `json:"eliminado_en,omitempty"`
 }
 type GetGroupsResponse struct {
 	Groups    []GetGroupResponse `json:"grupos"`

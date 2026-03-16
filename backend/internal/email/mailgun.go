@@ -32,6 +32,7 @@ func (m *MailgunClient) Send(ctx context.Context, to string, subject string, bod
 
 	_, err := m.client.Send(mailCtx, message)
 	if err != nil {
+		m.logger.Error("failed to send email", zap.Error(err))
 		return err
 	}
 	return nil

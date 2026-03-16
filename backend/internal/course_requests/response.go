@@ -21,13 +21,13 @@ type CourseInfo struct {
 }
 
 type GetCourseRequestResponse struct {
-	ID          string                 `json:"id,omitempty"`
-	Status      entities.RequestStatus `json:"estado,omitempty"`
-	Comments    string                 `json:"comentarios,omitempty"`
-	ReviewedAt  string                 `json:"revisado_en,omitempty"`
-	CreatedAt   string                 `json:"creado_en,omitempty"`
-	UpdatedAt string                 `json:"actualizado_en,omitempty"`
-	Course      *CourseInfo            `json:"curso,omitempty"`
+	ID         string                 `json:"id,omitempty"`
+	Status     entities.RequestStatus `json:"estado,omitempty"`
+	Comments   string                 `json:"comentarios,omitempty"`
+	ReviewedAt string                 `json:"revisado_en,omitempty"`
+	CreatedAt  string                 `json:"creado_en,omitempty"`
+	UpdatedAt  string                 `json:"actualizado_en,omitempty"`
+	Course     *CourseInfo            `json:"curso,omitempty"`
 }
 
 type GetCourseRequestsResponse struct {

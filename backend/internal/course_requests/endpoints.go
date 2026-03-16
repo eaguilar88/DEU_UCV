@@ -166,12 +166,12 @@ func (h *Handler) GetCourseRequestsByFaculty(c echo.Context) error {
 
 	for _, req := range requests {
 		response.CourseRequests = append(response.CourseRequests, GetCourseRequestResponse{
-			ID:          req.ID,
-			Status:      req.Status,
-			Comments:    req.Comments,
-			ReviewedAt:  req.ReviewedAt,
-			CreatedAt:   req.CreatedAt,
-			UpdatedAt: req.UpdatedAt,
+			ID:         req.ID,
+			Status:     req.Status,
+			Comments:   req.Comments,
+			ReviewedAt: req.ReviewedAt,
+			CreatedAt:  req.CreatedAt,
+			UpdatedAt:  req.UpdatedAt,
 		})
 	}
 
@@ -192,12 +192,12 @@ func (h *Handler) GetCourseRequestByID(c echo.Context) error {
 	}
 
 	response := GetCourseRequestResponse{
-		ID:          reqID,
-		Status:      req.Status,
-		Comments:    req.Comments,
-		ReviewedAt:  req.ReviewedAt,
-		CreatedAt:   req.CreatedAt,
-		UpdatedAt: req.UpdatedAt,
+		ID:         reqID,
+		Status:     req.Status,
+		Comments:   req.Comments,
+		ReviewedAt: req.ReviewedAt,
+		CreatedAt:  req.CreatedAt,
+		UpdatedAt:  req.UpdatedAt,
 	}
 
 	// Map course if present
