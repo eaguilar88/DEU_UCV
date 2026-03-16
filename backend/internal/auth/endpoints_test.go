@@ -16,24 +16,24 @@ import (
 	"go.uber.org/zap"
 )
 
-func TestMakeAuthEndpointsHandler(t *testing.T) {
+func TestNewHandler(t *testing.T) {
 	type testCase struct {
 		name string
 		svc  Service
 		log  *zap.Logger
-		want AuthEndpointsHandler
+		want Handler
 	}
 	tc := testCase{
 		name: "success",
 		svc:  &mocks.MockService{},
 		log:  zap.NewNop(),
-		want: AuthEndpointsHandler{
+		want: Handler{
 			svc: &mocks.MockService{},
 			log: zap.NewNop(),
 		},
 	}
 	t.Run(tc.name, func(t *testing.T) {
-		got := MakeAuthEndpointsHandler(tc.svc, tc.log)
+		got := NewHandler(tc.svc, tc.log)
 		assert.Equal(t, tc.want.svc, got.svc)
 	})
 }
@@ -94,7 +94,7 @@ func TestAuthEndpointsHandler_LoginHandleHTTP(t *testing.T) {
 				tt.prepare(ctx, &tt)
 			}
 
-			h := MakeAuthEndpointsHandler(tt.svc, loggerMock)
+			h := NewHandler(tt.svc, loggerMock)
 
 			err = h.LoginHandleHTTP(ctx)
 			assert.Equal(t, tt.wantErr, err)

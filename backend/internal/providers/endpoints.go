@@ -12,6 +12,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// Service defines the business logic operations for the providers domain.
 type Service interface {
 	GetProvider(ctx context.Context, providerID string) (entities.Provider, error)
 	GetProviderByCode(ctx context.Context, providerCode string) (entities.Provider, error)
@@ -21,31 +22,33 @@ type Service interface {
 	DeleteProvider(ctx context.Context, providerID string) error
 }
 
-type ProviderEndpointsHandler struct {
+// Handler holds the HTTP handler dependencies for the providers domain.
+type Handler struct {
 	svc Service
 	log *zap.Logger
 }
 
-func MakeProviderEndpointsHandler(svc Service, log *zap.Logger) ProviderEndpointsHandler {
-	return ProviderEndpointsHandler{
+// NewHandler creates a new providers HTTP handler.
+func NewHandler(svc Service, log *zap.Logger) *Handler {
+	return &Handler{
 		svc: svc,
 		log: log,
 	}
 }
 
-func (h *ProviderEndpointsHandler) GetProvider(c echo.Context) error {
+func (h *Handler) GetProvider(c echo.Context) error {
 	ctx := c.Request().Context()
 	req := GetProviderRequest{ID: c.Param("id")}
 	provider, err := h.svc.GetProvider(ctx, req.ID)
 	if err != nil {
 		h.log.Error("error getting provider", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, err)
+		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
 	return c.JSON(http.StatusOK, ProviderEntityToGetProviderResponse(provider))
 }
 
-func (h *ProviderEndpointsHandler) GetProviders(c echo.Context) error {
+func (h *Handler) GetProviders(c echo.Context) error {
 	ctx := c.Request().Context()
 	scope := entities.PageScope{}
 
@@ -60,13 +63,13 @@ func (h *ProviderEndpointsHandler) GetProviders(c echo.Context) error {
 	providers, pages, err := h.svc.GetProviders(ctx, req.PageScope)
 	if err != nil {
 		h.log.Error("error getting providers", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, err)
+		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
 	return c.JSON(http.StatusOK, ProvidersEntityToGetProvidersResponse(providers, pages))
 }
 
-func (h *ProviderEndpointsHandler) CreateProvider(c echo.Context) error {
+func (h *Handler) CreateProvider(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	userID, ok := c.Get("userID").(string)
@@ -84,7 +87,7 @@ func (h *ProviderEndpointsHandler) CreateProvider(c echo.Context) error {
 	id, code, err := h.svc.CreateProvider(ctx, provider)
 	if err != nil {
 		h.log.Error("error creating provider", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, err)
+		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
 	return c.JSON(http.StatusCreated, CreateProviderResponse{
@@ -93,7 +96,7 @@ func (h *ProviderEndpointsHandler) CreateProvider(c echo.Context) error {
 	})
 }
 
-func (h *ProviderEndpointsHandler) UpdateProvider(c echo.Context) error {
+func (h *Handler) UpdateProvider(c echo.Context) error {
 	ctx := c.Request().Context()
 	userID, ok := c.Get("userID").(string)
 	if !ok {
@@ -110,26 +113,30 @@ func (h *ProviderEndpointsHandler) UpdateProvider(c echo.Context) error {
 	err = h.svc.UpdateProvider(ctx, c.Param("id"), provider)
 	if err != nil {
 		h.log.Error("error updating provider", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, err)
+		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
 	return c.NoContent(http.StatusAccepted)
 }
 
-func (h *ProviderEndpointsHandler) DeleteProvider(c echo.Context) error {
+func (h *Handler) DeleteProvider(c echo.Context) error {
 	ctx := c.Request().Context()
 	err := h.svc.DeleteProvider(ctx, c.Param("id"))
 	if err != nil {
 		h.log.Error("error deleting provider", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, err)
+		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
 	return c.NoContent(http.StatusNoContent)
 }
 
 func makeProviderFromRequest(c echo.Context, userID string, logger *zap.Logger) (*entities.Provider, error) {
-	providerType := c.FormValue("provider_type")
-	isInternal := c.FormValue("is_internal")
+	providerType := c.FormValue("tipo_proveedor")
+	party := c.FormValue("tipo_persona")
+	name := c.FormValue("nombre")
+	bio := c.FormValue("bio")
+	isInternal := c.FormValue("es_interno")
+
 	ci, err := utils.GetFileFromForm(c, entities.ProviderFileTypeCI)
 	if err != nil {
 		logger.Error("error getting ci", zap.Error(err))
@@ -147,6 +154,12 @@ func makeProviderFromRequest(c echo.Context, userID string, logger *zap.Logger) 
 		return nil, errors.New("islr is required")
 	}
 
+	logo, err := utils.GetFileFromForm(c, entities.ProviderFileTypeLogo)
+	if err != nil {
+		logger.Error("error getting logo", zap.Error(err))
+		return nil, errors.New("logo is required")
+	}
+
 	form, err := c.MultipartForm()
 	if err != nil {
 		return nil, errors.New("error parsing form")
@@ -161,12 +174,16 @@ func makeProviderFromRequest(c echo.Context, userID string, logger *zap.Logger) 
 		User: entities.User{
 			ID: userID,
 		},
+		Name:       name,
+		Bio:        bio,
 		Type:       entities.ProviderType(providerType),
+		PartyType:  entities.ProviderPartyType(party),
 		IsInternal: isInternal == "true",
 		Files: entities.ProviderFiles{
 			CI:   ci,
 			RIF:  rif,
 			ISLR: islr,
+			Logo: logo,
 		},
 	}
 	resumes := make([]*entities.File, 0, len(files["resumes"]))

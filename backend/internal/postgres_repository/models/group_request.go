@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type GroupAuthRequest struct {
+type GroupRequest struct {
 	ID         int64          `db:"id"`
 	GroupID    int64          `db:"group_id"`
 	Status     string         `db:"status"`
@@ -17,7 +17,7 @@ type GroupAuthRequest struct {
 	UpdatedAt  time.Time      `db:"updated_at"`
 }
 
-func (m *GroupAuthRequest) GetComments() string {
+func (m *GroupRequest) GetComments() string {
 	if m.Comments.Valid {
 		return m.Comments.String
 	}

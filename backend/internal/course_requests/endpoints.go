@@ -18,19 +18,19 @@ type Service interface {
 	GetCourseRequestByID(ctx context.Context, reqID string) (entities.CourseRequest, error)
 }
 
-type CourseRequestEndpointsHandler struct {
+type Handler struct {
 	svc Service
 	log *zap.Logger
 }
 
-func MakeCourseRequestEndpointsHandler(svc Service, log *zap.Logger) *CourseRequestEndpointsHandler {
-	return &CourseRequestEndpointsHandler{
+func NewHandler(svc Service, log *zap.Logger) *Handler {
+	return &Handler{
 		svc: svc,
 		log: log,
 	}
 }
 
-func (h *CourseRequestEndpointsHandler) RegisterCourseRequestAdminEndpoints(g *echo.Group) {
+func (h *Handler) RegisterCourseRequestAdminEndpoints(g *echo.Group) {
 	cr := g.Group("/course-requests")
 	cr.GET("", h.GetCourseRequestsByFaculty)
 	cr.GET("/:id", h.GetCourseRequestByID)
@@ -39,7 +39,7 @@ func (h *CourseRequestEndpointsHandler) RegisterCourseRequestAdminEndpoints(g *e
 	cr.POST("/:id/redirect", h.RedirectCourseRequest)
 }
 
-func (h *CourseRequestEndpointsHandler) ApproveCourseRequest(c echo.Context) error {
+func (h *Handler) ApproveCourseRequest(c echo.Context) error {
 	ctx := c.Request().Context()
 	reqID := c.Param("id")
 	if reqID == "" {
@@ -72,7 +72,7 @@ func (h *CourseRequestEndpointsHandler) ApproveCourseRequest(c echo.Context) err
 	return c.NoContent(http.StatusAccepted)
 }
 
-func (h *CourseRequestEndpointsHandler) RejectCourseRequest(c echo.Context) error {
+func (h *Handler) RejectCourseRequest(c echo.Context) error {
 	ctx := c.Request().Context()
 	reqID := c.Param("id")
 	if reqID == "" {
@@ -99,7 +99,7 @@ func (h *CourseRequestEndpointsHandler) RejectCourseRequest(c echo.Context) erro
 	return c.NoContent(http.StatusAccepted)
 }
 
-func (h *CourseRequestEndpointsHandler) RedirectCourseRequest(c echo.Context) error {
+func (h *Handler) RedirectCourseRequest(c echo.Context) error {
 	ctx := c.Request().Context()
 	reqID := c.Param("id")
 	if reqID == "" {
@@ -137,7 +137,7 @@ func (h *CourseRequestEndpointsHandler) RedirectCourseRequest(c echo.Context) er
 	return c.NoContent(http.StatusAccepted)
 }
 
-func (h *CourseRequestEndpointsHandler) GetCourseRequestsByFaculty(c echo.Context) error {
+func (h *Handler) GetCourseRequestsByFaculty(c echo.Context) error {
 	ctx := c.Request().Context()
 	faculty, err := entities.FromString(c.QueryParam("faculty"))
 	if err != nil {
@@ -166,19 +166,19 @@ func (h *CourseRequestEndpointsHandler) GetCourseRequestsByFaculty(c echo.Contex
 
 	for _, req := range requests {
 		response.CourseRequests = append(response.CourseRequests, GetCourseRequestResponse{
-			ID:          req.ID,
-			Status:      req.Status,
-			Comments:    req.Comments,
-			ReviewedAt:  req.ReviewedAt,
-			CreatedAt:   req.CreatedAt,
-			UpdatedAtAt: req.UpdatedAtAt,
+			ID:         req.ID,
+			Status:     req.Status,
+			Comments:   req.Comments,
+			ReviewedAt: req.ReviewedAt,
+			CreatedAt:  req.CreatedAt,
+			UpdatedAt:  req.UpdatedAt,
 		})
 	}
 
 	return c.JSON(http.StatusOK, response)
 }
 
-func (h *CourseRequestEndpointsHandler) GetCourseRequestByID(c echo.Context) error {
+func (h *Handler) GetCourseRequestByID(c echo.Context) error {
 	ctx := c.Request().Context()
 	reqID := c.Param("id")
 	if reqID == "" {
@@ -192,12 +192,12 @@ func (h *CourseRequestEndpointsHandler) GetCourseRequestByID(c echo.Context) err
 	}
 
 	response := GetCourseRequestResponse{
-		ID:          reqID,
-		Status:      req.Status,
-		Comments:    req.Comments,
-		ReviewedAt:  req.ReviewedAt,
-		CreatedAt:   req.CreatedAt,
-		UpdatedAtAt: req.UpdatedAtAt,
+		ID:         reqID,
+		Status:     req.Status,
+		Comments:   req.Comments,
+		ReviewedAt: req.ReviewedAt,
+		CreatedAt:  req.CreatedAt,
+		UpdatedAt:  req.UpdatedAt,
 	}
 
 	// Map course if present

@@ -96,22 +96,22 @@ func (_c *MockRepository_ApproveGroupRequest_Call) RunAndReturn(run func(ctx con
 }
 
 // GetGroupRequestByID provides a mock function for the type MockRepository
-func (_mock *MockRepository) GetGroupRequestByID(ctx context.Context, reqID string) (entities.GroupAuthRequest, error) {
+func (_mock *MockRepository) GetGroupRequestByID(ctx context.Context, reqID string) (entities.GroupRequest, error) {
 	ret := _mock.Called(ctx, reqID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetGroupRequestByID")
 	}
 
-	var r0 entities.GroupAuthRequest
+	var r0 entities.GroupRequest
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (entities.GroupAuthRequest, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (entities.GroupRequest, error)); ok {
 		return returnFunc(ctx, reqID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) entities.GroupAuthRequest); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) entities.GroupRequest); ok {
 		r0 = returnFunc(ctx, reqID)
 	} else {
-		r0 = ret.Get(0).(entities.GroupAuthRequest)
+		r0 = ret.Get(0).(entities.GroupRequest)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
 		r1 = returnFunc(ctx, reqID)
@@ -151,35 +151,35 @@ func (_c *MockRepository_GetGroupRequestByID_Call) Run(run func(ctx context.Cont
 	return _c
 }
 
-func (_c *MockRepository_GetGroupRequestByID_Call) Return(groupAuthRequest entities.GroupAuthRequest, err error) *MockRepository_GetGroupRequestByID_Call {
+func (_c *MockRepository_GetGroupRequestByID_Call) Return(groupAuthRequest entities.GroupRequest, err error) *MockRepository_GetGroupRequestByID_Call {
 	_c.Call.Return(groupAuthRequest, err)
 	return _c
 }
 
-func (_c *MockRepository_GetGroupRequestByID_Call) RunAndReturn(run func(ctx context.Context, reqID string) (entities.GroupAuthRequest, error)) *MockRepository_GetGroupRequestByID_Call {
+func (_c *MockRepository_GetGroupRequestByID_Call) RunAndReturn(run func(ctx context.Context, reqID string) (entities.GroupRequest, error)) *MockRepository_GetGroupRequestByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetGroupRequestsByFaculty provides a mock function for the type MockRepository
-func (_mock *MockRepository) GetGroupRequestsByFaculty(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.GroupAuthRequest, entities.PageScope, error) {
+func (_mock *MockRepository) GetGroupRequestsByFaculty(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.GroupRequest, entities.PageScope, error) {
 	ret := _mock.Called(ctx, faculty, pageScope)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetGroupRequestsByFaculty")
 	}
 
-	var r0 []entities.GroupAuthRequest
+	var r0 []entities.GroupRequest
 	var r1 entities.PageScope
 	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.Faculty, entities.PageScope) ([]entities.GroupAuthRequest, entities.PageScope, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.Faculty, entities.PageScope) ([]entities.GroupRequest, entities.PageScope, error)); ok {
 		return returnFunc(ctx, faculty, pageScope)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.Faculty, entities.PageScope) []entities.GroupAuthRequest); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.Faculty, entities.PageScope) []entities.GroupRequest); ok {
 		r0 = returnFunc(ctx, faculty, pageScope)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]entities.GroupAuthRequest)
+			r0 = ret.Get(0).([]entities.GroupRequest)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.Faculty, entities.PageScope) entities.PageScope); ok {
@@ -231,12 +231,12 @@ func (_c *MockRepository_GetGroupRequestsByFaculty_Call) Run(run func(ctx contex
 	return _c
 }
 
-func (_c *MockRepository_GetGroupRequestsByFaculty_Call) Return(groupAuthRequests []entities.GroupAuthRequest, pageScope1 entities.PageScope, err error) *MockRepository_GetGroupRequestsByFaculty_Call {
+func (_c *MockRepository_GetGroupRequestsByFaculty_Call) Return(groupAuthRequests []entities.GroupRequest, pageScope1 entities.PageScope, err error) *MockRepository_GetGroupRequestsByFaculty_Call {
 	_c.Call.Return(groupAuthRequests, pageScope1, err)
 	return _c
 }
 
-func (_c *MockRepository_GetGroupRequestsByFaculty_Call) RunAndReturn(run func(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.GroupAuthRequest, entities.PageScope, error)) *MockRepository_GetGroupRequestsByFaculty_Call {
+func (_c *MockRepository_GetGroupRequestsByFaculty_Call) RunAndReturn(run func(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.GroupRequest, entities.PageScope, error)) *MockRepository_GetGroupRequestsByFaculty_Call {
 	_c.Call.Return(run)
 	return _c
 }

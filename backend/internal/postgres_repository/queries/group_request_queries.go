@@ -46,7 +46,7 @@ func RejectGroupRequest(requestID string) sq.UpdateBuilder {
 		Where(sq.Eq{"id": requestID, "status": "under_review"})
 }
 
-func InsertGroupRequest(req models.GroupAuthRequest) sq.InsertBuilder {
+func InsertGroupRequest(req models.GroupRequest) sq.InsertBuilder {
 	return psql.Insert(groupRequestsTableName).
 		Columns(
 			"group_id",

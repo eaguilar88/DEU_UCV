@@ -232,22 +232,24 @@ func (_c *MockRepository_DeleteUser_Call) RunAndReturn(run func(ctx context.Cont
 }
 
 // GetUser provides a mock function for the type MockRepository
-func (_mock *MockRepository) GetUser(ctx context.Context, userID string) (entities.User, error) {
+func (_mock *MockRepository) GetUser(ctx context.Context, userID string) (*entities.User, error) {
 	ret := _mock.Called(ctx, userID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetUser")
 	}
 
-	var r0 entities.User
+	var r0 *entities.User
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (entities.User, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*entities.User, error)); ok {
 		return returnFunc(ctx, userID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) entities.User); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *entities.User); ok {
 		r0 = returnFunc(ctx, userID)
 	} else {
-		r0 = ret.Get(0).(entities.User)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*entities.User)
+		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
 		r1 = returnFunc(ctx, userID)
@@ -287,33 +289,35 @@ func (_c *MockRepository_GetUser_Call) Run(run func(ctx context.Context, userID 
 	return _c
 }
 
-func (_c *MockRepository_GetUser_Call) Return(user entities.User, err error) *MockRepository_GetUser_Call {
+func (_c *MockRepository_GetUser_Call) Return(user *entities.User, err error) *MockRepository_GetUser_Call {
 	_c.Call.Return(user, err)
 	return _c
 }
 
-func (_c *MockRepository_GetUser_Call) RunAndReturn(run func(ctx context.Context, userID string) (entities.User, error)) *MockRepository_GetUser_Call {
+func (_c *MockRepository_GetUser_Call) RunAndReturn(run func(ctx context.Context, userID string) (*entities.User, error)) *MockRepository_GetUser_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetUserByUsername provides a mock function for the type MockRepository
-func (_mock *MockRepository) GetUserByUsername(ctx context.Context, username string) (entities.User, error) {
+func (_mock *MockRepository) GetUserByUsername(ctx context.Context, username string) (*entities.User, error) {
 	ret := _mock.Called(ctx, username)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetUserByUsername")
 	}
 
-	var r0 entities.User
+	var r0 *entities.User
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (entities.User, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*entities.User, error)); ok {
 		return returnFunc(ctx, username)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) entities.User); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *entities.User); ok {
 		r0 = returnFunc(ctx, username)
 	} else {
-		r0 = ret.Get(0).(entities.User)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*entities.User)
+		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
 		r1 = returnFunc(ctx, username)
@@ -353,12 +357,12 @@ func (_c *MockRepository_GetUserByUsername_Call) Run(run func(ctx context.Contex
 	return _c
 }
 
-func (_c *MockRepository_GetUserByUsername_Call) Return(user entities.User, err error) *MockRepository_GetUserByUsername_Call {
+func (_c *MockRepository_GetUserByUsername_Call) Return(user *entities.User, err error) *MockRepository_GetUserByUsername_Call {
 	_c.Call.Return(user, err)
 	return _c
 }
 
-func (_c *MockRepository_GetUserByUsername_Call) RunAndReturn(run func(ctx context.Context, username string) (entities.User, error)) *MockRepository_GetUserByUsername_Call {
+func (_c *MockRepository_GetUserByUsername_Call) RunAndReturn(run func(ctx context.Context, username string) (*entities.User, error)) *MockRepository_GetUserByUsername_Call {
 	_c.Call.Return(run)
 	return _c
 }

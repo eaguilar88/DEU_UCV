@@ -176,11 +176,18 @@ func scanProvider(row scannable) (models.Provider, error) {
 	err := row.Scan(
 		&provider.ID,
 		&provider.UserID,
+		&provider.Name,
+		&provider.PartyType,
+		&provider.IsInternal,
+		&provider.Bio,
 		&provider.Code,
-		&provider.Active,
+		&provider.IsActive,
 		&provider.CreatedAt,
 		&provider.UpdatedAt,
 		&provider.DeletedAt,
+		&provider.UserEmail,
+		&provider.UserFirstName,
+		&provider.UserLastName,
 	)
 
 	return provider, err
@@ -191,11 +198,33 @@ func newProviderFromModel(provider models.Provider) entities.Provider {
 		ID: provider.ID,
 		User: entities.User{
 			ID:        provider.UserID,
-			FirstName: provider.FirstName,
-			LastName:  provider.LastName,
+			Email:     provider.UserEmail,
+			FirstName: provider.UserFirstName,
+			LastName:  provider.UserLastName,
 		},
-		Code: provider.Code,
+		IsActive: provider.IsActive,
 	}
+
+	if provider.Name.Valid {
+		p.Name = provider.Name.String
+	}
+
+	if provider.PartyType.Valid {
+		p.PartyType = entities.ProviderPartyType(provider.PartyType.String)
+	}
+
+	if provider.IsInternal.Valid {
+		p.IsInternal = provider.IsInternal.Bool
+	}
+
+	if provider.Bio.Valid {
+		p.Bio = provider.Bio.String
+	}
+
+	if provider.Code.Valid {
+		p.Code = provider.Code.String
+	}
+
 	if provider.CreatedAt.Valid {
 		p.CreatedAt = provider.CreatedAt.String
 	}
@@ -207,12 +236,19 @@ func newProviderFromModel(provider models.Provider) entities.Provider {
 	if provider.DeletedAt.Valid {
 		p.DeletedAt = provider.DeletedAt.String
 	}
+
 	return p
 }
 
 func newProviderModelFromEntities(provider entities.Provider) models.Provider {
 	return models.Provider{
-		Code:   provider.Code,
-		UserID: provider.User.ID,
+		ID:         provider.ID,
+		UserID:     provider.User.ID,
+		Name:       toNullString(provider.Name),
+		PartyType:  toNullString(string(provider.PartyType)),
+		IsInternal: toNullBool(provider.IsInternal),
+		Bio:        toNullString(provider.Bio),
+		Code:       toNullString(provider.Code),
+		IsActive:   provider.IsActive,
 	}
 }

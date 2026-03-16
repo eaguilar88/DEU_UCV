@@ -11,8 +11,8 @@ import (
 )
 
 type Repository interface {
-	GetUser(ctx context.Context, userID string) (entities.User, error)
-	GetUserByUsername(ctx context.Context, username string) (entities.User, error)
+	GetUser(ctx context.Context, userID string) (*entities.User, error)
+	GetUserByUsername(ctx context.Context, username string) (*entities.User, error)
 	GetUsers(ctx context.Context, pageScope entities.PageScope) ([]entities.User, entities.PageScope, error)
 	CreateUser(ctx context.Context, user entities.User) (int64, error)
 	UpdateUser(ctx context.Context, userID string, user entities.User) error
@@ -21,30 +21,33 @@ type Repository interface {
 	GetUserRoles(ctx context.Context, userID string) ([]string, error)
 }
 
-type UserService struct {
-	repo Repository
-	log  *zap.Logger
+type MailClient interface {
+	Send(ctx context.Context, to string, subject string, body string) error
 }
 
-func NewUsersService(repository Repository, logger *zap.Logger) *UserService {
-	return &UserService{
-		repo: repository,
-		log:  logger,
+type service struct {
+	repo        Repository
+	emailClient MailClient
+	log         *zap.Logger
+}
+
+func NewService(repository Repository, emailClient MailClient, logger *zap.Logger) Service {
+	return &service{
+		repo:        repository,
+		emailClient: emailClient,
+		log:         logger,
 	}
 }
 
-func (s *UserService) GetUser(ctx context.Context, userID string) (entities.User, error) {
+func (s *service) GetUser(ctx context.Context, userID string) (entities.User, error) {
 	user, err := s.repo.GetUser(ctx, userID)
 	if err != nil {
 		return entities.User{}, err
 	}
-	return user, nil
+	return *user, nil
 }
 
-func (s *UserService) GetUsers(
-	ctx context.Context,
-	pageScope entities.PageScope,
-) ([]entities.User, entities.PageScope, error) {
+func (s *service) GetUsers(ctx context.Context, pageScope entities.PageScope) ([]entities.User, entities.PageScope, error) {
 	users, page, err := s.repo.GetUsers(ctx, pageScope)
 	if err != nil {
 		return nil, entities.PageScope{}, err
@@ -52,13 +55,13 @@ func (s *UserService) GetUsers(
 	return users, page, nil
 }
 
-func (s *UserService) CreateUser(ctx context.Context, user entities.User) (int64, error) {
-	existingUser, err := s.repo.GetUserByUsername(ctx, user.Username)
+func (s *service) CreateUser(ctx context.Context, user entities.User) (int64, error) {
+	existingUser, err := s.repo.GetUserByUsername(ctx, user.Email)
 	if err != nil && !errors.Is(err, ErrUserNotFound) {
 		return -1, fmt.Errorf("failed to check existing user: %w", err)
 	}
 
-	if existingUser.ID != "" {
+	if existingUser != nil && existingUser.ID != "" {
 		return -1, ErrUserAlreadyExists
 	}
 
@@ -66,28 +69,26 @@ func (s *UserService) CreateUser(ctx context.Context, user entities.User) (int64
 	if err != nil {
 		return -1, fmt.Errorf("error creating new user: %w", err)
 	}
+
+	if err := s.emailClient.Send(ctx, user.Email, "Welcome to DEU", "Welcome to DEU"); err != nil {
+		return -1, fmt.Errorf("error sending welcome email: %w", err)
+	}
 	return id, nil
 }
 
-func (s *UserService) UpdateUser(ctx context.Context, userID string, user entities.User) error {
+func (s *service) UpdateUser(ctx context.Context, userID string, user entities.User) error {
 	userFromDB, err := s.repo.GetUser(ctx, userID)
 	if err != nil {
 		return err
 	}
 
 	user.CI = userFromDB.CI
-	user.Username = userFromDB.Username
+	user.Email = userFromDB.Email
 	user.Password = userFromDB.Password
 
-	if err := s.repo.UpdateUser(ctx, userID, user); err != nil {
-		return err
-	}
-	return nil
+	return s.repo.UpdateUser(ctx, userID, user)
 }
 
-func (s *UserService) DeleteUser(ctx context.Context, userID string) error {
-	if err := s.repo.DeleteUser(ctx, userID); err != nil {
-		return err
-	}
-	return nil
+func (s *service) DeleteUser(ctx context.Context, userID string) error {
+	return s.repo.DeleteUser(ctx, userID)
 }

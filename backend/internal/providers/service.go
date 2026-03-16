@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/eaguilar88/deu/internal/entities"
 	"go.uber.org/zap"
 )
@@ -21,6 +23,7 @@ var (
 	ErrFileNotFound     = errors.New("file not found")
 )
 
+// Repository defines the data access operations required by the providers service.
 type Repository interface {
 	GetProvider(ctx context.Context, providerID string) (entities.Provider, error)
 	GetProviderByCode(ctx context.Context, code string) (entities.Provider, error)
@@ -34,6 +37,12 @@ type Repository interface {
 	SaveFilesToDB(ctx context.Context, file []*entities.File) error
 }
 
+// MailClient defines the email sending operations required by the providers service.
+type MailClient interface {
+	Send(ctx context.Context, to string, subject string, body string) error
+}
+
+// StorageClient defines the file storage operations required by the providers service.
 type StorageClient interface {
 	UploadFile(ctx context.Context, file []*entities.File) error
 	DeleteFile(ctx context.Context, objectKey string) error
@@ -41,21 +50,26 @@ type StorageClient interface {
 	GetFileMetadata(ctx context.Context, objectKey string) (map[string]string, error)
 }
 
-type ProvidersService struct {
-	repo    Repository
-	storage StorageClient
-	logger  *zap.Logger
+// service is the concrete implementation of the Service interface.
+type service struct {
+	repo        Repository
+	storage     StorageClient
+	emailClient MailClient
+	logger      *zap.Logger
 }
 
-func NewProvidersService(repo Repository, storage StorageClient, logger *zap.Logger) *ProvidersService {
-	return &ProvidersService{
-		repo:    repo,
-		storage: storage,
-		logger:  logger,
+// NewService creates a new providers service with the given dependencies.
+func NewService(repo Repository, storage StorageClient, emailClient MailClient, logger *zap.Logger) Service {
+	return &service{
+		repo:        repo,
+		storage:     storage,
+		emailClient: emailClient,
+		logger:      logger,
 	}
 }
 
-func (s *ProvidersService) GetProvider(ctx context.Context, providerID string) (entities.Provider, error) {
+// GetProvider returns a provider by ID, including its associated files with pre-signed URLs.
+func (s *service) GetProvider(ctx context.Context, providerID string) (entities.Provider, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -97,7 +111,8 @@ func (s *ProvidersService) GetProvider(ctx context.Context, providerID string) (
 	return provider, nil
 }
 
-func (s *ProvidersService) GetProviderByCode(ctx context.Context, code string) (entities.Provider, error) {
+// GetProviderByCode returns a provider by its assigned DEU code, including associated files.
+func (s *service) GetProviderByCode(ctx context.Context, code string) (entities.Provider, error) {
 	provider, err := s.repo.GetProviderByCode(ctx, code)
 	if err != nil {
 		s.logger.Error("failed to get provider by code", zap.Error(err))
@@ -112,32 +127,38 @@ func (s *ProvidersService) GetProviderByCode(ctx context.Context, code string) (
 	return provider, nil
 }
 
-func (s *ProvidersService) GetProviders(ctx context.Context, pageScope entities.PageScope) ([]entities.Provider, entities.PageScope, error) {
+// GetProviders returns a paginated list of providers. Files are fetched concurrently for each provider.
+func (s *service) GetProviders(ctx context.Context, pageScope entities.PageScope) ([]entities.Provider, entities.PageScope, error) {
 	providers, pageScope, err := s.repo.GetProviders(ctx, pageScope)
 	if err != nil {
 		s.logger.Error("failed to get providers", zap.Error(err))
 		return nil, entities.PageScope{}, err
 	}
 
-	var wg sync.WaitGroup
+	eg, egCtx := errgroup.WithContext(ctx)
 	for i := range providers {
-		wg.Add(1)
-		go func(idx int) {
-			defer wg.Done()
-			files, err := s.getFilesForProvider(ctx, providers[idx].ID)
+		idx := i
+		eg.Go(func() error {
+			files, err := s.getFilesForProvider(egCtx, providers[idx].ID)
 			if err != nil {
-				s.logger.Error("failed to get files for provider", zap.Error(err), zap.String("provider_id", providers[idx].ID))
-				return
+				return fmt.Errorf("failed to get files for provider %s: %w", providers[idx].ID, err)
 			}
 			providers[idx].Files = files
-		}(i)
+			return nil
+		})
 	}
-	wg.Wait()
+	if err := eg.Wait(); err != nil {
+		s.logger.Error("failed to get files for one or more providers", zap.Error(err))
+		return nil, entities.PageScope{}, err
+	}
 
 	return providers, pageScope, nil
 }
 
-func (s *ProvidersService) CreateProvider(ctx context.Context, provider *entities.Provider) (int64, string, error) {
+// CreateProvider registers a new provider, uploads its required files to storage,
+// saves file metadata to the database, and sends a confirmation email.
+// Returns the new provider's database ID and generated provider code.
+func (s *service) CreateProvider(ctx context.Context, provider *entities.Provider) (int64, string, error) {
 	code, err := entities.GenerateProviderCode(provider.Type)
 	if err != nil {
 		s.logger.Error("failed to generate provider code", zap.Error(err))
@@ -150,6 +171,7 @@ func (s *ProvidersService) CreateProvider(ctx context.Context, provider *entitie
 		return -1, "", err
 	}
 
+	provider.ID = fmt.Sprintf("%d", createdProviderID)
 	commonMetadata := map[string]string{
 		"provider_id":      provider.ID,
 		"provider_code":    provider.Code,
@@ -185,10 +207,29 @@ func (s *ProvidersService) CreateProvider(ctx context.Context, provider *entitie
 		zap.String("action", "upload_and_save"),
 	)
 
+	p, err := s.repo.GetProvider(ctx, provider.ID)
+	if err != nil {
+		s.logger.Error("failed to get provider", zap.Error(err))
+		return -1, "", err
+	}
+
+	provider.User.Email = p.User.Email
+	provider.User.FirstName = p.User.FirstName
+	provider.User.LastName = p.User.LastName
+	if err := s.emailClient.Send(ctx, provider.User.Email, "Provider Registration Successful", fmt.Sprintf("Your provider registration is complete. Your provider code is: %s", code)); err != nil {
+		s.logger.Error("failed to send provider registration email",
+			zap.Error(err),
+			zap.String("provider_code", code),
+			zap.String("action", "send_email"),
+		)
+		return -1, "", fmt.Errorf("error sending provider registration email: %w", err)
+	}
+
 	return createdProviderID, code, nil
 }
 
-func (s *ProvidersService) UpdateProvider(ctx context.Context, providerID string, provider *entities.Provider) error {
+// UpdateProvider updates an existing provider's data and re-uploads its associated files.
+func (s *service) UpdateProvider(ctx context.Context, providerID string, provider *entities.Provider) error {
 	err := s.repo.UpdateProvider(ctx, providerID, *provider)
 	if err != nil {
 		s.logger.Error("failed to update provider", zap.Error(err))
@@ -236,7 +277,8 @@ func (s *ProvidersService) UpdateProvider(ctx context.Context, providerID string
 	return nil
 }
 
-func (s *ProvidersService) DeleteProvider(ctx context.Context, providerID string) error {
+// DeleteProvider soft-deletes a provider by ID.
+func (s *service) DeleteProvider(ctx context.Context, providerID string) error {
 	err := s.repo.DeleteProvider(ctx, providerID)
 	if err != nil {
 		s.logger.Error("failed to delete provider", zap.Error(err))
@@ -245,6 +287,8 @@ func (s *ProvidersService) DeleteProvider(ctx context.Context, providerID string
 	return nil
 }
 
+// prepareFilesSlice builds the full list of file entities from a provider's file pointers,
+// setting ownership, storage key, and metadata on each file.
 func prepareFilesSlice(provider *entities.Provider, providerID int64, metadata map[string]string) ([]*entities.File, error) {
 	filesArr := []*entities.File{
 		makeFileEntityFromFilePointer(provider.Files.CI, providerID, provider.User.ID, entities.OwnerTypeProvider, metadata),
@@ -261,6 +305,7 @@ func prepareFilesSlice(provider *entities.Provider, providerID int64, metadata m
 	return filesArr, nil
 }
 
+// makeFileEntityFromFilePointer populates ownership and storage fields on a file pointer in-place and returns it.
 func makeFileEntityFromFilePointer(file *entities.File, providerID int64, uploadedBy string, ownerType entities.OwnerType, metadata map[string]string) *entities.File {
 	file.OwnerID = fmt.Sprintf("%d", providerID)
 	file.OwnerType = ownerType
@@ -273,7 +318,7 @@ func makeFileEntityFromFilePointer(file *entities.File, providerID int64, upload
 }
 
 // getFilesForProvider retrieves and populates file URLs for a provider.
-func (s *ProvidersService) getFilesForProvider(ctx context.Context, providerID string) (entities.ProviderFiles, error) {
+func (s *service) getFilesForProvider(ctx context.Context, providerID string) (entities.ProviderFiles, error) {
 	s.logger.Debug("getting files for provider",
 		zap.String("provider_id", providerID),
 		zap.String("action", "get_files"),

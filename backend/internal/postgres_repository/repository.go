@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 
 	"go.uber.org/zap"
 )
@@ -10,6 +11,12 @@ import (
 const (
 	pgErrorCodeUniqueViolation = "23505"
 	pgErrorCodeNoData          = "02000"
+)
+
+var (
+	ErrDatabaseError = errors.New("database error")
+	ErrScanError     = errors.New("scan error")
+	ErrInvalidQuery  = errors.New("invalid query")
 )
 
 type scannable interface {
@@ -31,5 +38,22 @@ func NewRepository(connection *sql.DB, directory string, logger *zap.Logger) *Po
 		db:           connection,
 		documentsDir: directory,
 		logger:       logger,
+	}
+}
+
+// toNullString converts a string to sql.NullString.
+// Returns a valid NullString if the value is non-empty.
+func toNullString(s string) sql.NullString {
+	return sql.NullString{
+		String: s,
+		Valid:  s != "",
+	}
+}
+
+// toNullBool converts a bool to sql.NullBool with Valid always true.
+func toNullBool(b bool) sql.NullBool {
+	return sql.NullBool{
+		Bool:  b,
+		Valid: true,
 	}
 }

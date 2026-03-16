@@ -1,6 +1,6 @@
 package entities
 
-type GroupAuthRequest struct {
+type GroupRequest struct {
 	ID        string
 	GroupID   string
 	Faculty   Faculty

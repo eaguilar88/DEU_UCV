@@ -319,10 +319,10 @@ func scanCourseRequestWithCourse(row scannable) (models.CourseRequest, error) {
 
 func newCourseRequestFromModel(request models.CourseRequest) entities.CourseRequest {
 	result := entities.CourseRequest{
-		ID:          request.ID,
-		Status:      entities.RequestStatus(request.Status),
-		CreatedAt:   request.CreatedAt,
-		UpdatedAtAt: request.UpdatedAt,
+		ID:        request.ID,
+		Status:    entities.RequestStatus(request.Status),
+		CreatedAt: request.CreatedAt,
+		UpdatedAt: request.UpdatedAt,
 	}
 
 	if request.ReviewerID.Valid {
@@ -364,6 +364,6 @@ func newCourseRequestModelFromEntities(request entities.CourseRequest) models.Co
 			Valid:  request.ReviewedAt != "",
 		},
 		CreatedAt: request.CreatedAt,
-		UpdatedAt: request.UpdatedAtAt,
+		UpdatedAt: request.UpdatedAt,
 	}
 }

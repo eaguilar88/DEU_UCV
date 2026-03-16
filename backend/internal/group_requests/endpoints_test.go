@@ -22,7 +22,7 @@ func TestGroupRequestEndpointsHandler_ApproveGroupRequest(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			h := group_requests.MakeGroupRequestEndpointsHandler(tt.svc, tt.log)
+			h := group_requests.NewHandler(tt.svc, tt.log)
 			gotErr := h.ApproveGroupRequest(tt.c)
 			if gotErr != nil {
 				if !tt.wantErr {

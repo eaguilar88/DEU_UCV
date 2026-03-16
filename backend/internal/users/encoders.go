@@ -6,7 +6,7 @@ func UserEntityToGetUserResponse(user entities.User) GetUserResponse {
 	return GetUserResponse{
 		ID:             user.ID,
 		CI:             user.CI,
-		Username:       user.Username,
+		Email:          user.Email,
 		FirstName:      user.FirstName,
 		LastName:       user.LastName,
 		DateOfBirth:    user.DateOfBirth,

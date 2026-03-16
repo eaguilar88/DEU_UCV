@@ -83,7 +83,7 @@ func (r *PostgresRepository) CreateGroup(ctx context.Context, gr entities.Extens
 }
 
 // CreateGroupWithRequest creates a group and its authorization request in a single transaction
-func (r *PostgresRepository) CreateGroupWithRequest(ctx context.Context, group entities.ExtensionGroup, request entities.GroupAuthRequest) (groupID int64, requestID int64, err error) {
+func (r *PostgresRepository) CreateGroupWithRequest(ctx context.Context, group entities.ExtensionGroup, request entities.GroupRequest) (groupID int64, requestID int64, err error) {
 	// Begin transaction
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -117,7 +117,7 @@ func (r *PostgresRepository) CreateGroupWithRequest(ctx context.Context, group e
 	}
 
 	// 2. Create the group authorization request
-	requestSQL, requestArgs, err := queries.InsertGroupRequest(models.GroupAuthRequest{
+	requestSQL, requestArgs, err := queries.InsertGroupRequest(models.GroupRequest{
 		GroupID: groupID,
 		Status:  string(request.Status),
 		Faculty: string(request.Faculty),
@@ -201,7 +201,7 @@ func (r *PostgresRepository) DeleteGroup(ctx context.Context, groupID string) er
 	return nil
 }
 
-func (r *PostgresRepository) CreateGroupRequest(ctx context.Context, req entities.GroupAuthRequest) (int64, error) {
+func (r *PostgresRepository) CreateGroupRequest(ctx context.Context, req entities.GroupRequest) (int64, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return -1, err
@@ -214,7 +214,7 @@ func (r *PostgresRepository) CreateGroupRequest(ctx context.Context, req entitie
 		return -1, err
 	}
 
-	sql, args, err := queries.InsertGroupRequest(models.GroupAuthRequest{
+	sql, args, err := queries.InsertGroupRequest(models.GroupRequest{
 		GroupID: int64(groupID),
 		Status:  string(req.Status),
 		Faculty: string(req.Faculty),

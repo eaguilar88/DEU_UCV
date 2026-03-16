@@ -1,9 +1,7 @@
 package courses
 
 import (
-	"github.com/eaguilar88/deu/internal/course_requests"
 	"github.com/eaguilar88/deu/internal/entities"
-	"github.com/eaguilar88/deu/internal/users"
 )
 
 type LatestCoursePeriodInfo struct {
@@ -14,21 +12,28 @@ type LatestCoursePeriodInfo struct {
 }
 
 type GetCourseResponse struct {
-	ID           string                                    `json:"id,omitempty"`
-	Content      string                                    `json:"contenido,omitempty"`
-	Cost         float64                                   `json:"costo,omitempty"`
-	CreatedAt    string                                    `json:"creado_en,omitempty"`
-	Description  string                                    `json:"descripcion,omitempty"`
-	Duration     int                                       `json:"duracion,omitempty"`
-	Endorsement  *course_requests.GetCourseRequestResponse `json:"aval,omitempty"`
-	Faculty      string                                    `json:"facultad,omitempty"`
-	Location     string                                    `json:"ubicacion,omitempty"`
-	Name         string                                    `json:"nombre,omitempty"`
-	Objectives   string                                    `json:"objetivos,omitempty"`
-	Owner        *users.GetUserResponse                    `json:"propietario,omitempty"`
-	Type         string                                    `json:"tipo,omitempty"`
-	UpdatedAt    string                                    `json:"actualizado_en,omitempty"`
-	LatestPeriod *LatestCoursePeriodInfo                   `json:"ultimo_periodo,omitempty"`
+	ID                string                  `json:"id,omitempty"`
+	Slug              string                  `json:"slug"`
+	Name              string                  `json:"titulo,omitempty"`
+	Description       string                  `json:"descripcion,omitempty"`
+	Logo              string                  `json:"image,omitempty"`
+	Objectives        string                  `json:"proposito,omitempty"`
+	Motivation        string                  `json:"fundamentacion,omitempty"`
+	Duration          int                     `json:"duracion,omitempty"`
+	Cost              string                  `json:"estructura_costos,omitempty"`
+	InstructorProfile string                  `json:"perfil_docente,omitempty"`
+	Profiles          string                  `json:"perfiles,omitempty"`
+	Requirements      string                  `json:"exigencias,omitempty"`
+	Content           string                  `json:"estructura_curricular,omitempty"`
+	Evaluation        string                  `json:"evaluacion,omitempty"`
+	Schedule          string                  `json:"cronograma,omitempty"`
+	ProviderCode      string                  `json:"codigo_proveedor,omitempty"`
+	Faculty           string                  `json:"facultad,omitempty"`
+	UserID            string                  `json:"user_id,omitempty"`
+	Type              string                  `json:"tipo,omitempty"`
+	CreatedAt         string                  `json:"creado_en,omitempty"`
+	UpdatedAt         string                  `json:"actualizado_en,omitempty"`
+	LatestPeriod      *LatestCoursePeriodInfo `json:"ultimo_periodo,omitempty"`
 }
 
 type GetCoursesResponse struct {

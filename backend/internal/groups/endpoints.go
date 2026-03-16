@@ -20,19 +20,19 @@ type Service interface {
 	DeleteGroup(ctx context.Context, groupID, userID string) error
 }
 
-type GroupEndpointsHandler struct {
+type Handler struct {
 	svc Service
 	log *zap.Logger
 }
 
-func MakeGroupEndpointsHandler(svc Service, log *zap.Logger) GroupEndpointsHandler {
-	return GroupEndpointsHandler{
+func NewHandler(svc Service, log *zap.Logger) *Handler {
+	return &Handler{
 		svc: svc,
 		log: log,
 	}
 }
 
-func (h *GroupEndpointsHandler) GetGroup(c echo.Context) error {
+func (h *Handler) GetGroup(c echo.Context) error {
 	ctx := c.Request().Context()
 	req := GetGroupRequest{ID: c.Param("id")}
 	group, err := h.svc.GetGroup(ctx, req.ID)
@@ -44,7 +44,7 @@ func (h *GroupEndpointsHandler) GetGroup(c echo.Context) error {
 	return c.JSON(http.StatusOK, EntitiesGroupToGetGroupResponse(group))
 }
 
-func (h *GroupEndpointsHandler) GetGroups(c echo.Context) error {
+func (h *Handler) GetGroups(c echo.Context) error {
 	ctx := c.Request().Context()
 	scope := entities.PageScope{}
 
@@ -65,7 +65,7 @@ func (h *GroupEndpointsHandler) GetGroups(c echo.Context) error {
 	})
 }
 
-func (h *GroupEndpointsHandler) CreateGroup(c echo.Context) error {
+func (h *Handler) CreateGroup(c echo.Context) error {
 	ctx := c.Request().Context()
 	userID, ok := c.Get("userID").(string)
 	if !ok {
@@ -90,7 +90,7 @@ func (h *GroupEndpointsHandler) CreateGroup(c echo.Context) error {
 	})
 }
 
-func (h *GroupEndpointsHandler) UpdateGroup(c echo.Context) error {
+func (h *Handler) UpdateGroup(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req UpdateGroupRequest
 	if err := c.Bind(&req); err != nil {
@@ -117,7 +117,7 @@ func (h *GroupEndpointsHandler) UpdateGroup(c echo.Context) error {
 	return c.JSON(http.StatusAccepted, nil)
 }
 
-func (h *GroupEndpointsHandler) DeleteGroup(c echo.Context) error {
+func (h *Handler) DeleteGroup(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req DeleteGroupRequest
 	if err := c.Bind(&req); err != nil {

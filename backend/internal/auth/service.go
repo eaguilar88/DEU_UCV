@@ -10,25 +10,25 @@ import (
 )
 
 type Repository interface {
-	GetUserByUsername(ctx context.Context, username string) (entities.User, error)
+	GetUserByUsername(ctx context.Context, username string) (*entities.User, error)
 	GetUserRoles(ctx context.Context, userID string) ([]string, error)
 }
 
-type AuthService struct {
+type service struct {
 	repository Repository
 	signer     jwt.Signer
 	logger     *zap.Logger
 }
 
-func NewAuthService(repo Repository, signer jwt.Signer, logger *zap.Logger) *AuthService {
-	return &AuthService{
+func NewService(repo Repository, signer jwt.Signer, logger *zap.Logger) Service {
+	return &service{
 		repository: repo,
 		signer:     signer,
 		logger:     logger,
 	}
 }
 
-func (s *AuthService) Login(ctx context.Context, username, password string) (string, *entities.User, error) {
+func (s *service) Login(ctx context.Context, username, password string) (string, *entities.User, error) {
 	user, err := s.repository.GetUserByUsername(ctx, username)
 	if err != nil {
 		return "", nil, err
@@ -52,5 +52,5 @@ func (s *AuthService) Login(ctx context.Context, username, password string) (str
 		return "", nil, err
 	}
 
-	return tokenString, &user, nil
+	return tokenString, user, nil
 }

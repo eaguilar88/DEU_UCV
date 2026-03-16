@@ -20,19 +20,19 @@ type Repository interface {
 	GetCourseRequestByID(ctx context.Context, reqID string) (entities.CourseRequest, error)
 }
 
-type CourseRequestService struct {
+type service struct {
 	repo   Repository
 	logger *zap.Logger
 }
 
-func NewCourseRequestService(repo Repository, logger *zap.Logger) *CourseRequestService {
-	return &CourseRequestService{
+func NewService(repo Repository, logger *zap.Logger) Service {
+	return &service{
 		repo:   repo,
 		logger: logger,
 	}
 }
 
-func (s *CourseRequestService) ApproveCourseRequest(ctx context.Context, request entities.CourseRequest, courseType entities.CourseType) error {
+func (s *service) ApproveCourseRequest(ctx context.Context, request entities.CourseRequest, courseType entities.CourseType) error {
 	if existingRequest, err := s.repo.GetCourseRequestByID(ctx, request.ID); err != nil {
 		return err
 	} else if existingRequest.Status != entities.RequestStatus_UNDER_REVIEW {
@@ -42,7 +42,7 @@ func (s *CourseRequestService) ApproveCourseRequest(ctx context.Context, request
 	return s.repo.ApproveCourseRequest(ctx, request.ID, request.Reviewer.ID, courseType.String(), request.Comments)
 }
 
-func (s *CourseRequestService) RejectCourseRequest(ctx context.Context, reqID, reviewerID, comments string) error {
+func (s *service) RejectCourseRequest(ctx context.Context, reqID, reviewerID, comments string) error {
 	if existingRequest, err := s.repo.GetCourseRequestByID(ctx, reqID); err != nil {
 		return err
 	} else if existingRequest.Status != entities.RequestStatus_UNDER_REVIEW {
@@ -52,7 +52,7 @@ func (s *CourseRequestService) RejectCourseRequest(ctx context.Context, reqID, r
 	return s.repo.RejectCourseRequest(ctx, reqID, reviewerID, comments)
 }
 
-func (s *CourseRequestService) RedirectCourseRequest(ctx context.Context, reqID, reviewerID string, faculty entities.Faculty, reason string) error {
+func (s *service) RedirectCourseRequest(ctx context.Context, reqID, reviewerID string, faculty entities.Faculty, reason string) error {
 	if existingRequest, err := s.repo.GetCourseRequestByID(ctx, reqID); err != nil {
 		return err
 	} else if existingRequest.Status != entities.RequestStatus_UNDER_REVIEW {
@@ -62,7 +62,7 @@ func (s *CourseRequestService) RedirectCourseRequest(ctx context.Context, reqID,
 	return s.repo.RedirectCourseRequest(ctx, reqID, reviewerID, faculty, reason)
 }
 
-func (s *CourseRequestService) GetCourseRequestsByFaculty(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.CourseRequest, entities.PageScope, error) {
+func (s *service) GetCourseRequestsByFaculty(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.CourseRequest, entities.PageScope, error) {
 	cr, ps, err := s.repo.GetCourseRequestsByFaculty(ctx, faculty, pageScope)
 	if err != nil {
 		s.logger.Error("failed to get course requests by faculty", zap.Error(err))
@@ -72,6 +72,6 @@ func (s *CourseRequestService) GetCourseRequestsByFaculty(ctx context.Context, f
 	return cr, ps, nil
 }
 
-func (s *CourseRequestService) GetCourseRequestByID(ctx context.Context, reqID string) (entities.CourseRequest, error) {
+func (s *service) GetCourseRequestByID(ctx context.Context, reqID string) (entities.CourseRequest, error) {
 	return s.repo.GetCourseRequestByID(ctx, reqID)
 }

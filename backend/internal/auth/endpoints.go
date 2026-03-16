@@ -13,19 +13,19 @@ type Service interface {
 	Login(ctx context.Context, username, password string) (string, *entities.User, error)
 }
 
-type AuthEndpointsHandler struct {
+type Handler struct {
 	svc Service
 	log *zap.Logger
 }
 
-func MakeAuthEndpointsHandler(svc Service, log *zap.Logger) AuthEndpointsHandler {
-	return AuthEndpointsHandler{
+func NewHandler(svc Service, log *zap.Logger) *Handler {
+	return &Handler{
 		svc: svc,
 		log: log,
 	}
 }
 
-func (h AuthEndpointsHandler) LoginHandleHTTP(c echo.Context) error {
+func (h *Handler) LoginHandleHTTP(c echo.Context) error {
 	var req LoginRequest
 	if err := c.Bind(&req); err != nil {
 		return echo.ErrUnauthorized
