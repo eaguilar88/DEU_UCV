@@ -22,6 +22,7 @@ func NewMailgunClient(config config.EmailConfig, logger *zap.Logger) *MailgunCli
 		from:   config.From,
 		domain: config.Domain,
 		client: c,
+		logger: logger,
 	}
 }
 
