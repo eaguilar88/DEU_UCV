@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/eaguilar88/deu/internal/entities"
-	errs "github.com/eaguilar88/deu/internal/errors"
+	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/eaguilar88/deu/internal/postgres_repository/models"
 	"github.com/eaguilar88/deu/internal/postgres_repository/queries"
 	"github.com/lib/pq"
@@ -115,10 +115,10 @@ func (r *PostgresRepository) CreateProvider(ctx context.Context, provider entiti
 	if err != nil {
 		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == pgErrorCodeUniqueViolation {
 			r.logger.Error("error inserting provider", zap.Error(err))
-			return -1, errs.NewDuplicateEntryError(err)
+			return -1, httperrors.NewDuplicateEntryError(err)
 		}
 		r.logger.Error("error inserting provider", zap.Error(err))
-		return -1, errs.NewInternalError(err)
+		return -1, httperrors.NewInternalError(err)
 	}
 	return lastInsertedID, nil
 }
@@ -126,12 +126,12 @@ func (r *PostgresRepository) CreateProvider(ctx context.Context, provider entiti
 func (r *PostgresRepository) UpdateProvider(ctx context.Context, providerID string, provider entities.Provider) error {
 	sql, args, err := queries.UpdateProvider(newProviderModelFromEntities(provider)).ToSql()
 	if err != nil {
-		return errs.NewBadQueryError(err)
+		return httperrors.NewBadQueryError(err)
 	}
 
 	stmt, err := r.db.PrepareContext(ctx, sql)
 	if err != nil {
-		return errs.NewBadQueryError(err)
+		return httperrors.NewBadQueryError(err)
 	}
 	defer stmt.Close()
 
@@ -141,7 +141,7 @@ func (r *PostgresRepository) UpdateProvider(ctx context.Context, providerID stri
 	}
 
 	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
-		return errs.NewNotFoundError(err)
+		return httperrors.NewNotFoundError(err)
 	}
 
 	return nil
@@ -150,12 +150,12 @@ func (r *PostgresRepository) UpdateProvider(ctx context.Context, providerID stri
 func (r *PostgresRepository) DeleteProvider(ctx context.Context, providerID string) error {
 	sql, args, err := queries.DeleteProvider(providerID).ToSql()
 	if err != nil {
-		return errs.NewBadQueryError(err)
+		return httperrors.NewBadQueryError(err)
 	}
 
 	stmt, err := r.db.PrepareContext(ctx, sql)
 	if err != nil {
-		return errs.NewBadQueryError(err)
+		return httperrors.NewBadQueryError(err)
 	}
 	defer stmt.Close()
 
@@ -165,7 +165,7 @@ func (r *PostgresRepository) DeleteProvider(ctx context.Context, providerID stri
 	}
 
 	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
-		return errs.NewNotFoundError(err)
+		return httperrors.NewNotFoundError(err)
 	}
 
 	return nil

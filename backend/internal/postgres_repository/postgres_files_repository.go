@@ -32,8 +32,8 @@ func (r *PostgresRepository) SaveFilesToDB(ctx context.Context, files []*entitie
 	return nil
 }
 
-func (r *PostgresRepository) GetFilesByOwner(ctx context.Context, ownerID string) (entities.GroupedFiles, error) {
-	sql, args, err := queries.GetFilesByOwner(ownerID, string(entities.OwnerTypeProvider)).ToSql()
+func (r *PostgresRepository) GetFilesByOwner(ctx context.Context, ownerID string, ownerType entities.OwnerType) (entities.GroupedFiles, error) {
+	sql, args, err := queries.GetFilesByOwner(ownerID, ownerType.String()).ToSql()
 	if err != nil {
 		return nil, err
 	}

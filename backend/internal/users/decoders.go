@@ -5,7 +5,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func createUserRequestToEntitiesUser(req CreateUserRequest) (entities.User, error) {
+// toUserEntity converts CreateUserRequest to a User entity.
+func toUserEntity(req CreateUserRequest) (entities.User, error) {
 	password, err := generateSecurePassword(req.Password)
 	if err != nil {
 		return entities.User{}, err
@@ -35,7 +36,8 @@ func generateSecurePassword(password string) (string, error) {
 	return string(hashedPassword), nil
 }
 
-func updateUserRequestToEntitiesUser(req UpdateUserRequest) entities.User {
+// toUserUpdateEntity converts UpdateUserRequest to a User entity.
+func toUserUpdateEntity(req UpdateUserRequest) entities.User {
 	return entities.User{
 		ID:             req.ID,
 		CI:             req.Document,

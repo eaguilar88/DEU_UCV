@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/eaguilar88/deu/internal/entities"
-	errs "github.com/eaguilar88/deu/internal/errors"
+	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/eaguilar88/deu/internal/postgres_repository/models"
 	"github.com/eaguilar88/deu/internal/postgres_repository/queries"
 	"go.uber.org/zap"
@@ -93,7 +93,7 @@ func (r *PostgresRepository) ApproveGroupRequest(ctx context.Context, reqID stri
 		return err
 	}
 	if rowsAffected == 0 {
-		return errs.ErrNotFound
+		return httperrors.ErrNotFound
 	}
 	return nil
 }
@@ -117,7 +117,7 @@ func (r *PostgresRepository) RejectGroupRequest(ctx context.Context, reqID strin
 		return err
 	}
 	if rowsAffected == 0 {
-		return errs.ErrNotFound
+		return httperrors.ErrNotFound
 	}
 	return nil
 }

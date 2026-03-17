@@ -9,6 +9,9 @@ const (
 	CourseType_SkillDevelopment  CourseType = "skill_development"
 	CourseType_LifeSkills        CourseType = "life_skills"
 	CourseType_TechnicalTraining CourseType = "technical_training"
+
+	//Files
+	CourseFileTypeCover = "portada"
 )
 
 var (
@@ -16,23 +19,28 @@ var (
 )
 
 type Course struct {
-	ID            string
-	Slug          string
-	Name          string
-	Description   string
-	Logo          string
-	Content       string
-	Cost          string
-	CourseRequest CourseRequest
-	Duration      int
-	Faculty       Faculty
-	Location      string
-	Objectives    string
-	Owner         User
-	Periods       []CoursePeriod
-	Type          CourseType
-	CreatedAt     string
-	UpdatedAt     string
+	ID                string
+	Name              string
+	Description       string
+	Cover             *File
+	Content           string
+	Cost              string
+	Rationale         string
+	InstructorProfile string
+	Profiles          string
+	Requirements      string
+	Evaluation        string
+	Schedule          string
+	CourseRequest     CourseRequest
+	Duration          string
+	Faculty           Faculty
+	Location          string
+	Objectives        string
+	Owner             User
+	Periods           []CoursePeriod
+	Type              CourseType
+	CreatedAt         string
+	UpdatedAt         string
 }
 
 func (ct CourseType) IsValid() bool {

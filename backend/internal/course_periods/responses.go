@@ -23,9 +23,8 @@ type GetCoursePeriodResponse struct {
 	DeletedAt       string             `json:"eliminado_en,omitempty"`
 }
 
-func EntitiesCoursePeriodToGetCoursePeriodResponse(
-	coursePeriod entities.CoursePeriod,
-) GetCoursePeriodResponse {
+// periodToResponse converts a CoursePeriod entity to GetCoursePeriodResponse.
+func periodToResponse(coursePeriod entities.CoursePeriod) GetCoursePeriodResponse {
 	announcements := make([]AnnouncementInfo, 0, len(coursePeriod.Announcements))
 	for _, announcement := range coursePeriod.Announcements {
 		announcements = append(announcements, AnnouncementInfo{
@@ -54,12 +53,11 @@ type GetCoursePeriodsResponse struct {
 	Pages   entities.PageScope        `json:"paginas"`
 }
 
-func EntitiesCoursePeriodsToGetCoursePeriodsResponse(
-	coursePeriods []entities.CoursePeriod,
-) []GetCoursePeriodResponse {
+// periodsToResponse converts a slice of CoursePeriod entities to responses.
+func periodsToResponse(coursePeriods []entities.CoursePeriod) []GetCoursePeriodResponse {
 	out := make([]GetCoursePeriodResponse, 0, len(coursePeriods))
 	for _, coursePeriod := range coursePeriods {
-		out = append(out, EntitiesCoursePeriodToGetCoursePeriodResponse(coursePeriod))
+		out = append(out, periodToResponse(coursePeriod))
 	}
 	return out
 }
@@ -81,7 +79,8 @@ type GetAnnouncementResponse struct {
 	UpdatedAt string `json:"actualizado_el"`
 }
 
-func EntitiesAnnouncementToGetAnnouncementResponse(announcement entities.Announcement) GetAnnouncementResponse {
+// announcementToResponse converts an Announcement entity to GetAnnouncementResponse.
+func announcementToResponse(announcement entities.Announcement) GetAnnouncementResponse {
 	return GetAnnouncementResponse{
 		ID:        announcement.ID,
 		Title:     announcement.Title,

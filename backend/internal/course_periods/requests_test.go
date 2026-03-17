@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_createCoursePeriodRequestToEntitiesCoursePeriod(t *testing.T) {
+func Test_toPeriodEntity(t *testing.T) {
 	type testCase struct {
 		name   string
 		userID string
@@ -36,12 +36,12 @@ func Test_createCoursePeriodRequestToEntitiesCoursePeriod(t *testing.T) {
 		},
 	}
 	t.Run(tc.name, func(t *testing.T) {
-		got := createCoursePeriodRequestToEntitiesCoursePeriod(tc.req, tc.userID)
+		got := toPeriodEntity(tc.req, tc.userID)
 		assert.Equal(t, tc.want, got)
 	})
 }
 
-func Test_updateCoursePeriodRequestToEntitiesCoursePeriod(t *testing.T) {
+func Test_toPeriodUpdateEntity(t *testing.T) {
 	type testCase struct {
 		name   string
 		userID string
@@ -72,7 +72,7 @@ func Test_updateCoursePeriodRequestToEntitiesCoursePeriod(t *testing.T) {
 		},
 	}
 	t.Run(tc.name, func(t *testing.T) {
-		got := updateCoursePeriodRequestToEntitiesCoursePeriod(tc.req, tc.userID)
+		got := toPeriodUpdateEntity(tc.req, tc.userID)
 		assert.Equal(t, tc.want, got)
 	})
 }

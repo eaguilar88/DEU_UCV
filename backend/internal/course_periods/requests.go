@@ -22,7 +22,8 @@ type CreateCoursePeriodRequest struct {
 	InscriptionDate string `json:"fecha_inscripcion"`
 }
 
-func createCoursePeriodRequestToEntitiesCoursePeriod(req CreateCoursePeriodRequest, userID string) entities.CoursePeriod {
+// toPeriodEntity converts CreateCoursePeriodRequest to a CoursePeriod entity.
+func toPeriodEntity(req CreateCoursePeriodRequest, userID string) entities.CoursePeriod {
 	return entities.CoursePeriod{
 		Course: entities.Course{
 			ID: req.CourseID,
@@ -44,10 +45,8 @@ type UpdateCoursePeriodRequest struct {
 	InscriptionDate string `json:"fecha_inscripcion"`
 }
 
-func updateCoursePeriodRequestToEntitiesCoursePeriod(
-	req UpdateCoursePeriodRequest,
-	userID string,
-) entities.CoursePeriod {
+// toPeriodUpdateEntity converts UpdateCoursePeriodRequest to a CoursePeriod entity.
+func toPeriodUpdateEntity(req UpdateCoursePeriodRequest, userID string) entities.CoursePeriod {
 	return entities.CoursePeriod{
 		ID: req.ID,
 		Course: entities.Course{
@@ -79,7 +78,8 @@ type CreateAnnouncementRequest struct {
 	Content  string `json:"contenido" validate:"required"`
 }
 
-func createAnnouncementRequestToEntitiesAnnouncement(req CreateAnnouncementRequest) entities.Announcement {
+// toAnnouncementEntity converts CreateAnnouncementRequest to an Announcement entity.
+func toAnnouncementEntity(req CreateAnnouncementRequest) entities.Announcement {
 	return entities.Announcement{
 		Title:   req.Title,
 		Content: req.Content,
@@ -93,7 +93,8 @@ type UpdateAnnouncementRequest struct {
 	Content  string `json:"contenido" validate:"required"`
 }
 
-func updateAnnouncementRequestToEntitiesAnnouncement(req UpdateAnnouncementRequest) entities.Announcement {
+// toAnnouncementUpdateEntity converts UpdateAnnouncementRequest to an Announcement entity.
+func toAnnouncementUpdateEntity(req UpdateAnnouncementRequest) entities.Announcement {
 	return entities.Announcement{
 		ID:      req.ID,
 		Title:   req.Title,

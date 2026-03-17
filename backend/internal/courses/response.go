@@ -13,13 +13,12 @@ type LatestCoursePeriodInfo struct {
 
 type GetCourseResponse struct {
 	ID                string                  `json:"id,omitempty"`
-	Slug              string                  `json:"slug"`
-	Name              string                  `json:"titulo,omitempty"`
+	Name              string                  `json:"nombre,omitempty"`
 	Description       string                  `json:"descripcion,omitempty"`
-	Logo              string                  `json:"image,omitempty"`
-	Objectives        string                  `json:"proposito,omitempty"`
-	Motivation        string                  `json:"fundamentacion,omitempty"`
-	Duration          int                     `json:"duracion,omitempty"`
+	Cover             string                  `json:"portada,omitempty"`
+	Objectives        string                  `json:"objetivos,omitempty"`
+	Rationale         string                  `json:"fundamentacion,omitempty"`
+	Duration          string                  `json:"duracion,omitempty"`
 	Cost              string                  `json:"estructura_costos,omitempty"`
 	InstructorProfile string                  `json:"perfil_docente,omitempty"`
 	Profiles          string                  `json:"perfiles,omitempty"`
@@ -28,8 +27,9 @@ type GetCourseResponse struct {
 	Evaluation        string                  `json:"evaluacion,omitempty"`
 	Schedule          string                  `json:"cronograma,omitempty"`
 	ProviderCode      string                  `json:"codigo_proveedor,omitempty"`
+	ProviderID        string                  `json:"id_proveedor,omitempty"`
 	Faculty           string                  `json:"facultad,omitempty"`
-	UserID            string                  `json:"user_id,omitempty"`
+	Location          string                  `json:"ubicacion,omitempty"`
 	Type              string                  `json:"tipo,omitempty"`
 	CreatedAt         string                  `json:"creado_en,omitempty"`
 	UpdatedAt         string                  `json:"actualizado_en,omitempty"`

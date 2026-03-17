@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"github.com/eaguilar88/deu/internal/entities"
-	errs "github.com/eaguilar88/deu/internal/errors"
+	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/eaguilar88/deu/internal/postgres_repository/models"
 	"github.com/eaguilar88/deu/internal/postgres_repository/queries"
 	"github.com/lib/pq"
@@ -74,10 +74,10 @@ func (r *PostgresRepository) CreateGroup(ctx context.Context, gr entities.Extens
 	if err != nil {
 		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == pgErrorCodeUniqueViolation {
 			r.logger.Error("error inserting group", zap.Error(err))
-			return -1, errs.NewDuplicateEntryError(err)
+			return -1, httperrors.NewDuplicateEntryError(err)
 		}
 		r.logger.Error("error inserting group", zap.Error(err))
-		return -1, errs.NewInternalError(err)
+		return -1, httperrors.NewInternalError(err)
 	}
 	return lastInsertedID, nil
 }
@@ -110,7 +110,7 @@ func (r *PostgresRepository) CreateGroupWithRequest(ctx context.Context, group e
 	if err != nil {
 		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == pgErrorCodeUniqueViolation {
 			r.logger.Error("duplicate group entry", zap.Error(err))
-			return -1, -1, errs.NewDuplicateEntryError(err)
+			return -1, -1, httperrors.NewDuplicateEntryError(err)
 		}
 		r.logger.Error("failed to insert group", zap.Error(err))
 		return -1, -1, fmt.Errorf("failed to insert group: %w", err)
@@ -142,7 +142,7 @@ func (r *PostgresRepository) CreateGroupWithRequest(ctx context.Context, group e
 	if err != nil {
 		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == pgErrorCodeUniqueViolation {
 			r.logger.Error("duplicate group request entry", zap.Error(err))
-			return -1, -1, errs.NewDuplicateEntryError(err)
+			return -1, -1, httperrors.NewDuplicateEntryError(err)
 		}
 		r.logger.Error("failed to insert group request", zap.Error(err))
 		return -1, -1, fmt.Errorf("failed to insert group request: %w", err)
@@ -176,7 +176,7 @@ func (r *PostgresRepository) UpdateGroup(ctx context.Context, group entities.Ext
 		return err
 	}
 	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
-		return errs.NewNotFoundError(err)
+		return httperrors.NewNotFoundError(err)
 	}
 	return nil
 }
@@ -196,7 +196,7 @@ func (r *PostgresRepository) DeleteGroup(ctx context.Context, groupID string) er
 		return err
 	}
 	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
-		return errs.NewNotFoundError(err)
+		return httperrors.NewNotFoundError(err)
 	}
 	return nil
 }
@@ -236,10 +236,10 @@ func (r *PostgresRepository) CreateGroupRequest(ctx context.Context, req entitie
 	if err != nil {
 		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == pgErrorCodeUniqueViolation {
 			r.logger.Error("error inserting group request", zap.Error(err), zap.String("group_id", req.GroupID))
-			return -1, errs.NewDuplicateEntryError(err)
+			return -1, httperrors.NewDuplicateEntryError(err)
 		}
 		r.logger.Error("error inserting group request", zap.Error(err), zap.String("group_id", req.GroupID))
-		return -1, errs.NewInternalError(err)
+		return -1, httperrors.NewInternalError(err)
 	}
 
 	if err := tx.Commit(); err != nil {

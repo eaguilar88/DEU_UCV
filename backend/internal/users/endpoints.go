@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/eaguilar88/deu/internal/entities"
+	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
@@ -36,11 +37,13 @@ func (h *Handler) GetUser(c echo.Context) error {
 	req := GetUserRequest{ID: c.Param("id")}
 	user, err := h.svc.GetUser(ctx, req.ID)
 	if err != nil {
-		h.log.Error("error getting user", zap.String("id", req.ID), zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, err.Error())
+		if errors.Is(err, ErrUserNotFound) {
+			return httperrors.NewNotFound("user not found")
+		}
+		return httperrors.NewInternal(err)
 	}
 
-	return c.JSON(http.StatusOK, UserEntityToGetUserResponse(user))
+	return c.JSON(http.StatusOK, userToResponse(user))
 }
 
 func (h *Handler) GetUsers(c echo.Context) error {
@@ -57,12 +60,11 @@ func (h *Handler) GetUsers(c echo.Context) error {
 	}
 	users, pages, err := h.svc.GetUsers(ctx, req.PageScope)
 	if err != nil {
-		h.log.Error("error getting users", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, err.Error())
+		return httperrors.NewInternal(err)
 	}
 
 	return c.JSON(http.StatusOK, GetUsersResponse{
-		Users: UserEntitiesToGetUserResponse(users),
+		Users: usersToResponse(users),
 		Pages: pages,
 	})
 }
@@ -71,25 +73,24 @@ func (h *Handler) CreateUser(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req CreateUserRequest
 	if err := c.Bind(&req); err != nil {
-		h.log.Error("error decoding create user request", zap.Error(err))
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return httperrors.NewBadRequest("invalid request body")
 	}
 
 	if err := c.Validate(req); err != nil {
-		h.log.Error("error validating request", zap.Error(err))
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return httperrors.NewBadRequest("validation failed")
 	}
 
-	newUser, err := createUserRequestToEntitiesUser(req)
+	newUser, err := toUserEntity(req)
 	if err != nil {
-		h.log.Error("error creating new user entity", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, err.Error())
+		return httperrors.NewBadRequest("invalid user data")
 	}
 
 	userID, err := h.svc.CreateUser(ctx, newUser)
 	if err != nil {
-		h.log.Error("error creating new user", zap.Error(err))
-		return h.handleError(c, err)
+		if errors.Is(err, ErrUserAlreadyExists) {
+			return httperrors.NewConflict("user already exists")
+		}
+		return httperrors.NewInternal(err)
 	}
 
 	return c.JSON(http.StatusCreated, CreateUsersResponse{
@@ -101,15 +102,16 @@ func (h *Handler) UpdateUser(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req UpdateUserRequest
 	if err := c.Bind(&req); err != nil {
-		h.log.Error("error decoding request", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, err.Error())
+		return httperrors.NewBadRequest("invalid request body")
 	}
 
-	newUser := updateUserRequestToEntitiesUser(req)
+	newUser := toUserUpdateEntity(req)
 	err := h.svc.UpdateUser(ctx, req.ID, newUser)
 	if err != nil {
-		h.log.Error("error updating user", zap.String("id", req.ID), zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, err.Error())
+		if errors.Is(err, ErrUserNotFound) {
+			return httperrors.NewNotFound("user not found")
+		}
+		return httperrors.NewInternal(err)
 	}
 
 	return c.JSON(http.StatusAccepted, nil)
@@ -119,26 +121,16 @@ func (h *Handler) DeleteUser(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req DeleteUserRequest
 	if err := c.Bind(&req); err != nil {
-		h.log.Error("error decoding request", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, err.Error())
+		return httperrors.NewBadRequest("invalid request body")
 	}
 
 	err := h.svc.DeleteUser(ctx, req.ID)
 	if err != nil {
-		h.log.Error("error deleting user", zap.String("id", req.ID), zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, err.Error())
+		if errors.Is(err, ErrUserNotFound) {
+			return httperrors.NewNotFound("user not found")
+		}
+		return httperrors.NewInternal(err)
 	}
 
 	return c.JSON(http.StatusAccepted, nil)
-}
-
-func (h *Handler) handleError(c echo.Context, err error) error {
-	switch {
-	case errors.Is(err, ErrUserNotFound):
-		return c.JSON(http.StatusNotFound, err.Error())
-	case errors.Is(err, ErrUserAlreadyExists):
-		return c.JSON(http.StatusConflict, err.Error())
-	default:
-		return c.JSON(http.StatusInternalServerError, err.Error())
-	}
 }

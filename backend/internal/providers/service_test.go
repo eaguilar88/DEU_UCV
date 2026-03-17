@@ -61,8 +61,8 @@ func TestService_GetProvider(t *testing.T) {
 					RunAndReturn(func(_ context.Context, _ string) (entities.Provider, error) {
 						return entities.Provider{ID: "1"}, nil
 					})
-				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1").
-					RunAndReturn(func(_ context.Context, _ string) (entities.GroupedFiles, error) {
+				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1", entities.OwnerTypeProvider).
+					RunAndReturn(func(_ context.Context, _ string, _ entities.OwnerType) (entities.GroupedFiles, error) {
 						return entities.GroupedFiles{}, nil
 					})
 			},
@@ -78,8 +78,8 @@ func TestService_GetProvider(t *testing.T) {
 					RunAndReturn(func(_ context.Context, _ string) (entities.Provider, error) {
 						return entities.Provider{ID: "1"}, nil
 					})
-				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1").
-					RunAndReturn(func(_ context.Context, _ string) (entities.GroupedFiles, error) {
+				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1", entities.OwnerTypeProvider).
+					RunAndReturn(func(_ context.Context, _ string, _ entities.OwnerType) (entities.GroupedFiles, error) {
 						return entities.GroupedFiles{entities.ProviderFileTypeCI: {ciFile}}, nil
 					})
 				storageMock.EXPECT().GetFileURL(mock.Anything, "ci-key").
@@ -126,8 +126,8 @@ func TestService_GetProvider(t *testing.T) {
 					RunAndReturn(func(_ context.Context, _ string) (entities.Provider, error) {
 						return entities.Provider{ID: "1"}, nil
 					})
-				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1").
-					RunAndReturn(func(_ context.Context, _ string) (entities.GroupedFiles, error) {
+				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1", entities.OwnerTypeProvider).
+					RunAndReturn(func(_ context.Context, _ string, _ entities.OwnerType) (entities.GroupedFiles, error) {
 						return entities.GroupedFiles{}, errors.New("fs error")
 					})
 			},
@@ -191,8 +191,8 @@ func TestService_GetProviderByCode(t *testing.T) {
 					RunAndReturn(func(_ context.Context, _ string) (entities.Provider, error) {
 						return entities.Provider{ID: "1"}, nil
 					})
-				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1").
-					RunAndReturn(func(_ context.Context, _ string) (entities.GroupedFiles, error) {
+				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1", entities.OwnerTypeProvider).
+					RunAndReturn(func(_ context.Context, _ string, _ entities.OwnerType) (entities.GroupedFiles, error) {
 						return entities.GroupedFiles{}, nil
 					})
 			},
@@ -218,8 +218,8 @@ func TestService_GetProviderByCode(t *testing.T) {
 					RunAndReturn(func(_ context.Context, _ string) (entities.Provider, error) {
 						return entities.Provider{ID: "1"}, nil
 					})
-				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1").
-					RunAndReturn(func(_ context.Context, _ string) (entities.GroupedFiles, error) {
+				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1", entities.OwnerTypeProvider).
+					RunAndReturn(func(_ context.Context, _ string, _ entities.OwnerType) (entities.GroupedFiles, error) {
 						return entities.GroupedFiles{}, errors.New("fs error")
 					})
 			},
@@ -277,8 +277,8 @@ func TestService_GetProviders(t *testing.T) {
 					RunAndReturn(func(_ context.Context, ps entities.PageScope) ([]entities.Provider, entities.PageScope, error) {
 						return []entities.Provider{{ID: "1"}}, ps, nil
 					})
-				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1").
-					RunAndReturn(func(_ context.Context, _ string) (entities.GroupedFiles, error) {
+				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1", entities.OwnerTypeProvider).
+					RunAndReturn(func(_ context.Context, _ string, _ entities.OwnerType) (entities.GroupedFiles, error) {
 						return entities.GroupedFiles{}, nil
 					})
 			},
@@ -302,8 +302,8 @@ func TestService_GetProviders(t *testing.T) {
 					RunAndReturn(func(_ context.Context, ps entities.PageScope) ([]entities.Provider, entities.PageScope, error) {
 						return []entities.Provider{{ID: "1"}}, ps, nil
 					})
-				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1").
-					RunAndReturn(func(_ context.Context, _ string) (entities.GroupedFiles, error) {
+				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1", entities.OwnerTypeProvider).
+					RunAndReturn(func(_ context.Context, _ string, _ entities.OwnerType) (entities.GroupedFiles, error) {
 						return entities.GroupedFiles{}, errors.New("fs error")
 					})
 			},
@@ -663,8 +663,8 @@ func TestService_getFilesForProvider(t *testing.T) {
 			name:       "success empty files",
 			providerID: "1",
 			prepare: func(repoMock *mocks.MockRepository, _ *mocks.MockStorageClient) {
-				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1").
-					RunAndReturn(func(_ context.Context, _ string) (entities.GroupedFiles, error) {
+				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1", entities.OwnerTypeProvider).
+					RunAndReturn(func(_ context.Context, _ string, _ entities.OwnerType) (entities.GroupedFiles, error) {
 						return entities.GroupedFiles{}, nil
 					})
 			},
@@ -676,8 +676,8 @@ func TestService_getFilesForProvider(t *testing.T) {
 			providerID: "1",
 			prepare: func(repoMock *mocks.MockRepository, storageMock *mocks.MockStorageClient) {
 				ciFile := &entities.File{Key: "ci-key", Name: "ci.pdf"}
-				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1").
-					RunAndReturn(func(_ context.Context, _ string) (entities.GroupedFiles, error) {
+				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1", entities.OwnerTypeProvider).
+					RunAndReturn(func(_ context.Context, _ string, _ entities.OwnerType) (entities.GroupedFiles, error) {
 						return entities.GroupedFiles{entities.ProviderFileTypeCI: {ciFile}}, nil
 					})
 				storageMock.EXPECT().GetFileURL(mock.Anything, "ci-key").
@@ -694,8 +694,8 @@ func TestService_getFilesForProvider(t *testing.T) {
 			name:       "file not found",
 			providerID: "1",
 			prepare: func(repoMock *mocks.MockRepository, _ *mocks.MockStorageClient) {
-				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1").
-					RunAndReturn(func(_ context.Context, _ string) (entities.GroupedFiles, error) {
+				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1", entities.OwnerTypeProvider).
+					RunAndReturn(func(_ context.Context, _ string, _ entities.OwnerType) (entities.GroupedFiles, error) {
 						return entities.GroupedFiles{}, ErrFileNotFound
 					})
 			},
@@ -706,8 +706,8 @@ func TestService_getFilesForProvider(t *testing.T) {
 			name:       "repo error",
 			providerID: "1",
 			prepare: func(repoMock *mocks.MockRepository, _ *mocks.MockStorageClient) {
-				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1").
-					RunAndReturn(func(_ context.Context, _ string) (entities.GroupedFiles, error) {
+				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1", entities.OwnerTypeProvider).
+					RunAndReturn(func(_ context.Context, _ string, _ entities.OwnerType) (entities.GroupedFiles, error) {
 						return entities.GroupedFiles{}, errors.New("db error")
 					})
 			},
@@ -717,8 +717,8 @@ func TestService_getFilesForProvider(t *testing.T) {
 			name:       "get file URL error",
 			providerID: "1",
 			prepare: func(repoMock *mocks.MockRepository, storageMock *mocks.MockStorageClient) {
-				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1").
-					RunAndReturn(func(_ context.Context, _ string) (entities.GroupedFiles, error) {
+				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1", entities.OwnerTypeProvider).
+					RunAndReturn(func(_ context.Context, _ string, _ entities.OwnerType) (entities.GroupedFiles, error) {
 						return entities.GroupedFiles{entities.ProviderFileTypeCI: {{Key: "ci-key"}}}, nil
 					})
 				storageMock.EXPECT().GetFileURL(mock.Anything, "ci-key").
