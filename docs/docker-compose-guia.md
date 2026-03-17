@@ -495,7 +495,191 @@ docker system prune -a
 
 ---
 
-## 4. Recursos Adicionales
+## 4. Cómo Desplegar tu Proyecto en el VPS del Equipo
+
+Esta sección está pensada para quienes quieren probar su propio proyecto usando el servidor compartido del equipo, sin necesidad de tener un dominio propio.
+
+La idea es simple: cada persona expone su aplicación en un **puerto diferente**, y se accede a ella usando la dirección IP del servidor seguida de ese puerto. Por ejemplo: `http://123.456.789.0:8082`.
+
+---
+
+### Paso 1: Conectarte al servidor por SSH
+
+SSH es una forma de conectarte a un servidor remoto desde tu computadora, como si abrieras una terminal directamente en ese servidor.
+
+Abre una terminal en tu computadora y ejecuta:
+
+```bash
+ssh usuario@IP_DEL_SERVIDOR
+```
+
+Reemplaza `usuario` con el nombre de usuario que te dieron, e `IP_DEL_SERVIDOR` con la dirección IP del VPS. Te va a pedir la contraseña — escríbela y presiona Enter (no vas a ver los caracteres mientras escribes, eso es normal).
+
+**Ejemplo:**
+```bash
+ssh maria@123.456.789.0
+```
+
+Si es la primera vez que te conectas, va a aparecer un mensaje preguntando si confías en el servidor. Escribe `yes` y presiona Enter.
+
+Una vez conectada, vas a ver algo como esto en tu terminal:
+```
+maria@vps-servidor:~$
+```
+
+Eso significa que ya estás dentro del servidor. Todo lo que escribas desde ahora se ejecuta ahí.
+
+---
+
+### Paso 2: Crear una carpeta para tu proyecto
+
+Es importante que cada persona trabaje en su propia carpeta para no mezclar archivos con los demás.
+
+```bash
+mkdir ~/mi-proyecto
+cd ~/mi-proyecto
+```
+
+Esto crea una carpeta llamada `mi-proyecto` en tu directorio personal y entra a ella. Puedes cambiar el nombre por el que quieras.
+
+---
+
+### Paso 3: Coordinar qué puerto vas a usar
+
+Cada proyecto debe usar un puerto diferente. Si dos personas usan el mismo puerto, una de las dos no va a poder levantar su servicio.
+
+Consulta con el equipo qué puertos ya están en uso. Como referencia, estos ya están ocupados por el proyecto DEU:
+- `80` → Traefik (HTTP)
+- `443` → Traefik (HTTPS)
+- `8080` → Dashboard de Traefik
+- `8081` → Backend de DEU
+
+Para proyectos de prueba del equipo, usen el rango **8082 en adelante**. Pongan su nombre y puerto en un documento compartido para evitar conflictos.
+
+---
+
+### Paso 4: Crear tu archivo docker-compose.yml
+
+Dentro de tu carpeta, crea el archivo de configuración de Docker:
+
+```bash
+nano docker-compose.yml
+```
+
+Esto abre un editor de texto en la terminal. Escribe (o pega) la configuración de tu proyecto. Aquí hay un ejemplo con una app de Node.js:
+
+```yaml
+services:
+  mi-app:
+    image: node:20-alpine        # La imagen de Docker que necesitas
+    container_name: mi-app       # Un nombre único para tu contenedor
+    restart: unless-stopped
+    ports:
+      - "8082:3000"              # Puerto del servidor : puerto interno de tu app
+    working_dir: /app
+    volumes:
+      - ./:/app                  # Monta tu código en el contenedor
+    command: node index.js
+```
+
+**Lo más importante aquí es la línea `ports`:**
+- El número de la **izquierda** (`8082`) es el puerto del servidor — el que coordinaste con el equipo.
+- El número de la **derecha** (`3000`) es el puerto que usa tu aplicación internamente — depende de cómo esté configurada tu app.
+
+Para guardar en nano: presiona `Ctrl + X`, luego `Y`, luego `Enter`.
+
+---
+
+### Paso 5: Subir tu código al servidor
+
+Tienes dos opciones para tener tu código en el servidor:
+
+**Opción A — Clonar desde Git (recomendado):**
+```bash
+git clone https://github.com/tu-usuario/tu-repositorio.git .
+```
+
+El `.` al final clona el repositorio en la carpeta actual.
+
+**Opción B — Copiar archivos desde tu computadora:**
+
+Abre **otra terminal** en tu computadora (no la que tiene el SSH) y ejecuta:
+```bash
+scp -r ./mi-proyecto/* usuario@IP_DEL_SERVIDOR:~/mi-proyecto/
+```
+
+Esto copia todos los archivos de tu carpeta local al servidor.
+
+---
+
+### Paso 6: Levantar tu proyecto
+
+Ya con el código y el `docker-compose.yml` listos, levanta los contenedores:
+
+```bash
+docker compose up -d
+```
+
+La flag `-d` hace que los contenedores corran en background (en segundo plano), así no bloquean tu terminal.
+
+Para verificar que está corriendo:
+```bash
+docker compose ps
+```
+
+Deberías ver tu contenedor con el estado `running`.
+
+---
+
+### Paso 7: Acceder a tu aplicación
+
+Abre el navegador y ve a:
+
+```
+http://IP_DEL_SERVIDOR:TU_PUERTO
+```
+
+Por ejemplo: `http://123.456.789.0:8082`
+
+Si ves tu aplicación, ¡listo! Ya está funcionando.
+
+---
+
+### Comandos útiles del día a día
+
+```bash
+# Ver si tus contenedores están corriendo
+docker compose ps
+
+# Ver los logs de tu app (útil para ver errores)
+docker compose logs -f
+
+# Detener tu proyecto
+docker compose down
+
+# Reiniciar tu proyecto (por ejemplo, después de cambiar código)
+docker compose down && docker compose up -d
+
+# Ver los últimos 50 líneas de logs
+docker compose logs --tail=50
+```
+
+---
+
+### Problemas comunes
+
+**"Port is already allocated" al levantar el contenedor**
+Alguien más ya está usando ese puerto. Elige otro número en el `docker-compose.yml` y vuelve a intentarlo.
+
+**No puedo acceder a `http://IP:PUERTO` desde el navegador**
+Verifica que el contenedor esté corriendo con `docker compose ps`. Si el estado no dice `running`, revisa los logs con `docker compose logs` para ver el error.
+
+**Me desconecté del SSH y el contenedor se detuvo**
+Eso no debería pasar si usaste `-d` en el `docker compose up`. Verifica que hayas incluido `restart: unless-stopped` en tu `docker-compose.yml`.
+
+---
+
+## 5. Recursos Adicionales
 
 ### Documentación Oficial
 
