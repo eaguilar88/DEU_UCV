@@ -90,7 +90,7 @@ func (h *Handler) CreateCourse(c echo.Context) error {
 
 	course, err := toCourseEntity(c)
 	if err != nil {
-		return errors.NewBadRequest("invalid course data")
+		return errors.NewBadRequest(err.Error())
 	}
 
 	courseID, err := h.svc.CreateCourse(ctx, userID, course)

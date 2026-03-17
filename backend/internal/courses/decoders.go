@@ -1,6 +1,7 @@
 package courses
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/eaguilar88/deu/internal/entities"
@@ -14,9 +15,28 @@ func formValue(c echo.Context, key string) string {
 
 // toCourseEntity converts a multipart form request to a Course entity.
 func toCourseEntity(c echo.Context) (entities.Course, error) {
+	requiredFields := []struct{ key, msg string }{
+		{"nombre", "nombre es requerido"},
+		{"descripcion", "descripcion es requerido"},
+		{"objetivos", "objetivos es requerido"},
+		{"fundamentacion", "fundamentacion es requerido"},
+		{"duracion", "duracion es requerido"},
+		{"estructura_costos", "estructura_costos es requerido"},
+		{"perfil_docente", "perfil_docente es requerido"},
+		{"exigencias", "exigencias es requerido"},
+		{"estructura_curricular", "estructura_curricular es requerido"},
+		{"evaluacion", "evaluacion es requerido"},
+		{"cronograma", "cronograma es requerido"},
+	}
+	for _, f := range requiredFields {
+		if formValue(c, f.key) == "" {
+			return entities.Course{}, fmt.Errorf("%s", f.msg)
+		}
+	}
+
 	faculty, err := entities.FromString(formValue(c, "facultad"))
 	if err != nil {
-		faculty = entities.FacultyDEU
+		return entities.Course{}, fmt.Errorf("facultad is required")
 	}
 
 	course := entities.Course{
@@ -39,7 +59,7 @@ func toCourseEntity(c echo.Context) (entities.Course, error) {
 
 	cover, err := utils.GetFileFrom(c, entities.CourseFileTypeCover)
 	if err != nil {
-		return course, nil
+		return entities.Course{}, fmt.Errorf("portada is required")
 	}
 	course.Cover = cover
 	return course, nil

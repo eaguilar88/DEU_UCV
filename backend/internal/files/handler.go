@@ -35,7 +35,11 @@ func (h *Handler) ServeFile(c echo.Context) error {
 		h.logger.Error("failed to fetch file from storage", zap.Error(err), zap.String("key", key))
 		return errors.NewNotFound("file not found")
 	}
-	defer body.Close()
+	defer func() {
+		if err := body.Close(); err != nil {
+			h.logger.Warn("failed to close file body", zap.Error(err), zap.String("key", key))
+		}
+	}()
 
 	return c.Stream(http.StatusOK, contentType, body)
 }

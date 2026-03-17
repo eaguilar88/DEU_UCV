@@ -190,12 +190,6 @@ func (s *service) CreateProvider(ctx context.Context, provider *entities.Provide
 		return -1, "", err
 	}
 
-	// Save metadata to database
-	s.logger.Debug("saving file metadata to database",
-		zap.Int("file_count", len(files)),
-		zap.String("action", "save_metadata"),
-	)
-
 	if err := s.repo.SaveFilesToDB(ctx, files); err != nil {
 		s.logger.Error("failed to save file metadata to database",
 			zap.Error(err),
