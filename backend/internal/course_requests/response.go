@@ -9,7 +9,7 @@ type CourseInfo struct {
 	Name        string `json:"nombre,omitempty"`
 	Description string `json:"descripcion,omitempty"`
 	Objectives  string `json:"objetivos,omitempty"`
-	Duration    int    `json:"duracion,omitempty"`
+	Duration    string `json:"duracion,omitempty"`
 	Content     string `json:"contenido,omitempty"`
 	Type        string `json:"tipo,omitempty"`
 	Faculty     string `json:"facultad,omitempty"`

@@ -12,6 +12,8 @@ import (
 	"github.com/eaguilar88/deu/internal/course_requests"
 	"github.com/eaguilar88/deu/internal/courses"
 	"github.com/eaguilar88/deu/internal/email"
+	"github.com/eaguilar88/deu/internal/errors"
+	"github.com/eaguilar88/deu/internal/files"
 	"github.com/eaguilar88/deu/internal/group_requests"
 	"github.com/eaguilar88/deu/internal/groups"
 	"github.com/eaguilar88/deu/internal/jwt"
@@ -66,6 +68,7 @@ func main() {
 		config.BlackBlazeB2.ApplicationKey,
 		config.BlackBlazeB2.Endpoint,
 		config.BlackBlazeB2.Region,
+		config.BaseURL,
 		logger,
 	)
 	if err != nil {
@@ -83,7 +86,7 @@ func main() {
 	providerService := providers.NewService(repository, bbClient, mailClient, logger)
 	providerEndpoints := providers.NewHandler(providerService, logger)
 
-	courseSvc := courses.NewService(repository, logger)
+	courseSvc := courses.NewService(repository, bbClient, logger)
 	courseEndpoints := courses.NewHandler(courseSvc, logger)
 
 	cpService := course_periods.NewService(repository, logger)
@@ -100,13 +103,17 @@ func main() {
 
 	e := echo.New()
 	e.Validator = security.NewCustomValidator()
+	e.HTTPErrorHandler = errors.NewHTTPErrorHandler(logger)
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
 	middlewares := []echo.MiddlewareFunc{
 		jwt.JWTMiddleware(signer, logger),
 	}
 
+	fileHandler := files.NewHandler(bbClient, logger)
+
 	addHealthRoute(e)
+	addFileRoutes(e, fileHandler)
 	addAuthRoutes(e, authEndpoints)
 	addUserRoutes(e, userEndpoints, middlewares...)
 	addProviderRoutes(e, providerEndpoints, middlewares...)
@@ -120,6 +127,10 @@ func main() {
 	)
 
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", config.HTTPPort)))
+}
+
+func addFileRoutes(e *echo.Echo, handler *files.Handler) {
+	e.GET("/files/*key", handler.ServeFile)
 }
 
 func addHealthRoute(e *echo.Echo) {

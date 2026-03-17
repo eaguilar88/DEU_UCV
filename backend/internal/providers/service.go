@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"strconv"
 	"sync"
 	"time"
@@ -33,7 +34,7 @@ type Repository interface {
 	DeleteProvider(ctx context.Context, providerID string) error
 
 	// Files
-	GetFilesByOwner(ctx context.Context, ownerID string) (entities.GroupedFiles, error)
+	GetFilesByOwner(ctx context.Context, ownerID string, ownerType entities.OwnerType) (entities.GroupedFiles, error)
 	SaveFilesToDB(ctx context.Context, file []*entities.File) error
 }
 
@@ -47,6 +48,7 @@ type StorageClient interface {
 	UploadFile(ctx context.Context, file []*entities.File) error
 	DeleteFile(ctx context.Context, objectKey string) error
 	GetFileURL(ctx context.Context, objectKey string) (string, error)
+	GetObject(ctx context.Context, objectKey string) (io.ReadCloser, string, error)
 	GetFileMetadata(ctx context.Context, objectKey string) (map[string]string, error)
 }
 
@@ -324,7 +326,7 @@ func (s *service) getFilesForProvider(ctx context.Context, providerID string) (e
 		zap.String("action", "get_files"),
 	)
 
-	files, err := s.repo.GetFilesByOwner(ctx, providerID)
+	files, err := s.repo.GetFilesByOwner(ctx, providerID, entities.OwnerTypeProvider)
 	if err != nil {
 		s.logger.Error("failed to get files by owner",
 			zap.Error(err),

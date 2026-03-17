@@ -26,7 +26,7 @@ type Repository interface {
 	CreateGroupRequest(ctx context.Context, req entities.GroupRequest) (int64, error)
 
 	// Files
-	GetFilesByOwner(ctx context.Context, ownerID string) (entities.GroupedFiles, error)
+	GetFilesByOwner(ctx context.Context, ownerID string, ownerType entities.OwnerType) (entities.GroupedFiles, error)
 	SaveFilesToDB(ctx context.Context, file []*entities.File) error
 }
 

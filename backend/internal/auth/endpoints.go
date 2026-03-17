@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/eaguilar88/deu/internal/entities"
+	"github.com/eaguilar88/deu/internal/errors"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
@@ -28,12 +29,13 @@ func NewHandler(svc Service, log *zap.Logger) *Handler {
 func (h *Handler) LoginHandleHTTP(c echo.Context) error {
 	var req LoginRequest
 	if err := c.Bind(&req); err != nil {
-		return echo.ErrUnauthorized
+		return errors.NewUnauthorized("invalid credentials")
 	}
 	token, user, err := h.svc.Login(c.Request().Context(), req.Username, req.Password)
 	if err != nil {
-		h.log.Error("error logging user", zap.Error(err))
-		return echo.ErrUnauthorized
+		// Log full error internally, but return generic message to client
+		h.log.Error("login failed", zap.Error(err), zap.String("username", req.Username))
+		return errors.NewUnauthorized("invalid credentials")
 	}
 
 	response := LoginResponse{

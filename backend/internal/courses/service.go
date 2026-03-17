@@ -2,6 +2,9 @@ package courses
 
 import (
 	"context"
+	"fmt"
+	"io"
+	"time"
 
 	"github.com/eaguilar88/deu/internal/entities"
 	"go.uber.org/zap"
@@ -23,17 +26,32 @@ type Repository interface {
 
 	// Course Requests
 	CreateCourseRequest(ctx context.Context, request entities.CourseRequest) (int64, error)
+
+	// Files
+	GetFilesByOwner(ctx context.Context, ownerID string, ownerType entities.OwnerType) (entities.GroupedFiles, error)
+	SaveFilesToDB(ctx context.Context, file []*entities.File) error
+}
+
+// StorageClient defines the file storage operations required by the courses service.
+type StorageClient interface {
+	UploadFile(ctx context.Context, file []*entities.File) error
+	DeleteFile(ctx context.Context, objectKey string) error
+	GetFileURL(ctx context.Context, objectKey string) (string, error)
+	GetObject(ctx context.Context, objectKey string) (io.ReadCloser, string, error)
+	GetFileMetadata(ctx context.Context, objectKey string) (map[string]string, error)
 }
 
 type service struct {
-	repo Repository
-	log  *zap.Logger
+	repo    Repository
+	storage StorageClient
+	log     *zap.Logger
 }
 
-func NewService(repository Repository, logger *zap.Logger) Service {
+func NewService(repository Repository, storage StorageClient, logger *zap.Logger) Service {
 	return &service{
-		repo: repository,
-		log:  logger,
+		repo:    repository,
+		storage: storage,
+		log:     logger,
 	}
 }
 
@@ -42,6 +60,22 @@ func (s *service) GetCourse(ctx context.Context, courseID string) (entities.Cour
 	if err != nil {
 		return entities.Course{}, err
 	}
+
+	files, err := s.repo.GetFilesByOwner(ctx, courseID, entities.OwnerTypeCourse)
+	if err != nil {
+		s.log.Error("failed to get course files", zap.Error(err), zap.String("course_id", courseID))
+		return entities.Course{}, err
+	}
+	if cover := files.GetSingleFile(entities.CourseFileTypeCover); cover != nil {
+		url, err := s.storage.GetFileURL(ctx, cover.Key)
+		if err != nil {
+			s.log.Error("failed to get cover URL", zap.Error(err), zap.String("course_id", courseID))
+			return entities.Course{}, err
+		}
+		cover.URL = url
+		course.Cover = cover
+	}
+
 	return course, nil
 }
 
@@ -53,14 +87,29 @@ func (s *service) GetLatestCoursePeriod(ctx context.Context, courseID string) (e
 	return period, nil
 }
 
-func (s *service) GetCourses(
-	ctx context.Context,
-	pageScope entities.PageScope,
-) ([]entities.Course, entities.PageScope, error) {
+func (s *service) GetCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error) {
 	courses, page, err := s.repo.GetCourses(ctx, pageScope)
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
+
+	for i := range courses {
+		files, err := s.repo.GetFilesByOwner(ctx, courses[i].ID, entities.OwnerTypeCourse)
+		if err != nil {
+			s.log.Error("failed to get course files", zap.Error(err), zap.String("course_id", courses[i].ID))
+			continue
+		}
+		if cover := files.GetSingleFile(entities.CourseFileTypeCover); cover != nil {
+			url, err := s.storage.GetFileURL(ctx, cover.Key)
+			if err != nil {
+				s.log.Error("failed to get cover URL", zap.Error(err), zap.String("course_id", courses[i].ID))
+				continue
+			}
+			cover.URL = url
+			courses[i].Cover = cover
+		}
+	}
+
 	return courses, page, nil
 }
 
@@ -81,6 +130,29 @@ func (s *service) CreateCourse(ctx context.Context, userID string, course entiti
 	s.log.Info("course and course request created successfully",
 		zap.Int64("course_id", courseID),
 		zap.Int64("request_id", requestID))
+
+	if course.Cover != nil {
+		courseIDStr := fmt.Sprintf("%d", courseID)
+		course.Cover.OwnerID = courseIDStr
+		course.Cover.OwnerType = entities.OwnerTypeCourse
+		course.Cover.Key = fmt.Sprintf("files/courses/%d/%s", courseID, course.Cover.Name)
+		course.Cover.Purpose = entities.CourseFileTypeCover
+		course.Cover.Public = false
+		course.Cover.UploadedBy = userID
+		course.Cover.CreatedAt = time.Now().Format(time.RFC3339)
+
+		if err := s.storage.UploadFile(ctx, []*entities.File{course.Cover}); err != nil {
+			s.log.Error("failed to upload course cover", zap.Error(err), zap.String("course_id", courseIDStr))
+			return -1, err
+		}
+
+		if err := s.repo.SaveFilesToDB(ctx, []*entities.File{course.Cover}); err != nil {
+			s.log.Error("failed to save course cover metadata", zap.Error(err), zap.String("course_id", courseIDStr))
+			return -1, err
+		}
+
+		s.log.Info("course cover uploaded successfully", zap.String("course_id", courseIDStr))
+	}
 
 	return courseID, nil
 }

@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"mime"
+	"path/filepath"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -16,11 +19,12 @@ import (
 
 type B2Client struct {
 	bucketName string
+	baseURL    string
 	client     *s3.Client
 	logger     *zap.Logger
 }
 
-func NewB2Client(bucketName, keyID, applicationKey, endpoint, region string, logger *zap.Logger) (*B2Client, error) {
+func NewB2Client(bucketName, keyID, applicationKey, endpoint, region, baseURL string, logger *zap.Logger) (*B2Client, error) {
 	cfg, err := config.LoadDefaultConfig(
 		context.TODO(),
 		config.WithRegion(region),
@@ -43,6 +47,7 @@ func NewB2Client(bucketName, keyID, applicationKey, endpoint, region string, log
 	return &B2Client{
 		client:     client,
 		bucketName: bucketName,
+		baseURL:    baseURL,
 		logger:     logger,
 	}, nil
 }
@@ -69,11 +74,19 @@ func (b *B2Client) UploadFile(ctx context.Context, files []*entities.File) error
 			)
 			return fmt.Errorf("invalid file %s: %w", file.Key, err)
 		}
+
+		contentType := mime.TypeByExtension(filepath.Ext(file.Name))
+		if contentType == "" {
+			contentType = "application/octet-stream"
+		}
+
 		_, err := b.client.PutObject(ctx, &s3.PutObjectInput{
-			Bucket:   aws.String(b.bucketName),
-			Key:      aws.String(file.Key),
-			Body:     file.Body,
-			Metadata: file.MetaData,
+			Bucket:             aws.String(b.bucketName),
+			Key:                aws.String(file.Key),
+			Body:               file.Body,
+			Metadata:           file.MetaData,
+			ContentType:        aws.String(contentType),
+			ContentDisposition: aws.String("inline"),
 		})
 		if err != nil {
 			b.logger.Error("failed to upload file", zap.String("objectKey", file.Key), zap.Error(err))
@@ -97,12 +110,14 @@ func (b *B2Client) DeleteFile(ctx context.Context, objectKey string) error {
 	return nil
 }
 
-func (b *B2Client) GetFileURL(ctx context.Context, objectKey string) (string, error) {
-	// Create a presign client
-	presignClient := s3.NewPresignClient(b.client)
+func (b *B2Client) GetFileURL(_ context.Context, objectKey string) (string, error) {
+	if b.baseURL != "" {
+		return fmt.Sprintf("%s/files/%s", b.baseURL, objectKey), nil
+	}
 
-	// Create a presigned URL for GetObject with 15 minutes expiration
-	presignResult, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
+	// Fallback: generate a pre-signed URL when no base URL is configured
+	presignClient := s3.NewPresignClient(b.client)
+	presignResult, err := presignClient.PresignGetObject(context.Background(), &s3.GetObjectInput{
 		Bucket: aws.String(b.bucketName),
 		Key:    aws.String(objectKey),
 	}, func(opts *s3.PresignOptions) {
@@ -114,6 +129,24 @@ func (b *B2Client) GetFileURL(ctx context.Context, objectKey string) (string, er
 	}
 
 	return presignResult.URL, nil
+}
+
+func (b *B2Client) GetObject(ctx context.Context, objectKey string) (io.ReadCloser, string, error) {
+	result, err := b.client.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(b.bucketName),
+		Key:    aws.String(objectKey),
+	})
+	if err != nil {
+		b.logger.Error("failed to get object", zap.String("objectKey", objectKey), zap.Error(err))
+		return nil, "", fmt.Errorf("failed to get object: %w", err)
+	}
+
+	contentType := aws.ToString(result.ContentType)
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+
+	return result.Body, contentType, nil
 }
 
 func (b *B2Client) GetFileMetadata(ctx context.Context, objectKey string) (map[string]string, error) {

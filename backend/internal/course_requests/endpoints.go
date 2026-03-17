@@ -43,19 +43,17 @@ func (h *Handler) ApproveCourseRequest(c echo.Context) error {
 	ctx := c.Request().Context()
 	reqID := c.Param("id")
 	if reqID == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "Request ID is required")
+		return errors.NewBadRequest("request ID is required")
 	}
 
 	userID, ok := c.Get("userID").(string)
 	if !ok {
-		h.log.Error("no user ID found in context")
-		return echo.NewHTTPError(http.StatusUnauthorized, "user missing from context")
+		return errors.NewUnauthorized("authentication required")
 	}
 
 	var req ApproveCourseRequestRequest
 	if err := c.Bind(&req); err != nil {
-		h.log.Error("could not decode request body", zap.Error(err))
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body")
+		return errors.NewBadRequest("invalid request body")
 	}
 	request := entities.CourseRequest{
 		ID:       reqID,
@@ -65,8 +63,7 @@ func (h *Handler) ApproveCourseRequest(c echo.Context) error {
 	courseType := entities.FromStringCourseType(req.CourseType)
 
 	if err := h.svc.ApproveCourseRequest(ctx, request, courseType); err != nil {
-		h.log.Error("failed to approve course request", zap.Error(err), zap.String("id", reqID))
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return errors.NewInternal(err)
 	}
 
 	return c.NoContent(http.StatusAccepted)
@@ -76,24 +73,21 @@ func (h *Handler) RejectCourseRequest(c echo.Context) error {
 	ctx := c.Request().Context()
 	reqID := c.Param("id")
 	if reqID == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "Request ID is required")
+		return errors.NewBadRequest("request ID is required")
 	}
 
 	userID, ok := c.Get("userID").(string)
 	if !ok {
-		h.log.Error("no user ID found in context")
-		return echo.NewHTTPError(http.StatusUnauthorized, "user missing from context")
+		return errors.NewUnauthorized("authentication required")
 	}
 
 	var req RejectCourseRequestRequest
 	if err := c.Bind(&req); err != nil {
-		h.log.Error("could not decode request body", zap.Error(err))
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body")
+		return errors.NewBadRequest("invalid request body")
 	}
 
 	if err := h.svc.RejectCourseRequest(ctx, reqID, userID, req.Comments); err != nil {
-		h.log.Error("failed to reject course request", zap.Error(err), zap.String("id", reqID))
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return errors.NewInternal(err)
 	}
 
 	return c.NoContent(http.StatusAccepted)
@@ -103,35 +97,30 @@ func (h *Handler) RedirectCourseRequest(c echo.Context) error {
 	ctx := c.Request().Context()
 	reqID := c.Param("id")
 	if reqID == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "Request ID is required")
+		return errors.NewBadRequest("request ID is required")
 	}
 
 	userID, ok := c.Get("userID").(string)
 	if !ok {
-		h.log.Error("no user ID found in context")
-		return echo.NewHTTPError(http.StatusUnauthorized, "user missing from context")
+		return errors.NewUnauthorized("authentication required")
 	}
 
 	var req RedirectCourseRequestRequest
 	if err := c.Bind(&req); err != nil {
-		h.log.Error("could not decode request body", zap.Error(err))
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body")
+		return errors.NewBadRequest("invalid request body")
 	}
 	if err := c.Validate(req); err != nil {
-		h.log.Error("invalid request", zap.Error(err))
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return errors.NewBadRequest("validation failed")
 	}
 
 	// Validate faculty using entities.FromString
 	faculty, err := entities.FromString(req.Faculty)
 	if err != nil {
-		h.log.Error("invalid faculty", zap.Error(err), zap.String("faculty", req.Faculty))
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid faculty")
+		return errors.NewBadRequest("invalid faculty")
 	}
 
 	if err := h.svc.RedirectCourseRequest(ctx, reqID, userID, faculty, req.Reason); err != nil {
-		h.log.Error("failed to redirect course request", zap.Error(err), zap.String("id", reqID))
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return errors.NewInternal(err)
 	}
 
 	return c.NoContent(http.StatusAccepted)
@@ -141,22 +130,21 @@ func (h *Handler) GetCourseRequestsByFaculty(c echo.Context) error {
 	ctx := c.Request().Context()
 	faculty, err := entities.FromString(c.QueryParam("faculty"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, errors.ErrBadFaculty)
+		return errors.NewBadRequest("invalid faculty")
 	}
 
 	var pageScope entities.PageScope
 	if err := pageScope.GetPageFromVars(c.QueryParam("page")); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid page number")
+		return errors.NewBadRequest("invalid page number")
 	}
 
 	if err := pageScope.GetPerPageFromVars(c.QueryParam("pageSize")); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid page size")
+		return errors.NewBadRequest("invalid page size")
 	}
 
 	requests, resultScope, err := h.svc.GetCourseRequestsByFaculty(ctx, faculty, pageScope)
 	if err != nil {
-		h.log.Error("failed to get course requests", zap.Error(err), zap.String("faculty", string(faculty)))
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get course requests")
+		return errors.NewInternal(err)
 	}
 
 	response := GetCourseRequestsResponse{
@@ -182,13 +170,12 @@ func (h *Handler) GetCourseRequestByID(c echo.Context) error {
 	ctx := c.Request().Context()
 	reqID := c.Param("id")
 	if reqID == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "Request ID is required")
+		return errors.NewBadRequest("request ID is required")
 	}
 
 	req, err := h.svc.GetCourseRequestByID(ctx, reqID)
 	if err != nil {
-		h.log.Error("failed to get course request", zap.Error(err), zap.String("id", reqID))
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get course request")
+		return errors.NewInternal(err)
 	}
 
 	response := GetCourseRequestResponse{

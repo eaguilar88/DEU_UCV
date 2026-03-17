@@ -3,19 +3,19 @@ services:
     image: traefik:v3.3
     restart: unless-stopped
     command:
-      - "--api.dashboard=true"                  # Enable the dashboard
-      - "--api.insecure=true"                   # Allow insecure dashboard (for local testing)
-      - "--providers.docker=true"               # Enable Docker provider
+      - "--api.dashboard=true" # Enable the dashboard
+      - "--api.insecure=true" # Allow insecure dashboard (for local testing)
+      - "--providers.docker=true" # Enable Docker provider
       - "--providers.docker.exposedbydefault=false" # Don't expose containers by default
-      - "--entrypoints.web.address=:80"         # Define entrypoint for HTTP
-      - "--entrypoints.websecure.address=:443"  # Enable HTTPS
-      - "--log.level=DEBUG"                       # Set log level to warn
+      - "--entrypoints.web.address=:80" # Define entrypoint for HTTP
+      - "--entrypoints.websecure.address=:443" # Enable HTTPS
+      - "--log.level=DEBUG" # Set log level to warn
     ports:
-      - "80:80"   # Expose HTTP
+      - "80:80" # Expose HTTP
       - "443:443" # Expose HTTPS
       - "8080:8080" # Expose Traefik dashboard (optional)
     volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"  # Allow Traefik to talk to Docker
+      - "/var/run/docker.sock:/var/run/docker.sock:ro" # Allow Traefik to talk to Docker
     networks:
       - web
   landing:
@@ -27,10 +27,10 @@ services:
       - backend
       - db
     labels:
-      - "traefik.enable=true"                     # Enable Traefik for this service
-      - "traefik.http.routers.landing.rule=Host(`extension.ucv.ve`)"  # Route based on hostname
-      - "traefik.http.routers.landing.entrypoints=web"  # Use the web entrypoint
-      - "traefik.http.services.landing.loadbalancer.server.port=80"  # Target container's port
+      - "traefik.enable=true" # Enable Traefik for this service
+      - "traefik.http.routers.landing.rule=Host(`extension.ucv.ve`)" # Route based on hostname
+      - "traefik.http.routers.landing.entrypoints=web" # Use the web entrypoint
+      - "traefik.http.services.landing.loadbalancer.server.port=80" # Target container's port
     networks:
       - web
   diplomados:
@@ -42,10 +42,10 @@ services:
       - backend
       - db
     labels:
-      - "traefik.enable=true"                     # Enable Traefik for this service
-      - "traefik.http.routers.formacion.rule=Host(`formacion.extension.ucv.ve`)"  # Route based on hostname
-      - "traefik.http.routers.formacion.entrypoints=web"  # Use the web entrypoint
-      - "traefik.http.services.formacion.loadbalancer.server.port=80"  # Target container's port
+      - "traefik.enable=true" # Enable Traefik for this service
+      - "traefik.http.routers.formacion.rule=Host(`formacion.extension.ucv.ve`)" # Route based on hostname
+      - "traefik.http.routers.formacion.entrypoints=web" # Use the web entrypoint
+      - "traefik.http.services.formacion.loadbalancer.server.port=80" # Target container's port
     networks:
       - web
   grupos:
@@ -57,10 +57,10 @@ services:
       - backend
       - db
     labels:
-      - "traefik.enable=true"                     # Enable Traefik for this service
-      - "traefik.http.routers.grupos.rule=Host(`grupos.extension.ucv.ve`)"  # Route based on hostname
-      - "traefik.http.routers.grupos.entrypoints=web"  # Use the web entrypoint
-      - "traefik.http.services.grupos.loadbalancer.server.port=80"  # Target container's port
+      - "traefik.enable=true" # Enable Traefik for this service
+      - "traefik.http.routers.grupos.rule=Host(`grupos.extension.ucv.ve`)" # Route based on hostname
+      - "traefik.http.routers.grupos.entrypoints=web" # Use the web entrypoint
+      - "traefik.http.services.grupos.loadbalancer.server.port=80" # Target container's port
     networks:
       - web
   backend:
@@ -86,8 +86,8 @@ services:
     labels:
       - "traefik.enable=false"
       - "traefik.http.routers.backend.rule=Host(`api.extension.ucv.ve`)"
-      - "traefik.http.routers.backend.entrypoints=web"  # Use the web entrypoint
-      - "traefik.http.services.backend.loadbalancer.server.port=80"  # Target container's port
+      - "traefik.http.routers.backend.entrypoints=web" # Use the web entrypoint
+      - "traefik.http.services.backend.loadbalancer.server.port=80" # Target container's port
     networks:
       - web
   db:

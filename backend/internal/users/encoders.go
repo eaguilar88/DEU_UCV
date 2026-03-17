@@ -2,7 +2,8 @@ package users
 
 import "github.com/eaguilar88/deu/internal/entities"
 
-func UserEntityToGetUserResponse(user entities.User) GetUserResponse {
+// userToResponse converts a User entity to GetUserResponse.
+func userToResponse(user entities.User) GetUserResponse {
 	return GetUserResponse{
 		ID:             user.ID,
 		CI:             user.CI,
@@ -19,10 +20,11 @@ func UserEntityToGetUserResponse(user entities.User) GetUserResponse {
 	}
 }
 
-func UserEntitiesToGetUserResponse(users []entities.User) []GetUserResponse {
+// usersToResponse converts a slice of User entities to responses.
+func usersToResponse(users []entities.User) []GetUserResponse {
 	out := make([]GetUserResponse, 0, len(users))
 	for _, user := range users {
-		out = append(out, UserEntityToGetUserResponse(user))
+		out = append(out, userToResponse(user))
 	}
 	return out
 }

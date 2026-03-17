@@ -9,6 +9,7 @@ import (
 
 	"github.com/eaguilar88/deu/internal/auth/mocks"
 	"github.com/eaguilar88/deu/internal/entities"
+	"github.com/eaguilar88/deu/internal/errors"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -69,14 +70,14 @@ func TestAuthEndpointsHandler_LoginHandleHTTP(t *testing.T) {
 			},
 			req:     LoginRequest{},
 			token:   "",
-			wantErr: echo.NewHTTPError(http.StatusUnauthorized, "Unauthorized"),
+			wantErr: errors.NewUnauthorized("invalid credentials"),
 		},
 		{
 			name:    "error cannot bind request",
 			svc:     &mocks.MockService{},
 			req:     "invalid request",
 			token:   "",
-			wantErr: echo.NewHTTPError(http.StatusUnauthorized, "Unauthorized"),
+			wantErr: errors.NewUnauthorized("invalid credentials"),
 		},
 	}
 
@@ -97,14 +98,39 @@ func TestAuthEndpointsHandler_LoginHandleHTTP(t *testing.T) {
 			h := NewHandler(tt.svc, loggerMock)
 
 			err = h.LoginHandleHTTP(ctx)
-			assert.Equal(t, tt.wantErr, err)
+			assertCustomError(t, tt.wantErr, err)
 			if tt.wantErr == nil {
 				var respBody LoginResponse
 				err = json.Unmarshal(rec.Body.Bytes(), &respBody)
 				assert.Equal(t, tt.token, respBody.Token) // Adjust as needed
-				assert.Equal(t, tt.wantErr, err)
+				require.NoError(t, err)
 			}
 			tt.svc.AssertExpectations(t)
 		})
 	}
+}
+
+// assertCustomError compares errors by status code and safe message
+func assertCustomError(t *testing.T, expected, actual error) {
+	t.Helper()
+	if expected == nil {
+		assert.Nil(t, actual)
+		return
+	}
+	if actual == nil {
+		t.Errorf("expected error %v but got nil", expected)
+		return
+	}
+	expectedErr, ok := expected.(errors.CustomError)
+	if !ok {
+		t.Errorf("expected error is not CustomError: %T", expected)
+		return
+	}
+	actualErr, ok := actual.(errors.CustomError)
+	if !ok {
+		t.Errorf("actual error is not CustomError: %T", actual)
+		return
+	}
+	assert.Equal(t, expectedErr.StatusCode(), actualErr.StatusCode(), "status codes should match")
+	assert.Equal(t, expectedErr.SafeMessage(), actualErr.SafeMessage(), "safe messages should match")
 }

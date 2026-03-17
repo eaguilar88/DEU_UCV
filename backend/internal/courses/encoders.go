@@ -4,26 +4,42 @@ import (
 	"github.com/eaguilar88/deu/internal/entities"
 )
 
-func EntitiesCoursesToGetCoursesResponse(courses []entities.Course) []GetCourseResponse {
+// coursesToResponse converts a slice of Course entities to responses.
+func coursesToResponse(courses []entities.Course) []GetCourseResponse {
 	var res []GetCourseResponse
 	for _, course := range courses {
-		res = append(res, EntitiesCourseToGetCourseResponse(course))
+		res = append(res, courseToResponse(course))
 	}
 	return res
 }
 
-func EntitiesCourseToGetCourseResponse(course entities.Course) GetCourseResponse {
+// courseToResponse converts a Course entity to GetCourseResponse.
+func courseToResponse(course entities.Course) GetCourseResponse {
+	var coverURL string
+	if course.Cover != nil {
+		coverURL = course.Cover.URL
+	}
+
 	return GetCourseResponse{
-		ID:          course.ID,
-		Content:     course.Content,
-		Cost:        course.Cost,
-		CreatedAt:   course.CreatedAt,
-		Description: course.Description,
-		Duration:    course.Duration,
-		Faculty:     string(course.Faculty),
-		Name:        course.Name,
-		Objectives:  course.Objectives,
-		Type:        course.Type.String(),
-		UpdatedAt:   course.UpdatedAt,
+		ID:                course.ID,
+		Name:              course.Name,
+		Description:       course.Description,
+		Cover:             coverURL,
+		Objectives:        course.Objectives,
+		Rationale:         course.Rationale,
+		Duration:          course.Duration,
+		Cost:              course.Cost,
+		InstructorProfile: course.InstructorProfile,
+		Profiles:          course.Profiles,
+		Requirements:      course.Requirements,
+		Content:           course.Content,
+		Evaluation:        course.Evaluation,
+		Schedule:          course.Schedule,
+		ProviderID:        course.Owner.ID,
+		Faculty:           string(course.Faculty),
+		Location:          course.Location,
+		Type:              course.Type.String(),
+		CreatedAt:         course.CreatedAt,
+		UpdatedAt:         course.UpdatedAt,
 	}
 }
