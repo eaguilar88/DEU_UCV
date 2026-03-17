@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM golang:1.24-alpine AS builder
+FROM golang:1.26.1-alpine3.22 AS builder
 
 # Install required packages and set the working directory
 RUN apk add --no-cache git && \
@@ -18,7 +18,7 @@ COPY . .
 RUN go build -o main cmd/deu/main.go
 
 # Stage 2: Final Image
-FROM alpine:3.18
+FROM alpine:3.22
 
 WORKDIR /app
 
