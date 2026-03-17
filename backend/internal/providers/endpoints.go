@@ -2,12 +2,12 @@ package providers
 
 import (
 	"context"
-	stderrors "errors"
+	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/eaguilar88/deu/internal/entities"
-	"github.com/eaguilar88/deu/internal/errors"
+	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/eaguilar88/deu/internal/utils"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -42,7 +42,7 @@ func (h *Handler) GetProvider(c echo.Context) error {
 	req := GetProviderRequest{ID: c.Param("id")}
 	provider, err := h.svc.GetProvider(ctx, req.ID)
 	if err != nil {
-		return errors.NewInternal(err)
+		return httperrors.NewInternal(err)
 	}
 
 	return c.JSON(http.StatusOK, providerToResponse(provider))
@@ -62,7 +62,7 @@ func (h *Handler) GetProviders(c echo.Context) error {
 	}
 	providers, pages, err := h.svc.GetProviders(ctx, req.PageScope)
 	if err != nil {
-		return errors.NewInternal(err)
+		return httperrors.NewInternal(err)
 	}
 
 	return c.JSON(http.StatusOK, providersToResponse(providers, pages))
@@ -73,17 +73,17 @@ func (h *Handler) CreateProvider(c echo.Context) error {
 
 	userID, ok := c.Get("userID").(string)
 	if !ok {
-		return errors.NewUnauthorized("authentication required")
+		return httperrors.NewUnauthorized("authentication required")
 	}
 
 	provider, err := makeProviderFromRequest(c, userID, h.log)
 	if err != nil {
-		return errors.NewBadRequest(err.Error())
+		return httperrors.NewBadRequest(err.Error())
 	}
 
 	id, code, err := h.svc.CreateProvider(ctx, provider)
 	if err != nil {
-		return errors.NewInternal(err)
+		return httperrors.NewInternal(err)
 	}
 
 	return c.JSON(http.StatusCreated, CreateProviderResponse{
@@ -96,17 +96,17 @@ func (h *Handler) UpdateProvider(c echo.Context) error {
 	ctx := c.Request().Context()
 	userID, ok := c.Get("userID").(string)
 	if !ok {
-		return errors.NewUnauthorized("authentication required")
+		return httperrors.NewUnauthorized("authentication required")
 	}
 
 	provider, err := makeProviderFromRequest(c, userID, h.log)
 	if err != nil {
-		return errors.NewBadRequest(err.Error())
+		return httperrors.NewBadRequest(err.Error())
 	}
 
 	err = h.svc.UpdateProvider(ctx, c.Param("id"), provider)
 	if err != nil {
-		return errors.NewInternal(err)
+		return httperrors.NewInternal(err)
 	}
 
 	return c.NoContent(http.StatusAccepted)
@@ -116,7 +116,7 @@ func (h *Handler) DeleteProvider(c echo.Context) error {
 	ctx := c.Request().Context()
 	err := h.svc.DeleteProvider(ctx, c.Param("id"))
 	if err != nil {
-		return errors.NewInternal(err)
+		return httperrors.NewInternal(err)
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -132,34 +132,34 @@ func makeProviderFromRequest(c echo.Context, userID string, logger *zap.Logger) 
 	ci, err := utils.GetFileFrom(c, entities.ProviderFileTypeCI)
 	if err != nil {
 		logger.Error("error getting ci", zap.Error(err))
-		return nil, stderrors.New("ci is required")
+		return nil, errors.New("ci is required")
 	}
 	rif, err := utils.GetFileFrom(c, entities.ProviderFileTypeRIF)
 	if err != nil {
 		logger.Error("error getting rif", zap.Error(err))
-		return nil, stderrors.New("rif is required")
+		return nil, errors.New("rif is required")
 	}
 
 	islr, err := utils.GetFileFrom(c, entities.ProviderFileTypeISLR)
 	if err != nil {
 		logger.Error("error getting islr", zap.Error(err))
-		return nil, stderrors.New("islr is required")
+		return nil, errors.New("islr is required")
 	}
 
 	logo, err := utils.GetFileFrom(c, entities.ProviderFileTypeLogo)
 	if err != nil {
 		logger.Error("error getting logo", zap.Error(err))
-		return nil, stderrors.New("logo is required")
+		return nil, errors.New("logo is required")
 	}
 
 	form, err := c.MultipartForm()
 	if err != nil {
-		return nil, stderrors.New("error parsing form")
+		return nil, errors.New("error parsing form")
 	}
 
 	files := form.File
 	if len(files["resumes"]) == 0 {
-		return nil, stderrors.New("at least one resume is required")
+		return nil, errors.New("at least one resume is required")
 	}
 
 	provider := &entities.Provider{
@@ -183,7 +183,7 @@ func makeProviderFromRequest(c echo.Context, userID string, logger *zap.Logger) 
 		file, err := resume.Open()
 		if err != nil {
 			logger.Error("error getting resume", zap.Error(err))
-			return nil, stderrors.New("error getting resume")
+			return nil, errors.New("error getting resume")
 		}
 		resumes = append(resumes, &entities.File{
 			Name:    resume.Filename,
@@ -196,7 +196,7 @@ func makeProviderFromRequest(c echo.Context, userID string, logger *zap.Logger) 
 		file, err := other.Open()
 		if err != nil {
 			logger.Error("error getting other", zap.Error(err))
-			return nil, stderrors.New("error getting other")
+			return nil, errors.New("error getting other")
 		}
 		others = append(others, &entities.File{
 			Name:    other.Filename,

@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/eaguilar88/deu/internal/entities"
-	"github.com/eaguilar88/deu/internal/errors"
+	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
@@ -41,11 +41,11 @@ func (h *Handler) ApproveGroupRequest(c echo.Context) error {
 	ctx := c.Request().Context()
 	reqID := c.Param("id")
 	if reqID == "" {
-		return errors.NewBadRequest("request ID is required")
+		return httperrors.NewBadRequest("request ID is required")
 	}
 
 	if err := h.svc.ApproveGroupRequest(ctx, reqID); err != nil {
-		return errors.NewInternal(err)
+		return httperrors.NewInternal(err)
 	}
 
 	return c.NoContent(http.StatusAccepted)
@@ -55,11 +55,11 @@ func (h *Handler) RejectGroupRequest(c echo.Context) error {
 	ctx := c.Request().Context()
 	reqID := c.Param("id")
 	if reqID == "" {
-		return errors.NewBadRequest("request ID is required")
+		return httperrors.NewBadRequest("request ID is required")
 	}
 
 	if err := h.svc.RejectGroupRequest(ctx, reqID); err != nil {
-		return errors.NewInternal(err)
+		return httperrors.NewInternal(err)
 	}
 
 	return c.NoContent(http.StatusAccepted)
@@ -69,21 +69,21 @@ func (h *Handler) GetGroupRequestsByFaculty(c echo.Context) error {
 	ctx := c.Request().Context()
 	faculty, err := entities.FromString(c.QueryParam("faculty"))
 	if err != nil {
-		return errors.NewBadRequest("invalid faculty")
+		return httperrors.NewBadRequest("invalid faculty")
 	}
 
 	var pageScope entities.PageScope
 	if err := pageScope.GetPageFromVars(c.QueryParam("page")); err != nil {
-		return errors.NewBadRequest("invalid page number")
+		return httperrors.NewBadRequest("invalid page number")
 	}
 
 	if err := pageScope.GetPerPageFromVars(c.QueryParam("pageSize")); err != nil {
-		return errors.NewBadRequest("invalid page size")
+		return httperrors.NewBadRequest("invalid page size")
 	}
 
 	requests, resultScope, err := h.svc.GetGroupRequestsByFaculty(ctx, faculty, pageScope)
 	if err != nil {
-		return errors.NewInternal(err)
+		return httperrors.NewInternal(err)
 	}
 
 	response := GetGroupRequestsResponse{
@@ -109,12 +109,12 @@ func (h *Handler) GetGroupRequestByID(c echo.Context) error {
 	ctx := c.Request().Context()
 	reqID := c.Param("id")
 	if reqID == "" {
-		return errors.NewBadRequest("request ID is required")
+		return httperrors.NewBadRequest("request ID is required")
 	}
 
 	req, err := h.svc.GetGroupRequestByID(ctx, reqID)
 	if err != nil {
-		return errors.NewInternal(err)
+		return httperrors.NewInternal(err)
 	}
 
 	response := GetGroupRequestResponse{

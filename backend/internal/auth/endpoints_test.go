@@ -9,7 +9,7 @@ import (
 
 	"github.com/eaguilar88/deu/internal/auth/mocks"
 	"github.com/eaguilar88/deu/internal/entities"
-	"github.com/eaguilar88/deu/internal/errors"
+	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -70,14 +70,14 @@ func TestAuthEndpointsHandler_LoginHandleHTTP(t *testing.T) {
 			},
 			req:     LoginRequest{},
 			token:   "",
-			wantErr: errors.NewUnauthorized("invalid credentials"),
+			wantErr: httperrors.NewUnauthorized("invalid credentials"),
 		},
 		{
 			name:    "error cannot bind request",
 			svc:     &mocks.MockService{},
 			req:     "invalid request",
 			token:   "",
-			wantErr: errors.NewUnauthorized("invalid credentials"),
+			wantErr: httperrors.NewUnauthorized("invalid credentials"),
 		},
 	}
 
@@ -121,12 +121,12 @@ func assertCustomError(t *testing.T, expected, actual error) {
 		t.Errorf("expected error %v but got nil", expected)
 		return
 	}
-	expectedErr, ok := expected.(errors.CustomError)
+	expectedErr, ok := expected.(httperrors.CustomError)
 	if !ok {
 		t.Errorf("expected error is not CustomError: %T", expected)
 		return
 	}
-	actualErr, ok := actual.(errors.CustomError)
+	actualErr, ok := actual.(httperrors.CustomError)
 	if !ok {
 		t.Errorf("actual error is not CustomError: %T", actual)
 		return

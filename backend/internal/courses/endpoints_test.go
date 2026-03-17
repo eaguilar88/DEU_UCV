@@ -2,8 +2,8 @@ package courses
 
 import (
 	"bytes"
-	stderrors "errors"
 	"encoding/json"
+	"errors"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -11,7 +11,7 @@ import (
 
 	"github.com/eaguilar88/deu/internal/courses/mocks"
 	"github.com/eaguilar88/deu/internal/entities"
-	"github.com/eaguilar88/deu/internal/errors"
+	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -92,7 +92,7 @@ func TestHandler_GetCourse(t *testing.T) {
 				tc.svc.On("GetCourse", ctx.Request().Context(), mock.AnythingOfType("string")).
 					Return(entities.Course{ID: "1", Name: "Test Course"}, nil)
 				tc.svc.On("GetLatestCoursePeriod", ctx.Request().Context(), mock.AnythingOfType("string")).
-					Return(entities.CoursePeriod{}, stderrors.New("not found"))
+					Return(entities.CoursePeriod{}, errors.New("not found"))
 			},
 			resp: GetCourseResponse{
 				ID:   "1",
@@ -104,9 +104,9 @@ func TestHandler_GetCourse(t *testing.T) {
 			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
 				tc.svc.On("GetCourse", ctx.Request().Context(), mock.AnythingOfType("string")).
-					Return(entities.Course{}, stderrors.New("db error"))
+					Return(entities.Course{}, errors.New("db error"))
 			},
-			wantErr: errors.NewInternal(stderrors.New("db error")),
+			wantErr: httperrors.NewInternal(errors.New("db error")),
 		},
 	}
 
@@ -172,9 +172,9 @@ func TestHandler_GetCourses(t *testing.T) {
 			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
 				tc.svc.On("GetCourses", ctx.Request().Context(), mock.AnythingOfType("entities.PageScope")).
-					Return(nil, entities.PageScope{}, stderrors.New("db error"))
+					Return(nil, entities.PageScope{}, errors.New("db error"))
 			},
-			wantErr: errors.NewInternal(stderrors.New("db error")),
+			wantErr: httperrors.NewInternal(errors.New("db error")),
 		},
 	}
 
@@ -219,7 +219,7 @@ func TestHandler_CreateCourse(t *testing.T) {
 		{
 			name:    "error missing userID",
 			svc:     &mocks.MockService{},
-			wantErr: errors.NewUnauthorized("authentication required"),
+			wantErr: httperrors.NewUnauthorized("authentication required"),
 		},
 		{
 			name:   "error missing required field",
@@ -231,7 +231,7 @@ func TestHandler_CreateCourse(t *testing.T) {
 				w.Close()
 				return &b, w.FormDataContentType()
 			},
-			wantErr: errors.NewBadRequest("nombre is required"),
+			wantErr: httperrors.NewBadRequest(NameMissingError),
 		},
 		{
 			name:      "error from service",
@@ -240,9 +240,9 @@ func TestHandler_CreateCourse(t *testing.T) {
 			buildForm: buildCourseForm,
 			prepare: func(ctx echo.Context, tc *testCase) {
 				tc.svc.On("CreateCourse", ctx.Request().Context(), userID, mock.AnythingOfType("entities.Course")).
-					Return(int64(-1), stderrors.New("db error"))
+					Return(int64(-1), errors.New("db error"))
 			},
-			wantErr: errors.NewInternal(stderrors.New("db error")),
+			wantErr: httperrors.NewInternal(errors.New("db error")),
 		},
 		{
 			name:      "success",
@@ -320,16 +320,16 @@ func TestHandler_UpdateCourse(t *testing.T) {
 			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
 				tc.svc.On("UpdateCourse", ctx.Request().Context(), mock.AnythingOfType("string"), mock.AnythingOfType("entities.Course")).
-					Return(stderrors.New("db error"))
+					Return(errors.New("db error"))
 			},
 			req:     UpdateCourseRequest{},
-			wantErr: errors.NewInternal(stderrors.New("db error")),
+			wantErr: httperrors.NewInternal(errors.New("db error")),
 		},
 		{
 			name:    "error cannot bind",
 			svc:     &mocks.MockService{},
 			req:     "bad request",
-			wantErr: errors.NewBadRequest("invalid request body"),
+			wantErr: httperrors.NewBadRequest("invalid request body"),
 		},
 	}
 
@@ -379,9 +379,9 @@ func TestHandler_DeleteCourse(t *testing.T) {
 			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
 				tc.svc.On("DeleteCourse", ctx.Request().Context(), mock.AnythingOfType("string")).
-					Return(stderrors.New("db error"))
+					Return(errors.New("db error"))
 			},
-			wantErr: errors.NewInternal(stderrors.New("db error")),
+			wantErr: httperrors.NewInternal(errors.New("db error")),
 		},
 	}
 
@@ -417,12 +417,12 @@ func assertCustomError(t *testing.T, expected, actual error) {
 		t.Errorf("expected error %v but got nil", expected)
 		return
 	}
-	expectedErr, ok := expected.(errors.CustomError)
+	expectedErr, ok := expected.(httperrors.CustomError)
 	if !ok {
 		t.Errorf("expected error is not CustomError: %T", expected)
 		return
 	}
-	actualErr, ok := actual.(errors.CustomError)
+	actualErr, ok := actual.(httperrors.CustomError)
 	if !ok {
 		t.Errorf("actual error is not CustomError: %T", actual)
 		return

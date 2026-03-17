@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/eaguilar88/deu/internal/entities"
-	errs "github.com/eaguilar88/deu/internal/errors"
+	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/eaguilar88/deu/internal/postgres_repository/mappers"
 	"github.com/eaguilar88/deu/internal/postgres_repository/models"
 	"github.com/eaguilar88/deu/internal/postgres_repository/queries"
@@ -107,7 +107,7 @@ func (r *PostgresRepository) CreateCoursePeriod(ctx context.Context, coursePerio
 	if err != nil {
 		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == pgErrorCodeUniqueViolation {
 			r.logger.Error("duplicated course period", zap.Error(err))
-			return -1, errs.NewDuplicateEntryError(err)
+			return -1, httperrors.NewDuplicateEntryError(err)
 		}
 		r.logger.Error("error inserting course period", zap.Error(err))
 		return -1, err
@@ -131,7 +131,7 @@ func (r *PostgresRepository) UpdateCoursePeriod(ctx context.Context, periodID st
 		return err
 	}
 	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
-		return errs.NewNotFoundError(err)
+		return httperrors.NewNotFoundError(err)
 	}
 	return nil
 }
@@ -139,7 +139,7 @@ func (r *PostgresRepository) UpdateCoursePeriod(ctx context.Context, periodID st
 func (r *PostgresRepository) DeleteCoursePeriod(ctx context.Context, periodID string) error {
 	sql, args, err := queries.DeleteCoursePeriod(periodID).ToSql()
 	if err != nil {
-		return errs.NewBadQueryError(err)
+		return httperrors.NewBadQueryError(err)
 	}
 	stmt, err := r.db.PrepareContext(ctx, sql)
 	if err != nil {
@@ -151,7 +151,7 @@ func (r *PostgresRepository) DeleteCoursePeriod(ctx context.Context, periodID st
 		return err
 	}
 	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
-		return errs.NewNotFoundError(err)
+		return httperrors.NewNotFoundError(err)
 	}
 	return nil
 }
@@ -270,7 +270,7 @@ func (r *PostgresRepository) UpdateAnnouncement(ctx context.Context, announcemen
 		return err
 	}
 	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
-		return errs.NewNotFoundError(err)
+		return httperrors.NewNotFoundError(err)
 	}
 
 	return nil
@@ -279,7 +279,7 @@ func (r *PostgresRepository) UpdateAnnouncement(ctx context.Context, announcemen
 func (r *PostgresRepository) DeleteAnnouncement(ctx context.Context, announcementID string) error {
 	sql, args, err := queries.DeleteAnnouncement(announcementID).ToSql()
 	if err != nil {
-		return errs.NewBadQueryError(err)
+		return httperrors.NewBadQueryError(err)
 	}
 	stmt, err := r.db.PrepareContext(ctx, sql)
 	if err != nil {
@@ -292,7 +292,7 @@ func (r *PostgresRepository) DeleteAnnouncement(ctx context.Context, announcemen
 		return err
 	}
 	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
-		return errs.NewNotFoundError(err)
+		return httperrors.NewNotFoundError(err)
 	}
 
 	return nil

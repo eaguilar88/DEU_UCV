@@ -9,6 +9,21 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+const (
+	NameMissingError              = "nombre es requerido"
+	DescriptionMissingError       = "descripcion es requerido"
+	ObjectivesMissingError        = "objetivos es requerido"
+	RationaleMissingError         = "fundamentacion es requerido"
+	DurationMissingError          = "duracion es requerido"
+	CostMissingError              = "estructura_costos es requerido"
+	InstructorProfileMissingError = "perfil_docente es requerido"
+	RequirementsMissingError      = "exigencias es requerido"
+	ContentMissingError           = "estructura_curricular es requerido"
+	EvaluationMissingError        = "evaluacion es requerido"
+	ScheduleMissingError          = "cronograma es requerido"
+	CoverMissingError             = "portada is required"
+)
+
 func formValue(c echo.Context, key string) string {
 	return strings.TrimSpace(c.FormValue(key))
 }
@@ -16,17 +31,17 @@ func formValue(c echo.Context, key string) string {
 // toCourseEntity converts a multipart form request to a Course entity.
 func toCourseEntity(c echo.Context) (entities.Course, error) {
 	requiredFields := []struct{ key, msg string }{
-		{"nombre", "nombre es requerido"},
-		{"descripcion", "descripcion es requerido"},
-		{"objetivos", "objetivos es requerido"},
-		{"fundamentacion", "fundamentacion es requerido"},
-		{"duracion", "duracion es requerido"},
-		{"estructura_costos", "estructura_costos es requerido"},
-		{"perfil_docente", "perfil_docente es requerido"},
-		{"exigencias", "exigencias es requerido"},
-		{"estructura_curricular", "estructura_curricular es requerido"},
-		{"evaluacion", "evaluacion es requerido"},
-		{"cronograma", "cronograma es requerido"},
+		{"nombre", NameMissingError},
+		{"descripcion", DescriptionMissingError},
+		{"objetivos", ObjectivesMissingError},
+		{"fundamentacion", RationaleMissingError},
+		{"duracion", DurationMissingError},
+		{"estructura_costos", CostMissingError},
+		{"perfil_docente", InstructorProfileMissingError},
+		{"exigencias", RequirementsMissingError},
+		{"estructura_curricular", ContentMissingError},
+		{"evaluacion", EvaluationMissingError},
+		{"cronograma", ScheduleMissingError},
 	}
 	for _, f := range requiredFields {
 		if formValue(c, f.key) == "" {

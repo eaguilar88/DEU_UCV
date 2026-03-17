@@ -2,12 +2,12 @@ package groups
 
 import (
 	"context"
-	stderrors "errors"
+	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/eaguilar88/deu/internal/entities"
-	"github.com/eaguilar88/deu/internal/errors"
+	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/eaguilar88/deu/internal/utils"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -38,7 +38,7 @@ func (h *Handler) GetGroup(c echo.Context) error {
 	req := GetGroupRequest{ID: c.Param("id")}
 	group, err := h.svc.GetGroup(ctx, req.ID)
 	if err != nil {
-		return errors.NewInternal(err)
+		return httperrors.NewInternal(err)
 	}
 
 	return c.JSON(http.StatusOK, groupToResponse(group))
@@ -55,7 +55,7 @@ func (h *Handler) GetGroups(c echo.Context) error {
 
 	groups, pageScope, err := h.svc.GetGroups(ctx, scope)
 	if err != nil {
-		return errors.NewInternal(err)
+		return httperrors.NewInternal(err)
 	}
 
 	return c.JSON(http.StatusOK, GetGroupsResponse{
@@ -68,17 +68,17 @@ func (h *Handler) CreateGroup(c echo.Context) error {
 	ctx := c.Request().Context()
 	userID, ok := c.Get("userID").(string)
 	if !ok {
-		return errors.NewUnauthorized("authentication required")
+		return httperrors.NewUnauthorized("authentication required")
 	}
 
 	req, err := makeGroupRequestFromContext(c, userID, h.log)
 	if err != nil {
-		return errors.NewBadRequest(err.Error())
+		return httperrors.NewBadRequest(err.Error())
 	}
 
 	groupID, providerCode, err := h.svc.CreateGroup(ctx, req)
 	if err != nil {
-		return errors.NewInternal(err)
+		return httperrors.NewInternal(err)
 	}
 
 	return c.JSON(http.StatusCreated, CreateGroupResponse{
@@ -91,20 +91,20 @@ func (h *Handler) UpdateGroup(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req UpdateGroupRequest
 	if err := c.Bind(&req); err != nil {
-		return errors.NewBadRequest("invalid request body")
+		return httperrors.NewBadRequest("invalid request body")
 	}
 	userID, ok := c.Get("userID").(string)
 	if !ok {
-		return errors.NewUnauthorized("authentication required")
+		return httperrors.NewUnauthorized("authentication required")
 	}
 	req.OwnerID = userID
 	if err := c.Validate(req); err != nil {
-		return errors.NewBadRequest("validation failed")
+		return httperrors.NewBadRequest("validation failed")
 	}
 
 	err := h.svc.UpdateGroup(ctx, req.ID, updateGroupEntityFromRequest(req))
 	if err != nil {
-		return errors.NewInternal(err)
+		return httperrors.NewInternal(err)
 	}
 
 	return c.JSON(http.StatusAccepted, nil)
@@ -114,20 +114,20 @@ func (h *Handler) DeleteGroup(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req DeleteGroupRequest
 	if err := c.Bind(&req); err != nil {
-		return errors.NewBadRequest("invalid request body")
+		return httperrors.NewBadRequest("invalid request body")
 	}
 	userID, ok := c.Get("userID").(string)
 	if !ok {
-		return errors.NewUnauthorized("authentication required")
+		return httperrors.NewUnauthorized("authentication required")
 	}
 	req.OwnerID = userID
 	if err := c.Validate(req); err != nil {
-		return errors.NewBadRequest("validation failed")
+		return httperrors.NewBadRequest("validation failed")
 	}
 
 	err := h.svc.DeleteGroup(ctx, req.ID, req.OwnerID)
 	if err != nil {
-		return errors.NewInternal(err)
+		return httperrors.NewInternal(err)
 	}
 
 	return c.JSON(http.StatusNoContent, nil)
@@ -148,7 +148,7 @@ func makeGroupRequestFromContext(c echo.Context, userID string, log *zap.Logger)
 	logo, err := utils.GetFileFrom(c, entities.GroupFileTypeLogo)
 	if err != nil {
 		log.Error("error getting logo", zap.Error(err))
-		return entities.ExtensionGroup{}, stderrors.New("logo is required")
+		return entities.ExtensionGroup{}, errors.New("logo is required")
 	}
 
 	// fp, err := utils.GetFileFrom(c, entities.GroupFileTypeFinancingPlan)

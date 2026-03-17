@@ -3,14 +3,14 @@ package course_periods
 import (
 	"bytes"
 	"encoding/json"
-	stderrors "errors"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/eaguilar88/deu/internal/course_periods/mocks"
 	"github.com/eaguilar88/deu/internal/entities"
-	"github.com/eaguilar88/deu/internal/errors"
+	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -70,17 +70,17 @@ func TestHandler_GetCoursePeriod(t *testing.T) {
 			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
 				tc.svc.On("GetCoursePeriod", ctx.Request().Context(), mock.AnythingOfType("string")).
-					Return(entities.CoursePeriod{}, stderrors.New("cannot get course period"))
+					Return(entities.CoursePeriod{}, errors.New("cannot get course period"))
 			},
 			req:     GetCoursePeriodRequest{},
 			resp:    GetCoursePeriodResponse{},
-			wantErr: errors.NewInternal(stderrors.New("cannot get course period")),
+			wantErr: httperrors.NewInternal(errors.New("cannot get course period")),
 		},
 		{
 			name:    "error cannot bind",
 			svc:     &mocks.MockService{},
 			req:     "bad request",
-			wantErr: errors.NewBadRequest("invalid request"),
+			wantErr: httperrors.NewBadRequest("invalid request"),
 		},
 	}
 
@@ -142,11 +142,11 @@ func TestHandler_GetCoursePeriods(t *testing.T) {
 			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
 				tc.svc.On("GetCoursePeriods", ctx.Request().Context(), mock.AnythingOfType("string"), mock.AnythingOfType("entities.PageScope")).
-					Return([]entities.CoursePeriod{}, entities.PageScope{}, stderrors.New("internal error"))
+					Return([]entities.CoursePeriod{}, entities.PageScope{}, errors.New("internal error"))
 			},
 			req:     GetCoursePeriodRequest{},
 			resp:    GetCoursePeriodResponse{},
-			wantErr: errors.NewInternal(stderrors.New("internal error")),
+			wantErr: httperrors.NewInternal(errors.New("internal error")),
 		},
 	}
 
@@ -208,23 +208,23 @@ func TestHandler_CreateCoursePeriod(t *testing.T) {
 			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
 				tc.svc.On("CreateCoursePeriod", ctx.Request().Context(), mock.AnythingOfType("entities.CoursePeriod")).
-					Return(int64(-1), stderrors.New("internal error"))
+					Return(int64(-1), errors.New("internal error"))
 			},
 			userID:  &userID,
 			req:     CreateCoursePeriodRequest{},
-			wantErr: errors.NewInternal(stderrors.New("internal error")),
+			wantErr: httperrors.NewInternal(errors.New("internal error")),
 		},
 		{
 			name:    "error cannot find userID in context",
 			svc:     &mocks.MockService{},
 			req:     CreateCoursePeriodRequest{},
-			wantErr: errors.NewUnauthorized("authentication required"),
+			wantErr: httperrors.NewUnauthorized("authentication required"),
 		},
 		{
 			name:    "error cannot bind",
 			svc:     &mocks.MockService{},
 			req:     "bad request",
-			wantErr: errors.NewBadRequest("invalid request body"),
+			wantErr: httperrors.NewBadRequest("invalid request body"),
 		},
 	}
 
@@ -287,23 +287,23 @@ func TestHandler_UpdateCoursePeriod(t *testing.T) {
 			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
 				tc.svc.On("UpdateCoursePeriod", ctx.Request().Context(), mock.AnythingOfType("string"), mock.AnythingOfType("entities.CoursePeriod")).
-					Return(stderrors.New("cannot update course period"))
+					Return(errors.New("cannot update course period"))
 			},
 			userID:  &userID,
 			req:     UpdateCoursePeriodRequest{},
-			wantErr: errors.NewInternal(stderrors.New("cannot update course period")),
+			wantErr: httperrors.NewInternal(errors.New("cannot update course period")),
 		},
 		{
 			name:    "error cannot find userID in context",
 			svc:     &mocks.MockService{},
 			req:     UpdateCoursePeriodRequest{},
-			wantErr: errors.NewUnauthorized("authentication required"),
+			wantErr: httperrors.NewUnauthorized("authentication required"),
 		},
 		{
 			name:    "error cannot bind",
 			svc:     &mocks.MockService{},
 			req:     "bad request",
-			wantErr: errors.NewBadRequest("invalid request body"),
+			wantErr: httperrors.NewBadRequest("invalid request body"),
 		},
 	}
 
@@ -366,23 +366,23 @@ func TestHandler_DeleteCoursePeriod(t *testing.T) {
 			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
 				tc.svc.On("DeleteCoursePeriod", ctx.Request().Context(), mock.AnythingOfType("string"), mock.AnythingOfType("string")).
-					Return(stderrors.New("cannot delete course period"))
+					Return(errors.New("cannot delete course period"))
 			},
 			userID:  &userID,
 			req:     DeleteCoursePeriodRequest{},
-			wantErr: errors.NewInternal(stderrors.New("cannot delete course period")),
+			wantErr: httperrors.NewInternal(errors.New("cannot delete course period")),
 		},
 		{
 			name:    "error cannot find userID in context",
 			svc:     &mocks.MockService{},
 			req:     DeleteCoursePeriodRequest{},
-			wantErr: errors.NewUnauthorized("authentication required"),
+			wantErr: httperrors.NewUnauthorized("authentication required"),
 		},
 		{
 			name:    "error cannot bind",
 			svc:     &mocks.MockService{},
 			req:     "bad request",
-			wantErr: errors.NewBadRequest("invalid request body"),
+			wantErr: httperrors.NewBadRequest("invalid request body"),
 		},
 	}
 
@@ -427,12 +427,12 @@ func assertCustomError(t *testing.T, expected, actual error) {
 		t.Errorf("expected error %v but got nil", expected)
 		return
 	}
-	expectedErr, ok := expected.(errors.CustomError)
+	expectedErr, ok := expected.(httperrors.CustomError)
 	if !ok {
 		t.Errorf("expected error is not CustomError: %T", expected)
 		return
 	}
-	actualErr, ok := actual.(errors.CustomError)
+	actualErr, ok := actual.(httperrors.CustomError)
 	if !ok {
 		t.Errorf("actual error is not CustomError: %T", actual)
 		return

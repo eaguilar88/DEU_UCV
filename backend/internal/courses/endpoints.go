@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/eaguilar88/deu/internal/entities"
-	"github.com/eaguilar88/deu/internal/errors"
+	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
@@ -37,7 +37,7 @@ func (h *Handler) GetCourse(c echo.Context) error {
 	req := GetCourseRequest{ID: c.Param("id")}
 	course, err := h.svc.GetCourse(ctx, req.ID)
 	if err != nil {
-		return errors.NewInternal(err)
+		return httperrors.NewInternal(err)
 	}
 
 	response := courseToResponse(course)
@@ -71,7 +71,7 @@ func (h *Handler) GetCourses(c echo.Context) error {
 	}
 	courses, pages, err := h.svc.GetCourses(ctx, req.PageScope)
 	if err != nil {
-		return errors.NewInternal(err)
+		return httperrors.NewInternal(err)
 	}
 
 	return c.JSON(http.StatusOK, GetCoursesResponse{
@@ -85,17 +85,17 @@ func (h *Handler) CreateCourse(c echo.Context) error {
 
 	userID, ok := c.Get("userID").(string)
 	if !ok {
-		return errors.NewUnauthorized("authentication required")
+		return httperrors.NewUnauthorized("authentication required")
 	}
 
 	course, err := toCourseEntity(c)
 	if err != nil {
-		return errors.NewBadRequest(err.Error())
+		return httperrors.NewBadRequest(err.Error())
 	}
 
 	courseID, err := h.svc.CreateCourse(ctx, userID, course)
 	if err != nil {
-		return errors.NewInternal(err)
+		return httperrors.NewInternal(err)
 	}
 
 	return c.JSON(http.StatusCreated, CreateCoursesResponse{
@@ -107,13 +107,13 @@ func (h *Handler) UpdateCourse(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req UpdateCourseRequest
 	if err := c.Bind(&req); err != nil {
-		return errors.NewBadRequest("invalid request body")
+		return httperrors.NewBadRequest("invalid request body")
 	}
 
 	updatedCourse := toCourseUpdateEntity(req, c.Param("id"))
 	err := h.svc.UpdateCourse(ctx, c.Param("id"), updatedCourse)
 	if err != nil {
-		return errors.NewInternal(err)
+		return httperrors.NewInternal(err)
 	}
 
 	return c.JSON(http.StatusAccepted, nil)
@@ -123,12 +123,12 @@ func (h *Handler) DeleteCourse(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req DeleteCourseRequest
 	if err := c.Bind(&req); err != nil {
-		return errors.NewBadRequest("invalid request body")
+		return httperrors.NewBadRequest("invalid request body")
 	}
 
 	err := h.svc.DeleteCourse(ctx, req.ID)
 	if err != nil {
-		return errors.NewInternal(err)
+		return httperrors.NewInternal(err)
 	}
 
 	return c.JSON(http.StatusAccepted, nil)

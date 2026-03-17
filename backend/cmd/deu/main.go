@@ -12,10 +12,10 @@ import (
 	"github.com/eaguilar88/deu/internal/course_requests"
 	"github.com/eaguilar88/deu/internal/courses"
 	"github.com/eaguilar88/deu/internal/email"
-	"github.com/eaguilar88/deu/internal/errors"
 	"github.com/eaguilar88/deu/internal/files"
 	"github.com/eaguilar88/deu/internal/group_requests"
 	"github.com/eaguilar88/deu/internal/groups"
+	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/eaguilar88/deu/internal/jwt"
 	repository "github.com/eaguilar88/deu/internal/postgres_repository"
 	"github.com/eaguilar88/deu/internal/providers"
@@ -103,7 +103,7 @@ func main() {
 
 	e := echo.New()
 	e.Validator = security.NewCustomValidator()
-	e.HTTPErrorHandler = errors.NewHTTPErrorHandler(logger)
+	e.HTTPErrorHandler = httperrors.NewHTTPErrorHandler(logger)
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
 	middlewares := []echo.MiddlewareFunc{

@@ -5,7 +5,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/eaguilar88/deu/internal/errors"
+	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
@@ -26,14 +26,14 @@ func NewHandler(storage StorageClient, logger *zap.Logger) *Handler {
 func (h *Handler) ServeFile(c echo.Context) error {
 	key := c.Param("key")
 	if key == "" {
-		return errors.NewBadRequest("missing file key")
+		return httperrors.NewBadRequest("missing file key")
 	}
 
 	ctx := c.Request().Context()
 	body, contentType, err := h.storage.GetObject(ctx, key)
 	if err != nil {
 		h.logger.Error("failed to fetch file from storage", zap.Error(err), zap.String("key", key))
-		return errors.NewNotFound("file not found")
+		return httperrors.NewNotFound("file not found")
 	}
 	defer func() {
 		if err := body.Close(); err != nil {

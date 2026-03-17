@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"github.com/eaguilar88/deu/internal/entities"
-	errs "github.com/eaguilar88/deu/internal/errors"
+	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/eaguilar88/deu/internal/postgres_repository/models"
 	"github.com/eaguilar88/deu/internal/postgres_repository/queries"
 	"github.com/lib/pq"
@@ -77,10 +77,10 @@ func (r *PostgresRepository) CreateCourse(ctx context.Context, course entities.C
 	if err != nil {
 		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == pgErrorCodeUniqueViolation {
 			r.logger.Error("error inserting user", zap.Error(err))
-			return -1, errs.NewDuplicateEntryError(err)
+			return -1, httperrors.NewDuplicateEntryError(err)
 		}
 		r.logger.Error("error inserting user", zap.Error(err))
-		return -1, errs.NewInternalError(err)
+		return -1, httperrors.NewInternalError(err)
 	}
 	return lastInsertedID, nil
 }
@@ -156,12 +156,12 @@ func (r *PostgresRepository) CreateCourseWithRequest(ctx context.Context, course
 func (r *PostgresRepository) UpdateCourse(ctx context.Context, courseID string, course entities.Course) error {
 	sql, args, err := queries.UpdateCourse(courseID, newCourseModelFromEntities(course)).ToSql()
 	if err != nil {
-		return errs.NewBadQueryError(err)
+		return httperrors.NewBadQueryError(err)
 	}
 
 	stmt, err := r.db.PrepareContext(ctx, sql)
 	if err != nil {
-		return errs.NewBadQueryError(err)
+		return httperrors.NewBadQueryError(err)
 	}
 	defer stmt.Close()
 
@@ -171,7 +171,7 @@ func (r *PostgresRepository) UpdateCourse(ctx context.Context, courseID string, 
 	}
 
 	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
-		return errs.NewNotFoundError(err)
+		return httperrors.NewNotFoundError(err)
 	}
 
 	return nil
@@ -180,12 +180,12 @@ func (r *PostgresRepository) UpdateCourse(ctx context.Context, courseID string, 
 func (r *PostgresRepository) DeleteCourse(ctx context.Context, courseID string) error {
 	sql, args, err := queries.DeleteCourse(courseID).ToSql()
 	if err != nil {
-		return errs.NewBadQueryError(err)
+		return httperrors.NewBadQueryError(err)
 	}
 
 	stmt, err := r.db.PrepareContext(ctx, sql)
 	if err != nil {
-		return errs.NewBadQueryError(err)
+		return httperrors.NewBadQueryError(err)
 	}
 	defer stmt.Close()
 
@@ -195,7 +195,7 @@ func (r *PostgresRepository) DeleteCourse(ctx context.Context, courseID string) 
 	}
 
 	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
-		return errs.NewNotFoundError(err)
+		return httperrors.NewNotFoundError(err)
 	}
 
 	return nil

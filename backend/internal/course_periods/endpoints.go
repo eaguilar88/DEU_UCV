@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/eaguilar88/deu/internal/entities"
-	"github.com/eaguilar88/deu/internal/errors"
+	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
@@ -39,12 +39,12 @@ func (h *Handler) GetCoursePeriod(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req GetCoursePeriodRequest
 	if err := c.Bind(&req); err != nil {
-		return errors.NewBadRequest("invalid request")
+		return httperrors.NewBadRequest("invalid request")
 	}
 
 	period, err := h.svc.GetCoursePeriod(ctx, req.ID)
 	if err != nil {
-		return errors.NewInternal(err)
+		return httperrors.NewInternal(err)
 	}
 
 	return c.JSON(http.StatusOK, periodToResponse(period))
@@ -64,7 +64,7 @@ func (h *Handler) GetCoursePeriods(c echo.Context) error {
 
 	periods, pages, err := h.svc.GetCoursePeriods(ctx, courseID, scope)
 	if err != nil {
-		return errors.NewInternal(err)
+		return httperrors.NewInternal(err)
 	}
 
 	return c.JSON(http.StatusOK, GetCoursePeriodsResponse{
@@ -78,16 +78,16 @@ func (h *Handler) CreateCoursePeriod(c echo.Context) error {
 
 	var req CreateCoursePeriodRequest
 	if err := c.Bind(&req); err != nil {
-		return errors.NewBadRequest("invalid request body")
+		return httperrors.NewBadRequest("invalid request body")
 	}
 	userID, ok := c.Get("userID").(string)
 	if !ok {
-		return errors.NewUnauthorized("authentication required")
+		return httperrors.NewUnauthorized("authentication required")
 	}
 
 	periodID, err := h.svc.CreateCoursePeriod(ctx, toPeriodEntity(req, userID))
 	if err != nil {
-		return errors.NewInternal(err)
+		return httperrors.NewInternal(err)
 	}
 
 	return c.JSON(http.StatusCreated, CreateCoursePeriodResponse{
@@ -99,18 +99,18 @@ func (h *Handler) UpdateCoursePeriod(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req UpdateCoursePeriodRequest
 	if err := c.Bind(&req); err != nil {
-		return errors.NewBadRequest("invalid request body")
+		return httperrors.NewBadRequest("invalid request body")
 	}
 
 	userID, ok := c.Get("userID").(string)
 	if !ok {
-		return errors.NewUnauthorized("authentication required")
+		return httperrors.NewUnauthorized("authentication required")
 	}
 
 	updatedPeriod := toPeriodUpdateEntity(req, userID)
 	err := h.svc.UpdateCoursePeriod(ctx, updatedPeriod.ID, updatedPeriod)
 	if err != nil {
-		return errors.NewInternal(err)
+		return httperrors.NewInternal(err)
 	}
 
 	return c.JSON(http.StatusAccepted, nil)
@@ -120,16 +120,16 @@ func (h *Handler) DeleteCoursePeriod(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req DeleteCoursePeriodRequest
 	if err := c.Bind(&req); err != nil {
-		return errors.NewBadRequest("invalid request body")
+		return httperrors.NewBadRequest("invalid request body")
 	}
 	userID, ok := c.Get("userID").(string)
 	if !ok {
-		return errors.NewUnauthorized("authentication required")
+		return httperrors.NewUnauthorized("authentication required")
 	}
 
 	err := h.svc.DeleteCoursePeriod(ctx, req.ID, userID)
 	if err != nil {
-		return errors.NewInternal(err)
+		return httperrors.NewInternal(err)
 	}
 
 	return c.JSON(http.StatusAccepted, nil)
@@ -140,12 +140,12 @@ func (h *Handler) GetAnnouncement(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req GetAnnouncementRequest
 	if err := c.Bind(&req); err != nil {
-		return errors.NewBadRequest("invalid request")
+		return httperrors.NewBadRequest("invalid request")
 	}
 
 	announcement, err := h.svc.GetAnnouncement(ctx, req.ID)
 	if err != nil {
-		return errors.NewInternal(err)
+		return httperrors.NewInternal(err)
 	}
 
 	return c.JSON(http.StatusOK, announcementToResponse(announcement))
@@ -155,17 +155,17 @@ func (h *Handler) CreateAnnouncement(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req CreateAnnouncementRequest
 	if err := c.Bind(&req); err != nil {
-		return errors.NewBadRequest("invalid request body")
+		return httperrors.NewBadRequest("invalid request body")
 	}
 
 	if err := c.Validate(&req); err != nil {
-		return errors.NewBadRequest("validation failed")
+		return httperrors.NewBadRequest("validation failed")
 	}
 
 	announcement := toAnnouncementEntity(req)
 	announcementID, err := h.svc.CreateAnnouncement(ctx, req.PeriodID, announcement)
 	if err != nil {
-		return errors.NewInternal(err)
+		return httperrors.NewInternal(err)
 	}
 
 	return c.JSON(http.StatusCreated, CreateAnnouncementResponse{
@@ -177,17 +177,17 @@ func (h *Handler) UpdateAnnouncement(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req UpdateAnnouncementRequest
 	if err := c.Bind(&req); err != nil {
-		return errors.NewBadRequest("invalid request body")
+		return httperrors.NewBadRequest("invalid request body")
 	}
 
 	if err := c.Validate(&req); err != nil {
-		return errors.NewBadRequest("validation failed")
+		return httperrors.NewBadRequest("validation failed")
 	}
 
 	announcement := toAnnouncementUpdateEntity(req)
 	err := h.svc.UpdateAnnouncement(ctx, req.ID, announcement)
 	if err != nil {
-		return errors.NewInternal(err)
+		return httperrors.NewInternal(err)
 	}
 
 	return c.JSON(http.StatusAccepted, nil)
@@ -197,12 +197,12 @@ func (h *Handler) DeleteAnnouncement(c echo.Context) error {
 	ctx := c.Request().Context()
 	var req DeleteAnnouncementRequest
 	if err := c.Bind(&req); err != nil {
-		return errors.NewBadRequest("invalid request body")
+		return httperrors.NewBadRequest("invalid request body")
 	}
 
 	err := h.svc.DeleteAnnouncement(ctx, req.ID)
 	if err != nil {
-		return errors.NewInternal(err)
+		return httperrors.NewInternal(err)
 	}
 
 	return c.JSON(http.StatusAccepted, nil)
