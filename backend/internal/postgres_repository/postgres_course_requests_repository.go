@@ -5,7 +5,7 @@ import (
 	"database/sql"
 
 	"github.com/eaguilar88/deu/internal/entities"
-	errs "github.com/eaguilar88/deu/internal/errors"
+	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/eaguilar88/deu/internal/postgres_repository/models"
 	"github.com/eaguilar88/deu/internal/postgres_repository/queries"
 	"go.uber.org/zap"
@@ -126,7 +126,7 @@ func (r *PostgresRepository) ApproveCourseRequest(ctx context.Context, reqID, re
 	}
 	if rowsAffected == 0 {
 		r.logger.Error("no rows affected when approving course request")
-		return errs.ErrNotFound
+		return httperrors.ErrNotFound
 	}
 
 	// Commit transaction
@@ -162,7 +162,7 @@ func (r *PostgresRepository) RejectCourseRequest(ctx context.Context, reqID, rev
 		return err
 	}
 	if rowsAffected == 0 {
-		return errs.ErrNotFound
+		return httperrors.ErrNotFound
 	}
 	return nil
 }
@@ -223,7 +223,7 @@ func (r *PostgresRepository) RedirectCourseRequest(ctx context.Context, reqID, r
 	}
 	if rowsAffected == 0 {
 		r.logger.Error("no rows affected when redirecting course request")
-		return errs.ErrNotFound
+		return httperrors.ErrNotFound
 	}
 
 	// Commit transaction

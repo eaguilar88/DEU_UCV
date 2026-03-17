@@ -45,6 +45,7 @@ type GroupMemberDTO struct {
 	Email string `json:"email" validate:"required,email"`
 }
 
+// groupMemberEntityFromRequest converts a GroupMemberDTO to a GroupMember entity.
 func groupMemberEntityFromRequest(dto GroupMemberDTO) entities.GroupMember {
 	return entities.GroupMember{
 		ID:    dto.ID,
@@ -53,6 +54,7 @@ func groupMemberEntityFromRequest(dto GroupMemberDTO) entities.GroupMember {
 	}
 }
 
+// groupMembersEntityFromRequest converts a slice of GroupMemberDTO to GroupMember entities.
 func groupMembersEntityFromRequest(dtos []GroupMemberDTO) []entities.GroupMember {
 	members := make([]entities.GroupMember, len(dtos))
 	for i, dto := range dtos {
@@ -61,7 +63,7 @@ func groupMembersEntityFromRequest(dtos []GroupMemberDTO) []entities.GroupMember
 	return members
 }
 
-// ValidateFaculty checks if the provided faculty string is valid and returns the Faculty type
+// ValidateFaculty checks if the provided faculty string is valid and returns the Faculty type.
 func ValidateFaculty(facultyStr string) (entities.Faculty, error) {
 	faculty := entities.Faculty(facultyStr)
 	if !faculty.IsValid() {
@@ -70,6 +72,7 @@ func ValidateFaculty(facultyStr string) (entities.Faculty, error) {
 	return faculty, nil
 }
 
+// updateGroupEntityFromRequest converts UpdateGroupRequest to an ExtensionGroup entity.
 func updateGroupEntityFromRequest(req UpdateGroupRequest) entities.ExtensionGroup {
 	return entities.ExtensionGroup{
 		ID:          req.ID,
@@ -87,6 +90,7 @@ func updateGroupEntityFromRequest(req UpdateGroupRequest) entities.ExtensionGrou
 	}
 }
 
+// createGroupEntityFromRequest converts CreateGroupRequest to an ExtensionGroup entity.
 func createGroupEntityFromRequest(req CreateGroupRequest, ownerID, faculty string) entities.ExtensionGroup {
 	eg := entities.ExtensionGroup{
 		Name:        req.Name,

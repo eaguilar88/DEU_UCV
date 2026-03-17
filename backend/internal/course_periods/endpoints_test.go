@@ -10,6 +10,7 @@ import (
 
 	"github.com/eaguilar88/deu/internal/course_periods/mocks"
 	"github.com/eaguilar88/deu/internal/entities"
+	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -73,13 +74,13 @@ func TestHandler_GetCoursePeriod(t *testing.T) {
 			},
 			req:     GetCoursePeriodRequest{},
 			resp:    GetCoursePeriodResponse{},
-			wantErr: echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error"),
+			wantErr: httperrors.NewInternal(errors.New("cannot get course period")),
 		},
 		{
 			name:    "error cannot bind",
 			svc:     &mocks.MockService{},
 			req:     "bad request",
-			wantErr: echo.NewHTTPError(http.StatusBadRequest, "Bad Request"),
+			wantErr: httperrors.NewBadRequest("invalid request"),
 		},
 	}
 
@@ -98,7 +99,7 @@ func TestHandler_GetCoursePeriod(t *testing.T) {
 			}
 			h := NewHandler(tt.svc, loggerMock)
 			err = h.GetCoursePeriod(ctx)
-			assert.Equal(t, tt.wantErr, err)
+			assertCustomError(t, tt.wantErr, err)
 			if tt.wantErr == nil {
 				var respBody GetCoursePeriodResponse
 				err = json.Unmarshal(rec.Body.Bytes(), &respBody)
@@ -141,11 +142,11 @@ func TestHandler_GetCoursePeriods(t *testing.T) {
 			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
 				tc.svc.On("GetCoursePeriods", ctx.Request().Context(), mock.AnythingOfType("string"), mock.AnythingOfType("entities.PageScope")).
-					Return([]entities.CoursePeriod{}, entities.PageScope{}, echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error"))
+					Return([]entities.CoursePeriod{}, entities.PageScope{}, errors.New("internal error"))
 			},
 			req:     GetCoursePeriodRequest{},
 			resp:    GetCoursePeriodResponse{},
-			wantErr: echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error"),
+			wantErr: httperrors.NewInternal(errors.New("internal error")),
 		},
 	}
 
@@ -164,7 +165,7 @@ func TestHandler_GetCoursePeriods(t *testing.T) {
 			}
 			h := NewHandler(tt.svc, loggerMock)
 			err = h.GetCoursePeriods(ctx)
-			assert.Equal(t, tt.wantErr, err)
+			assertCustomError(t, tt.wantErr, err)
 			if tt.wantErr == nil {
 				var respBody GetCoursePeriodsResponse
 				err = json.Unmarshal(rec.Body.Bytes(), &respBody)
@@ -207,23 +208,23 @@ func TestHandler_CreateCoursePeriod(t *testing.T) {
 			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
 				tc.svc.On("CreateCoursePeriod", ctx.Request().Context(), mock.AnythingOfType("entities.CoursePeriod")).
-					Return(int64(-1), echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error"))
+					Return(int64(-1), errors.New("internal error"))
 			},
 			userID:  &userID,
 			req:     CreateCoursePeriodRequest{},
-			wantErr: echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error"),
+			wantErr: httperrors.NewInternal(errors.New("internal error")),
 		},
 		{
 			name:    "error cannot find userID in context",
 			svc:     &mocks.MockService{},
 			req:     CreateCoursePeriodRequest{},
-			wantErr: echo.NewHTTPError(http.StatusBadRequest, "Bad Request"),
+			wantErr: httperrors.NewUnauthorized("authentication required"),
 		},
 		{
 			name:    "error cannot bind",
 			svc:     &mocks.MockService{},
 			req:     "bad request",
-			wantErr: echo.NewHTTPError(http.StatusBadRequest, "Bad Request"),
+			wantErr: httperrors.NewBadRequest("invalid request body"),
 		},
 	}
 
@@ -245,7 +246,7 @@ func TestHandler_CreateCoursePeriod(t *testing.T) {
 			}
 			h := NewHandler(tt.svc, loggerMock)
 			err = h.CreateCoursePeriod(ctx)
-			assert.Equal(t, tt.wantErr, err)
+			assertCustomError(t, tt.wantErr, err)
 			if tt.wantErr == nil {
 				var respBody CreateCoursePeriodResponse
 				err = json.Unmarshal(rec.Body.Bytes(), &respBody)
@@ -290,19 +291,19 @@ func TestHandler_UpdateCoursePeriod(t *testing.T) {
 			},
 			userID:  &userID,
 			req:     UpdateCoursePeriodRequest{},
-			wantErr: echo.NewHTTPError(http.StatusUnprocessableEntity, "Unprocessable Entity"),
+			wantErr: httperrors.NewInternal(errors.New("cannot update course period")),
 		},
 		{
 			name:    "error cannot find userID in context",
 			svc:     &mocks.MockService{},
 			req:     UpdateCoursePeriodRequest{},
-			wantErr: echo.NewHTTPError(http.StatusBadRequest, "Bad Request"),
+			wantErr: httperrors.NewUnauthorized("authentication required"),
 		},
 		{
 			name:    "error cannot bind",
 			svc:     &mocks.MockService{},
 			req:     "bad request",
-			wantErr: echo.NewHTTPError(http.StatusBadRequest, "Bad Request"),
+			wantErr: httperrors.NewBadRequest("invalid request body"),
 		},
 	}
 
@@ -324,7 +325,7 @@ func TestHandler_UpdateCoursePeriod(t *testing.T) {
 			}
 			h := NewHandler(tt.svc, loggerMock)
 			err = h.UpdateCoursePeriod(ctx)
-			assert.Equal(t, tt.wantErr, err)
+			assertCustomError(t, tt.wantErr, err)
 			if tt.wantErr == nil {
 				var respBody UpdateCoursePeriodResponse
 				err = json.Unmarshal(rec.Body.Bytes(), &respBody)
@@ -369,19 +370,19 @@ func TestHandler_DeleteCoursePeriod(t *testing.T) {
 			},
 			userID:  &userID,
 			req:     DeleteCoursePeriodRequest{},
-			wantErr: echo.NewHTTPError(http.StatusUnprocessableEntity, "Unprocessable Entity"),
+			wantErr: httperrors.NewInternal(errors.New("cannot delete course period")),
 		},
 		{
 			name:    "error cannot find userID in context",
 			svc:     &mocks.MockService{},
 			req:     DeleteCoursePeriodRequest{},
-			wantErr: echo.NewHTTPError(http.StatusBadRequest, "Bad Request"),
+			wantErr: httperrors.NewUnauthorized("authentication required"),
 		},
 		{
 			name:    "error cannot bind",
 			svc:     &mocks.MockService{},
 			req:     "bad request",
-			wantErr: echo.NewHTTPError(http.StatusBadRequest, "Bad Request"),
+			wantErr: httperrors.NewBadRequest("invalid request body"),
 		},
 	}
 
@@ -403,7 +404,7 @@ func TestHandler_DeleteCoursePeriod(t *testing.T) {
 			}
 			h := NewHandler(tt.svc, loggerMock)
 			err = h.DeleteCoursePeriod(ctx)
-			assert.Equal(t, tt.wantErr, err)
+			assertCustomError(t, tt.wantErr, err)
 			if tt.wantErr == nil {
 				var respBody DeleteCoursePeriodResponse
 				err = json.Unmarshal(rec.Body.Bytes(), &respBody)
@@ -413,4 +414,29 @@ func TestHandler_DeleteCoursePeriod(t *testing.T) {
 			tt.svc.AssertExpectations(t)
 		})
 	}
+}
+
+// assertCustomError compares errors by status code and safe message
+func assertCustomError(t *testing.T, expected, actual error) {
+	t.Helper()
+	if expected == nil {
+		assert.Nil(t, actual)
+		return
+	}
+	if actual == nil {
+		t.Errorf("expected error %v but got nil", expected)
+		return
+	}
+	expectedErr, ok := expected.(httperrors.CustomError)
+	if !ok {
+		t.Errorf("expected error is not CustomError: %T", expected)
+		return
+	}
+	actualErr, ok := actual.(httperrors.CustomError)
+	if !ok {
+		t.Errorf("actual error is not CustomError: %T", actual)
+		return
+	}
+	assert.Equal(t, expectedErr.StatusCode(), actualErr.StatusCode(), "status codes should match")
+	assert.Equal(t, expectedErr.SafeMessage(), actualErr.SafeMessage(), "safe messages should match")
 }

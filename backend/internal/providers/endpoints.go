@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/eaguilar88/deu/internal/entities"
+	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/eaguilar88/deu/internal/utils"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -41,11 +42,10 @@ func (h *Handler) GetProvider(c echo.Context) error {
 	req := GetProviderRequest{ID: c.Param("id")}
 	provider, err := h.svc.GetProvider(ctx, req.ID)
 	if err != nil {
-		h.log.Error("error getting provider", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, err.Error())
+		return httperrors.NewInternal(err)
 	}
 
-	return c.JSON(http.StatusOK, ProviderEntityToGetProviderResponse(provider))
+	return c.JSON(http.StatusOK, providerToResponse(provider))
 }
 
 func (h *Handler) GetProviders(c echo.Context) error {
@@ -62,11 +62,10 @@ func (h *Handler) GetProviders(c echo.Context) error {
 	}
 	providers, pages, err := h.svc.GetProviders(ctx, req.PageScope)
 	if err != nil {
-		h.log.Error("error getting providers", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, err.Error())
+		return httperrors.NewInternal(err)
 	}
 
-	return c.JSON(http.StatusOK, ProvidersEntityToGetProvidersResponse(providers, pages))
+	return c.JSON(http.StatusOK, providersToResponse(providers, pages))
 }
 
 func (h *Handler) CreateProvider(c echo.Context) error {
@@ -74,20 +73,17 @@ func (h *Handler) CreateProvider(c echo.Context) error {
 
 	userID, ok := c.Get("userID").(string)
 	if !ok {
-		h.log.Error("no user ID found in context")
-		return echo.NewHTTPError(http.StatusUnauthorized, "user missing from context")
+		return httperrors.NewUnauthorized("authentication required")
 	}
 
 	provider, err := makeProviderFromRequest(c, userID, h.log)
 	if err != nil {
-		h.log.Error("error getting files", zap.Error(err))
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return httperrors.NewBadRequest(err.Error())
 	}
 
 	id, code, err := h.svc.CreateProvider(ctx, provider)
 	if err != nil {
-		h.log.Error("error creating provider", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, err.Error())
+		return httperrors.NewInternal(err)
 	}
 
 	return c.JSON(http.StatusCreated, CreateProviderResponse{
@@ -100,20 +96,17 @@ func (h *Handler) UpdateProvider(c echo.Context) error {
 	ctx := c.Request().Context()
 	userID, ok := c.Get("userID").(string)
 	if !ok {
-		h.log.Error("no user ID found in context")
-		return echo.NewHTTPError(http.StatusUnauthorized, "user missing from context")
+		return httperrors.NewUnauthorized("authentication required")
 	}
 
 	provider, err := makeProviderFromRequest(c, userID, h.log)
 	if err != nil {
-		h.log.Error("error getting files", zap.Error(err))
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return httperrors.NewBadRequest(err.Error())
 	}
 
 	err = h.svc.UpdateProvider(ctx, c.Param("id"), provider)
 	if err != nil {
-		h.log.Error("error updating provider", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, err.Error())
+		return httperrors.NewInternal(err)
 	}
 
 	return c.NoContent(http.StatusAccepted)
@@ -123,8 +116,7 @@ func (h *Handler) DeleteProvider(c echo.Context) error {
 	ctx := c.Request().Context()
 	err := h.svc.DeleteProvider(ctx, c.Param("id"))
 	if err != nil {
-		h.log.Error("error deleting provider", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, err.Error())
+		return httperrors.NewInternal(err)
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -137,24 +129,24 @@ func makeProviderFromRequest(c echo.Context, userID string, logger *zap.Logger) 
 	bio := c.FormValue("bio")
 	isInternal := c.FormValue("es_interno")
 
-	ci, err := utils.GetFileFromForm(c, entities.ProviderFileTypeCI)
+	ci, err := utils.GetFileFrom(c, entities.ProviderFileTypeCI)
 	if err != nil {
 		logger.Error("error getting ci", zap.Error(err))
 		return nil, errors.New("ci is required")
 	}
-	rif, err := utils.GetFileFromForm(c, entities.ProviderFileTypeRIF)
+	rif, err := utils.GetFileFrom(c, entities.ProviderFileTypeRIF)
 	if err != nil {
 		logger.Error("error getting rif", zap.Error(err))
 		return nil, errors.New("rif is required")
 	}
 
-	islr, err := utils.GetFileFromForm(c, entities.ProviderFileTypeISLR)
+	islr, err := utils.GetFileFrom(c, entities.ProviderFileTypeISLR)
 	if err != nil {
 		logger.Error("error getting islr", zap.Error(err))
 		return nil, errors.New("islr is required")
 	}
 
-	logo, err := utils.GetFileFromForm(c, entities.ProviderFileTypeLogo)
+	logo, err := utils.GetFileFrom(c, entities.ProviderFileTypeLogo)
 	if err != nil {
 		logger.Error("error getting logo", zap.Error(err))
 		return nil, errors.New("logo is required")

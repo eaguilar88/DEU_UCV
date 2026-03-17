@@ -13,11 +13,17 @@ var courseQuerySelectCommon = []string{
 	"c.description",
 	"c.provider_id",
 	"c.objectives",
+	"c.rationale",
 	"c.duration",
+	"c.cost",
+	"c.instructor_profile",
+	"c.profiles",
+	"c.requirements",
 	"c.content",
+	"c.evaluation",
+	"c.schedule",
 	"c.type",
 	"c.faculty",
-	"c.cost",
 	"c.location",
 	"c.is_active",
 	"c.created_at",
@@ -49,10 +55,17 @@ func InsertCourse(course models.Course) sq.InsertBuilder {
 			"description",
 			"provider_id",
 			"objectives",
+			"rationale",
 			"duration",
-			"content",
-			"faculty",
 			"cost",
+			"instructor_profile",
+			"profiles",
+			"requirements",
+			"content",
+			"evaluation",
+			"schedule",
+			"type",
+			"faculty",
 			"location",
 		).
 		Values(
@@ -60,10 +73,17 @@ func InsertCourse(course models.Course) sq.InsertBuilder {
 			course.Description,
 			course.OwnerID,
 			course.Objectives,
+			course.Rationale,
 			course.Duration,
-			course.Content,
-			course.Faculty,
 			course.Cost,
+			course.InstructorProfile,
+			course.Profiles,
+			course.Requirements,
+			course.Content,
+			course.Evaluation,
+			course.Schedule,
+			course.Type,
+			course.Faculty,
 			course.Location,
 		).Suffix("RETURNING id")
 }
@@ -71,13 +91,19 @@ func InsertCourse(course models.Course) sq.InsertBuilder {
 func UpdateCourse(courseID string, course models.Course) sq.UpdateBuilder {
 	return psql.Update(coursesTableName).
 		Set("name", course.Name).
-		Set("description", course.Description.String).
-		Set("objectives", course.Objectives.String).
+		Set("description", course.Description).
+		Set("objectives", course.Objectives).
+		Set("rationale", course.Rationale).
 		Set("duration", course.Duration).
+		Set("cost", course.Cost).
+		Set("instructor_profile", course.InstructorProfile).
+		Set("profiles", course.Profiles).
+		Set("requirements", course.Requirements).
 		Set("content", course.Content).
+		Set("evaluation", course.Evaluation).
+		Set("schedule", course.Schedule).
 		Set("type", course.Type).
 		Set("faculty", course.Faculty).
-		Set("cost", course.Cost).
 		Set("location", course.Location).
 		Where(sq.Eq{"id": courseID})
 }

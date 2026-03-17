@@ -26,7 +26,8 @@ type ProviderFiles struct {
 	Others  []string `json:"otros,omitempty"`
 }
 
-func ProviderEntityToGetProviderResponse(entity entities.Provider) GetProviderResponse {
+// providerToResponse converts a Provider entity to GetProviderResponse.
+func providerToResponse(entity entities.Provider) GetProviderResponse {
 	response := GetProviderResponse{
 		ID:       entity.ID,
 		UserID:   entity.User.ID,
@@ -75,10 +76,11 @@ type GetProvidersResponse struct {
 	Pages     entities.PageScope    `json:"paginas"`
 }
 
-func ProvidersEntityToGetProvidersResponse(providers []entities.Provider, pageScope entities.PageScope) GetProvidersResponse {
+// providersToResponse converts a slice of Provider entities to GetProvidersResponse.
+func providersToResponse(providers []entities.Provider, pageScope entities.PageScope) GetProvidersResponse {
 	var responseProviders []GetProviderResponse
 	for _, provider := range providers {
-		responseProviders = append(responseProviders, ProviderEntityToGetProviderResponse(provider))
+		responseProviders = append(responseProviders, providerToResponse(provider))
 	}
 	return GetProvidersResponse{
 		Providers: responseProviders,
