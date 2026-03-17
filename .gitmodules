@@ -3,7 +3,7 @@
 	url = git@github.com:RoaRobinson97/ecp_ucv.git
 [submodule "landing"]
 	path = landing
-	url = git@github.com:SoniAmira/DEUWEB.git
+	url = git@github.com:danielitomoros03/deu-app.git
 [submodule "grupos"]
 	path = grupos
 	url = git@github.com:Kristian333/gsu_ucv.git

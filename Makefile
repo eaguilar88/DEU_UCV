@@ -1,4 +1,4 @@
-.PHONY: loadenv
+.PHONY: loadenv start-prod-landing seed-landing
 
 loadenv:
 	@set -a && source .env && set +a && env | grep -E '^HTTP_'
@@ -10,6 +10,14 @@ start-backend:
 start-prod:
 	git submodule update --recursive
 	docker compose -f docker-compose.prod.yml up -d
+
+start-prod-landing:
+	git submodule sync -- landing
+	git submodule update --init --recursive landing
+	docker compose -f docker-compose.prod.yml up -d --build traefik db backend landing
+
+seed-landing:
+	docker compose -f docker-compose.prod.yml exec landing ./bin/rails db:seed
 
 start-db:
 	git submodule update --recursive --remote
