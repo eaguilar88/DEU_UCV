@@ -22,7 +22,7 @@ type User struct {
 }
 
 func (u *User) SetAge() {
-	dob, err := time.Parse(time.RFC3339, u.DateOfBirth)
+	dob, err := time.Parse("2006-01-02", u.DateOfBirth)
 	if err != nil {
 		return
 	}

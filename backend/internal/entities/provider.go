@@ -13,6 +13,8 @@ type ProviderType string
 
 type ProviderPartyType string
 
+type ProviderProfitType string
+
 const (
 	// Provider code prefixes
 	CourseProvider ProviderPrefix = "ECP"
@@ -33,6 +35,10 @@ const (
 	// Legal identity types
 	PartyTypeNatural   ProviderPartyType = "natural"
 	PartyTypeJuridical ProviderPartyType = "juridical"
+
+	// Profit types
+	ProfitTypeLucrativo   ProviderProfitType = "lucrativo"
+	ProfitTypeNoLucrativo ProviderProfitType = "no_lucrativo"
 )
 
 type ProviderFiles struct {
@@ -50,6 +56,7 @@ type Provider struct {
 	Name       string // Provider's display name (e.g., business name for juridical providers)
 	Type       ProviderType
 	PartyType  ProviderPartyType
+	ProfitType ProviderProfitType
 	IsInternal bool
 	Bio        string
 	Code       string

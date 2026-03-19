@@ -11,7 +11,8 @@ type GetProviderResponse struct {
 	Code     string        `json:"codigo_proveedor"`
 	Files    ProviderFiles `json:"archivos"`
 	Logo     string        `json:"provider_avatar_url,omitempty"`
-	Type     string        `json:"tipo,omitempty"`
+	Type       string        `json:"tipo,omitempty"`
+	ProfitType string        `json:"tipo_lucro,omitempty"`
 	Contact  []string      `json:"emails_contacto,omitempty"`
 	Phones   []string      `json:"telefonos_contacto,omitempty"`
 	Webpage  string        `json:"sitio_web,omitempty"`
@@ -32,10 +33,12 @@ func providerToResponse(entity entities.Provider) GetProviderResponse {
 		ID:       entity.ID,
 		UserID:   entity.User.ID,
 		Name:     entity.User.FirstName + " " + entity.User.LastName,
-		Internal: entity.IsInternal,
-		Code:     entity.Code,
-		Active:   entity.DeletedAt == "",
-		Bio:      "", //TODO add bio to provider entity
+		Internal:   entity.IsInternal,
+		Code:       entity.Code,
+		Active:     entity.DeletedAt == "",
+		Bio:        entity.Bio,
+		Type:       string(entity.Type),
+		ProfitType: string(entity.ProfitType),
 	}
 
 	files := ProviderFiles{}

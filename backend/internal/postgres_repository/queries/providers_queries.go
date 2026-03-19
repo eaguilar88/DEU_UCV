@@ -12,6 +12,7 @@ var providerQuerySelectCommon = []string{
 	"p.user_id",
 	"p.name",
 	"p.party_type",
+	"p.profit_type",
 	"p.is_internal",
 	"p.bio",
 	"p.code",
@@ -66,6 +67,7 @@ func CreateProvider(provider models.Provider) sq.InsertBuilder {
 			"user_id",
 			"name",
 			"party_type",
+			"profit_type",
 			"is_internal",
 			"bio",
 			"code",
@@ -74,6 +76,7 @@ func CreateProvider(provider models.Provider) sq.InsertBuilder {
 			provider.UserID,
 			provider.Name,
 			provider.PartyType,
+			provider.ProfitType,
 			provider.IsInternal,
 			provider.Bio,
 			provider.Code,
@@ -86,6 +89,7 @@ func UpdateProvider(provider models.Provider) sq.UpdateBuilder {
 		Set("user_id", provider.UserID).
 		Set("name", provider.Name).
 		Set("party_type", provider.PartyType).
+		Set("profit_type", provider.ProfitType).
 		Set("is_internal", provider.IsInternal).
 		Set("bio", provider.Bio).
 		Set("code", provider.Code).
