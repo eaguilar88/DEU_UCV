@@ -178,6 +178,7 @@ func scanProvider(row scannable) (models.Provider, error) {
 		&provider.UserID,
 		&provider.Name,
 		&provider.PartyType,
+		&provider.ProfitType,
 		&provider.IsInternal,
 		&provider.Bio,
 		&provider.Code,
@@ -213,6 +214,8 @@ func newProviderFromModel(provider models.Provider) entities.Provider {
 		p.PartyType = entities.ProviderPartyType(provider.PartyType.String)
 	}
 
+	p.ProfitType = entities.ProviderProfitType(provider.ProfitType)
+
 	if provider.IsInternal.Valid {
 		p.IsInternal = provider.IsInternal.Bool
 	}
@@ -246,6 +249,7 @@ func newProviderModelFromEntities(provider entities.Provider) models.Provider {
 		UserID:     provider.User.ID,
 		Name:       toNullString(provider.Name),
 		PartyType:  toNullString(string(provider.PartyType)),
+		ProfitType: string(provider.ProfitType),
 		IsInternal: toNullBool(provider.IsInternal),
 		Bio:        toNullString(provider.Bio),
 		Code:       toNullString(provider.Code),

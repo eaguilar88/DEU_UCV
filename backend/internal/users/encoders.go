@@ -1,16 +1,25 @@
 package users
 
-import "github.com/eaguilar88/deu/internal/entities"
+import (
+	"time"
+
+	"github.com/eaguilar88/deu/internal/entities"
+)
 
 // userToResponse converts a User entity to GetUserResponse.
 func userToResponse(user entities.User) GetUserResponse {
+	dob := user.DateOfBirth
+	if t, err := time.Parse(storageDateFormat, user.DateOfBirth); err == nil {
+		dob = t.Format(clientDateFormat)
+	}
+
 	return GetUserResponse{
 		ID:             user.ID,
 		CI:             user.CI,
 		Email:          user.Email,
 		FirstName:      user.FirstName,
 		LastName:       user.LastName,
-		DateOfBirth:    user.DateOfBirth,
+		DateOfBirth:    dob,
 		Age:            user.Age,
 		Gender:         user.Gender,
 		EducationLevel: user.EducationLevel,

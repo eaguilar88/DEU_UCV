@@ -49,6 +49,7 @@ CREATE TABLE
     user_id INTEGER NOT NULL REFERENCES deu.users (id) ON DELETE CASCADE,
     name VARCHAR,
     party_type VARCHAR CHECK (party_type IN ('natural', 'juridical')),
+    profit_type VARCHAR NOT NULL CHECK (profit_type IN ('lucrativo', 'no_lucrativo')),
     is_internal BOOLEAN,
     bio text,
     code VARCHAR,
@@ -403,10 +404,10 @@ VALUES
 
   -- Insert mock data for providers
   INSERT INTO
-    deu.providers (user_id, name, party_type, is_internal, bio, code, is_active)
+    deu.providers (user_id, name, party_type, profit_type, is_internal, bio, code, is_active)
   VALUES
-    (5, 'Extensión Ingeniería UCV', 'natural', false, 'Proveedor de cursos de formación profesional en el área de ingeniería.', CONCAT('ECP-', LEFT(MD5(RANDOM()::TEXT), 6)), true), -- course_admin
-    (11, 'Grupo Cultural Humanidades', 'natural', true, 'Grupo de extensión universitaria dedicado a actividades culturales y humanísticas.', CONCAT('GEX-', LEFT(MD5(RANDOM()::TEXT), 6)), true); -- group_admin
+    (5, 'Extensión Ingeniería UCV', 'natural', 'no_lucrativo', false, 'Proveedor de cursos de formación profesional en el área de ingeniería.', CONCAT('ECP-', LEFT(MD5(RANDOM()::TEXT), 6)), true), -- course_admin
+    (11, 'Grupo Cultural Humanidades', 'natural', 'no_lucrativo', true, 'Grupo de extensión universitaria dedicado a actividades culturales y humanísticas.', CONCAT('GEX-', LEFT(MD5(RANDOM()::TEXT), 6)), true); -- group_admin
 
   -- Insert mock data for courses
   INSERT INTO

@@ -125,9 +125,22 @@ func (h *Handler) DeleteProvider(c echo.Context) error {
 func makeProviderFromRequest(c echo.Context, userID string, logger *zap.Logger) (*entities.Provider, error) {
 	providerType := c.FormValue("tipo_proveedor")
 	party := c.FormValue("tipo_persona")
+	profitType := c.FormValue("tipo_lucro")
 	name := c.FormValue("nombre")
 	bio := c.FormValue("bio")
 	isInternal := c.FormValue("es_interno")
+
+	if providerType != string(entities.CourseProviderType) && providerType != string(entities.GroupProviderType) {
+		return nil, errors.New("tipo_proveedor must be 'courses' or 'groups'")
+	}
+
+	if party != string(entities.PartyTypeNatural) && party != string(entities.PartyTypeJuridical) {
+		return nil, errors.New("tipo_persona must be 'natural' or 'juridical'")
+	}
+
+	if profitType != string(entities.ProfitTypeLucrativo) && profitType != string(entities.ProfitTypeNoLucrativo) {
+		return nil, errors.New("tipo_lucro must be 'lucrativo' or 'no_lucrativo'")
+	}
 
 	ci, err := utils.GetFileFrom(c, entities.ProviderFileTypeCI)
 	if err != nil {
@@ -170,6 +183,7 @@ func makeProviderFromRequest(c echo.Context, userID string, logger *zap.Logger) 
 		Bio:        bio,
 		Type:       entities.ProviderType(providerType),
 		PartyType:  entities.ProviderPartyType(party),
+		ProfitType: entities.ProviderProfitType(profitType),
 		IsInternal: isInternal == "true",
 		Files: entities.ProviderFiles{
 			CI:   ci,

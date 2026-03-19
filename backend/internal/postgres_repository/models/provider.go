@@ -7,6 +7,7 @@ type Provider struct {
 	UserID        string
 	Name          sql.NullString
 	PartyType     sql.NullString // 'natural' or 'juridical'
+	ProfitType    string         // 'lucrativo' or 'no_lucrativo' (NOT NULL)
 	IsInternal    sql.NullBool
 	Bio           sql.NullString
 	Code          sql.NullString

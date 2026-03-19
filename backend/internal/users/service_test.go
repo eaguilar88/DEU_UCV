@@ -1,0 +1,307 @@
+package users
+
+import (
+	"context"
+	"errors"
+	"testing"
+
+	"github.com/eaguilar88/deu/internal/entities"
+	"github.com/eaguilar88/deu/internal/users/mocks"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"go.uber.org/zap"
+)
+
+// newTestUser returns a fresh User entity for use in tests.
+func newTestUser() *entities.User {
+	return &entities.User{
+		ID:          "user-1",
+		CI:          "12345678",
+		Email:       "test@test.com",
+		FirstName:   "John",
+		LastName:    "Doe",
+		DateOfBirth: "1990-03-15",
+		Gender:      "male",
+		Address:     "123 Main St",
+	}
+}
+
+func TestService_GetUser(t *testing.T) {
+	type testCase struct {
+		name      string
+		userID    string
+		prepare   func(repo *mocks.MockRepository)
+		want      entities.User
+		wantErr   bool
+		errTarget error
+	}
+
+	tests := []testCase{
+		{
+			name:   "success",
+			userID: "user-1",
+			prepare: func(repo *mocks.MockRepository) {
+				repo.EXPECT().GetUser(mock.Anything, "user-1").
+					RunAndReturn(func(_ context.Context, _ string) (*entities.User, error) {
+						return newTestUser(), nil
+					})
+			},
+			want:    *newTestUser(),
+			wantErr: false,
+		},
+		{
+			name:   "user not found",
+			userID: "unknown",
+			prepare: func(repo *mocks.MockRepository) {
+				repo.EXPECT().GetUser(mock.Anything, "unknown").
+					RunAndReturn(func(_ context.Context, _ string) (*entities.User, error) {
+						return nil, ErrUserNotFound
+					})
+			},
+			wantErr:   true,
+			errTarget: ErrUserNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := mocks.NewMockRepository(t)
+			email := mocks.NewMockMailClient(t)
+			tt.prepare(repo)
+
+			svc := NewService(repo, email, zap.NewNop())
+			got, err := svc.GetUser(context.Background(), tt.userID)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.errTarget != nil {
+					assert.ErrorIs(t, err, tt.errTarget)
+				}
+				return
+			}
+			assert.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+			repo.AssertExpectations(t)
+		})
+	}
+}
+
+func TestService_CreateUser(t *testing.T) {
+	type testCase struct {
+		name      string
+		user      entities.User
+		prepare   func(repo *mocks.MockRepository, mail *mocks.MockMailClient)
+		wantID    int64
+		wantErr   bool
+		errTarget error
+	}
+
+	tests := []testCase{
+		{
+			name: "success",
+			user: *newTestUser(),
+			prepare: func(repo *mocks.MockRepository, mail *mocks.MockMailClient) {
+				repo.EXPECT().GetUserByUsername(mock.Anything, "test@test.com").
+					RunAndReturn(func(_ context.Context, _ string) (*entities.User, error) {
+						return nil, ErrUserNotFound
+					})
+				repo.EXPECT().CreateUser(mock.Anything, mock.Anything).
+					RunAndReturn(func(_ context.Context, _ entities.User) (int64, error) {
+						return 1, nil
+					})
+				mail.EXPECT().Send(mock.Anything, "test@test.com", mock.Anything, mock.Anything).
+					RunAndReturn(func(_ context.Context, _, _, _ string) error {
+						return nil
+					})
+			},
+			wantID:  1,
+			wantErr: false,
+		},
+		{
+			name: "user already exists",
+			user: *newTestUser(),
+			prepare: func(repo *mocks.MockRepository, _ *mocks.MockMailClient) {
+				existing := newTestUser()
+				repo.EXPECT().GetUserByUsername(mock.Anything, "test@test.com").
+					RunAndReturn(func(_ context.Context, _ string) (*entities.User, error) {
+						return existing, nil
+					})
+			},
+			wantErr:   true,
+			errTarget: ErrUserAlreadyExists,
+		},
+		{
+			name: "repo create error",
+			user: *newTestUser(),
+			prepare: func(repo *mocks.MockRepository, _ *mocks.MockMailClient) {
+				repo.EXPECT().GetUserByUsername(mock.Anything, "test@test.com").
+					RunAndReturn(func(_ context.Context, _ string) (*entities.User, error) {
+						return nil, ErrUserNotFound
+					})
+				repo.EXPECT().CreateUser(mock.Anything, mock.Anything).
+					RunAndReturn(func(_ context.Context, _ entities.User) (int64, error) {
+						return -1, errors.New("db error")
+					})
+			},
+			wantErr: true,
+		},
+		{
+			name: "email send error",
+			user: *newTestUser(),
+			prepare: func(repo *mocks.MockRepository, mail *mocks.MockMailClient) {
+				repo.EXPECT().GetUserByUsername(mock.Anything, "test@test.com").
+					RunAndReturn(func(_ context.Context, _ string) (*entities.User, error) {
+						return nil, ErrUserNotFound
+					})
+				repo.EXPECT().CreateUser(mock.Anything, mock.Anything).
+					RunAndReturn(func(_ context.Context, _ entities.User) (int64, error) {
+						return 1, nil
+					})
+				mail.EXPECT().Send(mock.Anything, "test@test.com", mock.Anything, mock.Anything).
+					RunAndReturn(func(_ context.Context, _, _, _ string) error {
+						return errors.New("mail error")
+					})
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := mocks.NewMockRepository(t)
+			mail := mocks.NewMockMailClient(t)
+			tt.prepare(repo, mail)
+
+			svc := NewService(repo, mail, zap.NewNop())
+			id, err := svc.CreateUser(context.Background(), tt.user)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.errTarget != nil {
+					assert.ErrorIs(t, err, tt.errTarget)
+				}
+				return
+			}
+			assert.NoError(t, err)
+			assert.Equal(t, tt.wantID, id)
+			repo.AssertExpectations(t)
+			mail.AssertExpectations(t)
+		})
+	}
+}
+
+func TestService_UpdateUser(t *testing.T) {
+	type testCase struct {
+		name      string
+		userID    string
+		user      entities.User
+		prepare   func(repo *mocks.MockRepository)
+		wantErr   bool
+		errTarget error
+	}
+
+	tests := []testCase{
+		{
+			name:   "success",
+			userID: "user-1",
+			user:   *newTestUser(),
+			prepare: func(repo *mocks.MockRepository) {
+				repo.EXPECT().GetUser(mock.Anything, "user-1").
+					RunAndReturn(func(_ context.Context, _ string) (*entities.User, error) {
+						return newTestUser(), nil
+					})
+				repo.EXPECT().UpdateUser(mock.Anything, "user-1", mock.Anything).
+					RunAndReturn(func(_ context.Context, _ string, _ entities.User) error {
+						return nil
+					})
+			},
+			wantErr: false,
+		},
+		{
+			name:   "user not found",
+			userID: "unknown",
+			user:   *newTestUser(),
+			prepare: func(repo *mocks.MockRepository) {
+				repo.EXPECT().GetUser(mock.Anything, "unknown").
+					RunAndReturn(func(_ context.Context, _ string) (*entities.User, error) {
+						return nil, ErrUserNotFound
+					})
+			},
+			wantErr:   true,
+			errTarget: ErrUserNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := mocks.NewMockRepository(t)
+			mail := mocks.NewMockMailClient(t)
+			tt.prepare(repo)
+
+			svc := NewService(repo, mail, zap.NewNop())
+			err := svc.UpdateUser(context.Background(), tt.userID, tt.user)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.errTarget != nil {
+					assert.ErrorIs(t, err, tt.errTarget)
+				}
+				return
+			}
+			assert.NoError(t, err)
+			repo.AssertExpectations(t)
+		})
+	}
+}
+
+func TestService_DeleteUser(t *testing.T) {
+	type testCase struct {
+		name    string
+		userID  string
+		prepare func(repo *mocks.MockRepository)
+		wantErr bool
+	}
+
+	tests := []testCase{
+		{
+			name:   "success",
+			userID: "user-1",
+			prepare: func(repo *mocks.MockRepository) {
+				repo.EXPECT().DeleteUser(mock.Anything, "user-1").
+					RunAndReturn(func(_ context.Context, _ string) error {
+						return nil
+					})
+			},
+			wantErr: false,
+		},
+		{
+			name:   "repo error",
+			userID: "user-1",
+			prepare: func(repo *mocks.MockRepository) {
+				repo.EXPECT().DeleteUser(mock.Anything, "user-1").
+					RunAndReturn(func(_ context.Context, _ string) error {
+						return errors.New("db error")
+					})
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := mocks.NewMockRepository(t)
+			mail := mocks.NewMockMailClient(t)
+			tt.prepare(repo)
+
+			svc := NewService(repo, mail, zap.NewNop())
+			err := svc.DeleteUser(context.Background(), tt.userID)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			assert.NoError(t, err)
+			repo.AssertExpectations(t)
+		})
+	}
+}

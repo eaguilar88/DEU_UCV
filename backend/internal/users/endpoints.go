@@ -82,7 +82,7 @@ func (h *Handler) CreateUser(c echo.Context) error {
 
 	newUser, err := toUserEntity(req)
 	if err != nil {
-		return httperrors.NewBadRequest("invalid user data")
+		return httperrors.NewBadRequest(err.Error())
 	}
 
 	userID, err := h.svc.CreateUser(ctx, newUser)
@@ -105,8 +105,15 @@ func (h *Handler) UpdateUser(c echo.Context) error {
 		return httperrors.NewBadRequest("invalid request body")
 	}
 
-	newUser := toUserUpdateEntity(req)
-	err := h.svc.UpdateUser(ctx, req.ID, newUser)
+	if err := c.Validate(req); err != nil {
+		return httperrors.NewBadRequest("validation failed")
+	}
+
+	newUser, err := toUserUpdateEntity(req)
+	if err != nil {
+		return httperrors.NewBadRequest(err.Error())
+	}
+	err = h.svc.UpdateUser(ctx, req.ID, newUser)
 	if err != nil {
 		if errors.Is(err, ErrUserNotFound) {
 			return httperrors.NewNotFound("user not found")
