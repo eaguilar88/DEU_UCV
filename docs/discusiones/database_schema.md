@@ -11,7 +11,7 @@ Este archivo describe de manera básica la estructura y relaciones principales d
 - **courses**: Almacena los cursos ofrecidos. Cada curso está asociado a un proveedor (`provider_id`).
 - **course_auth_requests**: Solicitudes de aval para cursos. Relacionadas con cursos y revisores (usuarios).
 - **course_cycles**: Ciclos o ediciones de los cursos. Cada ciclo pertenece a un curso.
-- **course_participants**: Participantes inscritos en ciclos de cursos. Relaciona usuarios con ciclos de cursos.
+- **visitante**: Visitantes interesados en ver los cursos.
 - **extension_groups**: Grupos de extensión universitaria. Cada grupo está asociado a un proveedor.
 - **group_auth_requests**: Solicitudes de aval para grupos de extensión. Relacionadas con grupos y revisores (usuarios).
 - **activities**: Actividades realizadas por los grupos de extensión. Relacionadas con un grupo.

@@ -56,24 +56,35 @@ func (s *service) GetUsers(ctx context.Context, pageScope entities.PageScope) ([
 }
 
 func (s *service) CreateUser(ctx context.Context, user entities.User) (int64, error) {
-	existingUser, err := s.repo.GetUserByUsername(ctx, user.Email)
-	if err != nil && !errors.Is(err, ErrUserNotFound) {
-		return -1, fmt.Errorf("failed to check existing user: %w", err)
-	}
+    // 1. Validar si ya existe (esto ya lo tienes)
+    existingUser, err := s.repo.GetUserByUsername(ctx, user.Email)
+    if err != nil && !errors.Is(err, ErrUserNotFound) {
+        return -1, fmt.Errorf("failed to check existing user: %w", err)
+    }
+    if existingUser != nil && existingUser.ID != "" {
+        return -1, ErrUserAlreadyExists
+    }
 
-	if existingUser != nil && existingUser.ID != "" {
-		return -1, ErrUserAlreadyExists
-	}
+    // ✨ EL CAMBIO CRUCIAL:
+    // Forzamos el rol de menor rango disponible en tu base de datos.
+    // Según tu SQL, el rol para gente común es 'visitante'.
+    user.Roles = []string{"visitante"} 
 
-	id, err := s.repo.CreateUser(ctx, user)
-	if err != nil {
-		return -1, fmt.Errorf("error creating new user: %w", err)
-	}
+    // 2. Ahora sí, crear el usuario con el rol forzado
+    id, err := s.repo.CreateUser(ctx, user)
+    if err != nil {
+        return -1, fmt.Errorf("error creating new user: %w", err)
+    }
 
-	if err := s.emailClient.Send(ctx, user.Email, "Welcome to DEU", "Welcome to DEU"); err != nil {
-		return -1, fmt.Errorf("error sending welcome email: %w", err)
-	}
-	return id, nil
+    // 3. Envío de correo (lo que te da error 500 si no es correo autorizado)
+    if err := s.emailClient.Send(ctx, user.Email, "Welcome to DEU", "Welcome to DEU"); err != nil {
+        s.log.Error("welcome email failed", zap.Error(err))
+        // OPCIONAL: Podrías quitar el 'return -1' de aquí si quieres que 
+        // el usuario se cree aunque falle el email.
+        return -1, fmt.Errorf("error sending welcome email: %w", err)
+    }
+    
+    return id, nil
 }
 
 func (s *service) UpdateUser(ctx context.Context, userID string, user entities.User) error {

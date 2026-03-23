@@ -22,7 +22,7 @@ var (
 	groupsTableName         = fmt.Sprintf("%s.extension_groups", schema)
 	groupRequestsTableName  = fmt.Sprintf("%s.group_auth_requests", schema)
 	periodsTableName        = fmt.Sprintf("%s.course_cycles", schema)
-	participantsTableName   = fmt.Sprintf("%s.course_participants", schema)
+	participantsTableName   = fmt.Sprintf("%s.visitantes", schema)
 	filesTableName          = fmt.Sprintf("%s.files", schema)
 	announcementsTableName  = fmt.Sprintf("%s.course_cycle_announcements", schema)
 )
