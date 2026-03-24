@@ -2,9 +2,11 @@ package main
 
 import (
 	"database/sql"
+	_ "embed"
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/eaguilar88/deu/internal/auth"
 	"github.com/eaguilar88/deu/internal/config"
@@ -28,9 +30,11 @@ import (
 	"go.uber.org/zap"
 )
 
+//go:embed VERSION
+var appVersion string
+
 const (
-// docsSource          = "./docs/openapi/service.yaml"
-// noVersionDefinedYet = "Version to be defined"
+// docsSource = "./docs/openapi/service.yaml"
 )
 
 type RegisterAdminEndpoints func(g *echo.Group)
@@ -113,6 +117,7 @@ func main() {
 	fileHandler := files.NewHandler(bbClient, logger)
 
 	addHealthRoute(e)
+	addVersionRoute(e, strings.TrimSpace(appVersion))
 	addFileRoutes(e, fileHandler)
 	addAuthRoutes(e, authEndpoints)
 	addUserRoutes(e, userEndpoints, middlewares...)
@@ -136,6 +141,12 @@ func addFileRoutes(e *echo.Echo, handler *files.Handler) {
 func addHealthRoute(e *echo.Echo) {
 	e.GET("/health", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Ok")
+	})
+}
+
+func addVersionRoute(e *echo.Echo, version string) {
+	e.GET("/version", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, map[string]string{"version": version})
 	})
 }
 
