@@ -1,0 +1,73 @@
+name: Deploy to Production
+run-name: ${{ github.actor }} is deploying ${{ github.ref_name }} to production
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  lint:
+    name: Go Linters Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: backend/go.mod
+          cache: true
+
+      - name: Verify Go version
+        run: go version
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: latest
+          working-directory: backend
+          args: --verbose --timeout=5m
+
+  test:
+    name: Run Go Tests with Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: backend/go.mod
+
+      - name: Run tests
+        run: |
+          cd backend
+          go test ./... -race -coverprofile=./coverage.tmp.out -covermode=atomic -coverpkg=./... -count=1
+
+      - name: Install bc
+        run: sudo apt update && sudo apt install bc
+
+      - name: Check Coverage Threshold
+        run: |
+          cd backend
+          $GITHUB_WORKSPACE/.github/workflows/gh-scripts/check-coverage.sh
+
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+      - name: SSH and deploy
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script_stop: true
+          script: |
+            cd /root/DEU_UCV
+            git fetch --all --tags
+            git checkout ${{ github.ref_name }}
+            make start-prod

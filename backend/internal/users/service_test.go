@@ -3,6 +3,7 @@ package users
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/eaguilar88/deu/internal/entities"
@@ -30,7 +31,7 @@ func TestService_GetUser(t *testing.T) {
 	type testCase struct {
 		name      string
 		userID    string
-		prepare   func(repo *mocks.MockRepository)
+		prepare   func(repo *mocks.MockRepository, storage *mocks.MockStorageClient)
 		want      entities.User
 		wantErr   bool
 		errTarget error
@@ -38,21 +39,51 @@ func TestService_GetUser(t *testing.T) {
 
 	tests := []testCase{
 		{
-			name:   "success",
+			name:   "success - no profile picture",
 			userID: "user-1",
-			prepare: func(repo *mocks.MockRepository) {
+			prepare: func(repo *mocks.MockRepository, _ *mocks.MockStorageClient) {
 				repo.EXPECT().GetUser(mock.Anything, "user-1").
 					RunAndReturn(func(_ context.Context, _ string) (*entities.User, error) {
 						return newTestUser(), nil
+					})
+				repo.EXPECT().GetFilesByOwner(mock.Anything, "user-1", entities.OwnerTypeUser).
+					RunAndReturn(func(_ context.Context, _ string, _ entities.OwnerType) (entities.GroupedFiles, error) {
+						return entities.GroupedFiles{}, nil
 					})
 			},
 			want:    *newTestUser(),
 			wantErr: false,
 		},
 		{
+			name:   "success - with profile picture",
+			userID: "user-1",
+			prepare: func(repo *mocks.MockRepository, storage *mocks.MockStorageClient) {
+				repo.EXPECT().GetUser(mock.Anything, "user-1").
+					RunAndReturn(func(_ context.Context, _ string) (*entities.User, error) {
+						return newTestUser(), nil
+					})
+				repo.EXPECT().GetFilesByOwner(mock.Anything, "user-1", entities.OwnerTypeUser).
+					RunAndReturn(func(_ context.Context, _ string, _ entities.OwnerType) (entities.GroupedFiles, error) {
+						return entities.GroupedFiles{
+							"profile_picture": {&entities.File{Key: "users/1/profile_picture.jpg"}},
+						}, nil
+					})
+				storage.EXPECT().GetFileURL(mock.Anything, "users/1/profile_picture.jpg").
+					RunAndReturn(func(_ context.Context, _ string) (string, error) {
+						return "https://cdn.example.com/users/1/profile_picture.jpg", nil
+					})
+			},
+			want: func() entities.User {
+				u := *newTestUser()
+				u.ProfilePictureURL = "https://cdn.example.com/users/1/profile_picture.jpg"
+				return u
+			}(),
+			wantErr: false,
+		},
+		{
 			name:   "user not found",
 			userID: "unknown",
-			prepare: func(repo *mocks.MockRepository) {
+			prepare: func(repo *mocks.MockRepository, _ *mocks.MockStorageClient) {
 				repo.EXPECT().GetUser(mock.Anything, "unknown").
 					RunAndReturn(func(_ context.Context, _ string) (*entities.User, error) {
 						return nil, ErrUserNotFound
@@ -67,9 +98,10 @@ func TestService_GetUser(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := mocks.NewMockRepository(t)
 			email := mocks.NewMockMailClient(t)
-			tt.prepare(repo)
+			storage := mocks.NewMockStorageClient(t)
+			tt.prepare(repo, storage)
 
-			svc := NewService(repo, email, zap.NewNop())
+			svc := NewService(repo, email, storage, zap.NewNop())
 			got, err := svc.GetUser(context.Background(), tt.userID)
 
 			if tt.wantErr {
@@ -88,19 +120,21 @@ func TestService_GetUser(t *testing.T) {
 
 func TestService_CreateUser(t *testing.T) {
 	type testCase struct {
-		name      string
-		user      entities.User
-		prepare   func(repo *mocks.MockRepository, mail *mocks.MockMailClient)
-		wantID    int64
-		wantErr   bool
-		errTarget error
+		name       string
+		user       entities.User
+		profilePic *entities.File
+		prepare    func(repo *mocks.MockRepository, mail *mocks.MockMailClient, storage *mocks.MockStorageClient)
+		wantID     int64
+		wantErr    bool
+		errTarget  error
 	}
 
 	tests := []testCase{
 		{
-			name: "success",
-			user: *newTestUser(),
-			prepare: func(repo *mocks.MockRepository, mail *mocks.MockMailClient) {
+			name:       "success - no profile picture",
+			user:       *newTestUser(),
+			profilePic: nil,
+			prepare: func(repo *mocks.MockRepository, mail *mocks.MockMailClient, _ *mocks.MockStorageClient) {
 				repo.EXPECT().GetUserByUsername(mock.Anything, "test@test.com").
 					RunAndReturn(func(_ context.Context, _ string) (*entities.User, error) {
 						return nil, ErrUserNotFound
@@ -118,9 +152,95 @@ func TestService_CreateUser(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "user already exists",
+			name: "success - with profile picture",
 			user: *newTestUser(),
-			prepare: func(repo *mocks.MockRepository, _ *mocks.MockMailClient) {
+			profilePic: &entities.File{
+				Name:    "profile_picture.jpg",
+				Purpose: "profile_picture",
+				Body:    strings.NewReader("fake image data"),
+			},
+			prepare: func(repo *mocks.MockRepository, mail *mocks.MockMailClient, storage *mocks.MockStorageClient) {
+				repo.EXPECT().GetUserByUsername(mock.Anything, "test@test.com").
+					RunAndReturn(func(_ context.Context, _ string) (*entities.User, error) {
+						return nil, ErrUserNotFound
+					})
+				repo.EXPECT().CreateUser(mock.Anything, mock.Anything).
+					RunAndReturn(func(_ context.Context, _ entities.User) (int64, error) {
+						return 1, nil
+					})
+				storage.EXPECT().UploadFile(mock.Anything, mock.Anything).
+					RunAndReturn(func(_ context.Context, _ []*entities.File) error {
+						return nil
+					})
+				repo.EXPECT().SaveFilesToDB(mock.Anything, mock.Anything).
+					RunAndReturn(func(_ context.Context, _ []*entities.File) error {
+						return nil
+					})
+				mail.EXPECT().Send(mock.Anything, "test@test.com", mock.Anything, mock.Anything).
+					RunAndReturn(func(_ context.Context, _, _, _ string) error {
+						return nil
+					})
+			},
+			wantID:  1,
+			wantErr: false,
+		},
+		{
+			name: "profile picture upload error",
+			user: *newTestUser(),
+			profilePic: &entities.File{
+				Name:    "profile_picture.jpg",
+				Purpose: "profile_picture",
+				Body:    strings.NewReader("fake image data"),
+			},
+			prepare: func(repo *mocks.MockRepository, _ *mocks.MockMailClient, storage *mocks.MockStorageClient) {
+				repo.EXPECT().GetUserByUsername(mock.Anything, "test@test.com").
+					RunAndReturn(func(_ context.Context, _ string) (*entities.User, error) {
+						return nil, ErrUserNotFound
+					})
+				repo.EXPECT().CreateUser(mock.Anything, mock.Anything).
+					RunAndReturn(func(_ context.Context, _ entities.User) (int64, error) {
+						return 1, nil
+					})
+				storage.EXPECT().UploadFile(mock.Anything, mock.Anything).
+					RunAndReturn(func(_ context.Context, _ []*entities.File) error {
+						return errors.New("storage error")
+					})
+			},
+			wantErr: true,
+		},
+		{
+			name: "profile picture db save error",
+			user: *newTestUser(),
+			profilePic: &entities.File{
+				Name:    "profile_picture.jpg",
+				Purpose: "profile_picture",
+				Body:    strings.NewReader("fake image data"),
+			},
+			prepare: func(repo *mocks.MockRepository, _ *mocks.MockMailClient, storage *mocks.MockStorageClient) {
+				repo.EXPECT().GetUserByUsername(mock.Anything, "test@test.com").
+					RunAndReturn(func(_ context.Context, _ string) (*entities.User, error) {
+						return nil, ErrUserNotFound
+					})
+				repo.EXPECT().CreateUser(mock.Anything, mock.Anything).
+					RunAndReturn(func(_ context.Context, _ entities.User) (int64, error) {
+						return 1, nil
+					})
+				storage.EXPECT().UploadFile(mock.Anything, mock.Anything).
+					RunAndReturn(func(_ context.Context, _ []*entities.File) error {
+						return nil
+					})
+				repo.EXPECT().SaveFilesToDB(mock.Anything, mock.Anything).
+					RunAndReturn(func(_ context.Context, _ []*entities.File) error {
+						return errors.New("db error")
+					})
+			},
+			wantErr: true,
+		},
+		{
+			name:       "user already exists",
+			user:       *newTestUser(),
+			profilePic: nil,
+			prepare: func(repo *mocks.MockRepository, _ *mocks.MockMailClient, _ *mocks.MockStorageClient) {
 				existing := newTestUser()
 				repo.EXPECT().GetUserByUsername(mock.Anything, "test@test.com").
 					RunAndReturn(func(_ context.Context, _ string) (*entities.User, error) {
@@ -131,9 +251,10 @@ func TestService_CreateUser(t *testing.T) {
 			errTarget: ErrUserAlreadyExists,
 		},
 		{
-			name: "repo create error",
-			user: *newTestUser(),
-			prepare: func(repo *mocks.MockRepository, _ *mocks.MockMailClient) {
+			name:       "repo create error",
+			user:       *newTestUser(),
+			profilePic: nil,
+			prepare: func(repo *mocks.MockRepository, _ *mocks.MockMailClient, _ *mocks.MockStorageClient) {
 				repo.EXPECT().GetUserByUsername(mock.Anything, "test@test.com").
 					RunAndReturn(func(_ context.Context, _ string) (*entities.User, error) {
 						return nil, ErrUserNotFound
@@ -146,9 +267,10 @@ func TestService_CreateUser(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "email send error",
-			user: *newTestUser(),
-			prepare: func(repo *mocks.MockRepository, mail *mocks.MockMailClient) {
+			name:       "email send error",
+			user:       *newTestUser(),
+			profilePic: nil,
+			prepare: func(repo *mocks.MockRepository, mail *mocks.MockMailClient, _ *mocks.MockStorageClient) {
 				repo.EXPECT().GetUserByUsername(mock.Anything, "test@test.com").
 					RunAndReturn(func(_ context.Context, _ string) (*entities.User, error) {
 						return nil, ErrUserNotFound
@@ -170,10 +292,11 @@ func TestService_CreateUser(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := mocks.NewMockRepository(t)
 			mail := mocks.NewMockMailClient(t)
-			tt.prepare(repo, mail)
+			storage := mocks.NewMockStorageClient(t)
+			tt.prepare(repo, mail, storage)
 
-			svc := NewService(repo, mail, zap.NewNop())
-			id, err := svc.CreateUser(context.Background(), tt.user)
+			svc := NewService(repo, mail, storage, zap.NewNop())
+			id, err := svc.CreateUser(context.Background(), tt.user, tt.profilePic)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -236,9 +359,10 @@ func TestService_UpdateUser(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := mocks.NewMockRepository(t)
 			mail := mocks.NewMockMailClient(t)
+			storage := mocks.NewMockStorageClient(t)
 			tt.prepare(repo)
 
-			svc := NewService(repo, mail, zap.NewNop())
+			svc := NewService(repo, mail, storage, zap.NewNop())
 			err := svc.UpdateUser(context.Background(), tt.userID, tt.user)
 
 			if tt.wantErr {
@@ -291,9 +415,10 @@ func TestService_DeleteUser(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := mocks.NewMockRepository(t)
 			mail := mocks.NewMockMailClient(t)
+			storage := mocks.NewMockStorageClient(t)
 			tt.prepare(repo)
 
-			svc := NewService(repo, mail, zap.NewNop())
+			svc := NewService(repo, mail, storage, zap.NewNop())
 			err := svc.DeleteUser(context.Background(), tt.userID)
 
 			if tt.wantErr {

@@ -80,7 +80,7 @@ func main() {
 	authService := auth.NewService(repository, signer, logger)
 	authEndpoints := auth.NewHandler(authService, logger)
 	mailClient := email.NewMailgunClient(config.Email, logger)
-	userSvc := users.NewService(repository, mailClient, logger)
+	userSvc := users.NewService(repository, mailClient, bbClient, logger)
 	userEndpoints := users.NewHandler(userSvc, logger)
 
 	providerService := providers.NewService(repository, bbClient, mailClient, logger)

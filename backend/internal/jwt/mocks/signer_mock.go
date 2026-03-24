@@ -5,6 +5,7 @@
 package mocks
 
 import (
+	"github.com/eaguilar88/deu/internal/entities"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -36,8 +37,8 @@ func (_m *MockSigner) EXPECT() *MockSigner_Expecter {
 }
 
 // GenerateJWT provides a mock function for the type MockSigner
-func (_mock *MockSigner) GenerateJWT(userID string, roles []string) (string, error) {
-	ret := _mock.Called(userID, roles)
+func (_mock *MockSigner) GenerateJWT(userID string, roles []entities.UserRole, providerCode string) (string, error) {
+	ret := _mock.Called(userID, roles, providerCode)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GenerateJWT")
@@ -45,16 +46,16 @@ func (_mock *MockSigner) GenerateJWT(userID string, roles []string) (string, err
 
 	var r0 string
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(string, []string) (string, error)); ok {
-		return returnFunc(userID, roles)
+	if returnFunc, ok := ret.Get(0).(func(string, []entities.UserRole, string) (string, error)); ok {
+		return returnFunc(userID, roles, providerCode)
 	}
-	if returnFunc, ok := ret.Get(0).(func(string, []string) string); ok {
-		r0 = returnFunc(userID, roles)
+	if returnFunc, ok := ret.Get(0).(func(string, []entities.UserRole, string) string); ok {
+		r0 = returnFunc(userID, roles, providerCode)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
-	if returnFunc, ok := ret.Get(1).(func(string, []string) error); ok {
-		r1 = returnFunc(userID, roles)
+	if returnFunc, ok := ret.Get(1).(func(string, []entities.UserRole, string) error); ok {
+		r1 = returnFunc(userID, roles, providerCode)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -68,25 +69,27 @@ type MockSigner_GenerateJWT_Call struct {
 
 // GenerateJWT is a helper method to define mock.On call
 //   - userID string
-//   - roles []string
-func (_e *MockSigner_Expecter) GenerateJWT(userID interface{}, roles interface{}) *MockSigner_GenerateJWT_Call {
-	return &MockSigner_GenerateJWT_Call{Call: _e.mock.On("GenerateJWT", userID, roles)}
+//   - roles []entities.UserRole
+//   - providerCode string
+func (_e *MockSigner_Expecter) GenerateJWT(userID interface{}, roles interface{}, providerCode interface{}) *MockSigner_GenerateJWT_Call {
+	return &MockSigner_GenerateJWT_Call{Call: _e.mock.On("GenerateJWT", userID, roles, providerCode)}
 }
 
-func (_c *MockSigner_GenerateJWT_Call) Run(run func(userID string, roles []string)) *MockSigner_GenerateJWT_Call {
+func (_c *MockSigner_GenerateJWT_Call) Run(run func(userID string, roles []entities.UserRole, providerCode string)) *MockSigner_GenerateJWT_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 string
 		if args[0] != nil {
 			arg0 = args[0].(string)
 		}
-		var arg1 []string
+		var arg1 []entities.UserRole
 		if args[1] != nil {
-			arg1 = args[1].([]string)
+			arg1 = args[1].([]entities.UserRole)
 		}
-		run(
-			arg0,
-			arg1,
-		)
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(arg0, arg1, arg2)
 	})
 	return _c
 }
@@ -96,7 +99,7 @@ func (_c *MockSigner_GenerateJWT_Call) Return(s string, err error) *MockSigner_G
 	return _c
 }
 
-func (_c *MockSigner_GenerateJWT_Call) RunAndReturn(run func(userID string, roles []string) (string, error)) *MockSigner_GenerateJWT_Call {
+func (_c *MockSigner_GenerateJWT_Call) RunAndReturn(run func(userID string, roles []entities.UserRole, providerCode string) (string, error)) *MockSigner_GenerateJWT_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -146,9 +149,7 @@ func (_c *MockSigner_ValidateToken_Call) Run(run func(tokenString string)) *Mock
 		if args[0] != nil {
 			arg0 = args[0].(string)
 		}
-		run(
-			arg0,
-		)
+		run(arg0)
 	})
 	return _c
 }

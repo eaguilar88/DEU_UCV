@@ -52,6 +52,13 @@ func GetProviderByUserID(userID string) sq.SelectBuilder {
 		Where(sq.Eq{"p.user_id": userID})
 }
 
+func GetProviderCodeByUserID(userID string) sq.SelectBuilder {
+	return psql.Select("COALESCE(p.code, '')").
+		From(fmt.Sprintf("%s AS p", providersTableName)).
+		Where(sq.Eq{"p.deleted_at": nil}).
+		Where(sq.Eq{"p.user_id": userID})
+}
+
 func GetProviders(limit, offset int) sq.SelectBuilder {
 	return psql.Select(providerQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS p", providersTableName)).

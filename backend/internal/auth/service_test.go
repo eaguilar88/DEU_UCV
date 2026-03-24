@@ -32,9 +32,11 @@ func TestAuthService_Login(t *testing.T) {
 			repo:     &mocks.MockRepository{},
 			signer:   &jwtMock.MockSigner{},
 			prepare: func(ctx context.Context, tc *testCase) {
+				userRoles := []entities.UserRole{{Name: "admin", DomainType: "all", Faculty: ""}}
 				tc.repo.On("GetUserByUsername", ctx, tc.username).Return(tc.user, nil)
-				tc.repo.On("GetUserRoles", ctx, tc.user.ID).Return([]string{"admin"}, nil)
-				tc.signer.On("GenerateJWT", "1", []string{"admin"}).Return(tc.token, nil)
+				tc.repo.On("GetUserRoles", ctx, tc.user.ID).Return(userRoles, nil)
+				tc.repo.On("GetProviderCodeByUserID", ctx, tc.user.ID).Return("", nil)
+				tc.signer.On("GenerateJWT", "1", userRoles, "").Return(tc.token, nil)
 			},
 			token: "token",
 			user: &entities.User{

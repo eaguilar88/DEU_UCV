@@ -1,8 +1,10 @@
 package auth
 
 type LoginResponse struct {
-	Token string            `json:"token"`
-	User  LoginUserResponse `json:"usuario"`
+	Token        string            `json:"token"`
+	User         LoginUserResponse `json:"usuario"`
+	Faculty      string            `json:"facultad,omitempty"`
+	ProviderCode string            `json:"codigoProveedor,omitempty"`
 }
 
 type RegisterResponse struct {
