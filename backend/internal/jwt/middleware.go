@@ -55,9 +55,18 @@ func JWTMiddleware(signer Signer, logger *zap.Logger) echo.MiddlewareFunc {
 				}
 			}
 
-			domainType, _ := v1Claims["domainType"].(string)
-			faculty, _ := v1Claims["faculty"].(string)
-			providerCode, _ := v1Claims["providerCode"].(string)
+			var domainType string
+			if d, ok := v1Claims["domainType"].(string); ok {
+				domainType = d
+			}
+			var faculty string
+			if f, ok := v1Claims["faculty"].(string); ok {
+				faculty = f
+			}
+			var providerCode string
+			if p, ok := v1Claims["providerCode"].(string); ok {
+				providerCode = p
+			}
 
 			c.Set("userID", userID)
 			c.Set("roles", roles)

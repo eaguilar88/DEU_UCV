@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	jwt "github.com/golang-jwt/jwt/v4"
 	"github.com/eaguilar88/deu/internal/entities"
+	jwt "github.com/golang-jwt/jwt/v4"
 	"go.uber.org/zap"
 )
 

@@ -94,7 +94,10 @@ func (h *Handler) CreateUser(c echo.Context) error {
 		return httperrors.NewBadRequest(err.Error())
 	}
 
-	profilePic, _ := utils.GetFileFrom(c, "profile_picture")
+	profilePic, err := utils.GetFileFrom(c, "profile_picture")
+	if err != nil && !errors.Is(err, http.ErrMissingFile) {
+		return httperrors.NewBadRequest("invalid profile picture")
+	}
 
 	userID, err := h.svc.CreateUser(ctx, newUser, profilePic)
 	if err != nil {

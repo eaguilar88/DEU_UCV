@@ -30,7 +30,6 @@ func GetRolesByUserID(userID string) sq.SelectBuilder {
 		Where(sq.Eq{"pr.user_id": userID})
 }
 
-
 func GetUserByUsername(username string) sq.SelectBuilder {
 	return psql.Select("u.id", "u.email", "u.first_name", "u.last_name", "u.password").
 		From(fmt.Sprintf("%s AS u", usersTableName)).
