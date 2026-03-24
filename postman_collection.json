@@ -1,0 +1,275 @@
+{
+  "info": {
+    "name": "DEU UCV API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "REST API collection for DEU UCV — Universidad Central de Venezuela university extension management system."
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8081",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string",
+      "description": "JWT Bearer token obtained from POST /auth/login"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"deu_admin1@example.com\",\n  \"password\": \"password\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Authenticate and obtain a JWT token. Store the returned token in the {{token}} variable."
+          },
+          "response": [
+            {
+              "name": "200 OK — Success",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"token\": \"eyJ...\",\n  \"user\": {\n    \"id\": \"1\",\n    \"name\": \"Admin1 Deu\",\n    \"roles\": [\"admin\"]\n  },\n  \"faculty\": \"\",\n  \"codigo_proveedor\": \"\"\n}"
+            },
+            {
+              "name": "401 Unauthorized — Bad credentials",
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"error\": \"invalid credentials\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Create User (no profile picture)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": ["{{base_url}}"],
+              "path": ["users"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cedula\": \"12345678\",\n  \"email\": \"testuser_qa@test.com\",\n  \"nombres\": \"Juan\",\n  \"apellidos\": \"Perez\",\n  \"fecha_de_nacimiento\": \"1-1-1990\",\n  \"genero\": \"masculino\",\n  \"nivel_educativo\": \"universitaria_completa\",\n  \"direccion\": \"Caracas\",\n  \"password\": \"secret123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Create a user with JSON body (current deployed behavior). No auth required.\n\nNOTE: Working tree changes this to multipart/form-data — rebuild container to test that version.\n\nValid nivel_educativo values: bachiller, universitaria_incompleta, universitaria_completa, posgrado\nDate format: D-M-YYYY (e.g. 1-1-1990, 15-3-1990)"
+          },
+          "response": [
+            {
+              "name": "201 Created — Success",
+              "status": "Created",
+              "code": 201,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": \"42\"\n}"
+            },
+            {
+              "name": "400 Bad Request — Validation failure",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"error\": \"validation failed\"\n}"
+            },
+            {
+              "name": "400 Bad Request — Invalid date format",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"error\": \"fecha_de_nacimiento must be in D-M-YYYY format\"\n}"
+            },
+            {
+              "name": "409 Conflict — User already exists",
+              "status": "Conflict",
+              "code": 409,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"error\": \"user already exists\"\n}"
+            },
+            {
+              "name": "500 Internal Server Error — Email send failure (dev only)",
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"error\": \"there was an internal error. contact an administrator or try again later\"\n}",
+              "_postman_previewlanguage": "json",
+              "description": "In local dev, Mailgun sandbox 403s for unauthorized recipients. User IS written to DB before this error."
+            }
+          ]
+        },
+        {
+          "name": "Create User WITH profile picture (multipart — new code)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": ["{{base_url}}"],
+              "path": ["users"]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "cedula", "value": "87654321", "type": "text" },
+                { "key": "email", "value": "testuser_qa2@test.com", "type": "text" },
+                { "key": "nombres", "value": "Maria", "type": "text" },
+                { "key": "apellidos", "value": "Lopez", "type": "text" },
+                { "key": "fecha_de_nacimiento", "value": "15-6-1995", "type": "text" },
+                { "key": "genero", "value": "femenino", "type": "text" },
+                { "key": "nivel_educativo", "value": "universitaria_completa", "type": "text" },
+                { "key": "direccion", "value": "Caracas", "type": "text" },
+                { "key": "password", "value": "secret123", "type": "text" },
+                { "key": "profile_picture", "type": "file", "src": "", "description": "Optional JPEG/PNG profile picture" }
+              ]
+            },
+            "description": "Create a user with multipart/form-data including an optional profile_picture file.\n\nREQUIRES: Container rebuilt with working tree code (make start-backend).\n\nIf profile_picture is provided and B2 storage credentials are missing, the endpoint returns 500 after creating the user in the DB (same data leak issue as email failure)."
+          },
+          "response": [
+            {
+              "name": "201 Created — Success (no picture or picture uploaded)",
+              "status": "Created",
+              "code": 201,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": \"43\"\n}"
+            },
+            {
+              "name": "500 — B2 storage not configured (dev)",
+              "status": "Internal Server Error",
+              "code": 500,
+              "body": "{\n  \"error\": \"there was an internal error. contact an administrator or try again later\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/1",
+              "host": ["{{base_url}}"],
+              "path": ["users", "1"]
+            },
+            "description": "Get a single user by numeric ID. No auth required.\n\nResponse includes foto_perfil (omitempty) — only present when user has a profile picture stored in B2.\n\nNOTE: fecha_de_nacimiento is returned as raw DB timestamp in old code (e.g. '1980-01-01T00:00:00Z'). New code reformats to D-M-YYYY."
+          },
+          "response": [
+            {
+              "name": "200 OK — User found (no profile picture)",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": \"1\",\n  \"cedula\": \"101\",\n  \"email\": \"deu_admin1@example.com\",\n  \"nombres\": \"Admin1\",\n  \"apellidos\": \"Deu\",\n  \"fecha_de_nacimiento\": \"1980-01-01T00:00:00Z\",\n  \"genero\": \"male\",\n  \"nivel_educativo\": \"universitaria_completa\",\n  \"direccion\": \"Address 1\",\n  \"creado_en\": \"2025-11-04T21:38:47.084437Z\"\n}"
+            },
+            {
+              "name": "200 OK — User found WITH profile picture",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": \"42\",\n  \"cedula\": \"12345678\",\n  \"email\": \"testuser_qa@test.com\",\n  \"nombres\": \"Juan\",\n  \"apellidos\": \"Perez\",\n  \"fecha_de_nacimiento\": \"1-1-1990\",\n  \"genero\": \"masculino\",\n  \"nivel_educativo\": \"universitaria_completa\",\n  \"direccion\": \"Caracas\",\n  \"creado_en\": \"2026-03-21T...\",\n  \"foto_perfil\": \"https://s3.us-west-004.backblazeb2.com/...\"\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"error\": \"user not found\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Users (list)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users?page=1&per_page=10",
+              "host": ["{{base_url}}"],
+              "path": ["users"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "per_page", "value": "10" }
+              ]
+            },
+            "description": "List all users with pagination. Requires JWT auth."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"usuarios\": [...],\n  \"paginas\": { \"page\": 1, \"per_page\": 10, \"total\": 50 }\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"error\": \"invalid or expired authorization token\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/1",
+              "host": ["{{base_url}}"],
+              "path": ["users", "1"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"primer_nombre\": \"NuevoNombre\",\n  \"apellido\": \"NuevoApellido\",\n  \"fecha_nacimiento\": \"15-6-1990\",\n  \"genero\": \"masculino\",\n  \"nivel_educacion\": \"posgrado\",\n  \"direccion\": \"Nueva Direccion\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Update user fields. Note: different JSON field names than POST (ci, primer_nombre, apellido, fecha_nacimiento, nivel_educacion). CI, email, and password are preserved from DB."
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/1",
+              "host": ["{{base_url}}"],
+              "path": ["users", "1"]
+            },
+            "description": "Soft-delete a user. Requires JWT auth."
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -8,6 +8,7 @@ import (
 
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/httperrors"
+	"github.com/eaguilar88/deu/internal/utils"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
@@ -15,7 +16,7 @@ import (
 type Service interface {
 	GetUser(ctx context.Context, userID string) (entities.User, error)
 	GetUsers(ctx context.Context, pageScope entities.PageScope) ([]entities.User, entities.PageScope, error)
-	CreateUser(ctx context.Context, user entities.User) (int64, error)
+	CreateUser(ctx context.Context, user entities.User, profilePic *entities.File) (int64, error)
 	UpdateUser(ctx context.Context, userID string, user entities.User) error
 	DeleteUser(ctx context.Context, userID string) error
 }
@@ -71,9 +72,17 @@ func (h *Handler) GetUsers(c echo.Context) error {
 
 func (h *Handler) CreateUser(c echo.Context) error {
 	ctx := c.Request().Context()
-	var req CreateUserRequest
-	if err := c.Bind(&req); err != nil {
-		return httperrors.NewBadRequest("invalid request body")
+
+	req := CreateUserRequest{
+		Document:       c.FormValue("cedula"),
+		Email:          c.FormValue("email"),
+		FirstName:      c.FormValue("nombres"),
+		LastName:       c.FormValue("apellidos"),
+		DateOfBirth:    c.FormValue("fecha_de_nacimiento"),
+		Gender:         c.FormValue("genero"),
+		EducationLevel: c.FormValue("nivel_educativo"),
+		Address:        c.FormValue("direccion"),
+		Password:       c.FormValue("password"),
 	}
 
 	if err := c.Validate(req); err != nil {
@@ -85,7 +94,9 @@ func (h *Handler) CreateUser(c echo.Context) error {
 		return httperrors.NewBadRequest(err.Error())
 	}
 
-	userID, err := h.svc.CreateUser(ctx, newUser)
+	profilePic, _ := utils.GetFileFrom(c, "profile_picture")
+
+	userID, err := h.svc.CreateUser(ctx, newUser, profilePic)
 	if err != nil {
 		if errors.Is(err, ErrUserAlreadyExists) {
 			return httperrors.NewConflict("user already exists")

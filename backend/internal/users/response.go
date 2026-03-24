@@ -15,7 +15,8 @@ type GetUserResponse struct {
 	EducationLevel string `json:"nivel_educativo,omitempty"`
 	Code           string `json:"codigo_proveedor,omitempty"`
 	Address        string `json:"direccion,omitempty"`
-	CreatedAt      string `json:"creado_en,omitempty"`
+	CreatedAt         string `json:"creado_en,omitempty"`
+	ProfilePictureURL string `json:"foto_perfil,omitempty"`
 	//TODO agregar el rol
 }
 

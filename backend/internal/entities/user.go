@@ -16,9 +16,17 @@ type User struct {
 	Gender         string
 	EducationLevel string
 	ProviderCode   string
+	Faculty        string
 	Address        string
-	Password       string
-	CreatedAt      string
+	Password          string
+	CreatedAt         string
+	ProfilePictureURL string
+}
+
+type UserRole struct {
+	Name       string
+	DomainType string
+	Faculty    string
 }
 
 func (u *User) SetAge() {

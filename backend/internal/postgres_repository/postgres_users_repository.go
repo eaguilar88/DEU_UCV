@@ -196,7 +196,7 @@ func (r *PostgresRepository) DeleteUser(ctx context.Context, userID string) erro
 	return nil
 }
 
-func (r *PostgresRepository) GetUserRoles(ctx context.Context, userID string) ([]string, error) {
+func (r *PostgresRepository) GetUserRoles(ctx context.Context, userID string) ([]entities.UserRole, error) {
 	sql, args, err := queries.GetRolesByUserID(userID).ToSql()
 	if err != nil {
 		return nil, err
@@ -214,16 +214,39 @@ func (r *PostgresRepository) GetUserRoles(ctx context.Context, userID string) ([
 	}
 	defer rows.Close()
 
-	roles := make([]string, 0)
-	var role string
+	roles := make([]entities.UserRole, 0)
 	for rows.Next() {
-		err = rows.Scan(&role)
+		var role entities.UserRole
+		err = rows.Scan(&role.Name, &role.DomainType, &role.Faculty)
 		if err != nil {
 			return nil, err
 		}
 		roles = append(roles, role)
 	}
 	return roles, nil
+}
+
+func (r *PostgresRepository) GetProviderCodeByUserID(ctx context.Context, userID string) (string, error) {
+	query, args, err := queries.GetProviderCodeByUserID(userID).ToSql()
+	if err != nil {
+		return "", err
+	}
+
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		return "", err
+	}
+	defer stmt.Close()
+
+	var code string
+	err = stmt.QueryRowContext(ctx, args...).Scan(&code)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", nil
+		}
+		return "", err
+	}
+	return code, nil
 }
 
 func (r *PostgresRepository) AddRoleToUser(ctx context.Context, tx *sql.Tx, userID string, role int) error {

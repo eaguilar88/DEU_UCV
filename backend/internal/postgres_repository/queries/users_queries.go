@@ -23,12 +23,13 @@ var userQuerySelectCommon = []string{
 }
 
 func GetRolesByUserID(userID string) sq.SelectBuilder {
-	return psql.Select("r.name").
+	return psql.Select("r.name", "pr.domain_type", "COALESCE(pr.faculty::TEXT, '')").
 		From(fmt.Sprintf("%s AS r", rolesTableName)).
 		LeftJoin(fmt.Sprintf("%s AS pr ON pr.role_id = r.id", pivotTableName)).
 		Where(sq.Eq{"r.deleted_at": nil}).
 		Where(sq.Eq{"pr.user_id": userID})
 }
+
 
 func GetUserByUsername(username string) sq.SelectBuilder {
 	return psql.Select("u.id", "u.email", "u.first_name", "u.last_name", "u.password").

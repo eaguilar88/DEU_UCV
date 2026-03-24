@@ -45,8 +45,25 @@ func JWTMiddleware(signer Signer, logger *zap.Logger) echo.MiddlewareFunc {
 				return echo.NewHTTPError(http.StatusUnauthorized, authErrorMessage)
 			}
 
-			// Store userID into the context for downstream handlers
+			// Extract roles from v1 map
+			var roles []string
+			if rolesRaw, ok := v1Claims["roles"].([]interface{}); ok {
+				for _, r := range rolesRaw {
+					if roleName, ok := r.(string); ok {
+						roles = append(roles, roleName)
+					}
+				}
+			}
+
+			domainType, _ := v1Claims["domainType"].(string)
+			faculty, _ := v1Claims["faculty"].(string)
+			providerCode, _ := v1Claims["providerCode"].(string)
+
 			c.Set("userID", userID)
+			c.Set("roles", roles)
+			c.Set("domainType", domainType)
+			c.Set("faculty", faculty)
+			c.Set("providerCode", providerCode)
 
 			return next(c)
 		}
