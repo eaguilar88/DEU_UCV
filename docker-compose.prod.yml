@@ -35,7 +35,7 @@ services:
       RAILS_SERVE_STATIC_FILES: "1"
       RAILS_FORCE_SSL: ${RAILS_FORCE_SSL:-false}
       SECRET_KEY_BASE: ${SECRET_KEY_BASE}
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${POSTGRES_PORT}/${POSTGRES_DB}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
       DEU_SEED_PASSWORD: ${DEU_SEED_PASSWORD:-123123}
       DEU_SUPER_ADMIN_EMAILS: ${DEU_SUPER_ADMIN_EMAILS:-danielito.moros03@gmail.com}
     command: ["./bin/rails", "server", "-b", "0.0.0.0", "-p", "3000"]
