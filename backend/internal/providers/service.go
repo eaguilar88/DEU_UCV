@@ -28,10 +28,11 @@ var (
 type Repository interface {
 	GetProvider(ctx context.Context, providerID string) (entities.Provider, error)
 	GetProviderByCode(ctx context.Context, code string) (entities.Provider, error)
-	GetProviders(ctx context.Context, pageScope entities.PageScope) ([]entities.Provider, entities.PageScope, error)
+	GetProviders(ctx context.Context, pageScope entities.PageScope, filters entities.ProviderFilters) ([]entities.Provider, entities.PageScope, error)
 	CreateProvider(ctx context.Context, provider entities.Provider) (int64, error)
 	UpdateProvider(ctx context.Context, providerID string, provider entities.Provider) error
 	DeleteProvider(ctx context.Context, providerID string) error
+	CreateProviderRequest(ctx context.Context, providerID int64) error
 
 	// Files
 	GetFilesByOwner(ctx context.Context, ownerID string, ownerType entities.OwnerType) (entities.GroupedFiles, error)
@@ -130,8 +131,8 @@ func (s *service) GetProviderByCode(ctx context.Context, code string) (entities.
 }
 
 // GetProviders returns a paginated list of providers. Files are fetched concurrently for each provider.
-func (s *service) GetProviders(ctx context.Context, pageScope entities.PageScope) ([]entities.Provider, entities.PageScope, error) {
-	providers, pageScope, err := s.repo.GetProviders(ctx, pageScope)
+func (s *service) GetProviders(ctx context.Context, pageScope entities.PageScope, filters entities.ProviderFilters) ([]entities.Provider, entities.PageScope, error) {
+	providers, pageScope, err := s.repo.GetProviders(ctx, pageScope, filters)
 	if err != nil {
 		s.logger.Error("failed to get providers", zap.Error(err))
 		return nil, entities.PageScope{}, err
@@ -158,36 +159,30 @@ func (s *service) GetProviders(ctx context.Context, pageScope entities.PageScope
 }
 
 // CreateProvider registers a new provider, uploads its required files to storage,
-// saves file metadata to the database, and sends a confirmation email.
-// Returns the new provider's database ID and generated provider code.
-func (s *service) CreateProvider(ctx context.Context, provider *entities.Provider) (int64, string, error) {
-	code, err := entities.GenerateProviderCode(provider.Type)
-	if err != nil {
-		s.logger.Error("failed to generate provider code", zap.Error(err))
-		return -1, "", err
-	}
-	provider.Code = code
+// saves file metadata to the database, creates a provider request for admin review,
+// and sends a confirmation email. Returns the new provider's database ID.
+func (s *service) CreateProvider(ctx context.Context, provider *entities.Provider) (int64, error) {
+	provider.IsActive = false
 	createdProviderID, err := s.repo.CreateProvider(ctx, *provider)
 	if err != nil {
 		s.logger.Error("failed to create provider", zap.Error(err))
-		return -1, "", err
+		return -1, err
 	}
 
 	provider.ID = fmt.Sprintf("%d", createdProviderID)
 	commonMetadata := map[string]string{
 		"provider_id":      provider.ID,
-		"provider_code":    provider.Code,
 		"provider_type":    string(provider.Type),
 		"provider_user_id": provider.User.ID,
 	}
 	files, err := prepareFilesSlice(provider, createdProviderID, commonMetadata)
 	if err != nil {
 		s.logger.Error("failed to prepare files map", zap.Error(err))
-		return -1, "", err
+		return -1, err
 	}
 	if err = s.storage.UploadFile(ctx, files); err != nil {
 		s.logger.Error("failed to upload files file", zap.Error(err))
-		return -1, "", err
+		return -1, err
 	}
 
 	if err := s.repo.SaveFilesToDB(ctx, files); err != nil {
@@ -195,7 +190,7 @@ func (s *service) CreateProvider(ctx context.Context, provider *entities.Provide
 			zap.Error(err),
 			zap.String("action", "save_metadata"),
 		)
-		return -1, "", fmt.Errorf("failed to save file metadata: %w", err)
+		return -1, fmt.Errorf("failed to save file metadata: %w", err)
 	}
 
 	s.logger.Debug("successfully uploaded and saved files",
@@ -203,25 +198,32 @@ func (s *service) CreateProvider(ctx context.Context, provider *entities.Provide
 		zap.String("action", "upload_and_save"),
 	)
 
+	if err := s.repo.CreateProviderRequest(ctx, createdProviderID); err != nil {
+		s.logger.Error("failed to create provider request",
+			zap.Error(err),
+			zap.String("action", "create_provider_request"),
+		)
+		return -1, fmt.Errorf("failed to create provider request: %w", err)
+	}
+
 	p, err := s.repo.GetProvider(ctx, provider.ID)
 	if err != nil {
 		s.logger.Error("failed to get provider", zap.Error(err))
-		return -1, "", err
+		return -1, err
 	}
 
 	provider.User.Email = p.User.Email
 	provider.User.FirstName = p.User.FirstName
 	provider.User.LastName = p.User.LastName
-	if err := s.emailClient.Send(ctx, provider.User.Email, "Provider Registration Successful", fmt.Sprintf("Your provider registration is complete. Your provider code is: %s", code)); err != nil {
+	if err := s.emailClient.Send(ctx, provider.User.Email, "Solicitud de registro recibida", "Tu solicitud de registro como proveedor ha sido recibida y está bajo revisión. Recibirás una notificación cuando sea procesada."); err != nil {
 		s.logger.Error("failed to send provider registration email",
 			zap.Error(err),
-			zap.String("provider_code", code),
 			zap.String("action", "send_email"),
 		)
-		return -1, "", fmt.Errorf("error sending provider registration email: %w", err)
+		return -1, fmt.Errorf("error sending provider registration email: %w", err)
 	}
 
-	return createdProviderID, code, nil
+	return createdProviderID, nil
 }
 
 // UpdateProvider updates an existing provider's data and re-uploads its associated files.

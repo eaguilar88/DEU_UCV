@@ -71,8 +71,8 @@ func (r *PostgresRepository) GetProviderByUserID(ctx context.Context, userID str
 	return newProviderFromModel(provider), nil
 }
 
-func (r *PostgresRepository) GetProviders(ctx context.Context, pageScope entities.PageScope) ([]entities.Provider, entities.PageScope, error) {
-	sql, args, err := queries.GetProviders(pageScope.PerPage, pageScope.Offset()).ToSql()
+func (r *PostgresRepository) GetProviders(ctx context.Context, pageScope entities.PageScope, filters entities.ProviderFilters) ([]entities.Provider, entities.PageScope, error) {
+	sql, args, err := queries.GetProviders(filters, pageScope.PerPage, pageScope.Offset()).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}

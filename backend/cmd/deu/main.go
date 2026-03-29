@@ -10,6 +10,7 @@ import (
 
 	"github.com/eaguilar88/deu/internal/auth"
 	"github.com/eaguilar88/deu/internal/config"
+	"github.com/eaguilar88/deu/internal/course_cycle_close_requests"
 	"github.com/eaguilar88/deu/internal/course_periods"
 	"github.com/eaguilar88/deu/internal/course_requests"
 	"github.com/eaguilar88/deu/internal/courses"
@@ -20,6 +21,7 @@ import (
 	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/eaguilar88/deu/internal/jwt"
 	repository "github.com/eaguilar88/deu/internal/postgres_repository"
+	"github.com/eaguilar88/deu/internal/provider_requests"
 	"github.com/eaguilar88/deu/internal/providers"
 	"github.com/eaguilar88/deu/internal/security"
 	"github.com/eaguilar88/deu/internal/storage"
@@ -105,6 +107,12 @@ func main() {
 	courseRequestService := course_requests.NewService(repository, logger)
 	courseRequestEndpoints := course_requests.NewHandler(courseRequestService, logger)
 
+	providerRequestService := provider_requests.NewService(repository, mailClient, logger)
+	providerRequestEndpoints := provider_requests.NewHandler(providerRequestService, logger)
+
+	cycleCloseService := course_cycle_close_requests.NewService(repository, logger)
+	cycleCloseEndpoints := course_cycle_close_requests.NewHandler(cycleCloseService, logger)
+
 	e := echo.New()
 	e.Validator = security.NewCustomValidator()
 	e.HTTPErrorHandler = httperrors.NewHTTPErrorHandler(logger)
@@ -129,7 +137,11 @@ func main() {
 	addAdminRoutes(e, middlewares,
 		groupRequestEndpoints.RegisterGroupRequestAdminEndpoints,
 		courseRequestEndpoints.RegisterCourseRequestAdminEndpoints,
+		providerRequestEndpoints.RegisterProviderRequestAdminEndpoints,
+		cycleCloseEndpoints.RegisterAdminEndpoints,
 	)
+
+	addCourseCycleCloseRequestRoutes(e, cycleCloseEndpoints, middlewares...)
 
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", config.HTTPPort)))
 }
@@ -223,6 +235,11 @@ func addGroupsRoutes(e *echo.Echo, endpoints *groups.Handler, middlewares ...ech
 	protectedGroup.POST("", endpoints.CreateGroup)
 	protectedGroup.PUT("/:id", endpoints.UpdateGroup)
 	protectedGroup.DELETE("/:id", endpoints.DeleteGroup)
+}
+
+func addCourseCycleCloseRequestRoutes(e *echo.Echo, endpoints *course_cycle_close_requests.Handler, middlewares ...echo.MiddlewareFunc) {
+	protected := e.Group("", middlewares...)
+	endpoints.RegisterProtectedEndpoints(protected)
 }
 
 func addProviderRoutes(e *echo.Echo, endpoints *providers.Handler, middlewares ...echo.MiddlewareFunc) {

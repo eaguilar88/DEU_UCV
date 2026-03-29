@@ -17,8 +17,8 @@ import (
 type Service interface {
 	GetProvider(ctx context.Context, providerID string) (entities.Provider, error)
 	GetProviderByCode(ctx context.Context, providerCode string) (entities.Provider, error)
-	GetProviders(ctx context.Context, pageScope entities.PageScope) ([]entities.Provider, entities.PageScope, error)
-	CreateProvider(ctx context.Context, provider *entities.Provider) (int64, string, error)
+	GetProviders(ctx context.Context, pageScope entities.PageScope, filters entities.ProviderFilters) ([]entities.Provider, entities.PageScope, error)
+	CreateProvider(ctx context.Context, provider *entities.Provider) (int64, error)
 	UpdateProvider(ctx context.Context, providerID string, provider *entities.Provider) error
 	DeleteProvider(ctx context.Context, providerID string) error
 }
@@ -57,10 +57,24 @@ func (h *Handler) GetProviders(c echo.Context) error {
 	//nolint:errcheck
 	scope.GetPerPageFromVars(c.QueryParam("per_page"))
 
-	req := GetProvidersRequest{
-		PageScope: scope,
+	filters := entities.ProviderFilters{
+		Type:          entities.ProviderType(c.QueryParam("type")),
+		PartyType:     entities.ProviderPartyType(c.QueryParam("party_type")),
+		ProfitType:    entities.ProviderProfitType(c.QueryParam("profit_type")),
+		Code:          c.QueryParam("code"),
+		CreatedAtFrom: c.QueryParam("created_at_from"),
+		CreatedAtTo:   c.QueryParam("created_at_to"),
 	}
-	providers, pages, err := h.svc.GetProviders(ctx, req.PageScope)
+	if v := c.QueryParam("is_internal"); v != "" {
+		b := v == "true"
+		filters.IsInternal = &b
+	}
+	if v := c.QueryParam("is_active"); v != "" {
+		b := v == "true"
+		filters.IsActive = &b
+	}
+
+	providers, pages, err := h.svc.GetProviders(ctx, scope, filters)
 	if err != nil {
 		return httperrors.NewInternal(err)
 	}
@@ -81,14 +95,13 @@ func (h *Handler) CreateProvider(c echo.Context) error {
 		return httperrors.NewBadRequest(err.Error())
 	}
 
-	id, code, err := h.svc.CreateProvider(ctx, provider)
+	id, err := h.svc.CreateProvider(ctx, provider)
 	if err != nil {
 		return httperrors.NewInternal(err)
 	}
 
 	return c.JSON(http.StatusCreated, CreateProviderResponse{
-		ID:   fmt.Sprintf("%d", id),
-		Code: code,
+		ID: fmt.Sprintf("%d", id),
 	})
 }
 

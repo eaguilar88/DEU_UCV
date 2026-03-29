@@ -34,7 +34,7 @@ const (
 
 	// Legal identity types
 	PartyTypeNatural   ProviderPartyType = "natural"
-	PartyTypeJuridical ProviderPartyType = "juridical"
+	PartyTypeJuridical ProviderPartyType = "juridico"
 
 	// Profit types
 	ProfitTypeLucrativo   ProviderProfitType = "lucrativo"
@@ -65,6 +65,17 @@ type Provider struct {
 	CreatedAt  string
 	UpdatedAt  string
 	DeletedAt  string
+}
+
+type ProviderFilters struct {
+	Type          ProviderType
+	PartyType     ProviderPartyType
+	ProfitType    ProviderProfitType
+	IsInternal    *bool
+	IsActive      *bool
+	Code          string
+	CreatedAtFrom string
+	CreatedAtTo   string
 }
 
 func GenerateProviderCode(providerType ProviderType) (string, error) {

@@ -70,8 +70,7 @@ func providerToResponse(entity entities.Provider) GetProviderResponse {
 }
 
 type CreateProviderResponse struct {
-	ID   string `json:"id"`
-	Code string `json:"codigo_proveedor"`
+	ID string `json:"id"`
 }
 
 type GetProvidersResponse struct {

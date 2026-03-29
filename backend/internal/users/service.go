@@ -85,6 +85,7 @@ func (s *service) CreateUser(ctx context.Context, user entities.User, profilePic
 		return -1, ErrUserAlreadyExists
 	}
 
+	user.Roles = []string{"visitante"}
 	id, err := s.repo.CreateUser(ctx, user)
 	if err != nil {
 		return -1, fmt.Errorf("error creating new user: %w", err)

@@ -300,8 +300,8 @@ func (_c *MockService_GetProviderByCode_Call) RunAndReturn(run func(ctx context.
 }
 
 // GetProviders provides a mock function for the type MockService
-func (_mock *MockService) GetProviders(ctx context.Context, pageScope entities.PageScope) ([]entities.Provider, entities.PageScope, error) {
-	ret := _mock.Called(ctx, pageScope)
+func (_mock *MockService) GetProviders(ctx context.Context, pageScope entities.PageScope, filters entities.ProviderFilters) ([]entities.Provider, entities.PageScope, error) {
+	ret := _mock.Called(ctx, pageScope, filters)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetProviders")
@@ -310,23 +310,23 @@ func (_mock *MockService) GetProviders(ctx context.Context, pageScope entities.P
 	var r0 []entities.Provider
 	var r1 entities.PageScope
 	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.PageScope) ([]entities.Provider, entities.PageScope, error)); ok {
-		return returnFunc(ctx, pageScope)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.PageScope, entities.ProviderFilters) ([]entities.Provider, entities.PageScope, error)); ok {
+		return returnFunc(ctx, pageScope, filters)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.PageScope) []entities.Provider); ok {
-		r0 = returnFunc(ctx, pageScope)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.PageScope, entities.ProviderFilters) []entities.Provider); ok {
+		r0 = returnFunc(ctx, pageScope, filters)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]entities.Provider)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.PageScope) entities.PageScope); ok {
-		r1 = returnFunc(ctx, pageScope)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.PageScope, entities.ProviderFilters) entities.PageScope); ok {
+		r1 = returnFunc(ctx, pageScope, filters)
 	} else {
 		r1 = ret.Get(1).(entities.PageScope)
 	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, entities.PageScope) error); ok {
-		r2 = returnFunc(ctx, pageScope)
+	if returnFunc, ok := ret.Get(2).(func(context.Context, entities.PageScope, entities.ProviderFilters) error); ok {
+		r2 = returnFunc(ctx, pageScope, filters)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -341,11 +341,12 @@ type MockService_GetProviders_Call struct {
 // GetProviders is a helper method to define mock.On call
 //   - ctx context.Context
 //   - pageScope entities.PageScope
-func (_e *MockService_Expecter) GetProviders(ctx interface{}, pageScope interface{}) *MockService_GetProviders_Call {
-	return &MockService_GetProviders_Call{Call: _e.mock.On("GetProviders", ctx, pageScope)}
+//   - filters entities.ProviderFilters
+func (_e *MockService_Expecter) GetProviders(ctx interface{}, pageScope interface{}, filters interface{}) *MockService_GetProviders_Call {
+	return &MockService_GetProviders_Call{Call: _e.mock.On("GetProviders", ctx, pageScope, filters)}
 }
 
-func (_c *MockService_GetProviders_Call) Run(run func(ctx context.Context, pageScope entities.PageScope)) *MockService_GetProviders_Call {
+func (_c *MockService_GetProviders_Call) Run(run func(ctx context.Context, pageScope entities.PageScope, filters entities.ProviderFilters)) *MockService_GetProviders_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -355,10 +356,11 @@ func (_c *MockService_GetProviders_Call) Run(run func(ctx context.Context, pageS
 		if args[1] != nil {
 			arg1 = args[1].(entities.PageScope)
 		}
-		run(
-			arg0,
-			arg1,
-		)
+		var arg2 entities.ProviderFilters
+		if args[2] != nil {
+			arg2 = args[2].(entities.ProviderFilters)
+		}
+		run(arg0, arg1, arg2)
 	})
 	return _c
 }
@@ -368,7 +370,7 @@ func (_c *MockService_GetProviders_Call) Return(providers []entities.Provider, p
 	return _c
 }
 
-func (_c *MockService_GetProviders_Call) RunAndReturn(run func(ctx context.Context, pageScope entities.PageScope) ([]entities.Provider, entities.PageScope, error)) *MockService_GetProviders_Call {
+func (_c *MockService_GetProviders_Call) RunAndReturn(run func(ctx context.Context, pageScope entities.PageScope, filters entities.ProviderFilters) ([]entities.Provider, entities.PageScope, error)) *MockService_GetProviders_Call {
 	_c.Call.Return(run)
 	return _c
 }

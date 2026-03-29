@@ -15,6 +15,7 @@ var periodQuerySelectCommon = []string{
 	"cp.end_date",
 	"cp.is_active",
 	"cp.inscription_date",
+	"cp.closed_at",
 	"cp.created_at",
 	"cp.updated_at",
 	"cp.deleted_at",

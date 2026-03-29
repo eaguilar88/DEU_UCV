@@ -307,6 +307,7 @@ func scanCoursePeriod(row scannable) (models.CoursePeriod, error) {
 		&coursePeriod.EndDate,
 		&coursePeriod.IsActive,
 		&coursePeriod.InscriptionDate,
+		&coursePeriod.ClosedAt,
 		&coursePeriod.CreatedAt,
 		&coursePeriod.UpdatedAt,
 		&coursePeriod.DeletedAt,
@@ -315,7 +316,11 @@ func scanCoursePeriod(row scannable) (models.CoursePeriod, error) {
 }
 
 func newCoursePeriodFromModel(coursePeriod models.CoursePeriod) entities.CoursePeriod {
-	var deletedAt string
+	var closedAt, deletedAt string
+
+	if coursePeriod.ClosedAt.Valid {
+		closedAt = coursePeriod.ClosedAt.String
+	}
 
 	if coursePeriod.DeletedAt.Valid {
 		deletedAt = coursePeriod.DeletedAt.String
@@ -330,6 +335,7 @@ func newCoursePeriodFromModel(coursePeriod models.CoursePeriod) entities.CourseP
 		EndDate:         coursePeriod.EndDate,
 		InscriptionDate: coursePeriod.InscriptionDate,
 		IsActive:        coursePeriod.IsActive,
+		ClosedAt:        closedAt,
 		CreatedAt:       coursePeriod.CreatedAt,
 		UpdatedAt:       coursePeriod.UpdatedAt,
 		DeletedAt:       deletedAt,

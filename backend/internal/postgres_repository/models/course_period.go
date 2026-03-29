@@ -9,6 +9,7 @@ type CoursePeriod struct {
 	EndDate         string
 	InscriptionDate string
 	IsActive        bool
+	ClosedAt        sql.NullString
 	CreatedAt       string
 	UpdatedAt       string
 	DeletedAt       sql.NullString
