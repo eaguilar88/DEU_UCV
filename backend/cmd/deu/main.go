@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/eaguilar88/deu/docs"
 	"github.com/eaguilar88/deu/internal/auth"
 	"github.com/eaguilar88/deu/internal/config"
 	"github.com/eaguilar88/deu/internal/course_cycle_close_requests"
@@ -34,10 +35,6 @@ import (
 
 //go:embed VERSION
 var appVersion string
-
-const (
-// docsSource = "./docs/openapi/service.yaml"
-)
 
 type RegisterAdminEndpoints func(g *echo.Group)
 
@@ -124,6 +121,7 @@ func main() {
 
 	fileHandler := files.NewHandler(bbClient, logger)
 
+	docs.RegisterDocsRoute(e, logger)
 	addHealthRoute(e)
 	addVersionRoute(e, strings.TrimSpace(appVersion))
 	addFileRoutes(e, fileHandler)
