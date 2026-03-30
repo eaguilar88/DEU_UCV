@@ -46,13 +46,12 @@ func (r *PostgresRepository) GetUserByUsername(ctx context.Context, username str
 }
 
 func (r *PostgresRepository) GetUser(ctx context.Context, userID string) (*entities.User, error) {
-	query := queries.GetUserByID(userID)
-	sql, args, err := query.ToSql()
+	query, args, err := queries.GetUserByID(userID).ToSql()
 	if err != nil {
 		return nil, err
 	}
 
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -69,12 +68,12 @@ func (r *PostgresRepository) GetUser(ctx context.Context, userID string) (*entit
 }
 
 func (r *PostgresRepository) GetUsers(ctx context.Context, pageScope entities.PageScope) ([]entities.User, entities.PageScope, error) {
-	sql, args, err := queries.GetUsers(pageScope.PerPage, pageScope.Offset()).ToSql()
+	query, args, err := queries.GetUsers(pageScope.PerPage, pageScope.Offset()).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
 
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
@@ -108,13 +107,13 @@ func (r *PostgresRepository) CreateUser(ctx context.Context, user entities.User)
 
 	userModel := newUserFromEntity(user, false)
 
-	sql, args, err := queries.InsertUser(userModel).ToSql()
+	query, args, err := queries.InsertUser(userModel).ToSql()
 	if err != nil {
 		r.logger.Error("error formatting query", zap.Error(err))
 		return -1, fmt.Errorf("database error: %w", err)
 	}
 
-	stmt, err := tx.PrepareContext(ctx, sql)
+	stmt, err := tx.PrepareContext(ctx, query)
 	if err != nil {
 		return -1, fmt.Errorf("database error: %w", err)
 	}
@@ -149,12 +148,12 @@ func (r *PostgresRepository) CreateUser(ctx context.Context, user entities.User)
 }
 
 func (r *PostgresRepository) UpdateUser(ctx context.Context, userID string, user entities.User) error {
-	sql, args, err := queries.UpdateUserInfo(user, userID).ToSql()
+	query, args, err := queries.UpdateUserInfo(user, userID).ToSql()
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrInvalidQuery, err)
 	}
 
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrInvalidQuery, err)
 	}
@@ -173,12 +172,12 @@ func (r *PostgresRepository) UpdateUser(ctx context.Context, userID string, user
 }
 
 func (r *PostgresRepository) DeleteUser(ctx context.Context, userID string) error {
-	sql, args, err := queries.SoftDeleteUser(userID).ToSql()
+	query, args, err := queries.SoftDeleteUser(userID).ToSql()
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrInvalidQuery, err)
 	}
 
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrInvalidQuery, err)
 	}
@@ -197,12 +196,12 @@ func (r *PostgresRepository) DeleteUser(ctx context.Context, userID string) erro
 }
 
 func (r *PostgresRepository) GetUserRoles(ctx context.Context, userID string) ([]entities.UserRole, error) {
-	sql, args, err := queries.GetRolesByUserID(userID).ToSql()
+	query, args, err := queries.GetRolesByUserID(userID).ToSql()
 	if err != nil {
 		return nil, err
 	}
 
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -250,23 +249,23 @@ func (r *PostgresRepository) GetProviderCodeByUserID(ctx context.Context, userID
 }
 
 func (r *PostgresRepository) AddRoleToUser(ctx context.Context, tx *sql.Tx, userID string, role int) error {
-	sql, args, err := queries.AddRoleToUser(userID, role).ToSql()
+	query, args, err := queries.AddRoleToUser(userID, role).ToSql()
 	if err != nil {
 		return err
 	}
 	if tx != nil {
-		return prepareAndExecute(ctx, tx, sql, args, r.logger)
+		return prepareAndExecute(ctx, tx, query, args, r.logger)
 	}
-	return prepareAndExecute(ctx, r.db, sql, args, r.logger)
+	return prepareAndExecute(ctx, r.db, query, args, r.logger)
 }
 
 func (r *PostgresRepository) GetUsersByCoursePeriodID(ctx context.Context, periodID string) ([]entities.User, error) {
-	sql, args, err := queries.GetUsersByCoursePeriodID(periodID).ToSql()
+	query, args, err := queries.GetUsersByCoursePeriodID(periodID).ToSql()
 	if err != nil {
 		return nil, err
 	}
 
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -299,11 +298,11 @@ func (r *PostgresRepository) GetUsersByCoursePeriodID(ctx context.Context, perio
 func prepareAndExecute(
 	ctx context.Context,
 	p preparer,
-	sql string,
+	query string,
 	args []interface{},
 	log *zap.Logger,
 ) error {
-	stmt, err := p.PrepareContext(ctx, sql)
+	stmt, err := p.PrepareContext(ctx, query)
 	if err != nil {
 		log.Error("error preparing", zap.Error(err))
 		return err

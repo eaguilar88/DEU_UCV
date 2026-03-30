@@ -2,21 +2,24 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/eaguilar88/deu/internal/postgres_repository/models"
 	"github.com/eaguilar88/deu/internal/postgres_repository/queries"
+	"github.com/eaguilar88/deu/internal/provider_requests"
 	"go.uber.org/zap"
 )
 
 func (r *PostgresRepository) CreateProviderRequest(ctx context.Context, providerID int64) error {
-	sql, args, err := queries.InsertProviderRequest(providerID).ToSql()
+	query, args, err := queries.InsertProviderRequest(providerID).ToSql()
 	if err != nil {
 		r.logger.Error("error creating provider request query", zap.Error(err))
 		return err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		r.logger.Error("error preparing provider request query", zap.Error(err))
 		return err
@@ -31,11 +34,11 @@ func (r *PostgresRepository) CreateProviderRequest(ctx context.Context, provider
 }
 
 func (r *PostgresRepository) GetProviderRequestByID(ctx context.Context, id string) (entities.ProviderRequest, error) {
-	sql, args, err := queries.GetProviderRequestByID(id).ToSql()
+	query, args, err := queries.GetProviderRequestByID(id).ToSql()
 	if err != nil {
 		return entities.ProviderRequest{}, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return entities.ProviderRequest{}, err
 	}
@@ -43,17 +46,20 @@ func (r *PostgresRepository) GetProviderRequestByID(ctx context.Context, id stri
 	row := stmt.QueryRowContext(ctx, args...)
 	m, err := scanProviderRequest(row)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return entities.ProviderRequest{}, fmt.Errorf("%w: %w", provider_requests.ErrProviderRequestNotFound, err)
+		}
 		return entities.ProviderRequest{}, err
 	}
 	return newProviderRequestFromModel(m), nil
 }
 
 func (r *PostgresRepository) GetProviderRequests(ctx context.Context, pageScope entities.PageScope) ([]entities.ProviderRequest, entities.PageScope, error) {
-	sql, args, err := queries.GetProviderRequests(uint64(pageScope.PerPage), uint64(pageScope.Offset())).ToSql()
+	query, args, err := queries.GetProviderRequests(uint64(pageScope.PerPage), uint64(pageScope.Offset())).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
@@ -86,20 +92,20 @@ func (r *PostgresRepository) ApproveProviderRequest(ctx context.Context, id, rev
 		}
 	}()
 
-	approveSql, approveArgs, err := queries.ApproveProviderRequest(id, reviewerID).ToSql()
+	approveQuery, approveArgs, err := queries.ApproveProviderRequest(id, reviewerID).ToSql()
 	if err != nil {
 		return httperrors.NewBadQueryError(err)
 	}
-	if _, err = tx.ExecContext(ctx, approveSql, approveArgs...); err != nil {
+	if _, err = tx.ExecContext(ctx, approveQuery, approveArgs...); err != nil {
 		r.logger.Error("error approving provider request", zap.Error(err))
 		return err
 	}
 
-	activateSql, activateArgs, err := queries.SetProviderActive(providerID, code).ToSql()
+	activateQuery, activateArgs, err := queries.SetProviderActive(providerID, code).ToSql()
 	if err != nil {
 		return httperrors.NewBadQueryError(err)
 	}
-	if _, err = tx.ExecContext(ctx, activateSql, activateArgs...); err != nil {
+	if _, err = tx.ExecContext(ctx, activateQuery, activateArgs...); err != nil {
 		r.logger.Error("error activating provider", zap.Error(err))
 		return err
 	}
@@ -108,11 +114,11 @@ func (r *PostgresRepository) ApproveProviderRequest(ctx context.Context, id, rev
 }
 
 func (r *PostgresRepository) RejectProviderRequest(ctx context.Context, id, reviewerID, comments string) error {
-	sql, args, err := queries.RejectProviderRequest(id, reviewerID, comments).ToSql()
+	query, args, err := queries.RejectProviderRequest(id, reviewerID, comments).ToSql()
 	if err != nil {
 		return httperrors.NewBadQueryError(err)
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return httperrors.NewBadQueryError(err)
 	}
@@ -122,7 +128,7 @@ func (r *PostgresRepository) RejectProviderRequest(ctx context.Context, id, revi
 		return err
 	}
 	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
-		return httperrors.NewNotFoundError(err)
+		return fmt.Errorf("%w: %w", provider_requests.ErrProviderRequestNotFound, err)
 	}
 	return nil
 }

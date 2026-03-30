@@ -2,7 +2,10 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 
+	"github.com/eaguilar88/deu/internal/course_periods"
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/eaguilar88/deu/internal/postgres_repository/mappers"
@@ -13,12 +16,11 @@ import (
 )
 
 func (r *PostgresRepository) GetCoursePeriodByID(ctx context.Context, periodID string) (entities.CoursePeriod, error) {
-	query := queries.GetCoursePeriodByID(periodID)
-	sql, args, err := query.ToSql()
+	query, args, err := queries.GetCoursePeriodByID(periodID).ToSql()
 	if err != nil {
 		return entities.CoursePeriod{}, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return entities.CoursePeriod{}, err
 	}
@@ -28,17 +30,20 @@ func (r *PostgresRepository) GetCoursePeriodByID(ctx context.Context, periodID s
 	row := stmt.QueryRowContext(ctx, args...)
 	coursePeriod, err = scanCoursePeriod(row)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return entities.CoursePeriod{}, fmt.Errorf("%w: %w", course_periods.ErrCoursePeriodNotFound, err)
+		}
 		return entities.CoursePeriod{}, err
 	}
 	return newCoursePeriodFromModel(coursePeriod), nil
 }
 
 func (r *PostgresRepository) GetCoursePeriods(ctx context.Context, courseID string, pageScope entities.PageScope) ([]entities.CoursePeriod, entities.PageScope, error) {
-	sql, args, err := queries.GetCoursePeriods(courseID, pageScope).ToSql()
+	query, args, err := queries.GetCoursePeriods(courseID, pageScope).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
@@ -60,11 +65,11 @@ func (r *PostgresRepository) GetCoursePeriods(ctx context.Context, courseID stri
 }
 
 func (r *PostgresRepository) GetLatestCoursePeriod(ctx context.Context, courseID string) (entities.CoursePeriod, error) {
-	sql, args, err := queries.GetLatestCoursePeriod(courseID).ToSql()
+	query, args, err := queries.GetLatestCoursePeriod(courseID).ToSql()
 	if err != nil {
 		return entities.CoursePeriod{}, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return entities.CoursePeriod{}, err
 	}
@@ -93,11 +98,11 @@ func (r *PostgresRepository) CreateCoursePeriod(ctx context.Context, coursePerio
 		InscriptionDate: coursePeriod.InscriptionDate,
 	}
 
-	sql, args, err := queries.InsertCoursePeriod(cpModel).ToSql()
+	query, args, err := queries.InsertCoursePeriod(cpModel).ToSql()
 	if err != nil {
 		return -1, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return -1, err
 	}
@@ -116,12 +121,12 @@ func (r *PostgresRepository) CreateCoursePeriod(ctx context.Context, coursePerio
 }
 
 func (r *PostgresRepository) UpdateCoursePeriod(ctx context.Context, periodID string, coursePeriod entities.CoursePeriod) error {
-	sql, args, err := queries.UpdateCoursePeriod(periodID, newCoursePeriodModelFromEntities(coursePeriod)).
+	query, args, err := queries.UpdateCoursePeriod(periodID, newCoursePeriodModelFromEntities(coursePeriod)).
 		ToSql()
 	if err != nil {
 		return err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return err
 	}
@@ -131,17 +136,17 @@ func (r *PostgresRepository) UpdateCoursePeriod(ctx context.Context, periodID st
 		return err
 	}
 	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
-		return httperrors.NewNotFoundError(err)
+		return fmt.Errorf("%w: %w", course_periods.ErrCoursePeriodNotFound, err)
 	}
 	return nil
 }
 
 func (r *PostgresRepository) DeleteCoursePeriod(ctx context.Context, periodID string) error {
-	sql, args, err := queries.DeleteCoursePeriod(periodID).ToSql()
+	query, args, err := queries.DeleteCoursePeriod(periodID).ToSql()
 	if err != nil {
 		return httperrors.NewBadQueryError(err)
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return err
 	}
@@ -151,17 +156,17 @@ func (r *PostgresRepository) DeleteCoursePeriod(ctx context.Context, periodID st
 		return err
 	}
 	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
-		return httperrors.NewNotFoundError(err)
+		return fmt.Errorf("%w: %w", course_periods.ErrCoursePeriodNotFound, err)
 	}
 	return nil
 }
 
 func (r *PostgresRepository) GetAnnouncementsByCoursePeriodID(ctx context.Context, periodID string) ([]entities.Announcement, error) {
-	sql, args, err := queries.GetAnnouncementsByCoursePeriodID(periodID).ToSql()
+	query, args, err := queries.GetAnnouncementsByCoursePeriodID(periodID).ToSql()
 	if err != nil {
 		return nil, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -194,11 +199,11 @@ func (r *PostgresRepository) GetAnnouncementsByCoursePeriodID(ctx context.Contex
 }
 
 func (r *PostgresRepository) GetAnnouncementByID(ctx context.Context, announcementID string) (entities.Announcement, error) {
-	sql, args, err := queries.GetAnnouncementByID(announcementID).ToSql()
+	query, args, err := queries.GetAnnouncementByID(announcementID).ToSql()
 	if err != nil {
 		return entities.Announcement{}, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return entities.Announcement{}, err
 	}
@@ -216,6 +221,9 @@ func (r *PostgresRepository) GetAnnouncementByID(ctx context.Context, announceme
 		&announcement.DeletedAt,
 	)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return entities.Announcement{}, fmt.Errorf("%w: %w", course_periods.ErrAnnouncementNotFound, err)
+		}
 		return entities.Announcement{}, err
 	}
 
@@ -229,11 +237,11 @@ func (r *PostgresRepository) CreateAnnouncement(ctx context.Context, periodID st
 		Content:       announcement.Content,
 	}
 
-	sql, args, err := queries.InsertAnnouncement(announcementModel).ToSql()
+	query, args, err := queries.InsertAnnouncement(announcementModel).ToSql()
 	if err != nil {
 		return -1, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return -1, err
 	}
@@ -255,11 +263,11 @@ func (r *PostgresRepository) UpdateAnnouncement(ctx context.Context, announcemen
 		Content: announcement.Content,
 	}
 
-	sql, args, err := queries.UpdateAnnouncement(announcementID, announcementModel).ToSql()
+	query, args, err := queries.UpdateAnnouncement(announcementID, announcementModel).ToSql()
 	if err != nil {
 		return err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return err
 	}
@@ -270,18 +278,18 @@ func (r *PostgresRepository) UpdateAnnouncement(ctx context.Context, announcemen
 		return err
 	}
 	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
-		return httperrors.NewNotFoundError(err)
+		return fmt.Errorf("%w: %w", course_periods.ErrAnnouncementNotFound, err)
 	}
 
 	return nil
 }
 
 func (r *PostgresRepository) DeleteAnnouncement(ctx context.Context, announcementID string) error {
-	sql, args, err := queries.DeleteAnnouncement(announcementID).ToSql()
+	query, args, err := queries.DeleteAnnouncement(announcementID).ToSql()
 	if err != nil {
 		return httperrors.NewBadQueryError(err)
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return err
 	}
@@ -292,7 +300,7 @@ func (r *PostgresRepository) DeleteAnnouncement(ctx context.Context, announcemen
 		return err
 	}
 	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
-		return httperrors.NewNotFoundError(err)
+		return fmt.Errorf("%w: %w", course_periods.ErrAnnouncementNotFound, err)
 	}
 
 	return nil

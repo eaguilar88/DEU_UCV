@@ -2,6 +2,7 @@ package course_periods
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -44,6 +45,9 @@ func (h *Handler) GetCoursePeriod(c echo.Context) error {
 
 	period, err := h.svc.GetCoursePeriod(ctx, req.ID)
 	if err != nil {
+		if errors.Is(err, ErrCoursePeriodNotFound) {
+			return httperrors.NewNotFound("course period not found")
+		}
 		return httperrors.NewInternal(err)
 	}
 
@@ -110,6 +114,9 @@ func (h *Handler) UpdateCoursePeriod(c echo.Context) error {
 	updatedPeriod := toPeriodUpdateEntity(req, userID)
 	err := h.svc.UpdateCoursePeriod(ctx, updatedPeriod.ID, updatedPeriod)
 	if err != nil {
+		if errors.Is(err, ErrCoursePeriodNotFound) {
+			return httperrors.NewNotFound("course period not found")
+		}
 		return httperrors.NewInternal(err)
 	}
 
@@ -129,6 +136,9 @@ func (h *Handler) DeleteCoursePeriod(c echo.Context) error {
 
 	err := h.svc.DeleteCoursePeriod(ctx, req.ID, userID)
 	if err != nil {
+		if errors.Is(err, ErrCoursePeriodNotFound) {
+			return httperrors.NewNotFound("course period not found")
+		}
 		return httperrors.NewInternal(err)
 	}
 
@@ -145,6 +155,9 @@ func (h *Handler) GetAnnouncement(c echo.Context) error {
 
 	announcement, err := h.svc.GetAnnouncement(ctx, req.ID)
 	if err != nil {
+		if errors.Is(err, ErrAnnouncementNotFound) {
+			return httperrors.NewNotFound("announcement not found")
+		}
 		return httperrors.NewInternal(err)
 	}
 
@@ -187,6 +200,9 @@ func (h *Handler) UpdateAnnouncement(c echo.Context) error {
 	announcement := toAnnouncementUpdateEntity(req)
 	err := h.svc.UpdateAnnouncement(ctx, req.ID, announcement)
 	if err != nil {
+		if errors.Is(err, ErrAnnouncementNotFound) {
+			return httperrors.NewNotFound("announcement not found")
+		}
 		return httperrors.NewInternal(err)
 	}
 
@@ -202,6 +218,9 @@ func (h *Handler) DeleteAnnouncement(c echo.Context) error {
 
 	err := h.svc.DeleteAnnouncement(ctx, req.ID)
 	if err != nil {
+		if errors.Is(err, ErrAnnouncementNotFound) {
+			return httperrors.NewNotFound("announcement not found")
+		}
 		return httperrors.NewInternal(err)
 	}
 

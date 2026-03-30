@@ -42,6 +42,9 @@ func (h *Handler) GetProvider(c echo.Context) error {
 	req := GetProviderRequest{ID: c.Param("id")}
 	provider, err := h.svc.GetProvider(ctx, req.ID)
 	if err != nil {
+		if errors.Is(err, ErrProviderNotFound) {
+			return httperrors.NewNotFound("provider not found")
+		}
 		return httperrors.NewInternal(err)
 	}
 
@@ -119,6 +122,9 @@ func (h *Handler) UpdateProvider(c echo.Context) error {
 
 	err = h.svc.UpdateProvider(ctx, c.Param("id"), provider)
 	if err != nil {
+		if errors.Is(err, ErrProviderNotFound) {
+			return httperrors.NewNotFound("provider not found")
+		}
 		return httperrors.NewInternal(err)
 	}
 
@@ -129,6 +135,9 @@ func (h *Handler) DeleteProvider(c echo.Context) error {
 	ctx := c.Request().Context()
 	err := h.svc.DeleteProvider(ctx, c.Param("id"))
 	if err != nil {
+		if errors.Is(err, ErrProviderNotFound) {
+			return httperrors.NewNotFound("provider not found")
+		}
 		return httperrors.NewInternal(err)
 	}
 

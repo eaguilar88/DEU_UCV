@@ -2,7 +2,10 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 
+	"github.com/eaguilar88/deu/internal/course_cycle_close_requests"
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/eaguilar88/deu/internal/postgres_repository/models"
@@ -11,12 +14,12 @@ import (
 )
 
 func (r *PostgresRepository) CreateCourseCycleCloseRequest(ctx context.Context, cycleID, submittedByID int64) (int64, error) {
-	sql, args, err := queries.InsertCourseCycleCloseRequest(cycleID, submittedByID).ToSql()
+	query, args, err := queries.InsertCourseCycleCloseRequest(cycleID, submittedByID).ToSql()
 	if err != nil {
 		r.logger.Error("error creating cycle close request query", zap.Error(err))
 		return -1, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		r.logger.Error("error preparing cycle close request query", zap.Error(err))
 		return -1, err
@@ -31,11 +34,11 @@ func (r *PostgresRepository) CreateCourseCycleCloseRequest(ctx context.Context, 
 }
 
 func (r *PostgresRepository) GetCourseCycleCloseRequestByID(ctx context.Context, id string) (entities.CourseCycleCloseRequest, error) {
-	sql, args, err := queries.GetCourseCycleCloseRequestByID(id).ToSql()
+	query, args, err := queries.GetCourseCycleCloseRequestByID(id).ToSql()
 	if err != nil {
 		return entities.CourseCycleCloseRequest{}, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return entities.CourseCycleCloseRequest{}, err
 	}
@@ -43,17 +46,20 @@ func (r *PostgresRepository) GetCourseCycleCloseRequestByID(ctx context.Context,
 	row := stmt.QueryRowContext(ctx, args...)
 	m, err := scanCourseCycleCloseRequest(row)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return entities.CourseCycleCloseRequest{}, fmt.Errorf("%w: %w", course_cycle_close_requests.ErrCycleCloseRequestNotFound, err)
+		}
 		return entities.CourseCycleCloseRequest{}, err
 	}
 	return newCourseCycleCloseRequestFromModel(m), nil
 }
 
 func (r *PostgresRepository) GetCourseCycleCloseRequests(ctx context.Context, pageScope entities.PageScope) ([]entities.CourseCycleCloseRequest, entities.PageScope, error) {
-	sql, args, err := queries.GetCourseCycleCloseRequests(uint64(pageScope.PerPage), uint64(pageScope.Offset())).ToSql()
+	query, args, err := queries.GetCourseCycleCloseRequests(uint64(pageScope.PerPage), uint64(pageScope.Offset())).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
@@ -86,20 +92,20 @@ func (r *PostgresRepository) ApproveCourseCycleCloseRequest(ctx context.Context,
 		}
 	}()
 
-	approveSql, approveArgs, err := queries.ApproveCourseCycleCloseRequest(id, reviewerID).ToSql()
+	approveQuery, approveArgs, err := queries.ApproveCourseCycleCloseRequest(id, reviewerID).ToSql()
 	if err != nil {
 		return httperrors.NewBadQueryError(err)
 	}
-	if _, err = tx.ExecContext(ctx, approveSql, approveArgs...); err != nil {
+	if _, err = tx.ExecContext(ctx, approveQuery, approveArgs...); err != nil {
 		r.logger.Error("error approving cycle close request", zap.Error(err))
 		return err
 	}
 
-	closeSql, closeArgs, err := queries.SetCourseCycleClosed(cycleID).ToSql()
+	closeQuery, closeArgs, err := queries.SetCourseCycleClosed(cycleID).ToSql()
 	if err != nil {
 		return httperrors.NewBadQueryError(err)
 	}
-	if _, err = tx.ExecContext(ctx, closeSql, closeArgs...); err != nil {
+	if _, err = tx.ExecContext(ctx, closeQuery, closeArgs...); err != nil {
 		r.logger.Error("error closing course cycle", zap.Error(err))
 		return err
 	}
@@ -108,11 +114,11 @@ func (r *PostgresRepository) ApproveCourseCycleCloseRequest(ctx context.Context,
 }
 
 func (r *PostgresRepository) RejectCourseCycleCloseRequest(ctx context.Context, id, reviewerID, comments string) error {
-	sql, args, err := queries.RejectCourseCycleCloseRequest(id, reviewerID, comments).ToSql()
+	query, args, err := queries.RejectCourseCycleCloseRequest(id, reviewerID, comments).ToSql()
 	if err != nil {
 		return httperrors.NewBadQueryError(err)
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return httperrors.NewBadQueryError(err)
 	}
@@ -122,7 +128,7 @@ func (r *PostgresRepository) RejectCourseCycleCloseRequest(ctx context.Context, 
 		return err
 	}
 	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
-		return httperrors.NewNotFoundError(err)
+		return fmt.Errorf("%w: %w", course_cycle_close_requests.ErrCycleCloseRequestNotFound, err)
 	}
 	return nil
 }

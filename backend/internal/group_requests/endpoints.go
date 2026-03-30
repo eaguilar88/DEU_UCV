@@ -2,6 +2,7 @@ package group_requests
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/eaguilar88/deu/internal/entities"
@@ -45,6 +46,9 @@ func (h *Handler) ApproveGroupRequest(c echo.Context) error {
 	}
 
 	if err := h.svc.ApproveGroupRequest(ctx, reqID); err != nil {
+		if errors.Is(err, ErrGroupRequestNotFound) {
+			return httperrors.NewNotFound("group request not found")
+		}
 		return httperrors.NewInternal(err)
 	}
 
@@ -59,6 +63,9 @@ func (h *Handler) RejectGroupRequest(c echo.Context) error {
 	}
 
 	if err := h.svc.RejectGroupRequest(ctx, reqID); err != nil {
+		if errors.Is(err, ErrGroupRequestNotFound) {
+			return httperrors.NewNotFound("group request not found")
+		}
 		return httperrors.NewInternal(err)
 	}
 
@@ -114,6 +121,9 @@ func (h *Handler) GetGroupRequestByID(c echo.Context) error {
 
 	req, err := h.svc.GetGroupRequestByID(ctx, reqID)
 	if err != nil {
+		if errors.Is(err, ErrGroupRequestNotFound) {
+			return httperrors.NewNotFound("group request not found")
+		}
 		return httperrors.NewInternal(err)
 	}
 

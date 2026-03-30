@@ -2,6 +2,7 @@ package course_cycle_close_requests
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -80,6 +81,9 @@ func (h *Handler) ApproveCloseRequest(c echo.Context) error {
 	}
 
 	if err := h.svc.ApproveCloseRequest(ctx, id, userID); err != nil {
+		if errors.Is(err, ErrCycleCloseRequestNotFound) {
+			return httperrors.NewNotFound("close request not found")
+		}
 		return httperrors.NewInternal(err)
 	}
 
@@ -104,6 +108,9 @@ func (h *Handler) RejectCloseRequest(c echo.Context) error {
 	}
 
 	if err := h.svc.RejectCloseRequest(ctx, id, userID, req.Comments); err != nil {
+		if errors.Is(err, ErrCycleCloseRequestNotFound) {
+			return httperrors.NewNotFound("close request not found")
+		}
 		return httperrors.NewInternal(err)
 	}
 
@@ -144,6 +151,9 @@ func (h *Handler) GetCloseRequestByID(c echo.Context) error {
 
 	req, err := h.svc.GetCloseRequestByID(ctx, id)
 	if err != nil {
+		if errors.Is(err, ErrCycleCloseRequestNotFound) {
+			return httperrors.NewNotFound("close request not found")
+		}
 		return httperrors.NewInternal(err)
 	}
 

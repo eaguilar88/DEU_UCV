@@ -2,6 +2,7 @@ package provider_requests
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/eaguilar88/deu/internal/entities"
@@ -50,6 +51,9 @@ func (h *Handler) ApproveProviderRequest(c echo.Context) error {
 	}
 
 	if err := h.svc.ApproveProviderRequest(ctx, id, userID); err != nil {
+		if errors.Is(err, ErrProviderRequestNotFound) {
+			return httperrors.NewNotFound("provider request not found")
+		}
 		return httperrors.NewInternal(err)
 	}
 
@@ -74,6 +78,9 @@ func (h *Handler) RejectProviderRequest(c echo.Context) error {
 	}
 
 	if err := h.svc.RejectProviderRequest(ctx, id, userID, req.Comments); err != nil {
+		if errors.Is(err, ErrProviderRequestNotFound) {
+			return httperrors.NewNotFound("provider request not found")
+		}
 		return httperrors.NewInternal(err)
 	}
 
@@ -114,6 +121,9 @@ func (h *Handler) GetProviderRequestByID(c echo.Context) error {
 
 	req, err := h.svc.GetProviderRequestByID(ctx, id)
 	if err != nil {
+		if errors.Is(err, ErrProviderRequestNotFound) {
+			return httperrors.NewNotFound("provider request not found")
+		}
 		return httperrors.NewInternal(err)
 	}
 

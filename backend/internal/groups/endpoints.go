@@ -38,6 +38,9 @@ func (h *Handler) GetGroup(c echo.Context) error {
 	req := GetGroupRequest{ID: c.Param("id")}
 	group, err := h.svc.GetGroup(ctx, req.ID)
 	if err != nil {
+		if errors.Is(err, ErrGroupNotFound) {
+			return httperrors.NewNotFound("group not found")
+		}
 		return httperrors.NewInternal(err)
 	}
 
@@ -104,6 +107,9 @@ func (h *Handler) UpdateGroup(c echo.Context) error {
 
 	err := h.svc.UpdateGroup(ctx, req.ID, updateGroupEntityFromRequest(req))
 	if err != nil {
+		if errors.Is(err, ErrGroupNotFound) {
+			return httperrors.NewNotFound("group not found")
+		}
 		return httperrors.NewInternal(err)
 	}
 
@@ -127,6 +133,9 @@ func (h *Handler) DeleteGroup(c echo.Context) error {
 
 	err := h.svc.DeleteGroup(ctx, req.ID, req.OwnerID)
 	if err != nil {
+		if errors.Is(err, ErrGroupNotFound) {
+			return httperrors.NewNotFound("group not found")
+		}
 		return httperrors.NewInternal(err)
 	}
 

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/eaguilar88/deu/internal/courses"
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/eaguilar88/deu/internal/postgres_repository/models"
@@ -15,12 +16,11 @@ import (
 )
 
 func (r *PostgresRepository) GetCourse(ctx context.Context, courseID string) (entities.Course, error) {
-	query := queries.GetCourseByID(courseID)
-	sql, args, err := query.ToSql()
+	query, args, err := queries.GetCourseByID(courseID).ToSql()
 	if err != nil {
 		return entities.Course{}, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return entities.Course{}, err
 	}
@@ -29,17 +29,20 @@ func (r *PostgresRepository) GetCourse(ctx context.Context, courseID string) (en
 	row := stmt.QueryRowContext(ctx, args...)
 	course, err = scanCourse(row)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return entities.Course{}, fmt.Errorf("%w: %w", courses.ErrCourseNotFound, err)
+		}
 		return entities.Course{}, err
 	}
 	return newCourseFromModel(course), nil
 }
 
 func (r *PostgresRepository) GetCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error) {
-	sql, args, err := queries.GetCourses(pageScope.PerPage, pageScope.Offset()).ToSql()
+	query, args, err := queries.GetCourses(pageScope.PerPage, pageScope.Offset()).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
@@ -61,12 +64,12 @@ func (r *PostgresRepository) GetCourses(ctx context.Context, pageScope entities.
 }
 
 func (r *PostgresRepository) CreateCourse(ctx context.Context, course entities.Course) (int64, error) {
-	sql, args, err := queries.InsertCourse(newCourseModelFromEntities(course)).ToSql()
+	query, args, err := queries.InsertCourse(newCourseModelFromEntities(course)).ToSql()
 	if err != nil {
 		r.logger.Error("error creating query", zap.Error(err))
 		return -1, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		r.logger.Error("error preparing query", zap.Error(err))
 		return -1, err
@@ -154,12 +157,12 @@ func (r *PostgresRepository) CreateCourseWithRequest(ctx context.Context, course
 }
 
 func (r *PostgresRepository) UpdateCourse(ctx context.Context, courseID string, course entities.Course) error {
-	sql, args, err := queries.UpdateCourse(courseID, newCourseModelFromEntities(course)).ToSql()
+	query, args, err := queries.UpdateCourse(courseID, newCourseModelFromEntities(course)).ToSql()
 	if err != nil {
 		return httperrors.NewBadQueryError(err)
 	}
 
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return httperrors.NewBadQueryError(err)
 	}
@@ -171,19 +174,19 @@ func (r *PostgresRepository) UpdateCourse(ctx context.Context, courseID string, 
 	}
 
 	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
-		return httperrors.NewNotFoundError(err)
+		return fmt.Errorf("%w: %w", courses.ErrCourseNotFound, err)
 	}
 
 	return nil
 }
 
 func (r *PostgresRepository) DeleteCourse(ctx context.Context, courseID string) error {
-	sql, args, err := queries.DeleteCourse(courseID).ToSql()
+	query, args, err := queries.DeleteCourse(courseID).ToSql()
 	if err != nil {
 		return httperrors.NewBadQueryError(err)
 	}
 
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return httperrors.NewBadQueryError(err)
 	}
@@ -195,7 +198,7 @@ func (r *PostgresRepository) DeleteCourse(ctx context.Context, courseID string) 
 	}
 
 	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
-		return httperrors.NewNotFoundError(err)
+		return fmt.Errorf("%w: %w", courses.ErrCourseNotFound, err)
 	}
 
 	return nil

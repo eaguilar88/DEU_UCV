@@ -2,6 +2,7 @@ package course_requests
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/eaguilar88/deu/internal/entities"
@@ -63,6 +64,9 @@ func (h *Handler) ApproveCourseRequest(c echo.Context) error {
 	courseType := entities.FromStringCourseType(req.CourseType)
 
 	if err := h.svc.ApproveCourseRequest(ctx, request, courseType); err != nil {
+		if errors.Is(err, ErrCourseRequestNotFound) {
+			return httperrors.NewNotFound("course request not found")
+		}
 		return httperrors.NewInternal(err)
 	}
 
@@ -87,6 +91,9 @@ func (h *Handler) RejectCourseRequest(c echo.Context) error {
 	}
 
 	if err := h.svc.RejectCourseRequest(ctx, reqID, userID, req.Comments); err != nil {
+		if errors.Is(err, ErrCourseRequestNotFound) {
+			return httperrors.NewNotFound("course request not found")
+		}
 		return httperrors.NewInternal(err)
 	}
 
@@ -120,6 +127,9 @@ func (h *Handler) RedirectCourseRequest(c echo.Context) error {
 	}
 
 	if err := h.svc.RedirectCourseRequest(ctx, reqID, userID, faculty, req.Reason); err != nil {
+		if errors.Is(err, ErrCourseRequestNotFound) {
+			return httperrors.NewNotFound("course request not found")
+		}
 		return httperrors.NewInternal(err)
 	}
 
@@ -175,6 +185,9 @@ func (h *Handler) GetCourseRequestByID(c echo.Context) error {
 
 	req, err := h.svc.GetCourseRequestByID(ctx, reqID)
 	if err != nil {
+		if errors.Is(err, ErrCourseRequestNotFound) {
+			return httperrors.NewNotFound("course request not found")
+		}
 		return httperrors.NewInternal(err)
 	}
 
