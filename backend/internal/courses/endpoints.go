@@ -2,6 +2,7 @@ package courses
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -37,6 +38,9 @@ func (h *Handler) GetCourse(c echo.Context) error {
 	req := GetCourseRequest{ID: c.Param("id")}
 	course, err := h.svc.GetCourse(ctx, req.ID)
 	if err != nil {
+		if errors.Is(err, ErrCourseNotFound) {
+			return httperrors.NewNotFound("course not found")
+		}
 		return httperrors.NewInternal(err)
 	}
 
@@ -113,6 +117,9 @@ func (h *Handler) UpdateCourse(c echo.Context) error {
 	updatedCourse := toCourseUpdateEntity(req, c.Param("id"))
 	err := h.svc.UpdateCourse(ctx, c.Param("id"), updatedCourse)
 	if err != nil {
+		if errors.Is(err, ErrCourseNotFound) {
+			return httperrors.NewNotFound("course not found")
+		}
 		return httperrors.NewInternal(err)
 	}
 
@@ -128,6 +135,9 @@ func (h *Handler) DeleteCourse(c echo.Context) error {
 
 	err := h.svc.DeleteCourse(ctx, req.ID)
 	if err != nil {
+		if errors.Is(err, ErrCourseNotFound) {
+			return httperrors.NewNotFound("course not found")
+		}
 		return httperrors.NewInternal(err)
 	}
 

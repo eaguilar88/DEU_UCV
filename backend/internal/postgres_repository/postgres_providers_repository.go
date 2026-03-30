@@ -2,22 +2,24 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/eaguilar88/deu/internal/postgres_repository/models"
 	"github.com/eaguilar88/deu/internal/postgres_repository/queries"
+	"github.com/eaguilar88/deu/internal/providers"
 	"github.com/lib/pq"
 	"go.uber.org/zap"
 )
 
 func (r *PostgresRepository) GetProvider(ctx context.Context, providerID string) (entities.Provider, error) {
-	query := queries.GetProviderByID(providerID, true, false)
-	sql, args, err := query.ToSql()
+	query, args, err := queries.GetProviderByID(providerID, true, false).ToSql()
 	if err != nil {
 		return entities.Provider{}, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return entities.Provider{}, err
 	}
@@ -26,18 +28,20 @@ func (r *PostgresRepository) GetProvider(ctx context.Context, providerID string)
 	row := stmt.QueryRowContext(ctx, args...)
 	provider, err = scanProvider(row)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return entities.Provider{}, fmt.Errorf("%w: %w", providers.ErrProviderNotFound, err)
+		}
 		return entities.Provider{}, err
 	}
 	return newProviderFromModel(provider), nil
 }
 
 func (r *PostgresRepository) GetProviderByCode(ctx context.Context, code string) (entities.Provider, error) {
-	query := queries.GetProviderByCode(code)
-	sql, args, err := query.ToSql()
+	query, args, err := queries.GetProviderByCode(code).ToSql()
 	if err != nil {
 		return entities.Provider{}, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return entities.Provider{}, err
 	}
@@ -46,18 +50,20 @@ func (r *PostgresRepository) GetProviderByCode(ctx context.Context, code string)
 	row := stmt.QueryRowContext(ctx, args...)
 	provider, err = scanProvider(row)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return entities.Provider{}, fmt.Errorf("%w: %w", providers.ErrProviderNotFound, err)
+		}
 		return entities.Provider{}, err
 	}
 	return newProviderFromModel(provider), nil
 }
 
 func (r *PostgresRepository) GetProviderByUserID(ctx context.Context, userID string) (entities.Provider, error) {
-	query := queries.GetProviderByUserID(userID)
-	sql, args, err := query.ToSql()
+	query, args, err := queries.GetProviderByUserID(userID).ToSql()
 	if err != nil {
 		return entities.Provider{}, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return entities.Provider{}, err
 	}
@@ -66,17 +72,20 @@ func (r *PostgresRepository) GetProviderByUserID(ctx context.Context, userID str
 	row := stmt.QueryRowContext(ctx, args...)
 	provider, err = scanProvider(row)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return entities.Provider{}, fmt.Errorf("%w: %w", providers.ErrProviderNotFound, err)
+		}
 		return entities.Provider{}, err
 	}
 	return newProviderFromModel(provider), nil
 }
 
-func (r *PostgresRepository) GetProviders(ctx context.Context, pageScope entities.PageScope) ([]entities.Provider, entities.PageScope, error) {
-	sql, args, err := queries.GetProviders(pageScope.PerPage, pageScope.Offset()).ToSql()
+func (r *PostgresRepository) GetProviders(ctx context.Context, pageScope entities.PageScope, filters entities.ProviderFilters) ([]entities.Provider, entities.PageScope, error) {
+	query, args, err := queries.GetProviders(filters, pageScope.PerPage, pageScope.Offset()).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
@@ -99,12 +108,12 @@ func (r *PostgresRepository) GetProviders(ctx context.Context, pageScope entitie
 }
 
 func (r *PostgresRepository) CreateProvider(ctx context.Context, provider entities.Provider) (int64, error) {
-	sql, args, err := queries.CreateProvider(newProviderModelFromEntities(provider)).ToSql()
+	query, args, err := queries.CreateProvider(newProviderModelFromEntities(provider)).ToSql()
 	if err != nil {
 		r.logger.Error("error creating query", zap.Error(err))
 		return -1, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		r.logger.Error("error preparing query", zap.Error(err))
 		return -1, err
@@ -124,12 +133,12 @@ func (r *PostgresRepository) CreateProvider(ctx context.Context, provider entiti
 }
 
 func (r *PostgresRepository) UpdateProvider(ctx context.Context, providerID string, provider entities.Provider) error {
-	sql, args, err := queries.UpdateProvider(newProviderModelFromEntities(provider)).ToSql()
+	query, args, err := queries.UpdateProvider(newProviderModelFromEntities(provider)).ToSql()
 	if err != nil {
 		return httperrors.NewBadQueryError(err)
 	}
 
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return httperrors.NewBadQueryError(err)
 	}
@@ -141,19 +150,19 @@ func (r *PostgresRepository) UpdateProvider(ctx context.Context, providerID stri
 	}
 
 	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
-		return httperrors.NewNotFoundError(err)
+		return fmt.Errorf("%w: %w", providers.ErrProviderNotFound, err)
 	}
 
 	return nil
 }
 
 func (r *PostgresRepository) DeleteProvider(ctx context.Context, providerID string) error {
-	sql, args, err := queries.DeleteProvider(providerID).ToSql()
+	query, args, err := queries.DeleteProvider(providerID).ToSql()
 	if err != nil {
 		return httperrors.NewBadQueryError(err)
 	}
 
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return httperrors.NewBadQueryError(err)
 	}
@@ -165,7 +174,7 @@ func (r *PostgresRepository) DeleteProvider(ctx context.Context, providerID stri
 	}
 
 	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
-		return httperrors.NewNotFoundError(err)
+		return fmt.Errorf("%w: %w", providers.ErrProviderNotFound, err)
 	}
 
 	return nil

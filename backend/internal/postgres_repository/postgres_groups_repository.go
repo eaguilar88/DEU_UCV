@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/eaguilar88/deu/internal/entities"
+	"github.com/eaguilar88/deu/internal/groups"
 	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/eaguilar88/deu/internal/postgres_repository/models"
 	"github.com/eaguilar88/deu/internal/postgres_repository/queries"
@@ -15,11 +16,11 @@ import (
 )
 
 func (r *PostgresRepository) GetGroupByID(ctx context.Context, groupID string) (entities.ExtensionGroup, error) {
-	sql, args, err := queries.GetGroupByID(groupID).ToSql()
+	query, args, err := queries.GetGroupByID(groupID).ToSql()
 	if err != nil {
 		return entities.ExtensionGroup{}, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return entities.ExtensionGroup{}, err
 	}
@@ -28,17 +29,20 @@ func (r *PostgresRepository) GetGroupByID(ctx context.Context, groupID string) (
 	row := stmt.QueryRowContext(ctx, args...)
 	group, err = scanGroup(row)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return entities.ExtensionGroup{}, fmt.Errorf("%w: %w", groups.ErrGroupNotFound, err)
+		}
 		return entities.ExtensionGroup{}, err
 	}
 	return newGroupFromModel(group), nil
 }
 
 func (r *PostgresRepository) GetGroups(ctx context.Context, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error) {
-	sql, args, err := queries.GetGroups(pageScope.PerPage, pageScope.Offset()).ToSql()
+	query, args, err := queries.GetGroups(pageScope.PerPage, pageScope.Offset()).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
@@ -60,11 +64,11 @@ func (r *PostgresRepository) GetGroups(ctx context.Context, pageScope entities.P
 }
 
 func (r *PostgresRepository) CreateGroup(ctx context.Context, gr entities.ExtensionGroup) (int64, error) {
-	sql, args, err := queries.InsertGroup(newGroupToModel(gr)).ToSql()
+	query, args, err := queries.InsertGroup(newGroupToModel(gr)).ToSql()
 	if err != nil {
 		return 0, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return 0, err
 	}
@@ -162,11 +166,11 @@ func (r *PostgresRepository) CreateGroupWithRequest(ctx context.Context, group e
 }
 
 func (r *PostgresRepository) UpdateGroup(ctx context.Context, group entities.ExtensionGroup) error {
-	sql, args, err := queries.UpdateGroup(newGroupToModel(group)).ToSql()
+	query, args, err := queries.UpdateGroup(newGroupToModel(group)).ToSql()
 	if err != nil {
 		return err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return err
 	}
@@ -176,17 +180,17 @@ func (r *PostgresRepository) UpdateGroup(ctx context.Context, group entities.Ext
 		return err
 	}
 	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
-		return httperrors.NewNotFoundError(err)
+		return fmt.Errorf("%w: %w", groups.ErrGroupNotFound, err)
 	}
 	return nil
 }
 
 func (r *PostgresRepository) DeleteGroup(ctx context.Context, groupID string) error {
-	sql, args, err := queries.DeleteGroup(groupID).ToSql()
+	query, args, err := queries.DeleteGroup(groupID).ToSql()
 	if err != nil {
 		return err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return err
 	}
@@ -196,7 +200,7 @@ func (r *PostgresRepository) DeleteGroup(ctx context.Context, groupID string) er
 		return err
 	}
 	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
-		return httperrors.NewNotFoundError(err)
+		return fmt.Errorf("%w: %w", groups.ErrGroupNotFound, err)
 	}
 	return nil
 }
@@ -214,7 +218,7 @@ func (r *PostgresRepository) CreateGroupRequest(ctx context.Context, req entitie
 		return -1, err
 	}
 
-	sql, args, err := queries.InsertGroupRequest(models.GroupRequest{
+	query, args, err := queries.InsertGroupRequest(models.GroupRequest{
 		GroupID: int64(groupID),
 		Status:  string(req.Status),
 		Faculty: string(req.Faculty),
@@ -226,7 +230,7 @@ func (r *PostgresRepository) CreateGroupRequest(ctx context.Context, req entitie
 	if err != nil {
 		return -1, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return -1, err
 	}

@@ -253,17 +253,19 @@ func TestService_GetProviders(t *testing.T) {
 	type testCase struct {
 		name      string
 		pageScope entities.PageScope
+		filters   entities.ProviderFilters
 		prepare   func(repoMock *mocks.MockRepository)
 		want      []entities.Provider
 		wantErr   bool
 	}
 
+	trueVal := true
 	tests := []testCase{
 		{
 			name: "success empty list",
 			prepare: func(repoMock *mocks.MockRepository) {
-				repoMock.EXPECT().GetProviders(mock.Anything, mock.Anything).
-					RunAndReturn(func(_ context.Context, ps entities.PageScope) ([]entities.Provider, entities.PageScope, error) {
+				repoMock.EXPECT().GetProviders(mock.Anything, mock.Anything, mock.Anything).
+					RunAndReturn(func(_ context.Context, ps entities.PageScope, _ entities.ProviderFilters) ([]entities.Provider, entities.PageScope, error) {
 						return []entities.Provider{}, ps, nil
 					})
 			},
@@ -273,8 +275,8 @@ func TestService_GetProviders(t *testing.T) {
 		{
 			name: "success with one provider",
 			prepare: func(repoMock *mocks.MockRepository) {
-				repoMock.EXPECT().GetProviders(mock.Anything, mock.Anything).
-					RunAndReturn(func(_ context.Context, ps entities.PageScope) ([]entities.Provider, entities.PageScope, error) {
+				repoMock.EXPECT().GetProviders(mock.Anything, mock.Anything, mock.Anything).
+					RunAndReturn(func(_ context.Context, ps entities.PageScope, _ entities.ProviderFilters) ([]entities.Provider, entities.PageScope, error) {
 						return []entities.Provider{{ID: "1"}}, ps, nil
 					})
 				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1", entities.OwnerTypeProvider).
@@ -286,10 +288,42 @@ func TestService_GetProviders(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name:    "filter by type courses",
+			filters: entities.ProviderFilters{Type: entities.CourseProviderType},
+			prepare: func(repoMock *mocks.MockRepository) {
+				repoMock.EXPECT().GetProviders(mock.Anything, mock.Anything, mock.Anything).
+					RunAndReturn(func(_ context.Context, ps entities.PageScope, f entities.ProviderFilters) ([]entities.Provider, entities.PageScope, error) {
+						return []entities.Provider{{ID: "2", Type: entities.CourseProviderType}}, ps, nil
+					})
+				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "2", entities.OwnerTypeProvider).
+					RunAndReturn(func(_ context.Context, _ string, _ entities.OwnerType) (entities.GroupedFiles, error) {
+						return entities.GroupedFiles{}, nil
+					})
+			},
+			want:    []entities.Provider{{ID: "2", Type: entities.CourseProviderType}},
+			wantErr: false,
+		},
+		{
+			name:    "filter by is_active true",
+			filters: entities.ProviderFilters{IsActive: &trueVal},
+			prepare: func(repoMock *mocks.MockRepository) {
+				repoMock.EXPECT().GetProviders(mock.Anything, mock.Anything, mock.Anything).
+					RunAndReturn(func(_ context.Context, ps entities.PageScope, f entities.ProviderFilters) ([]entities.Provider, entities.PageScope, error) {
+						return []entities.Provider{{ID: "3", IsActive: true}}, ps, nil
+					})
+				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "3", entities.OwnerTypeProvider).
+					RunAndReturn(func(_ context.Context, _ string, _ entities.OwnerType) (entities.GroupedFiles, error) {
+						return entities.GroupedFiles{}, nil
+					})
+			},
+			want:    []entities.Provider{{ID: "3", IsActive: true}},
+			wantErr: false,
+		},
+		{
 			name: "repo error",
 			prepare: func(repoMock *mocks.MockRepository) {
-				repoMock.EXPECT().GetProviders(mock.Anything, mock.Anything).
-					RunAndReturn(func(_ context.Context, _ entities.PageScope) ([]entities.Provider, entities.PageScope, error) {
+				repoMock.EXPECT().GetProviders(mock.Anything, mock.Anything, mock.Anything).
+					RunAndReturn(func(_ context.Context, _ entities.PageScope, _ entities.ProviderFilters) ([]entities.Provider, entities.PageScope, error) {
 						return nil, entities.PageScope{}, errors.New("db error")
 					})
 			},
@@ -298,8 +332,8 @@ func TestService_GetProviders(t *testing.T) {
 		{
 			name: "get files error",
 			prepare: func(repoMock *mocks.MockRepository) {
-				repoMock.EXPECT().GetProviders(mock.Anything, mock.Anything).
-					RunAndReturn(func(_ context.Context, ps entities.PageScope) ([]entities.Provider, entities.PageScope, error) {
+				repoMock.EXPECT().GetProviders(mock.Anything, mock.Anything, mock.Anything).
+					RunAndReturn(func(_ context.Context, ps entities.PageScope, _ entities.ProviderFilters) ([]entities.Provider, entities.PageScope, error) {
 						return []entities.Provider{{ID: "1"}}, ps, nil
 					})
 				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1", entities.OwnerTypeProvider).
@@ -321,7 +355,7 @@ func TestService_GetProviders(t *testing.T) {
 				tt.prepare(repoMock)
 			}
 			s := NewService(repoMock, storageMock, mailMock, loggerMock)
-			got, _, err := s.GetProviders(context.Background(), tt.pageScope)
+			got, _, err := s.GetProviders(context.Background(), tt.pageScope, tt.filters)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -343,12 +377,6 @@ func TestService_CreateProvider(t *testing.T) {
 	}
 
 	tests := []testCase{
-		{
-			name:    "invalid provider type",
-			pType:   entities.ProviderType("invalid"),
-			wantID:  int64(-1),
-			wantErr: true,
-		},
 		{
 			name:  "repo create error",
 			pType: entities.CourseProviderType,
@@ -373,7 +401,7 @@ func TestService_CreateProvider(t *testing.T) {
 				tt.prepare(repoMock)
 			}
 			s := NewService(repoMock, storageMock, mailMock, loggerMock)
-			gotID, _, err := s.CreateProvider(context.Background(), &entities.Provider{Type: tt.pType})
+			gotID, err := s.CreateProvider(context.Background(), &entities.Provider{Type: tt.pType})
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Equal(t, tt.wantID, gotID)
@@ -554,6 +582,8 @@ func TestService_uploadAndSave(t *testing.T) {
 					RunAndReturn(func(_ context.Context, _ []*entities.File) error { return nil })
 				repoMock.EXPECT().SaveFilesToDB(mock.Anything, mock.Anything).
 					RunAndReturn(func(_ context.Context, _ []*entities.File) error { return nil })
+				repoMock.EXPECT().CreateProviderRequest(mock.Anything, int64(1)).
+					RunAndReturn(func(_ context.Context, _ int64) error { return nil })
 				repoMock.EXPECT().GetProvider(mock.Anything, "1").
 					RunAndReturn(func(_ context.Context, _ string) (entities.Provider, error) {
 						return entities.Provider{User: entities.User{Email: "user@test.com", FirstName: "Test", LastName: "User"}}, nil
@@ -607,6 +637,8 @@ func TestService_uploadAndSave(t *testing.T) {
 					RunAndReturn(func(_ context.Context, _ []*entities.File) error { return nil })
 				repoMock.EXPECT().SaveFilesToDB(mock.Anything, mock.Anything).
 					RunAndReturn(func(_ context.Context, _ []*entities.File) error { return nil })
+				repoMock.EXPECT().CreateProviderRequest(mock.Anything, int64(1)).
+					RunAndReturn(func(_ context.Context, _ int64) error { return nil })
 				repoMock.EXPECT().GetProvider(mock.Anything, "1").
 					RunAndReturn(func(_ context.Context, _ string) (entities.Provider, error) {
 						return entities.Provider{User: entities.User{Email: "user@test.com", FirstName: "Test", LastName: "User"}}, nil
@@ -632,14 +664,13 @@ func TestService_uploadAndSave(t *testing.T) {
 				tt.prepare(ctx, repoMock, storageMock, mailMock)
 			}
 			s := NewService(repoMock, storageMock, mailMock, loggerMock)
-			gotID, gotCode, err := s.CreateProvider(ctx, newTestProvider())
+			gotID, err := s.CreateProvider(ctx, newTestProvider())
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Equal(t, int64(-1), gotID)
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, tt.wantID, gotID)
-				assert.NotEmpty(t, gotCode)
 			}
 			repoMock.AssertExpectations(t)
 			storageMock.AssertExpectations(t)

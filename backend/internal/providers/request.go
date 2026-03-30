@@ -12,6 +12,7 @@ type GetProviderRequest struct {
 
 type GetProvidersRequest struct {
 	PageScope entities.PageScope
+	Filters   entities.ProviderFilters
 }
 
 type UpdateProviderRequest struct {

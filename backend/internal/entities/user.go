@@ -56,6 +56,7 @@ const (
 	RoleFacilitador
 	RoleParticipante
 	RoleExtension
+	RoleVisitante
 )
 
 var roleNames = map[int]string{
@@ -66,6 +67,7 @@ var roleNames = map[int]string{
 	RoleFacilitador:  "facilitador",
 	RoleParticipante: "participante",
 	RoleExtension:    "extensión",
+	RoleVisitante:    "visitante",
 }
 
 var roleIDs = map[string]int{
@@ -76,6 +78,7 @@ var roleIDs = map[string]int{
 	"facilitador":            RoleFacilitador,
 	"participante":           RoleParticipante,
 	"extensión":              RoleExtension,
+	"visitante":              RoleVisitante,
 }
 
 // RoleNameFromID returns the role name for a given ID.
