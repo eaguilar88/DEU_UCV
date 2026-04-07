@@ -37,15 +37,17 @@ type UpdateGroupResponse struct{}
 
 type DeleteGroupResponse struct{}
 
-func EntitiesGroupsToGetGroupsResponse(groups []entities.ExtensionGroup) []GetGroupResponse {
+// groupsToResponse converts a slice of ExtensionGroup entities to responses.
+func groupsToResponse(groups []entities.ExtensionGroup) []GetGroupResponse {
 	var res []GetGroupResponse
 	for _, group := range groups {
-		res = append(res, EntitiesGroupToGetGroupResponse(group))
+		res = append(res, groupToResponse(group))
 	}
 	return res
 }
 
-func EntitiesGroupToGetGroupResponse(group entities.ExtensionGroup) GetGroupResponse {
+// groupToResponse converts an ExtensionGroup entity to GetGroupResponse.
+func groupToResponse(group entities.ExtensionGroup) GetGroupResponse {
 	var owner *OwnerInfo
 	if group.Owner != nil {
 		owner = &OwnerInfo{

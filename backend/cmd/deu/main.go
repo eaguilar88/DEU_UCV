@@ -2,20 +2,27 @@ package main
 
 import (
 	"database/sql"
+	_ "embed"
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 
+	"github.com/eaguilar88/deu/docs"
 	"github.com/eaguilar88/deu/internal/auth"
 	"github.com/eaguilar88/deu/internal/config"
+	"github.com/eaguilar88/deu/internal/course_cycle_close_requests"
 	"github.com/eaguilar88/deu/internal/course_periods"
 	"github.com/eaguilar88/deu/internal/course_requests"
 	"github.com/eaguilar88/deu/internal/courses"
 	"github.com/eaguilar88/deu/internal/email"
+	"github.com/eaguilar88/deu/internal/files"
 	"github.com/eaguilar88/deu/internal/group_requests"
 	"github.com/eaguilar88/deu/internal/groups"
+	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/eaguilar88/deu/internal/jwt"
 	repository "github.com/eaguilar88/deu/internal/postgres_repository"
+	"github.com/eaguilar88/deu/internal/provider_requests"
 	"github.com/eaguilar88/deu/internal/providers"
 	"github.com/eaguilar88/deu/internal/security"
 	"github.com/eaguilar88/deu/internal/storage"
@@ -26,10 +33,8 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-// docsSource          = "./docs/openapi/service.yaml"
-// noVersionDefinedYet = "Version to be defined"
-)
+//go:embed VERSION
+var appVersion string
 
 type RegisterAdminEndpoints func(g *echo.Group)
 
@@ -66,6 +71,7 @@ func main() {
 		config.BlackBlazeB2.ApplicationKey,
 		config.BlackBlazeB2.Endpoint,
 		config.BlackBlazeB2.Region,
+		config.BaseURL,
 		logger,
 	)
 	if err != nil {
@@ -77,13 +83,13 @@ func main() {
 	authService := auth.NewService(repository, signer, logger)
 	authEndpoints := auth.NewHandler(authService, logger)
 	mailClient := email.NewMailgunClient(config.Email, logger)
-	userSvc := users.NewService(repository, mailClient, logger)
+	userSvc := users.NewService(repository, mailClient, bbClient, logger)
 	userEndpoints := users.NewHandler(userSvc, logger)
 
 	providerService := providers.NewService(repository, bbClient, mailClient, logger)
 	providerEndpoints := providers.NewHandler(providerService, logger)
 
-	courseSvc := courses.NewService(repository, logger)
+	courseSvc := courses.NewService(repository, bbClient, logger)
 	courseEndpoints := courses.NewHandler(courseSvc, logger)
 
 	cpService := course_periods.NewService(repository, logger)
@@ -98,15 +104,27 @@ func main() {
 	courseRequestService := course_requests.NewService(repository, logger)
 	courseRequestEndpoints := course_requests.NewHandler(courseRequestService, logger)
 
+	providerRequestService := provider_requests.NewService(repository, mailClient, logger)
+	providerRequestEndpoints := provider_requests.NewHandler(providerRequestService, logger)
+
+	cycleCloseService := course_cycle_close_requests.NewService(repository, logger)
+	cycleCloseEndpoints := course_cycle_close_requests.NewHandler(cycleCloseService, logger)
+
 	e := echo.New()
 	e.Validator = security.NewCustomValidator()
+	e.HTTPErrorHandler = httperrors.NewHTTPErrorHandler(logger)
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
 	middlewares := []echo.MiddlewareFunc{
 		jwt.JWTMiddleware(signer, logger),
 	}
 
+	fileHandler := files.NewHandler(bbClient, logger)
+
+	docs.RegisterDocsRoute(e, logger)
 	addHealthRoute(e)
+	addVersionRoute(e, strings.TrimSpace(appVersion))
+	addFileRoutes(e, fileHandler)
 	addAuthRoutes(e, authEndpoints)
 	addUserRoutes(e, userEndpoints, middlewares...)
 	addProviderRoutes(e, providerEndpoints, middlewares...)
@@ -117,14 +135,28 @@ func main() {
 	addAdminRoutes(e, middlewares,
 		groupRequestEndpoints.RegisterGroupRequestAdminEndpoints,
 		courseRequestEndpoints.RegisterCourseRequestAdminEndpoints,
+		providerRequestEndpoints.RegisterProviderRequestAdminEndpoints,
+		cycleCloseEndpoints.RegisterAdminEndpoints,
 	)
 
+	addCourseCycleCloseRequestRoutes(e, cycleCloseEndpoints, middlewares...)
+
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", config.HTTPPort)))
+}
+
+func addFileRoutes(e *echo.Echo, handler *files.Handler) {
+	e.GET("/files/*key", handler.ServeFile)
 }
 
 func addHealthRoute(e *echo.Echo) {
 	e.GET("/health", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Ok")
+	})
+}
+
+func addVersionRoute(e *echo.Echo, version string) {
+	e.GET("/version", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, map[string]string{"version": version})
 	})
 }
 
@@ -201,6 +233,11 @@ func addGroupsRoutes(e *echo.Echo, endpoints *groups.Handler, middlewares ...ech
 	protectedGroup.POST("", endpoints.CreateGroup)
 	protectedGroup.PUT("/:id", endpoints.UpdateGroup)
 	protectedGroup.DELETE("/:id", endpoints.DeleteGroup)
+}
+
+func addCourseCycleCloseRequestRoutes(e *echo.Echo, endpoints *course_cycle_close_requests.Handler, middlewares ...echo.MiddlewareFunc) {
+	protected := e.Group("", middlewares...)
+	endpoints.RegisterProtectedEndpoints(protected)
 }
 
 func addProviderRoutes(e *echo.Echo, endpoints *providers.Handler, middlewares ...echo.MiddlewareFunc) {

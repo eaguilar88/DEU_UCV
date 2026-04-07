@@ -6,6 +6,7 @@ package mocks
 
 import (
 	"context"
+	"io"
 
 	"github.com/eaguilar88/deu/internal/entities"
 	mock "github.com/stretchr/testify/mock"
@@ -225,6 +226,77 @@ func (_c *MockStorageClient_GetFileURL_Call) Return(s string, err error) *MockSt
 }
 
 func (_c *MockStorageClient_GetFileURL_Call) RunAndReturn(run func(ctx context.Context, objectKey string) (string, error)) *MockStorageClient_GetFileURL_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetObject provides a mock function for the type MockStorageClient
+func (_mock *MockStorageClient) GetObject(ctx context.Context, objectKey string) (io.ReadCloser, string, error) {
+	ret := _mock.Called(ctx, objectKey)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetObject")
+	}
+
+	var r0 io.ReadCloser
+	var r1 string
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (io.ReadCloser, string, error)); ok {
+		return returnFunc(ctx, objectKey)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) io.ReadCloser); ok {
+		r0 = returnFunc(ctx, objectKey)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(io.ReadCloser)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) string); ok {
+		r1 = returnFunc(ctx, objectKey)
+	} else {
+		r1 = ret.Get(1).(string)
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, string) error); ok {
+		r2 = returnFunc(ctx, objectKey)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// MockStorageClient_GetObject_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetObject'
+type MockStorageClient_GetObject_Call struct {
+	*mock.Call
+}
+
+// GetObject is a helper method to define mock.On call
+//   - ctx context.Context
+//   - objectKey string
+func (_e *MockStorageClient_Expecter) GetObject(ctx interface{}, objectKey interface{}) *MockStorageClient_GetObject_Call {
+	return &MockStorageClient_GetObject_Call{Call: _e.mock.On("GetObject", ctx, objectKey)}
+}
+
+func (_c *MockStorageClient_GetObject_Call) Run(run func(ctx context.Context, objectKey string)) *MockStorageClient_GetObject_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(arg0, arg1)
+	})
+	return _c
+}
+
+func (_c *MockStorageClient_GetObject_Call) Return(body io.ReadCloser, contentType string, err error) *MockStorageClient_GetObject_Call {
+	_c.Call.Return(body, contentType, err)
+	return _c
+}
+
+func (_c *MockStorageClient_GetObject_Call) RunAndReturn(run func(ctx context.Context, objectKey string) (io.ReadCloser, string, error)) *MockStorageClient_GetObject_Call {
 	_c.Call.Return(run)
 	return _c
 }

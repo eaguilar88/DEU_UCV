@@ -11,7 +11,8 @@ import (
 
 type Repository interface {
 	GetUserByUsername(ctx context.Context, username string) (*entities.User, error)
-	GetUserRoles(ctx context.Context, userID string) ([]string, error)
+	GetUserRoles(ctx context.Context, userID string) ([]entities.UserRole, error)
+	GetProviderCodeByUserID(ctx context.Context, userID string) (string, error)
 }
 
 type service struct {
@@ -40,14 +41,31 @@ func (s *service) Login(ctx context.Context, username, password string) (string,
 		return "", nil, err
 	}
 
-	roles, err := s.repository.GetUserRoles(ctx, user.ID)
+	userRoles, err := s.repository.GetUserRoles(ctx, user.ID)
 	if err != nil {
 		return "", nil, err
 	}
 
-	user.Roles = roles
+	roleNames := make([]string, len(userRoles))
+	for i, r := range userRoles {
+		roleNames[i] = r.Name
+	}
+	user.Roles = roleNames
 
-	tokenString, err := s.signer.GenerateJWT(user.ID, roles)
+	for _, r := range userRoles {
+		if r.Name == "faculty_admin" {
+			user.Faculty = r.Faculty
+			break
+		}
+	}
+
+	providerCode, err := s.repository.GetProviderCodeByUserID(ctx, user.ID)
+	if err != nil {
+		return "", nil, err
+	}
+	user.ProviderCode = providerCode
+
+	tokenString, err := s.signer.GenerateJWT(user.ID, userRoles, providerCode)
 	if err != nil {
 		return "", nil, err
 	}

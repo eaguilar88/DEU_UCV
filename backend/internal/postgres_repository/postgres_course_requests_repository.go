@@ -3,22 +3,22 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
+	"github.com/eaguilar88/deu/internal/course_requests"
 	"github.com/eaguilar88/deu/internal/entities"
-	errs "github.com/eaguilar88/deu/internal/errors"
 	"github.com/eaguilar88/deu/internal/postgres_repository/models"
 	"github.com/eaguilar88/deu/internal/postgres_repository/queries"
 	"go.uber.org/zap"
 )
 
 func (r *PostgresRepository) GetCourseRequestByID(ctx context.Context, requestID string) (entities.CourseRequest, error) {
-	query := queries.GetCourseRequestByID(requestID)
-	sql, args, err := query.ToSql()
+	query, args, err := queries.GetCourseRequestByID(requestID).ToSql()
 	if err != nil {
 		return entities.CourseRequest{}, err
 	}
 
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return entities.CourseRequest{}, err
 	}
@@ -29,22 +29,27 @@ func (r *PostgresRepository) GetCourseRequestByID(ctx context.Context, requestID
 	}
 	defer rows.Close()
 	var request models.CourseRequest
+	found := false
 	for rows.Next() {
+		found = true
 		request, err = scanCourseRequestWithCourse(rows)
 		if err != nil {
 			return entities.CourseRequest{}, err
 		}
 	}
+	if !found {
+		return entities.CourseRequest{}, fmt.Errorf("%w", course_requests.ErrCourseRequestNotFound)
+	}
 	return newCourseRequestFromModel(request), nil
 }
 
 func (r *PostgresRepository) GetCourseRequestsByFaculty(ctx context.Context, faculty entities.Faculty, scope entities.PageScope) ([]entities.CourseRequest, entities.PageScope, error) {
-	sql, args, err := queries.GetCourseRequestsByFaculty(faculty.String(), scope.PerPage, scope.Offset()).ToSql()
+	query, args, err := queries.GetCourseRequestsByFaculty(faculty.String(), scope.PerPage, scope.Offset()).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
-	r.logger.Debug("SQL Query: ", zap.String("query", sql), zap.Any("args", args))
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	r.logger.Debug("SQL Query: ", zap.String("query", query), zap.Any("args", args))
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
@@ -63,11 +68,11 @@ func (r *PostgresRepository) GetCourseRequestsByFaculty(ctx context.Context, fac
 		requests = append(requests, newCourseRequestFromModel(model))
 	}
 	var total int
-	sql, args, err = queries.CountCourseRequestsByFaculty(faculty.String()).ToSql()
+	query, args, err = queries.CountCourseRequestsByFaculty(faculty.String()).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
-	if err = r.db.QueryRowContext(ctx, sql, args...).Scan(&total); err != nil {
+	if err = r.db.QueryRowContext(ctx, query, args...).Scan(&total); err != nil {
 		return nil, entities.PageScope{}, err
 	}
 	scope.Count = total
@@ -126,7 +131,7 @@ func (r *PostgresRepository) ApproveCourseRequest(ctx context.Context, reqID, re
 	}
 	if rowsAffected == 0 {
 		r.logger.Error("no rows affected when approving course request")
-		return errs.ErrNotFound
+		return fmt.Errorf("%w", course_requests.ErrCourseRequestNotFound)
 	}
 
 	// Commit transaction
@@ -144,11 +149,11 @@ func (r *PostgresRepository) ApproveCourseRequest(ctx context.Context, reqID, re
 }
 
 func (r *PostgresRepository) RejectCourseRequest(ctx context.Context, reqID, reviewerID, comments string) error {
-	sql, args, err := queries.RejectCourseRequest(reqID, reviewerID, comments).ToSql()
+	query, args, err := queries.RejectCourseRequest(reqID, reviewerID, comments).ToSql()
 	if err != nil {
 		return err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return err
 	}
@@ -162,7 +167,7 @@ func (r *PostgresRepository) RejectCourseRequest(ctx context.Context, reqID, rev
 		return err
 	}
 	if rowsAffected == 0 {
-		return errs.ErrNotFound
+		return fmt.Errorf("%w", course_requests.ErrCourseRequestNotFound)
 	}
 	return nil
 }
@@ -223,7 +228,7 @@ func (r *PostgresRepository) RedirectCourseRequest(ctx context.Context, reqID, r
 	}
 	if rowsAffected == 0 {
 		r.logger.Error("no rows affected when redirecting course request")
-		return errs.ErrNotFound
+		return fmt.Errorf("%w", course_requests.ErrCourseRequestNotFound)
 	}
 
 	// Commit transaction
@@ -241,12 +246,12 @@ func (r *PostgresRepository) RedirectCourseRequest(ctx context.Context, reqID, r
 }
 
 func (r *PostgresRepository) CreateCourseRequest(ctx context.Context, request entities.CourseRequest) (int64, error) {
-	sql, args, err := queries.InsertCourseRequest(newCourseRequestModelFromEntities(request)).ToSql()
+	query, args, err := queries.InsertCourseRequest(newCourseRequestModelFromEntities(request)).ToSql()
 	if err != nil {
 		return -1, err
 	}
 
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return -1, err
 	}

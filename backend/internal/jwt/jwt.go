@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/eaguilar88/deu/internal/entities"
 	jwt "github.com/golang-jwt/jwt/v4"
 	"go.uber.org/zap"
 )
@@ -19,7 +20,7 @@ type CustomClaims struct {
 // Signer defines the interface for an authorization service.
 type Signer interface {
 	ValidateToken(tokenString string) (map[string]any, error) // Takes token string
-	GenerateJWT(userID string, roles []string) (string, error)
+	GenerateJWT(userID string, roles []entities.UserRole, providerCode string) (string, error)
 }
 
 type JWTSigner struct {
@@ -57,7 +58,23 @@ func (s *JWTSigner) ValidateToken(tokenString string) (map[string]any, error) {
 	return claims, nil
 }
 
-func (s *JWTSigner) GenerateJWT(userID string, roles []string) (string, error) {
+func (s *JWTSigner) GenerateJWT(userID string, roles []entities.UserRole, providerCode string) (string, error) {
+	roleNames := make([]string, len(roles))
+	for i, r := range roles {
+		roleNames[i] = r.Name
+	}
+
+	domainType := "all"
+	faculty := ""
+	for _, r := range roles {
+		if r.DomainType != "all" {
+			domainType = r.DomainType
+		}
+		if r.Name == "faculty_admin" {
+			faculty = r.Faculty
+		}
+	}
+
 	// Create JWT claims
 	claims := jwt.MapClaims{
 		"iss": tokenIssuer,
@@ -67,8 +84,11 @@ func (s *JWTSigner) GenerateJWT(userID string, roles []string) (string, error) {
 		// Set expiration using s.TTL
 		"iat": time.Now().Unix(),
 		"v1": map[string]interface{}{
-			"roles":  roles,
-			"userID": userID,
+			"roles":        roleNames,
+			"userID":       userID,
+			"domainType":   domainType,
+			"faculty":      faculty,
+			"providerCode": providerCode,
 		},
 	}
 

@@ -6,19 +6,19 @@ import (
 	"time"
 
 	"github.com/eaguilar88/deu/internal/entities"
-	errs "github.com/eaguilar88/deu/internal/errors"
+	"github.com/eaguilar88/deu/internal/group_requests"
 	"github.com/eaguilar88/deu/internal/postgres_repository/models"
 	"github.com/eaguilar88/deu/internal/postgres_repository/queries"
 	"go.uber.org/zap"
 )
 
 func (r *PostgresRepository) GetGroupRequestByID(ctx context.Context, requestID string) (entities.GroupRequest, error) {
-	sql, args, err := queries.GetGroupRequestByID(requestID).ToSql()
+	query, args, err := queries.GetGroupRequestByID(requestID).ToSql()
 	if err != nil {
 		return entities.GroupRequest{}, err
 	}
 
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return entities.GroupRequest{}, err
 	}
@@ -29,22 +29,27 @@ func (r *PostgresRepository) GetGroupRequestByID(ctx context.Context, requestID 
 	}
 	defer rows.Close()
 	var request models.GroupRequest
+	found := false
 	for rows.Next() {
+		found = true
 		request, err = scanGroupRequest(rows)
 		if err != nil {
 			return entities.GroupRequest{}, err
 		}
 	}
+	if !found {
+		return entities.GroupRequest{}, fmt.Errorf("%w", group_requests.ErrGroupRequestNotFound)
+	}
 	return newGroupRequestFromModel(request), nil
 }
 
 func (r *PostgresRepository) GetGroupRequestsByFaculty(ctx context.Context, faculty entities.Faculty, scope entities.PageScope) ([]entities.GroupRequest, entities.PageScope, error) {
-	sql, args, err := queries.GetGroupRequestsByFaculty(faculty.String(), scope.PerPage, scope.Offset()).ToSql()
+	query, args, err := queries.GetGroupRequestsByFaculty(faculty.String(), scope.PerPage, scope.Offset()).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
-	r.logger.Debug("SQL Query: ", zap.String("query", sql), zap.Any("args", args))
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	r.logger.Debug("SQL Query: ", zap.String("query", query), zap.Any("args", args))
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
@@ -63,11 +68,11 @@ func (r *PostgresRepository) GetGroupRequestsByFaculty(ctx context.Context, facu
 		requests = append(requests, newGroupRequestFromModel(model))
 	}
 	var total int
-	sql, args, err = queries.CountGroupRequestsByFaculty(faculty.String()).ToSql()
+	query, args, err = queries.CountGroupRequestsByFaculty(faculty.String()).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
-	if err = r.db.QueryRowContext(ctx, sql, args...).Scan(&total); err != nil {
+	if err = r.db.QueryRowContext(ctx, query, args...).Scan(&total); err != nil {
 		return nil, entities.PageScope{}, err
 	}
 	scope.Count = total
@@ -75,11 +80,11 @@ func (r *PostgresRepository) GetGroupRequestsByFaculty(ctx context.Context, facu
 }
 
 func (r *PostgresRepository) ApproveGroupRequest(ctx context.Context, reqID string) error {
-	sql, args, err := queries.ApproveGroupRequest(reqID).ToSql()
+	query, args, err := queries.ApproveGroupRequest(reqID).ToSql()
 	if err != nil {
 		return err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return err
 	}
@@ -93,17 +98,17 @@ func (r *PostgresRepository) ApproveGroupRequest(ctx context.Context, reqID stri
 		return err
 	}
 	if rowsAffected == 0 {
-		return errs.ErrNotFound
+		return fmt.Errorf("%w", group_requests.ErrGroupRequestNotFound)
 	}
 	return nil
 }
 
 func (r *PostgresRepository) RejectGroupRequest(ctx context.Context, reqID string) error {
-	sql, args, err := queries.RejectGroupRequest(reqID).ToSql()
+	query, args, err := queries.RejectGroupRequest(reqID).ToSql()
 	if err != nil {
 		return err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return err
 	}
@@ -117,7 +122,7 @@ func (r *PostgresRepository) RejectGroupRequest(ctx context.Context, reqID strin
 		return err
 	}
 	if rowsAffected == 0 {
-		return errs.ErrNotFound
+		return fmt.Errorf("%w", group_requests.ErrGroupRequestNotFound)
 	}
 	return nil
 }

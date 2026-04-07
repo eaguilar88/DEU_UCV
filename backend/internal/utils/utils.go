@@ -8,7 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func GetFileFromForm(c echo.Context, key string) (*entities.File, error) {
+func GetFileFrom(c echo.Context, key string) (*entities.File, error) {
 	file, err := c.FormFile(key)
 	if err != nil {
 		return nil, err

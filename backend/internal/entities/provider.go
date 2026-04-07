@@ -13,6 +13,8 @@ type ProviderType string
 
 type ProviderPartyType string
 
+type ProviderProfitType string
+
 const (
 	// Provider code prefixes
 	CourseProvider ProviderPrefix = "ECP"
@@ -32,7 +34,11 @@ const (
 
 	// Legal identity types
 	PartyTypeNatural   ProviderPartyType = "natural"
-	PartyTypeJuridical ProviderPartyType = "juridical"
+	PartyTypeJuridical ProviderPartyType = "juridico"
+
+	// Profit types
+	ProfitTypeLucrativo   ProviderProfitType = "lucrativo"
+	ProfitTypeNoLucrativo ProviderProfitType = "no_lucrativo"
 )
 
 type ProviderFiles struct {
@@ -50,6 +56,7 @@ type Provider struct {
 	Name       string // Provider's display name (e.g., business name for juridical providers)
 	Type       ProviderType
 	PartyType  ProviderPartyType
+	ProfitType ProviderProfitType
 	IsInternal bool
 	Bio        string
 	Code       string
@@ -58,6 +65,17 @@ type Provider struct {
 	CreatedAt  string
 	UpdatedAt  string
 	DeletedAt  string
+}
+
+type ProviderFilters struct {
+	Type          ProviderType
+	PartyType     ProviderPartyType
+	ProfitType    ProviderProfitType
+	IsInternal    *bool
+	IsActive      *bool
+	Code          string
+	CreatedAtFrom string
+	CreatedAtTo   string
 }
 
 func GenerateProviderCode(providerType ProviderType) (string, error) {

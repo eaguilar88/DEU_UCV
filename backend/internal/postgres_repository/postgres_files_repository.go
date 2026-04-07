@@ -15,11 +15,11 @@ func (r *PostgresRepository) SaveFilesToDB(ctx context.Context, files []*entitie
 		m := newFileFromEntity(*f)
 		models = append(models, m)
 	}
-	sql, args, err := queries.InsertFile(models).ToSql()
+	query, args, err := queries.InsertFile(models).ToSql()
 	if err != nil {
 		return err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return err
 	}
@@ -32,12 +32,12 @@ func (r *PostgresRepository) SaveFilesToDB(ctx context.Context, files []*entitie
 	return nil
 }
 
-func (r *PostgresRepository) GetFilesByOwner(ctx context.Context, ownerID string) (entities.GroupedFiles, error) {
-	sql, args, err := queries.GetFilesByOwner(ownerID, string(entities.OwnerTypeProvider)).ToSql()
+func (r *PostgresRepository) GetFilesByOwner(ctx context.Context, ownerID string, ownerType entities.OwnerType) (entities.GroupedFiles, error) {
+	query, args, err := queries.GetFilesByOwner(ownerID, ownerType.String()).ToSql()
 	if err != nil {
 		return nil, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}

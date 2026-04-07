@@ -23,6 +23,7 @@ type DeuConfig struct {
 	FilePath         string             `env:"FILE_PATH,required"`
 	TTL              uint32             `env:"TOKEN_TTL" envDefault:"3600"`
 	Flavor           string             `env:"FLAVOR" envDefault:"dev"`
+	BaseURL          string             `env:"APP_BASE_URL" envDefault:"http://localhost:8080"`
 	Database         DatabaseConfig     `envPrefix:"POSTGRES_"`
 	Email            EmailConfig        `envPrefix:"EMAIL_"`
 	BlackBlazeB2     BlackBlazeB2Config `envPrefix:"BLACKBLAZE_B2_"`

@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/eaguilar88/deu/internal/courses"
 	"github.com/eaguilar88/deu/internal/entities"
-	errs "github.com/eaguilar88/deu/internal/errors"
+	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/eaguilar88/deu/internal/postgres_repository/models"
 	"github.com/eaguilar88/deu/internal/postgres_repository/queries"
 	"github.com/lib/pq"
@@ -15,12 +16,11 @@ import (
 )
 
 func (r *PostgresRepository) GetCourse(ctx context.Context, courseID string) (entities.Course, error) {
-	query := queries.GetCourseByID(courseID)
-	sql, args, err := query.ToSql()
+	query, args, err := queries.GetCourseByID(courseID).ToSql()
 	if err != nil {
 		return entities.Course{}, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return entities.Course{}, err
 	}
@@ -29,17 +29,20 @@ func (r *PostgresRepository) GetCourse(ctx context.Context, courseID string) (en
 	row := stmt.QueryRowContext(ctx, args...)
 	course, err = scanCourse(row)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return entities.Course{}, fmt.Errorf("%w: %w", courses.ErrCourseNotFound, err)
+		}
 		return entities.Course{}, err
 	}
 	return newCourseFromModel(course), nil
 }
 
 func (r *PostgresRepository) GetCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error) {
-	sql, args, err := queries.GetCourses(pageScope.PerPage, pageScope.Offset()).ToSql()
+	query, args, err := queries.GetCourses(pageScope.PerPage, pageScope.Offset()).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
@@ -61,12 +64,12 @@ func (r *PostgresRepository) GetCourses(ctx context.Context, pageScope entities.
 }
 
 func (r *PostgresRepository) CreateCourse(ctx context.Context, course entities.Course) (int64, error) {
-	sql, args, err := queries.InsertCourse(newCourseModelFromEntities(course)).ToSql()
+	query, args, err := queries.InsertCourse(newCourseModelFromEntities(course)).ToSql()
 	if err != nil {
 		r.logger.Error("error creating query", zap.Error(err))
 		return -1, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
 		r.logger.Error("error preparing query", zap.Error(err))
 		return -1, err
@@ -77,10 +80,10 @@ func (r *PostgresRepository) CreateCourse(ctx context.Context, course entities.C
 	if err != nil {
 		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == pgErrorCodeUniqueViolation {
 			r.logger.Error("error inserting user", zap.Error(err))
-			return -1, errs.NewDuplicateEntryError(err)
+			return -1, httperrors.NewDuplicateEntryError(err)
 		}
 		r.logger.Error("error inserting user", zap.Error(err))
-		return -1, errs.NewInternalError(err)
+		return -1, httperrors.NewInternalError(err)
 	}
 	return lastInsertedID, nil
 }
@@ -154,14 +157,14 @@ func (r *PostgresRepository) CreateCourseWithRequest(ctx context.Context, course
 }
 
 func (r *PostgresRepository) UpdateCourse(ctx context.Context, courseID string, course entities.Course) error {
-	sql, args, err := queries.UpdateCourse(courseID, newCourseModelFromEntities(course)).ToSql()
+	query, args, err := queries.UpdateCourse(courseID, newCourseModelFromEntities(course)).ToSql()
 	if err != nil {
-		return errs.NewBadQueryError(err)
+		return httperrors.NewBadQueryError(err)
 	}
 
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
-		return errs.NewBadQueryError(err)
+		return httperrors.NewBadQueryError(err)
 	}
 	defer stmt.Close()
 
@@ -171,21 +174,21 @@ func (r *PostgresRepository) UpdateCourse(ctx context.Context, courseID string, 
 	}
 
 	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
-		return errs.NewNotFoundError(err)
+		return fmt.Errorf("%w: %w", courses.ErrCourseNotFound, err)
 	}
 
 	return nil
 }
 
 func (r *PostgresRepository) DeleteCourse(ctx context.Context, courseID string) error {
-	sql, args, err := queries.DeleteCourse(courseID).ToSql()
+	query, args, err := queries.DeleteCourse(courseID).ToSql()
 	if err != nil {
-		return errs.NewBadQueryError(err)
+		return httperrors.NewBadQueryError(err)
 	}
 
-	stmt, err := r.db.PrepareContext(ctx, sql)
+	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
-		return errs.NewBadQueryError(err)
+		return httperrors.NewBadQueryError(err)
 	}
 	defer stmt.Close()
 
@@ -195,7 +198,7 @@ func (r *PostgresRepository) DeleteCourse(ctx context.Context, courseID string) 
 	}
 
 	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
-		return errs.NewNotFoundError(err)
+		return fmt.Errorf("%w: %w", courses.ErrCourseNotFound, err)
 	}
 
 	return nil
@@ -209,11 +212,17 @@ func scanCourse(row scannable) (models.Course, error) {
 		&course.Description,
 		&course.OwnerID,
 		&course.Objectives,
+		&course.Rationale,
 		&course.Duration,
+		&course.Cost,
+		&course.InstructorProfile,
+		&course.Profiles,
+		&course.Requirements,
 		&course.Content,
+		&course.Evaluation,
+		&course.Schedule,
 		&course.Type,
 		&course.Faculty,
-		&course.Cost,
 		&course.Location,
 		&course.IsActive,
 		&course.CreatedAt,
@@ -228,7 +237,6 @@ func newCourseFromModel(course models.Course) entities.Course {
 	c := entities.Course{
 		ID:        course.ID,
 		Name:      course.Name,
-		Content:   course.Content,
 		CreatedAt: course.CreatedAt,
 		UpdatedAt: course.UpdatedAt,
 	}
@@ -241,8 +249,40 @@ func newCourseFromModel(course models.Course) entities.Course {
 		c.Objectives = course.Objectives.String
 	}
 
+	if course.Rationale.Valid {
+		c.Rationale = course.Rationale.String
+	}
+
 	if course.Duration.Valid {
-		c.Duration = int(course.Duration.Int64)
+		c.Duration = course.Duration.String
+	}
+
+	if course.Cost.Valid {
+		c.Cost = course.Cost.String
+	}
+
+	if course.InstructorProfile.Valid {
+		c.InstructorProfile = course.InstructorProfile.String
+	}
+
+	if course.Profiles.Valid {
+		c.Profiles = course.Profiles.String
+	}
+
+	if course.Requirements.Valid {
+		c.Requirements = course.Requirements.String
+	}
+
+	if course.Content.Valid {
+		c.Content = course.Content.String
+	}
+
+	if course.Evaluation.Valid {
+		c.Evaluation = course.Evaluation.String
+	}
+
+	if course.Schedule.Valid {
+		c.Schedule = course.Schedule.String
 	}
 
 	if course.Type.Valid {
@@ -256,10 +296,6 @@ func newCourseFromModel(course models.Course) entities.Course {
 		}
 	}
 
-	if course.Cost.Valid {
-		c.Cost = course.Cost.String
-	}
-
 	if course.Location.Valid {
 		c.Location = course.Location.String
 	}
@@ -268,7 +304,7 @@ func newCourseFromModel(course models.Course) entities.Course {
 }
 
 func newCourseModelFromEntities(course entities.Course) models.Course {
-	c := models.Course{
+	return models.Course{
 		ID:      course.ID,
 		Name:    course.Name,
 		OwnerID: course.Owner.ID,
@@ -280,31 +316,56 @@ func newCourseModelFromEntities(course entities.Course) models.Course {
 			String: course.Objectives,
 			Valid:  course.Objectives != "",
 		},
-		Duration: sql.NullInt64{
-			Int64: int64(course.Duration),
-			Valid: course.Duration > 0,
+		Rationale: sql.NullString{
+			String: course.Rationale,
+			Valid:  course.Rationale != "",
+		},
+		Duration: sql.NullString{
+			String: course.Duration,
+			Valid:  course.Duration != "",
+		},
+		Cost: sql.NullString{
+			String: course.Cost,
+			Valid:  course.Cost != "",
+		},
+		InstructorProfile: sql.NullString{
+			String: course.InstructorProfile,
+			Valid:  course.InstructorProfile != "",
+		},
+		Profiles: sql.NullString{
+			String: course.Profiles,
+			Valid:  course.Profiles != "",
+		},
+		Requirements: sql.NullString{
+			String: course.Requirements,
+			Valid:  course.Requirements != "",
+		},
+		Content: sql.NullString{
+			String: course.Content,
+			Valid:  course.Content != "",
+		},
+		Evaluation: sql.NullString{
+			String: course.Evaluation,
+			Valid:  course.Evaluation != "",
+		},
+		Schedule: sql.NullString{
+			String: course.Schedule,
+			Valid:  course.Schedule != "",
 		},
 		Type: sql.NullString{
-			String: string(entities.CourseType_Undefined),
+			String: string(course.Type),
 			Valid:  course.Type != "",
 		},
 		Faculty: sql.NullString{
 			String: string(course.Faculty),
 			Valid:  course.Faculty != "",
 		},
-		Cost: sql.NullString{
-			String: course.Cost,
-			Valid:  course.Cost != "",
-		},
 		Location: sql.NullString{
 			String: course.Location,
 			Valid:  course.Location != "",
 		},
-		Content:   course.Content,
 		IsActive:  false,
 		CreatedAt: course.CreatedAt,
 		UpdatedAt: course.UpdatedAt,
 	}
-
-	return c
 }

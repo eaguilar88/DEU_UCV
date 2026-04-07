@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/postgres_repository/models"
 )
 
@@ -12,6 +13,7 @@ var providerQuerySelectCommon = []string{
 	"p.user_id",
 	"p.name",
 	"p.party_type",
+	"p.profit_type",
 	"p.is_internal",
 	"p.bio",
 	"p.code",
@@ -51,13 +53,49 @@ func GetProviderByUserID(userID string) sq.SelectBuilder {
 		Where(sq.Eq{"p.user_id": userID})
 }
 
-func GetProviders(limit, offset int) sq.SelectBuilder {
-	return psql.Select(providerQuerySelectCommon...).
+func GetProviderCodeByUserID(userID string) sq.SelectBuilder {
+	return psql.Select("COALESCE(p.code, '')").
+		From(fmt.Sprintf("%s AS p", providersTableName)).
+		Where(sq.Eq{"p.deleted_at": nil}).
+		Where(sq.Eq{"p.user_id": userID})
+}
+
+func GetProviders(filters entities.ProviderFilters, limit, offset int) sq.SelectBuilder {
+	q := psql.Select(providerQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS p", providersTableName)).
 		Join(fmt.Sprintf("%s AS u ON u.id = p.user_id", usersTableName)).
 		OrderBy("p.created_at DESC").
 		Limit(uint64(limit)).
 		Offset(uint64(offset))
+
+	switch filters.Type {
+	case entities.CourseProviderType:
+		q = q.Where(sq.Like{"p.code": "ECP-%"})
+	case entities.GroupProviderType:
+		q = q.Where(sq.Like{"p.code": "GEX-%"})
+	}
+	if filters.PartyType != "" {
+		q = q.Where(sq.Eq{"p.party_type": string(filters.PartyType)})
+	}
+	if filters.ProfitType != "" {
+		q = q.Where(sq.Eq{"p.profit_type": string(filters.ProfitType)})
+	}
+	if filters.IsInternal != nil {
+		q = q.Where(sq.Eq{"p.is_internal": *filters.IsInternal})
+	}
+	if filters.IsActive != nil {
+		q = q.Where(sq.Eq{"p.is_active": *filters.IsActive})
+	}
+	if filters.Code != "" {
+		q = q.Where(sq.Eq{"p.code": filters.Code})
+	}
+	if filters.CreatedAtFrom != "" {
+		q = q.Where(sq.GtOrEq{"p.created_at": filters.CreatedAtFrom})
+	}
+	if filters.CreatedAtTo != "" {
+		q = q.Where(sq.LtOrEq{"p.created_at": filters.CreatedAtTo})
+	}
+	return q
 }
 
 func CreateProvider(provider models.Provider) sq.InsertBuilder {
@@ -66,6 +104,7 @@ func CreateProvider(provider models.Provider) sq.InsertBuilder {
 			"user_id",
 			"name",
 			"party_type",
+			"profit_type",
 			"is_internal",
 			"bio",
 			"code",
@@ -74,6 +113,7 @@ func CreateProvider(provider models.Provider) sq.InsertBuilder {
 			provider.UserID,
 			provider.Name,
 			provider.PartyType,
+			provider.ProfitType,
 			provider.IsInternal,
 			provider.Bio,
 			provider.Code,
@@ -86,6 +126,7 @@ func UpdateProvider(provider models.Provider) sq.UpdateBuilder {
 		Set("user_id", provider.UserID).
 		Set("name", provider.Name).
 		Set("party_type", provider.PartyType).
+		Set("profit_type", provider.ProfitType).
 		Set("is_internal", provider.IsInternal).
 		Set("bio", provider.Bio).
 		Set("code", provider.Code).

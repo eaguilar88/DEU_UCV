@@ -5,24 +5,32 @@ import (
 )
 
 type User struct {
-	ID             string
-	CI             string
-	Email          string
-	Roles          []string
-	FirstName      string
-	LastName       string
-	DateOfBirth    string
-	Age            int
-	Gender         string
-	EducationLevel string
-	ProviderCode   string
-	Address        string
-	Password       string
-	CreatedAt      string
+	ID                string
+	CI                string
+	Email             string
+	Roles             []string
+	FirstName         string
+	LastName          string
+	DateOfBirth       string
+	Age               int
+	Gender            string
+	EducationLevel    string
+	ProviderCode      string
+	Faculty           string
+	Address           string
+	Password          string
+	CreatedAt         string
+	ProfilePictureURL string
+}
+
+type UserRole struct {
+	Name       string
+	DomainType string
+	Faculty    string
 }
 
 func (u *User) SetAge() {
-	dob, err := time.Parse(time.RFC3339, u.DateOfBirth)
+	dob, err := time.Parse("2006-01-02", u.DateOfBirth)
 	if err != nil {
 		return
 	}
@@ -48,6 +56,7 @@ const (
 	RoleFacilitador
 	RoleParticipante
 	RoleExtension
+	RoleVisitante
 )
 
 var roleNames = map[int]string{
@@ -58,6 +67,7 @@ var roleNames = map[int]string{
 	RoleFacilitador:  "facilitador",
 	RoleParticipante: "participante",
 	RoleExtension:    "extensión",
+	RoleVisitante:    "visitante",
 }
 
 var roleIDs = map[string]int{
@@ -68,6 +78,7 @@ var roleIDs = map[string]int{
 	"facilitador":            RoleFacilitador,
 	"participante":           RoleParticipante,
 	"extensión":              RoleExtension,
+	"visitante":              RoleVisitante,
 }
 
 // RoleNameFromID returns the role name for a given ID.

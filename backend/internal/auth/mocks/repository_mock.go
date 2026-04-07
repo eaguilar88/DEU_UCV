@@ -88,10 +88,7 @@ func (_c *MockRepository_GetUserByUsername_Call) Run(run func(ctx context.Contex
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		run(
-			arg0,
-			arg1,
-		)
+		run(arg0, arg1)
 	})
 	return _c
 }
@@ -107,23 +104,23 @@ func (_c *MockRepository_GetUserByUsername_Call) RunAndReturn(run func(ctx conte
 }
 
 // GetUserRoles provides a mock function for the type MockRepository
-func (_mock *MockRepository) GetUserRoles(ctx context.Context, userID string) ([]string, error) {
+func (_mock *MockRepository) GetUserRoles(ctx context.Context, userID string) ([]entities.UserRole, error) {
 	ret := _mock.Called(ctx, userID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetUserRoles")
 	}
 
-	var r0 []string
+	var r0 []entities.UserRole
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]string, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]entities.UserRole, error)); ok {
 		return returnFunc(ctx, userID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []string); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []entities.UserRole); ok {
 		r0 = returnFunc(ctx, userID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]string)
+			r0 = ret.Get(0).([]entities.UserRole)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
@@ -156,20 +153,80 @@ func (_c *MockRepository_GetUserRoles_Call) Run(run func(ctx context.Context, us
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		run(
-			arg0,
-			arg1,
-		)
+		run(arg0, arg1)
 	})
 	return _c
 }
 
-func (_c *MockRepository_GetUserRoles_Call) Return(strings []string, err error) *MockRepository_GetUserRoles_Call {
-	_c.Call.Return(strings, err)
+func (_c *MockRepository_GetUserRoles_Call) Return(roles []entities.UserRole, err error) *MockRepository_GetUserRoles_Call {
+	_c.Call.Return(roles, err)
 	return _c
 }
 
-func (_c *MockRepository_GetUserRoles_Call) RunAndReturn(run func(ctx context.Context, userID string) ([]string, error)) *MockRepository_GetUserRoles_Call {
+func (_c *MockRepository_GetUserRoles_Call) RunAndReturn(run func(ctx context.Context, userID string) ([]entities.UserRole, error)) *MockRepository_GetUserRoles_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetProviderCodeByUserID provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetProviderCodeByUserID(ctx context.Context, userID string) (string, error) {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetProviderCodeByUserID")
+	}
+
+	var r0 string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (string, error)); ok {
+		return returnFunc(ctx, userID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) string); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetProviderCodeByUserID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetProviderCodeByUserID'
+type MockRepository_GetProviderCodeByUserID_Call struct {
+	*mock.Call
+}
+
+// GetProviderCodeByUserID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID string
+func (_e *MockRepository_Expecter) GetProviderCodeByUserID(ctx interface{}, userID interface{}) *MockRepository_GetProviderCodeByUserID_Call {
+	return &MockRepository_GetProviderCodeByUserID_Call{Call: _e.mock.On("GetProviderCodeByUserID", ctx, userID)}
+}
+
+func (_c *MockRepository_GetProviderCodeByUserID_Call) Run(run func(ctx context.Context, userID string)) *MockRepository_GetProviderCodeByUserID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(arg0, arg1)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetProviderCodeByUserID_Call) Return(code string, err error) *MockRepository_GetProviderCodeByUserID_Call {
+	_c.Call.Return(code, err)
+	return _c
+}
+
+func (_c *MockRepository_GetProviderCodeByUserID_Call) RunAndReturn(run func(ctx context.Context, userID string) (string, error)) *MockRepository_GetProviderCodeByUserID_Call {
 	_c.Call.Return(run)
 	return _c
 }

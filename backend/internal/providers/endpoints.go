@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/eaguilar88/deu/internal/entities"
+	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/eaguilar88/deu/internal/utils"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -16,8 +17,8 @@ import (
 type Service interface {
 	GetProvider(ctx context.Context, providerID string) (entities.Provider, error)
 	GetProviderByCode(ctx context.Context, providerCode string) (entities.Provider, error)
-	GetProviders(ctx context.Context, pageScope entities.PageScope) ([]entities.Provider, entities.PageScope, error)
-	CreateProvider(ctx context.Context, provider *entities.Provider) (int64, string, error)
+	GetProviders(ctx context.Context, pageScope entities.PageScope, filters entities.ProviderFilters) ([]entities.Provider, entities.PageScope, error)
+	CreateProvider(ctx context.Context, provider *entities.Provider) (int64, error)
 	UpdateProvider(ctx context.Context, providerID string, provider *entities.Provider) error
 	DeleteProvider(ctx context.Context, providerID string) error
 }
@@ -41,11 +42,13 @@ func (h *Handler) GetProvider(c echo.Context) error {
 	req := GetProviderRequest{ID: c.Param("id")}
 	provider, err := h.svc.GetProvider(ctx, req.ID)
 	if err != nil {
-		h.log.Error("error getting provider", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, err.Error())
+		if errors.Is(err, ErrProviderNotFound) {
+			return httperrors.NewNotFound("provider not found")
+		}
+		return httperrors.NewInternal(err)
 	}
 
-	return c.JSON(http.StatusOK, ProviderEntityToGetProviderResponse(provider))
+	return c.JSON(http.StatusOK, providerToResponse(provider))
 }
 
 func (h *Handler) GetProviders(c echo.Context) error {
@@ -57,16 +60,29 @@ func (h *Handler) GetProviders(c echo.Context) error {
 	//nolint:errcheck
 	scope.GetPerPageFromVars(c.QueryParam("per_page"))
 
-	req := GetProvidersRequest{
-		PageScope: scope,
+	filters := entities.ProviderFilters{
+		Type:          entities.ProviderType(c.QueryParam("type")),
+		PartyType:     entities.ProviderPartyType(c.QueryParam("party_type")),
+		ProfitType:    entities.ProviderProfitType(c.QueryParam("profit_type")),
+		Code:          c.QueryParam("code"),
+		CreatedAtFrom: c.QueryParam("created_at_from"),
+		CreatedAtTo:   c.QueryParam("created_at_to"),
 	}
-	providers, pages, err := h.svc.GetProviders(ctx, req.PageScope)
-	if err != nil {
-		h.log.Error("error getting providers", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, err.Error())
+	if v := c.QueryParam("is_internal"); v != "" {
+		b := v == "true"
+		filters.IsInternal = &b
+	}
+	if v := c.QueryParam("is_active"); v != "" {
+		b := v == "true"
+		filters.IsActive = &b
 	}
 
-	return c.JSON(http.StatusOK, ProvidersEntityToGetProvidersResponse(providers, pages))
+	providers, pages, err := h.svc.GetProviders(ctx, scope, filters)
+	if err != nil {
+		return httperrors.NewInternal(err)
+	}
+
+	return c.JSON(http.StatusOK, providersToResponse(providers, pages))
 }
 
 func (h *Handler) CreateProvider(c echo.Context) error {
@@ -74,25 +90,21 @@ func (h *Handler) CreateProvider(c echo.Context) error {
 
 	userID, ok := c.Get("userID").(string)
 	if !ok {
-		h.log.Error("no user ID found in context")
-		return echo.NewHTTPError(http.StatusUnauthorized, "user missing from context")
+		return httperrors.NewUnauthorized("authentication required")
 	}
 
 	provider, err := makeProviderFromRequest(c, userID, h.log)
 	if err != nil {
-		h.log.Error("error getting files", zap.Error(err))
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return httperrors.NewBadRequest(err.Error())
 	}
 
-	id, code, err := h.svc.CreateProvider(ctx, provider)
+	id, err := h.svc.CreateProvider(ctx, provider)
 	if err != nil {
-		h.log.Error("error creating provider", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, err.Error())
+		return httperrors.NewInternal(err)
 	}
 
 	return c.JSON(http.StatusCreated, CreateProviderResponse{
-		ID:   fmt.Sprintf("%d", id),
-		Code: code,
+		ID: fmt.Sprintf("%d", id),
 	})
 }
 
@@ -100,20 +112,20 @@ func (h *Handler) UpdateProvider(c echo.Context) error {
 	ctx := c.Request().Context()
 	userID, ok := c.Get("userID").(string)
 	if !ok {
-		h.log.Error("no user ID found in context")
-		return echo.NewHTTPError(http.StatusUnauthorized, "user missing from context")
+		return httperrors.NewUnauthorized("authentication required")
 	}
 
 	provider, err := makeProviderFromRequest(c, userID, h.log)
 	if err != nil {
-		h.log.Error("error getting files", zap.Error(err))
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return httperrors.NewBadRequest(err.Error())
 	}
 
 	err = h.svc.UpdateProvider(ctx, c.Param("id"), provider)
 	if err != nil {
-		h.log.Error("error updating provider", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, err.Error())
+		if errors.Is(err, ErrProviderNotFound) {
+			return httperrors.NewNotFound("provider not found")
+		}
+		return httperrors.NewInternal(err)
 	}
 
 	return c.NoContent(http.StatusAccepted)
@@ -123,8 +135,10 @@ func (h *Handler) DeleteProvider(c echo.Context) error {
 	ctx := c.Request().Context()
 	err := h.svc.DeleteProvider(ctx, c.Param("id"))
 	if err != nil {
-		h.log.Error("error deleting provider", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, err.Error())
+		if errors.Is(err, ErrProviderNotFound) {
+			return httperrors.NewNotFound("provider not found")
+		}
+		return httperrors.NewInternal(err)
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -133,28 +147,41 @@ func (h *Handler) DeleteProvider(c echo.Context) error {
 func makeProviderFromRequest(c echo.Context, userID string, logger *zap.Logger) (*entities.Provider, error) {
 	providerType := c.FormValue("tipo_proveedor")
 	party := c.FormValue("tipo_persona")
+	profitType := c.FormValue("tipo_lucro")
 	name := c.FormValue("nombre")
 	bio := c.FormValue("bio")
 	isInternal := c.FormValue("es_interno")
 
-	ci, err := utils.GetFileFromForm(c, entities.ProviderFileTypeCI)
+	if providerType != string(entities.CourseProviderType) && providerType != string(entities.GroupProviderType) {
+		return nil, errors.New("tipo_proveedor must be 'courses' or 'groups'")
+	}
+
+	if party != string(entities.PartyTypeNatural) && party != string(entities.PartyTypeJuridical) {
+		return nil, errors.New("tipo_persona must be 'natural' or 'juridical'")
+	}
+
+	if profitType != string(entities.ProfitTypeLucrativo) && profitType != string(entities.ProfitTypeNoLucrativo) {
+		return nil, errors.New("tipo_lucro must be 'lucrativo' or 'no_lucrativo'")
+	}
+
+	ci, err := utils.GetFileFrom(c, entities.ProviderFileTypeCI)
 	if err != nil {
 		logger.Error("error getting ci", zap.Error(err))
 		return nil, errors.New("ci is required")
 	}
-	rif, err := utils.GetFileFromForm(c, entities.ProviderFileTypeRIF)
+	rif, err := utils.GetFileFrom(c, entities.ProviderFileTypeRIF)
 	if err != nil {
 		logger.Error("error getting rif", zap.Error(err))
 		return nil, errors.New("rif is required")
 	}
 
-	islr, err := utils.GetFileFromForm(c, entities.ProviderFileTypeISLR)
+	islr, err := utils.GetFileFrom(c, entities.ProviderFileTypeISLR)
 	if err != nil {
 		logger.Error("error getting islr", zap.Error(err))
 		return nil, errors.New("islr is required")
 	}
 
-	logo, err := utils.GetFileFromForm(c, entities.ProviderFileTypeLogo)
+	logo, err := utils.GetFileFrom(c, entities.ProviderFileTypeLogo)
 	if err != nil {
 		logger.Error("error getting logo", zap.Error(err))
 		return nil, errors.New("logo is required")
@@ -178,6 +205,7 @@ func makeProviderFromRequest(c echo.Context, userID string, logger *zap.Logger) 
 		Bio:        bio,
 		Type:       entities.ProviderType(providerType),
 		PartyType:  entities.ProviderPartyType(party),
+		ProfitType: entities.ProviderProfitType(profitType),
 		IsInternal: isInternal == "true",
 		Files: entities.ProviderFiles{
 			CI:   ci,

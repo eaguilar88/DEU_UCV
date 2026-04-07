@@ -10,7 +10,12 @@ const (
 	OwnerTypeCourse         OwnerType = "course"
 	OwnerTypeActivity       OwnerType = "group_activity"
 	OwnerTypeCourseCycle    OwnerType = "course_cycle"
+	OwnerTypeUser           OwnerType = "user"
 )
+
+func (ot OwnerType) String() string {
+	return string(ot)
+}
 
 type File struct {
 	ID         string

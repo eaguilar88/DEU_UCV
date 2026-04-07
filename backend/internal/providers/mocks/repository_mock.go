@@ -104,6 +104,60 @@ func (_c *MockRepository_CreateProvider_Call) RunAndReturn(run func(ctx context.
 	return _c
 }
 
+// CreateProviderRequest provides a mock function for the type MockRepository
+func (_mock *MockRepository) CreateProviderRequest(ctx context.Context, providerID int64) error {
+	ret := _mock.Called(ctx, providerID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateProviderRequest")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) error); ok {
+		r0 = returnFunc(ctx, providerID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockRepository_CreateProviderRequest_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateProviderRequest'
+type MockRepository_CreateProviderRequest_Call struct {
+	*mock.Call
+}
+
+// CreateProviderRequest is a helper method to define mock.On call
+//   - ctx context.Context
+//   - providerID int64
+func (_e *MockRepository_Expecter) CreateProviderRequest(ctx interface{}, providerID interface{}) *MockRepository_CreateProviderRequest_Call {
+	return &MockRepository_CreateProviderRequest_Call{Call: _e.mock.On("CreateProviderRequest", ctx, providerID)}
+}
+
+func (_c *MockRepository_CreateProviderRequest_Call) Run(run func(ctx context.Context, providerID int64)) *MockRepository_CreateProviderRequest_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int64
+		if args[1] != nil {
+			arg1 = args[1].(int64)
+		}
+		run(arg0, arg1)
+	})
+	return _c
+}
+
+func (_c *MockRepository_CreateProviderRequest_Call) Return(err error) *MockRepository_CreateProviderRequest_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockRepository_CreateProviderRequest_Call) RunAndReturn(run func(ctx context.Context, providerID int64) error) *MockRepository_CreateProviderRequest_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteProvider provides a mock function for the type MockRepository
 func (_mock *MockRepository) DeleteProvider(ctx context.Context, providerID string) error {
 	ret := _mock.Called(ctx, providerID)
@@ -162,8 +216,8 @@ func (_c *MockRepository_DeleteProvider_Call) RunAndReturn(run func(ctx context.
 }
 
 // GetFilesByOwner provides a mock function for the type MockRepository
-func (_mock *MockRepository) GetFilesByOwner(ctx context.Context, ownerID string) (entities.GroupedFiles, error) {
-	ret := _mock.Called(ctx, ownerID)
+func (_mock *MockRepository) GetFilesByOwner(ctx context.Context, ownerID string, ownerType entities.OwnerType) (entities.GroupedFiles, error) {
+	ret := _mock.Called(ctx, ownerID, ownerType)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetFilesByOwner")
@@ -171,18 +225,18 @@ func (_mock *MockRepository) GetFilesByOwner(ctx context.Context, ownerID string
 
 	var r0 entities.GroupedFiles
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (entities.GroupedFiles, error)); ok {
-		return returnFunc(ctx, ownerID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, entities.OwnerType) (entities.GroupedFiles, error)); ok {
+		return returnFunc(ctx, ownerID, ownerType)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) entities.GroupedFiles); ok {
-		r0 = returnFunc(ctx, ownerID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, entities.OwnerType) entities.GroupedFiles); ok {
+		r0 = returnFunc(ctx, ownerID, ownerType)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(entities.GroupedFiles)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = returnFunc(ctx, ownerID)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, entities.OwnerType) error); ok {
+		r1 = returnFunc(ctx, ownerID, ownerType)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -197,11 +251,12 @@ type MockRepository_GetFilesByOwner_Call struct {
 // GetFilesByOwner is a helper method to define mock.On call
 //   - ctx context.Context
 //   - ownerID string
-func (_e *MockRepository_Expecter) GetFilesByOwner(ctx interface{}, ownerID interface{}) *MockRepository_GetFilesByOwner_Call {
-	return &MockRepository_GetFilesByOwner_Call{Call: _e.mock.On("GetFilesByOwner", ctx, ownerID)}
+//   - ownerType entities.OwnerType
+func (_e *MockRepository_Expecter) GetFilesByOwner(ctx interface{}, ownerID interface{}, ownerType interface{}) *MockRepository_GetFilesByOwner_Call {
+	return &MockRepository_GetFilesByOwner_Call{Call: _e.mock.On("GetFilesByOwner", ctx, ownerID, ownerType)}
 }
 
-func (_c *MockRepository_GetFilesByOwner_Call) Run(run func(ctx context.Context, ownerID string)) *MockRepository_GetFilesByOwner_Call {
+func (_c *MockRepository_GetFilesByOwner_Call) Run(run func(ctx context.Context, ownerID string, ownerType entities.OwnerType)) *MockRepository_GetFilesByOwner_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -211,10 +266,11 @@ func (_c *MockRepository_GetFilesByOwner_Call) Run(run func(ctx context.Context,
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		run(
-			arg0,
-			arg1,
-		)
+		var arg2 entities.OwnerType
+		if args[2] != nil {
+			arg2 = args[2].(entities.OwnerType)
+		}
+		run(arg0, arg1, arg2)
 	})
 	return _c
 }
@@ -224,7 +280,7 @@ func (_c *MockRepository_GetFilesByOwner_Call) Return(groupedFiles entities.Grou
 	return _c
 }
 
-func (_c *MockRepository_GetFilesByOwner_Call) RunAndReturn(run func(ctx context.Context, ownerID string) (entities.GroupedFiles, error)) *MockRepository_GetFilesByOwner_Call {
+func (_c *MockRepository_GetFilesByOwner_Call) RunAndReturn(run func(ctx context.Context, ownerID string, ownerType entities.OwnerType) (entities.GroupedFiles, error)) *MockRepository_GetFilesByOwner_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -362,8 +418,8 @@ func (_c *MockRepository_GetProviderByCode_Call) RunAndReturn(run func(ctx conte
 }
 
 // GetProviders provides a mock function for the type MockRepository
-func (_mock *MockRepository) GetProviders(ctx context.Context, pageScope entities.PageScope) ([]entities.Provider, entities.PageScope, error) {
-	ret := _mock.Called(ctx, pageScope)
+func (_mock *MockRepository) GetProviders(ctx context.Context, pageScope entities.PageScope, filters entities.ProviderFilters) ([]entities.Provider, entities.PageScope, error) {
+	ret := _mock.Called(ctx, pageScope, filters)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetProviders")
@@ -372,23 +428,23 @@ func (_mock *MockRepository) GetProviders(ctx context.Context, pageScope entitie
 	var r0 []entities.Provider
 	var r1 entities.PageScope
 	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.PageScope) ([]entities.Provider, entities.PageScope, error)); ok {
-		return returnFunc(ctx, pageScope)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.PageScope, entities.ProviderFilters) ([]entities.Provider, entities.PageScope, error)); ok {
+		return returnFunc(ctx, pageScope, filters)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.PageScope) []entities.Provider); ok {
-		r0 = returnFunc(ctx, pageScope)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.PageScope, entities.ProviderFilters) []entities.Provider); ok {
+		r0 = returnFunc(ctx, pageScope, filters)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]entities.Provider)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.PageScope) entities.PageScope); ok {
-		r1 = returnFunc(ctx, pageScope)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.PageScope, entities.ProviderFilters) entities.PageScope); ok {
+		r1 = returnFunc(ctx, pageScope, filters)
 	} else {
 		r1 = ret.Get(1).(entities.PageScope)
 	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, entities.PageScope) error); ok {
-		r2 = returnFunc(ctx, pageScope)
+	if returnFunc, ok := ret.Get(2).(func(context.Context, entities.PageScope, entities.ProviderFilters) error); ok {
+		r2 = returnFunc(ctx, pageScope, filters)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -403,11 +459,12 @@ type MockRepository_GetProviders_Call struct {
 // GetProviders is a helper method to define mock.On call
 //   - ctx context.Context
 //   - pageScope entities.PageScope
-func (_e *MockRepository_Expecter) GetProviders(ctx interface{}, pageScope interface{}) *MockRepository_GetProviders_Call {
-	return &MockRepository_GetProviders_Call{Call: _e.mock.On("GetProviders", ctx, pageScope)}
+//   - filters entities.ProviderFilters
+func (_e *MockRepository_Expecter) GetProviders(ctx interface{}, pageScope interface{}, filters interface{}) *MockRepository_GetProviders_Call {
+	return &MockRepository_GetProviders_Call{Call: _e.mock.On("GetProviders", ctx, pageScope, filters)}
 }
 
-func (_c *MockRepository_GetProviders_Call) Run(run func(ctx context.Context, pageScope entities.PageScope)) *MockRepository_GetProviders_Call {
+func (_c *MockRepository_GetProviders_Call) Run(run func(ctx context.Context, pageScope entities.PageScope, filters entities.ProviderFilters)) *MockRepository_GetProviders_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -417,10 +474,11 @@ func (_c *MockRepository_GetProviders_Call) Run(run func(ctx context.Context, pa
 		if args[1] != nil {
 			arg1 = args[1].(entities.PageScope)
 		}
-		run(
-			arg0,
-			arg1,
-		)
+		var arg2 entities.ProviderFilters
+		if args[2] != nil {
+			arg2 = args[2].(entities.ProviderFilters)
+		}
+		run(arg0, arg1, arg2)
 	})
 	return _c
 }
@@ -430,7 +488,7 @@ func (_c *MockRepository_GetProviders_Call) Return(providers []entities.Provider
 	return _c
 }
 
-func (_c *MockRepository_GetProviders_Call) RunAndReturn(run func(ctx context.Context, pageScope entities.PageScope) ([]entities.Provider, entities.PageScope, error)) *MockRepository_GetProviders_Call {
+func (_c *MockRepository_GetProviders_Call) RunAndReturn(run func(ctx context.Context, pageScope entities.PageScope, filters entities.ProviderFilters) ([]entities.Provider, entities.PageScope, error)) *MockRepository_GetProviders_Call {
 	_c.Call.Return(run)
 	return _c
 }

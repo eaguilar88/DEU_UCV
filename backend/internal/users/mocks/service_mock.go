@@ -39,8 +39,8 @@ func (_m *MockService) EXPECT() *MockService_Expecter {
 }
 
 // CreateUser provides a mock function for the type MockService
-func (_mock *MockService) CreateUser(ctx context.Context, user entities.User) (int64, error) {
-	ret := _mock.Called(ctx, user)
+func (_mock *MockService) CreateUser(ctx context.Context, user entities.User, profilePic *entities.File) (int64, error) {
+	ret := _mock.Called(ctx, user, profilePic)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateUser")
@@ -48,16 +48,16 @@ func (_mock *MockService) CreateUser(ctx context.Context, user entities.User) (i
 
 	var r0 int64
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.User) (int64, error)); ok {
-		return returnFunc(ctx, user)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.User, *entities.File) (int64, error)); ok {
+		return returnFunc(ctx, user, profilePic)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.User) int64); ok {
-		r0 = returnFunc(ctx, user)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.User, *entities.File) int64); ok {
+		r0 = returnFunc(ctx, user, profilePic)
 	} else {
 		r0 = ret.Get(0).(int64)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.User) error); ok {
-		r1 = returnFunc(ctx, user)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.User, *entities.File) error); ok {
+		r1 = returnFunc(ctx, user, profilePic)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -72,11 +72,12 @@ type MockService_CreateUser_Call struct {
 // CreateUser is a helper method to define mock.On call
 //   - ctx context.Context
 //   - user entities.User
-func (_e *MockService_Expecter) CreateUser(ctx interface{}, user interface{}) *MockService_CreateUser_Call {
-	return &MockService_CreateUser_Call{Call: _e.mock.On("CreateUser", ctx, user)}
+//   - profilePic *entities.File
+func (_e *MockService_Expecter) CreateUser(ctx interface{}, user interface{}, profilePic interface{}) *MockService_CreateUser_Call {
+	return &MockService_CreateUser_Call{Call: _e.mock.On("CreateUser", ctx, user, profilePic)}
 }
 
-func (_c *MockService_CreateUser_Call) Run(run func(ctx context.Context, user entities.User)) *MockService_CreateUser_Call {
+func (_c *MockService_CreateUser_Call) Run(run func(ctx context.Context, user entities.User, profilePic *entities.File)) *MockService_CreateUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -86,10 +87,11 @@ func (_c *MockService_CreateUser_Call) Run(run func(ctx context.Context, user en
 		if args[1] != nil {
 			arg1 = args[1].(entities.User)
 		}
-		run(
-			arg0,
-			arg1,
-		)
+		var arg2 *entities.File
+		if args[2] != nil {
+			arg2 = args[2].(*entities.File)
+		}
+		run(arg0, arg1, arg2)
 	})
 	return _c
 }
@@ -99,7 +101,7 @@ func (_c *MockService_CreateUser_Call) Return(n int64, err error) *MockService_C
 	return _c
 }
 
-func (_c *MockService_CreateUser_Call) RunAndReturn(run func(ctx context.Context, user entities.User) (int64, error)) *MockService_CreateUser_Call {
+func (_c *MockService_CreateUser_Call) RunAndReturn(run func(ctx context.Context, user entities.User, profilePic *entities.File) (int64, error)) *MockService_CreateUser_Call {
 	_c.Call.Return(run)
 	return _c
 }

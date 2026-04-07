@@ -5,11 +5,11 @@ loadenv:
 
 start-backend:
 	git submodule update --recursive --remote
-	docker compose up -d
+	docker compose up --build -d
 
 start-prod:
 	git submodule update --recursive
-	docker compose -f docker-compose.prod.yml up -d
+	docker compose -f docker-compose.prod.yml up  --build -d
 
 start-prod-landing:
 	git submodule sync -- landing
@@ -21,7 +21,7 @@ seed-landing:
 
 start-db:
 	git submodule update --recursive --remote
-	docker compose -f docker-compose.dev.yml up -d
+	docker compose -f docker-compose.dev.yml up  --build -d
 
 stop-backend:
 	docker compose down
