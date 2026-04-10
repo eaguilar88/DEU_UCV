@@ -24,8 +24,23 @@ services:
       dockerfile: "Dockerfile"
     restart: unless-stopped
     depends_on:
-      - backend
-      - db
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      RAILS_ENV: production
+      PORT: 3000
+      RAILS_LOG_TO_STDOUT: "1"
+      RAILS_SERVE_STATIC_FILES: "1"
+      RAILS_FORCE_SSL: ${RAILS_FORCE_SSL:-false}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+      DEU_SEED_PASSWORD: ${DEU_SEED_PASSWORD:-123123}
+      DEU_SUPER_ADMIN_EMAILS: ${DEU_SUPER_ADMIN_EMAILS:-danielito.moros03@gmail.com}
+    command: ["./bin/rails", "server", "-b", "0.0.0.0", "-p", "3000"]
+    volumes:
+      - landing_storage:/rails/storage
     labels:
       - "traefik.enable=true" # Enable Traefik for this service
       - "traefik.http.routers.landing.rule=Host(`extension.ucv.ve`)" # Route based on hostname
@@ -72,15 +87,12 @@ services:
       db:
         condition: service_healthy
     ports:
-      - 8081:80
+      - ${HTTP_SERVE_PORT}:${HTTP_SERVE_PORT}
     env_file:
       - .env
     secrets:
       - b2_key_id
-      - b2_application_id
-    environment:
-      - B2_KEY_ID_FILE=/run/secrets/b2_key_id
-      - B2_APPLICATION_ID_FILE=/run/secrets/b2_application_id
+      - b2_application_key
     links:
       - "db"
     labels:
@@ -94,6 +106,7 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     volumes:
+      - postgres_data:/var/lib/postgresql/data
       - ./postgresql:/docker-entrypoint-initdb.d
     env_file:
       - .env
@@ -106,6 +119,7 @@ services:
       retries: 5
 volumes:
   postgres_data:
+  landing_storage:
 networks:
   web:
     driver: bridge

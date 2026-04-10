@@ -18,6 +18,7 @@ Sistema para la Dirección de Extensión Universitaria de la UCV
 
 ## Enlaces a otros proyectos
 - [Landing del proyecto](https://github.com/soniamira/deuweb)
+- [Nueva landing (Rails)](https://github.com/danielitomoros03/deu-app)
 - [Sistema de diplomados](https://github.com/RoaRobinson97/ecp_ucv)
 
 ## Tecnologías principales del proyecto
@@ -66,3 +67,51 @@ Para iniciar el entorno de producción, ejecute el siguiente comando:
 ```
 make start-prod
 ```
+
+Si desea desplegar solo la nueva landing Rails y sus dependencias directas (sin levantar `diplomados` y `grupos`), use:
+
+```
+make start-prod-landing
+```
+
+## Despliegue de la nueva landing Rails (deu-app)
+
+`docker-compose.prod.yml` está configurado para construir el servicio `landing` desde la carpeta local `landing/`.
+
+La diferencia es solo el origen del submódulo: ahora `landing/` apunta al repositorio `deu-app`.
+
+### Pasos recomendados de despliegue
+
+1. Crear `.env` a partir de `.env.example`.
+2. Definir `SECRET_KEY_BASE` con un valor seguro y aleatorio.
+3. Inicializar/actualizar solo el submódulo `landing`:
+
+```
+git submodule sync -- landing
+git submodule update --init --recursive landing
+```
+
+4. Levantar producción:
+
+```
+make start-prod-landing
+```
+
+5. Ejecutar seed de Rails (usuarios base y contenido inicial):
+
+```
+make seed-landing
+```
+
+### Variables relevantes para la landing Rails
+
+- `SECRET_KEY_BASE`: obligatorio para producción.
+- `RAILS_FORCE_SSL`: activar solo si tienes HTTPS terminado antes de la app/proxy.
+- `DEU_SEED_PASSWORD`: contraseña para usuarios semilla.
+- `DEU_SUPER_ADMIN_EMAILS`: lista de correos de superadmin separados por coma.
+
+### Notas operativas
+
+- El servicio `landing` usa PostgreSQL del servicio `db` vía `DATABASE_URL`.
+- El almacenamiento local de Active Storage persiste en el volumen `landing_storage`.
+- El seed es idempotente y se puede ejecutar más de una vez.
