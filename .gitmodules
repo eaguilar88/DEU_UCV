@@ -7,3 +7,6 @@
 [submodule "grupos"]
 	path = grupos
 	url = git@github.com:Kristian333/gsu_ucv.git
+[submodule "espacios-universitarios"]
+	path = espacios-universitarios
+	url = git@github.com:MaximilianoCar/espacios-universitarios.git
