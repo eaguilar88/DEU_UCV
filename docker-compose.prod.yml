@@ -126,5 +126,5 @@ networks:
 secrets:
   b2_key_id:
     file: ./secrets/b2_key_id
-  b2_application_id:
-    file: ./secrets/b2_application_id
+  b2_application_key:
+    file: ./secrets/b2_application_key
