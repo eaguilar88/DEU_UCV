@@ -6,7 +6,9 @@ info:
 
 servers:
   - url: http://localhost:8080
-    description: Local development
+    description: Ambiente Local
+  - url: http://51.81.78.213:8081
+    description: Servidor Remoto
 
 components:
   securitySchemes:
@@ -36,7 +38,7 @@ components:
 
     LoginRequest:
       type: object
-      required: [email, password]
+      required: [ email, password ]
       properties:
         email:
           type: string
@@ -50,7 +52,7 @@ components:
         token:
           type: string
         user:
-          $ref: '#/components/schemas/User'
+          $ref: "#/components/schemas/User"
 
     # ── Users ─────────────────────────────────────────────────────────────────
 
@@ -80,7 +82,7 @@ components:
 
     CreateUserRequest:
       type: object
-      required: [email, password, first_name, last_name]
+      required: [ email, password, first_name, last_name ]
       properties:
         email:
           type: string
@@ -111,10 +113,10 @@ components:
           type: string
         party_type:
           type: string
-          enum: [natural, juridica]
+          enum: [ natural, juridica ]
         profit_type:
           type: string
-          enum: [lucrativa, no_lucrativa]
+          enum: [ lucrativa, no_lucrativa ]
         is_internal:
           type: boolean
         bio:
@@ -124,7 +126,7 @@ components:
         is_active:
           type: boolean
         user:
-          $ref: '#/components/schemas/User'
+          $ref: "#/components/schemas/User"
         created_at:
           type: string
         updated_at:
@@ -225,7 +227,7 @@ components:
         is_active:
           type: boolean
         owner:
-          $ref: '#/components/schemas/User'
+          $ref: "#/components/schemas/User"
         created_at:
           type: string
         updated_at:
@@ -235,7 +237,7 @@ components:
 
     RequestStatus:
       type: string
-      enum: [created, under_review, approved, rejected, redirected]
+      enum: [ created, under_review, approved, rejected, redirected ]
 
     # ── Course Requests ───────────────────────────────────────────────────────
 
@@ -245,7 +247,7 @@ components:
         id:
           type: string
         status:
-          $ref: '#/components/schemas/RequestStatus'
+          $ref: "#/components/schemas/RequestStatus"
         comments:
           type: string
         reviewed_at:
@@ -255,7 +257,7 @@ components:
         updated_at:
           type: string
         course:
-          $ref: '#/components/schemas/Course'
+          $ref: "#/components/schemas/Course"
 
     ApproveCourseRequestBody:
       type: object
@@ -273,7 +275,7 @@ components:
 
     RedirectCourseRequestBody:
       type: object
-      required: [facultad, motivo]
+      required: [ facultad, motivo ]
       properties:
         facultad:
           type: string
@@ -290,7 +292,7 @@ components:
         group_id:
           type: string
         status:
-          $ref: '#/components/schemas/RequestStatus'
+          $ref: "#/components/schemas/RequestStatus"
         comments:
           type: string
         created_at:
@@ -308,7 +310,7 @@ components:
         provider_id:
           type: string
         status:
-          $ref: '#/components/schemas/RequestStatus'
+          $ref: "#/components/schemas/RequestStatus"
         comments:
           type: string
         reviewed_at:
@@ -330,7 +332,7 @@ components:
         submitted_by_id:
           type: string
         status:
-          $ref: '#/components/schemas/RequestStatus'
+          $ref: "#/components/schemas/RequestStatus"
         comments:
           type: string
         reviewed_at:
@@ -347,17 +349,17 @@ paths:
   /health:
     get:
       summary: Health check
-      tags: [System]
+      tags: [ System ]
       responses:
-        '200':
+        "200":
           description: Service is healthy
 
   /version:
     get:
       summary: Get API version
-      tags: [System]
+      tags: [ System ]
       responses:
-        '200':
+        "200":
           description: Current version
           content:
             application/json:
@@ -370,7 +372,7 @@ paths:
   /files/{key}:
     get:
       summary: Download a file
-      tags: [Files]
+      tags: [ Files ]
       parameters:
         - name: key
           in: path
@@ -378,7 +380,7 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: File content
 
   # ── Auth ──────────────────────────────────────────────────────────────────
@@ -386,21 +388,21 @@ paths:
   /auth/login:
     post:
       summary: Login
-      tags: [Auth]
+      tags: [ Auth ]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LoginRequest'
+              $ref: "#/components/schemas/LoginRequest"
       responses:
-        '200':
+        "200":
           description: JWT token + user info
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LoginResponse'
-        '401':
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
           description: Invalid credentials
 
   # ── Users ─────────────────────────────────────────────────────────────────
@@ -408,7 +410,7 @@ paths:
   /users:
     get:
       summary: List users
-      tags: [Users]
+      tags: [ Users ]
       security:
         - BearerAuth: []
       parameters:
@@ -423,29 +425,29 @@ paths:
             type: integer
             default: 10
       responses:
-        '200':
+        "200":
           description: Paginated user list
-        '401':
+        "401":
           description: Unauthorized
     post:
       summary: Create user
-      tags: [Users]
+      tags: [ Users ]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateUserRequest'
+              $ref: "#/components/schemas/CreateUserRequest"
       responses:
-        '201':
+        "201":
           description: User created
-        '409':
+        "409":
           description: Email already in use
 
   /users/{id}:
     get:
       summary: Get user by ID
-      tags: [Users]
+      tags: [ Users ]
       parameters:
         - name: id
           in: path
@@ -453,17 +455,17 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: User
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
-        '404':
+                $ref: "#/components/schemas/User"
+        "404":
           description: User not found
     put:
       summary: Update user
-      tags: [Users]
+      tags: [ Users ]
       security:
         - BearerAuth: []
       parameters:
@@ -476,15 +478,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateUserRequest'
+              $ref: "#/components/schemas/UpdateUserRequest"
       responses:
-        '200':
+        "200":
           description: Updated user
-        '404':
+        "404":
           description: User not found
     delete:
       summary: Delete user
-      tags: [Users]
+      tags: [ Users ]
       security:
         - BearerAuth: []
       parameters:
@@ -494,9 +496,9 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Deleted
-        '404':
+        "404":
           description: User not found
 
   # ── Providers ─────────────────────────────────────────────────────────────
@@ -504,7 +506,7 @@ paths:
   /providers:
     get:
       summary: List providers
-      tags: [Providers]
+      tags: [ Providers ]
       security:
         - BearerAuth: []
       parameters:
@@ -517,23 +519,23 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: Paginated provider list
     post:
       summary: Create provider
-      tags: [Providers]
+      tags: [ Providers ]
       security:
         - BearerAuth: []
       responses:
-        '201':
+        "201":
           description: Provider created
-        '409':
+        "409":
           description: Duplicate entry
 
   /providers/{id}:
     get:
       summary: Get provider by ID
-      tags: [Providers]
+      tags: [ Providers ]
       security:
         - BearerAuth: []
       parameters:
@@ -543,17 +545,17 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Provider
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Provider'
-        '404':
+                $ref: "#/components/schemas/Provider"
+        "404":
           description: Provider not found
     put:
       summary: Update provider
-      tags: [Providers]
+      tags: [ Providers ]
       security:
         - BearerAuth: []
       parameters:
@@ -563,13 +565,13 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Updated
-        '404':
+        "404":
           description: Provider not found
     delete:
       summary: Delete provider
-      tags: [Providers]
+      tags: [ Providers ]
       security:
         - BearerAuth: []
       parameters:
@@ -579,9 +581,9 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Deleted
-        '404':
+        "404":
           description: Provider not found
 
   # ── Courses ───────────────────────────────────────────────────────────────
@@ -589,7 +591,7 @@ paths:
   /courses:
     get:
       summary: List courses
-      tags: [Courses]
+      tags: [ Courses ]
       parameters:
         - name: page
           in: query
@@ -600,21 +602,21 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: Paginated course list
     post:
       summary: Create course
-      tags: [Courses]
+      tags: [ Courses ]
       security:
         - BearerAuth: []
       responses:
-        '201':
+        "201":
           description: Course created
 
   /courses/{id}:
     get:
       summary: Get course by ID
-      tags: [Courses]
+      tags: [ Courses ]
       parameters:
         - name: id
           in: path
@@ -622,17 +624,17 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Course
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Course'
-        '404':
+                $ref: "#/components/schemas/Course"
+        "404":
           description: Course not found
     put:
       summary: Update course
-      tags: [Courses]
+      tags: [ Courses ]
       security:
         - BearerAuth: []
       parameters:
@@ -642,13 +644,13 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Updated
-        '404':
+        "404":
           description: Course not found
     delete:
       summary: Delete course
-      tags: [Courses]
+      tags: [ Courses ]
       security:
         - BearerAuth: []
       parameters:
@@ -658,9 +660,9 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Deleted
-        '404':
+        "404":
           description: Course not found
 
   # ── Course Periods ────────────────────────────────────────────────────────
@@ -668,7 +670,7 @@ paths:
   /courses/{course_id}/periods:
     get:
       summary: List periods for a course
-      tags: [Course Periods]
+      tags: [ Course Periods ]
       parameters:
         - name: course_id
           in: path
@@ -684,11 +686,11 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: Paginated period list
     post:
       summary: Create a course period
-      tags: [Course Periods]
+      tags: [ Course Periods ]
       security:
         - BearerAuth: []
       parameters:
@@ -698,13 +700,13 @@ paths:
           schema:
             type: string
       responses:
-        '201':
+        "201":
           description: Period created
 
   /courses/{course_id}/periods/{id}:
     get:
       summary: Get a course period by ID
-      tags: [Course Periods]
+      tags: [ Course Periods ]
       parameters:
         - name: course_id
           in: path
@@ -717,17 +719,17 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Course period
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CoursePeriod'
-        '404':
+                $ref: "#/components/schemas/CoursePeriod"
+        "404":
           description: Period not found
     put:
       summary: Update a course period
-      tags: [Course Periods]
+      tags: [ Course Periods ]
       security:
         - BearerAuth: []
       parameters:
@@ -742,13 +744,13 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Updated
-        '404':
+        "404":
           description: Period not found
     delete:
       summary: Delete a course period
-      tags: [Course Periods]
+      tags: [ Course Periods ]
       security:
         - BearerAuth: []
       parameters:
@@ -763,9 +765,9 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Deleted
-        '404':
+        "404":
           description: Period not found
 
   # ── Announcements ─────────────────────────────────────────────────────────
@@ -773,7 +775,7 @@ paths:
   /course-periods/{period_id}/announcements/{id}:
     get:
       summary: Get announcement by ID
-      tags: [Announcements]
+      tags: [ Announcements ]
       parameters:
         - name: period_id
           in: path
@@ -786,17 +788,17 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Announcement
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Announcement'
-        '404':
+                $ref: "#/components/schemas/Announcement"
+        "404":
           description: Announcement not found
     put:
       summary: Update announcement
-      tags: [Announcements]
+      tags: [ Announcements ]
       security:
         - BearerAuth: []
       parameters:
@@ -811,13 +813,13 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Updated
-        '404':
+        "404":
           description: Announcement not found
     delete:
       summary: Delete announcement
-      tags: [Announcements]
+      tags: [ Announcements ]
       security:
         - BearerAuth: []
       parameters:
@@ -832,15 +834,15 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Deleted
-        '404':
+        "404":
           description: Announcement not found
 
   /course-periods/{period_id}/announcements:
     post:
       summary: Create announcement
-      tags: [Announcements]
+      tags: [ Announcements ]
       security:
         - BearerAuth: []
       parameters:
@@ -854,14 +856,14 @@ paths:
           application/json:
             schema:
               type: object
-              required: [title, content]
+              required: [ title, content ]
               properties:
                 title:
                   type: string
                 content:
                   type: string
       responses:
-        '201':
+        "201":
           description: Announcement created
 
   # ── Groups ────────────────────────────────────────────────────────────────
@@ -869,7 +871,7 @@ paths:
   /groups:
     get:
       summary: List groups
-      tags: [Groups]
+      tags: [ Groups ]
       parameters:
         - name: page
           in: query
@@ -880,13 +882,13 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: Paginated group list
 
   /groups/{id}:
     get:
       summary: Get group by ID
-      tags: [Groups]
+      tags: [ Groups ]
       parameters:
         - name: id
           in: path
@@ -894,29 +896,29 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Group
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Group'
-        '404':
+                $ref: "#/components/schemas/Group"
+        "404":
           description: Group not found
 
   /groups/requests:
     post:
       summary: Submit a new group registration request
-      tags: [Groups]
+      tags: [ Groups ]
       security:
         - BearerAuth: []
       responses:
-        '201':
+        "201":
           description: Group and request created
 
   /groups/requests/{id}:
     put:
       summary: Update group
-      tags: [Groups]
+      tags: [ Groups ]
       security:
         - BearerAuth: []
       parameters:
@@ -926,13 +928,13 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Updated
-        '404':
+        "404":
           description: Group not found
     delete:
       summary: Delete group
-      tags: [Groups]
+      tags: [ Groups ]
       security:
         - BearerAuth: []
       parameters:
@@ -942,9 +944,9 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Deleted
-        '404':
+        "404":
           description: Group not found
 
   # ── Course Cycle Close Requests (protected) ───────────────────────────────
@@ -952,7 +954,7 @@ paths:
   /course-cycle-close-requests:
     post:
       summary: Submit a course cycle close request
-      tags: [Course Cycle Close Requests]
+      tags: [ Course Cycle Close Requests ]
       security:
         - BearerAuth: []
       requestBody:
@@ -960,14 +962,14 @@ paths:
           application/json:
             schema:
               type: object
-              required: [course_cycle_id]
+              required: [ course_cycle_id ]
               properties:
                 course_cycle_id:
                   type: string
                 observaciones:
                   type: string
       responses:
-        '201':
+        "201":
           description: Request submitted
 
   # ── Admin — Course Requests ───────────────────────────────────────────────
@@ -975,7 +977,7 @@ paths:
   /admin/course-requests:
     get:
       summary: List course requests by faculty
-      tags: [Admin - Course Requests]
+      tags: [ Admin - Course Requests ]
       security:
         - BearerAuth: []
       parameters:
@@ -995,7 +997,7 @@ paths:
             type: integer
             default: 10
       responses:
-        '200':
+        "200":
           description: Paginated list of course requests
           content:
             application/json:
@@ -1005,16 +1007,16 @@ paths:
                   requests:
                     type: array
                     items:
-                      $ref: '#/components/schemas/CourseRequest'
+                      $ref: "#/components/schemas/CourseRequest"
                   pagination:
-                    $ref: '#/components/schemas/Pagination'
-        '401':
+                    $ref: "#/components/schemas/Pagination"
+        "401":
           description: Unauthorized
 
   /admin/course-requests/{id}:
     get:
       summary: Get course request by ID
-      tags: [Admin - Course Requests]
+      tags: [ Admin - Course Requests ]
       security:
         - BearerAuth: []
       parameters:
@@ -1024,19 +1026,19 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Course request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CourseRequest'
-        '404':
+                $ref: "#/components/schemas/CourseRequest"
+        "404":
           description: Request not found
 
   /admin/course-requests/{id}/approve:
     post:
       summary: Approve a course request
-      tags: [Admin - Course Requests]
+      tags: [ Admin - Course Requests ]
       security:
         - BearerAuth: []
       parameters:
@@ -1049,17 +1051,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ApproveCourseRequestBody'
+              $ref: "#/components/schemas/ApproveCourseRequestBody"
       responses:
-        '200':
+        "200":
           description: Approved
-        '404':
+        "404":
           description: Request not found
 
   /admin/course-requests/{id}/reject:
     post:
       summary: Reject a course request
-      tags: [Admin - Course Requests]
+      tags: [ Admin - Course Requests ]
       security:
         - BearerAuth: []
       parameters:
@@ -1072,17 +1074,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RejectRequestBody'
+              $ref: "#/components/schemas/RejectRequestBody"
       responses:
-        '200':
+        "200":
           description: Rejected
-        '404':
+        "404":
           description: Request not found
 
   /admin/course-requests/{id}/redirect:
     post:
       summary: Redirect a course request to another faculty
-      tags: [Admin - Course Requests]
+      tags: [ Admin - Course Requests ]
       security:
         - BearerAuth: []
       parameters:
@@ -1096,13 +1098,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RedirectCourseRequestBody'
+              $ref: "#/components/schemas/RedirectCourseRequestBody"
       responses:
-        '200':
+        "200":
           description: Redirected
-        '400':
+        "400":
           description: Missing required fields
-        '404':
+        "404":
           description: Request not found
 
   # ── Admin — Group Requests ────────────────────────────────────────────────
@@ -1110,7 +1112,7 @@ paths:
   /admin/group-requests:
     get:
       summary: List group requests by faculty
-      tags: [Admin - Group Requests]
+      tags: [ Admin - Group Requests ]
       security:
         - BearerAuth: []
       parameters:
@@ -1130,7 +1132,7 @@ paths:
             type: integer
             default: 10
       responses:
-        '200':
+        "200":
           description: Paginated list of group requests
           content:
             application/json:
@@ -1140,14 +1142,14 @@ paths:
                   requests:
                     type: array
                     items:
-                      $ref: '#/components/schemas/GroupRequest'
+                      $ref: "#/components/schemas/GroupRequest"
                   pagination:
-                    $ref: '#/components/schemas/Pagination'
+                    $ref: "#/components/schemas/Pagination"
 
   /admin/group-requests/{id}:
     get:
       summary: Get group request by ID
-      tags: [Admin - Group Requests]
+      tags: [ Admin - Group Requests ]
       security:
         - BearerAuth: []
       parameters:
@@ -1157,19 +1159,19 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Group request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GroupRequest'
-        '404':
+                $ref: "#/components/schemas/GroupRequest"
+        "404":
           description: Request not found
 
   /admin/group-requests/{id}/approve:
     post:
       summary: Approve a group request
-      tags: [Admin - Group Requests]
+      tags: [ Admin - Group Requests ]
       security:
         - BearerAuth: []
       parameters:
@@ -1179,15 +1181,15 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Approved
-        '404':
+        "404":
           description: Request not found
 
   /admin/group-requests/{id}/reject:
     post:
       summary: Reject a group request
-      tags: [Admin - Group Requests]
+      tags: [ Admin - Group Requests ]
       security:
         - BearerAuth: []
       parameters:
@@ -1197,9 +1199,9 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Rejected
-        '404':
+        "404":
           description: Request not found
 
   # ── Admin — Provider Requests ─────────────────────────────────────────────
@@ -1207,7 +1209,7 @@ paths:
   /admin/provider-requests:
     get:
       summary: List provider requests
-      tags: [Admin - Provider Requests]
+      tags: [ Admin - Provider Requests ]
       security:
         - BearerAuth: []
       parameters:
@@ -1222,7 +1224,7 @@ paths:
             type: integer
             default: 10
       responses:
-        '200':
+        "200":
           description: Paginated list of provider requests
           content:
             application/json:
@@ -1232,14 +1234,14 @@ paths:
                   requests:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ProviderRequest'
+                      $ref: "#/components/schemas/ProviderRequest"
                   pagination:
-                    $ref: '#/components/schemas/Pagination'
+                    $ref: "#/components/schemas/Pagination"
 
   /admin/provider-requests/{id}:
     get:
       summary: Get provider request by ID
-      tags: [Admin - Provider Requests]
+      tags: [ Admin - Provider Requests ]
       security:
         - BearerAuth: []
       parameters:
@@ -1249,19 +1251,19 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Provider request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProviderRequest'
-        '404':
+                $ref: "#/components/schemas/ProviderRequest"
+        "404":
           description: Request not found
 
   /admin/provider-requests/{id}/approve:
     post:
       summary: Approve a provider request
-      tags: [Admin - Provider Requests]
+      tags: [ Admin - Provider Requests ]
       security:
         - BearerAuth: []
       parameters:
@@ -1271,15 +1273,15 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Approved — provider code generated automatically
-        '404':
+        "404":
           description: Request not found
 
   /admin/provider-requests/{id}/reject:
     post:
       summary: Reject a provider request
-      tags: [Admin - Provider Requests]
+      tags: [ Admin - Provider Requests ]
       security:
         - BearerAuth: []
       parameters:
@@ -1292,11 +1294,11 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RejectRequestBody'
+              $ref: "#/components/schemas/RejectRequestBody"
       responses:
-        '200':
+        "200":
           description: Rejected
-        '404':
+        "404":
           description: Request not found
 
   # ── Admin — Course Cycle Close Requests ───────────────────────────────────
@@ -1304,7 +1306,7 @@ paths:
   /admin/course-cycle-close-requests:
     get:
       summary: List course cycle close requests
-      tags: [Admin - Course Cycle Close Requests]
+      tags: [ Admin - Course Cycle Close Requests ]
       security:
         - BearerAuth: []
       parameters:
@@ -1319,7 +1321,7 @@ paths:
             type: integer
             default: 10
       responses:
-        '200':
+        "200":
           description: Paginated list of close requests
           content:
             application/json:
@@ -1329,14 +1331,14 @@ paths:
                   requests:
                     type: array
                     items:
-                      $ref: '#/components/schemas/CloseRequest'
+                      $ref: "#/components/schemas/CloseRequest"
                   pagination:
-                    $ref: '#/components/schemas/Pagination'
+                    $ref: "#/components/schemas/Pagination"
 
   /admin/course-cycle-close-requests/{id}:
     get:
       summary: Get close request by ID
-      tags: [Admin - Course Cycle Close Requests]
+      tags: [ Admin - Course Cycle Close Requests ]
       security:
         - BearerAuth: []
       parameters:
@@ -1346,19 +1348,19 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Close request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CloseRequest'
-        '404':
+                $ref: "#/components/schemas/CloseRequest"
+        "404":
           description: Request not found
 
   /admin/course-cycle-close-requests/{id}/approve:
     post:
       summary: Approve a course cycle close request
-      tags: [Admin - Course Cycle Close Requests]
+      tags: [ Admin - Course Cycle Close Requests ]
       security:
         - BearerAuth: []
       parameters:
@@ -1368,15 +1370,15 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Approved
-        '404':
+        "404":
           description: Request not found
 
   /admin/course-cycle-close-requests/{id}/reject:
     post:
       summary: Reject a course cycle close request
-      tags: [Admin - Course Cycle Close Requests]
+      tags: [ Admin - Course Cycle Close Requests ]
       security:
         - BearerAuth: []
       parameters:
@@ -1389,9 +1391,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RejectRequestBody'
+              $ref: "#/components/schemas/RejectRequestBody"
       responses:
-        '200':
+        "200":
           description: Rejected
-        '404':
+        "404":
           description: Request not found
