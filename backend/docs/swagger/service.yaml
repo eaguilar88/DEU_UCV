@@ -6,9 +6,9 @@ info:
 
 servers:
   - url: http://localhost:8080
-    description: Local development
+    description: Ambiente Local
   - url: http://51.81.78.213:8081
-    description: Local development
+    description: Servidor Remoto
 
 components:
   securitySchemes:
