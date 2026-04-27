@@ -233,6 +233,39 @@ components:
         updated_at:
           type: string
 
+    # ── Group Resource Requests ───────────────────────────────────────────────
+
+    GroupResourceRequest:
+      type: object
+      properties:
+        id:
+          type: string
+        grupo_id:
+          type: string
+        tipo:
+          type: string
+        contenido:
+          type: string
+        estado:
+          $ref: "#/components/schemas/RequestStatus"
+        creado_en:
+          type: string
+          format: date-time
+        actualizado_en:
+          type: string
+          format: date-time
+
+    CreateGroupResourceRequestBody:
+      type: object
+      required: [ grupo_id, tipo ]
+      properties:
+        grupo_id:
+          type: string
+        tipo:
+          type: string
+        contenido:
+          type: string
+
     # ── Request status ────────────────────────────────────────────────────────
 
     RequestStatus:
@@ -948,6 +981,136 @@ paths:
           description: Deleted
         "404":
           description: Group not found
+
+  # ── Group Resource Requests ───────────────────────────────────────────────
+
+  /group-resource-requests:
+    post:
+      summary: Submit a group resource request
+      tags: [ Group Resource Requests ]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGroupResourceRequestBody"
+      responses:
+        "201":
+          description: Request created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+        "400":
+          description: Validation error
+        "401":
+          description: Unauthorized
+
+  # ── Admin — Group Resource Requests ───────────────────────────────────────
+
+  /admin/group-resource-requests:
+    get:
+      summary: List group resource requests by faculty
+      tags: [ Admin - Group Resource Requests ]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: faculty
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Paginated list of group resource requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  solicitudes:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/GroupResourceRequest"
+                  paginas:
+                    $ref: "#/components/schemas/Pagination"
+        "400":
+          description: Invalid faculty
+        "401":
+          description: Unauthorized
+
+  /admin/group-resource-requests/{id}:
+    get:
+      summary: Get group resource request by ID
+      tags: [ Admin - Group Resource Requests ]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Group resource request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupResourceRequest"
+        "404":
+          description: Request not found
+
+  /admin/group-resource-requests/{id}/approve:
+    post:
+      summary: Approve a group resource request
+      tags: [ Admin - Group Resource Requests ]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "202":
+          description: Approved
+        "404":
+          description: Request not found (or not in reviewable state)
+
+  /admin/group-resource-requests/{id}/reject:
+    post:
+      summary: Reject a group resource request
+      tags: [ Admin - Group Resource Requests ]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "202":
+          description: Rejected
+        "404":
+          description: Request not found (or not in reviewable state)
 
   # ── Course Cycle Close Requests (protected) ───────────────────────────────
 

@@ -2,6 +2,7 @@ package groups
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -143,10 +144,21 @@ func (h *Handler) DeleteGroup(c echo.Context) error {
 }
 
 func makeGroupRequestFromContext(c echo.Context, userID string, log *zap.Logger) (entities.ExtensionGroup, error) {
-	var req CreateGroupRequest
-	if err := c.Bind(&req); err != nil {
-		log.Error("error binding request", zap.Error(err))
-		return entities.ExtensionGroup{}, err
+	req := CreateGroupRequest{
+		Name:        c.FormValue("nombre"),
+		Description: c.FormValue("descripcion"),
+		LeaderName:  c.FormValue("nombre_lider"),
+		Type:        c.FormValue("tipo"),
+		Faculty:     c.FormValue("facultad"),
+		Objective:   c.FormValue("objetivo"),
+		Location:    c.FormValue("ubicacion"),
+	}
+
+	if raw := c.FormValue("miembros"); raw != "" {
+		if err := json.Unmarshal([]byte(raw), &req.Members); err != nil {
+			log.Error("error parsing members", zap.Error(err))
+			return entities.ExtensionGroup{}, errors.New("miembros: formato inválido")
+		}
 	}
 
 	if err := c.Validate(req); err != nil {
@@ -160,24 +172,7 @@ func makeGroupRequestFromContext(c echo.Context, userID string, log *zap.Logger)
 		return entities.ExtensionGroup{}, errors.New("logo is required")
 	}
 
-	// fp, err := utils.GetFileFrom(c, entities.GroupFileTypeFinancingPlan)
-	// if err != nil {
-	// 	log.Error("error getting financing plan", zap.Error(err))
-	// 	return entities.ExtensionGroup{}, errors.New("financing plan is required")
-	// }
-
-	// gp, err := utils.GetFileFrom(c, entities.GroupFileTypeGroupProject)
-	// if err != nil {
-	// 	log.Error("error getting group project", zap.Error(err))
-	// 	return entities.ExtensionGroup{}, errors.New("group project is required")
-	// }
-
 	group := createGroupEntityFromRequest(req, userID, req.Faculty)
-
-	group.Files = &entities.GroupFiles{
-		Logo: logo,
-		// FinancingPlan: fp,
-		// GroupProject:  gp,
-	}
+	group.Files = &entities.GroupFiles{Logo: logo}
 	return group, nil
 }

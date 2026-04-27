@@ -3,7 +3,7 @@ package providers
 import "github.com/eaguilar88/deu/internal/entities"
 
 type GetProviderResponse struct {
-	ID         string        `json:"proveedor_id"`
+	ID         string        `json:"id"`
 	UserID     string        `json:"usuario_id"`
 	Name       string        `json:"nombre_proveedor"`
 	Bio        string        `json:"biografia,omitempty"`

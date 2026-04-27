@@ -34,7 +34,12 @@ func (r *PostgresRepository) GetGroupByID(ctx context.Context, groupID string) (
 		}
 		return entities.ExtensionGroup{}, err
 	}
-	return newGroupFromModel(group), nil
+	eg := newGroupFromModel(group)
+	eg.Members, err = r.getGroupMembers(ctx, groupID)
+	if err != nil {
+		return entities.ExtensionGroup{}, err
+	}
+	return eg, nil
 }
 
 func (r *PostgresRepository) GetGroups(ctx context.Context, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error) {
@@ -58,7 +63,12 @@ func (r *PostgresRepository) GetGroups(ctx context.Context, pageScope entities.P
 		if err != nil {
 			return nil, entities.PageScope{}, err
 		}
-		groups = append(groups, newGroupFromModel(group))
+		eg := newGroupFromModel(group)
+		eg.Members, err = r.getGroupMembers(ctx, eg.ID)
+		if err != nil {
+			return nil, entities.PageScope{}, err
+		}
+		groups = append(groups, eg)
 	}
 	return groups, pageScope, nil
 }
@@ -82,6 +92,10 @@ func (r *PostgresRepository) CreateGroup(ctx context.Context, gr entities.Extens
 		}
 		r.logger.Error("error inserting group", zap.Error(err))
 		return -1, httperrors.NewInternalError(err)
+	}
+	if err := r.insertGroupMembers(ctx, lastInsertedID, gr.Members); err != nil {
+		r.logger.Error("error inserting group members", zap.Error(err))
+		return -1, err
 	}
 	return lastInsertedID, nil
 }
@@ -320,5 +334,80 @@ func newGroupFromModel(group models.ExtensionGroup) entities.ExtensionGroup {
 		CreatedAt: group.CreatedAt,
 		UpdatedAt: group.UpdatedAt,
 		DeletedAt: group.DeletedAt.String,
+	}
+}
+
+func (r *PostgresRepository) insertGroupMembers(ctx context.Context, groupID int64, members []entities.GroupMember) error {
+	for _, m := range members {
+		model := models.GroupMember{
+			Name:         m.Name,
+			CI:           m.CI,
+			Phone:        sql.NullString{String: m.Phone, Valid: m.Phone != ""},
+			Email:        sql.NullString{String: m.Email, Valid: m.Email != ""},
+			Coordination: sql.NullString{String: m.Coordination, Valid: m.Coordination != ""},
+			Year:         sql.NullInt64{Int64: int64(m.Year), Valid: m.Year != 0},
+			Faculty:      string(m.Faculty),
+			School:       sql.NullString{String: m.School, Valid: m.School != ""},
+			Document:     sql.NullString{String: m.Document, Valid: m.Document != ""},
+			IsActive:     m.IsActive,
+		}
+		query, args, err := queries.InsertGroupMember(groupID, model).ToSql()
+		if err != nil {
+			return err
+		}
+		stmt, err := r.db.PrepareContext(ctx, query)
+		if err != nil {
+			return err
+		}
+		var id int64
+		err = stmt.QueryRowContext(ctx, args...).Scan(&id)
+		stmt.Close()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *PostgresRepository) getGroupMembers(ctx context.Context, groupID string) ([]entities.GroupMember, error) {
+	query, args, err := queries.SelectGroupMembers(groupID).ToSql()
+	if err != nil {
+		return nil, err
+	}
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+	rows, err := stmt.QueryContext(ctx, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var members []entities.GroupMember
+	for rows.Next() {
+		var m models.GroupMember
+		err := rows.Scan(&m.ID, &m.Name, &m.CI, &m.Phone, &m.Email, &m.Coordination, &m.Year, &m.Faculty, &m.School, &m.Document, &m.IsActive)
+		if err != nil {
+			return nil, err
+		}
+		members = append(members, groupMemberFromModel(m))
+	}
+	return members, nil
+}
+
+func groupMemberFromModel(m models.GroupMember) entities.GroupMember {
+	return entities.GroupMember{
+		ID:           m.ID,
+		Name:         m.Name,
+		CI:           m.CI,
+		Phone:        m.Phone.String,
+		Email:        m.Email.String,
+		Coordination: m.Coordination.String,
+		Year:         int(m.Year.Int64),
+		Faculty:      entities.Faculty(m.Faculty),
+		School:       m.School.String,
+		Document:     m.Document.String,
+		IsActive:     m.IsActive,
 	}
 }

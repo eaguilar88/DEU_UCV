@@ -18,6 +18,7 @@ import (
 	"github.com/eaguilar88/deu/internal/email"
 	"github.com/eaguilar88/deu/internal/files"
 	"github.com/eaguilar88/deu/internal/group_requests"
+	"github.com/eaguilar88/deu/internal/group_resource_requests"
 	"github.com/eaguilar88/deu/internal/groups"
 	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/eaguilar88/deu/internal/jwt"
@@ -101,6 +102,9 @@ func main() {
 	groupRequestService := group_requests.NewService(repository, logger)
 	groupRequestEndpoints := group_requests.NewHandler(groupRequestService, logger)
 
+	groupResourceRequestService := group_resource_requests.NewService(repository, logger)
+	groupResourceRequestEndpoints := group_resource_requests.NewHandler(groupResourceRequestService, logger)
+
 	courseRequestService := course_requests.NewService(repository, logger)
 	courseRequestEndpoints := course_requests.NewHandler(courseRequestService, logger)
 
@@ -131,9 +135,11 @@ func main() {
 	addCourseRoutes(e, courseEndpoints, middlewares...)
 	addCoursePeriodRoutes(e, cpEndpoints, middlewares...)
 	addGroupsRoutes(e, groupEndpoints, middlewares...)
+	addGroupResourceRequestRoutes(e, groupResourceRequestEndpoints, middlewares...)
 
 	addAdminRoutes(e, middlewares,
 		groupRequestEndpoints.RegisterGroupRequestAdminEndpoints,
+		groupResourceRequestEndpoints.RegisterGroupResourceRequestAdminEndpoints,
 		courseRequestEndpoints.RegisterCourseRequestAdminEndpoints,
 		providerRequestEndpoints.RegisterProviderRequestAdminEndpoints,
 		cycleCloseEndpoints.RegisterAdminEndpoints,
@@ -223,6 +229,11 @@ func addCoursePeriodRoutes(e *echo.Echo, endpoints *course_periods.Handler, midd
 	protectedAnnouncementGroup.POST("", endpoints.CreateAnnouncement)
 	protectedAnnouncementGroup.PUT("/:id", endpoints.UpdateAnnouncement)
 	protectedAnnouncementGroup.DELETE("/:id", endpoints.DeleteAnnouncement)
+}
+
+func addGroupResourceRequestRoutes(e *echo.Echo, endpoints *group_resource_requests.Handler, middlewares ...echo.MiddlewareFunc) {
+	protected := e.Group("", middlewares...)
+	endpoints.RegisterGroupResourceRequestEndpoints(protected)
 }
 
 func addGroupsRoutes(e *echo.Echo, endpoints *groups.Handler, middlewares ...echo.MiddlewareFunc) {

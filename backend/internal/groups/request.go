@@ -21,7 +21,7 @@ type CreateGroupRequest struct {
 	Faculty     string           `validate:"required" form:"facultad"`
 	Objective   string           `validate:"required" form:"objetivo"`
 	Location    string           `validate:"required" form:"ubicacion"`
-	Members     []GroupMemberDTO `form:"miembros"`
+	Members     []GroupMemberDTO `form:"miembros" validate:"dive"`
 }
 
 type UpdateGroupRequest struct {
@@ -40,17 +40,31 @@ type DeleteGroupRequest struct {
 }
 
 type GroupMemberDTO struct {
-	ID    string `json:"id"`
-	Name  string `json:"nombre" validate:"required"`
-	Email string `json:"email" validate:"required,email"`
+	Name         string `json:"nombre"       validate:"required"`
+	CI           int    `json:"cedula"       validate:"required"`
+	Phone        string `json:"telefono"     validate:"required"`
+	Email        string `json:"correo"       validate:"required,email"`
+	Coordination string `json:"coordinacion" validate:"required"`
+	Year         int    `json:"año"          validate:"required"`
+	Faculty      string `json:"facultad"     validate:"required"`
+	School       string `json:"escuela"      validate:"required"`
+	Document     string `json:"documento"    validate:"required"`
+	IsActive     bool   `json:"status"`
 }
 
 // groupMemberEntityFromRequest converts a GroupMemberDTO to a GroupMember entity.
 func groupMemberEntityFromRequest(dto GroupMemberDTO) entities.GroupMember {
 	return entities.GroupMember{
-		ID:    dto.ID,
-		Name:  dto.Name,
-		Email: dto.Email,
+		Name:         dto.Name,
+		CI:           dto.CI,
+		Phone:        dto.Phone,
+		Email:        dto.Email,
+		Coordination: dto.Coordination,
+		Year:         dto.Year,
+		Faculty:      entities.Faculty(dto.Faculty),
+		School:       dto.School,
+		Document:     dto.Document,
+		IsActive:     dto.IsActive,
 	}
 }
 

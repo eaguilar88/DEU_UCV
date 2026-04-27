@@ -31,9 +31,17 @@ type ExtensionGroup struct {
 }
 
 type GroupMember struct {
-	ID    string
-	Name  string
-	Email string
+	ID           string
+	Name         string
+	CI           int
+	Phone        string
+	Email        string
+	Coordination string
+	Year         int
+	Faculty      Faculty
+	School       string
+	Document     string
+	IsActive     bool
 }
 
 type GroupFiles struct {

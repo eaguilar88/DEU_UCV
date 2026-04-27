@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/eaguilar88/deu/internal/entities"
@@ -28,7 +29,7 @@ func (r *PostgresRepository) GetProvider(ctx context.Context, providerID string)
 	row := stmt.QueryRowContext(ctx, args...)
 	provider, err = scanProvider(row)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return entities.Provider{}, fmt.Errorf("%w: %w", providers.ErrProviderNotFound, err)
 		}
 		return entities.Provider{}, err
@@ -50,7 +51,7 @@ func (r *PostgresRepository) GetProviderByCode(ctx context.Context, code string)
 	row := stmt.QueryRowContext(ctx, args...)
 	provider, err = scanProvider(row)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return entities.Provider{}, fmt.Errorf("%w: %w", providers.ErrProviderNotFound, err)
 		}
 		return entities.Provider{}, err
