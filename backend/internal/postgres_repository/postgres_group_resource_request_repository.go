@@ -17,7 +17,9 @@ func (r *PostgresRepository) CreateGroupResourceRequest(ctx context.Context, req
 		Status: req.Status,
 	}
 	if req.GroupID != "" {
-		fmt.Sscanf(req.GroupID, "%d", &model.GroupID)
+		if _, err := fmt.Sscanf(req.GroupID, "%d", &model.GroupID); err != nil {
+			return 0, err
+		}
 	}
 	if req.Content != "" {
 		model.Content.String = req.Content

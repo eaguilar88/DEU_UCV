@@ -82,7 +82,8 @@ CREATE TYPE faculty_enum AS ENUM (
   'Ingeniería',
   'Medicina',
   'Odontología',
-  'DEU'
+  'DEU',
+  'NA'
 );
 
 -- Tabla para almacenar relaciones usuario-rol
@@ -416,21 +417,21 @@ VALUES
 
 -- Insert mock data for user_roles
 INSERT INTO
-  deu.user_roles (user_id, role_id, domain_type)
+  deu.user_roles (user_id, role_id, domain_type, faculty)
 VALUES
-  (13, 1, 'all'), -- root user
-  (1, 2, 'all'), -- deu_admin
-  (2, 2, 'all'), -- deu_admin
-  (3, 3, 'all'), -- faculty_admin
-  (4, 3, 'all'), -- faculty_admin
-  (5, 4, 'course'), -- course_admin
-  (6, 5, 'course'), -- course_manager
-  (7, 6, 'course'), -- visitante
-  (8, 6, 'course'), -- visitante
-  (9, 6, 'course'), -- visitante
-  (10, 6, 'course'), -- visitante
-  (11, 7, 'group'), -- group_admin
-  (12, 8, 'group'); -- group_helper
+  (13, 1, 'all','DEU'), -- root user
+  (1, 2, 'all','DEU'), -- deu_admin
+  (2, 2, 'all','DEU'), -- deu_admin
+  (3, 3, 'all', 'Ciencias'), -- faculty_admin
+  (4, 3, 'all', 'Medicina'), -- faculty_admin
+  (5, 4, 'course','NA'), -- course_admin
+  (6, 5, 'course','NA'), -- course_manager
+  (7, 6, 'course','NA'), -- visitante
+  (8, 6, 'course','NA'), -- visitante
+  (9, 6, 'course','NA'), -- visitante
+  (10, 6, 'course','NA'), -- visitante
+  (11, 7, 'group','NA'), -- group_admin
+  (12, 8, 'group','NA'); -- group_helper
 
   -- Insert mock data for providers
   INSERT INTO

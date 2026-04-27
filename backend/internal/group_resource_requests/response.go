@@ -14,7 +14,7 @@ type GetGroupResourceRequestResponse struct {
 
 type GetGroupResourceRequestsResponse struct {
 	Requests []GetGroupResourceRequestResponse `json:"solicitudes"`
-	Pages    entities.PageScope               `json:"paginas"`
+	Pages    entities.PageScope                `json:"paginas"`
 }
 
 type CreateGroupResourceRequestResponse struct {
