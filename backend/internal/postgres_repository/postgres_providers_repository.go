@@ -199,6 +199,7 @@ func scanProvider(row scannable) (models.Provider, error) {
 		&provider.UserEmail,
 		&provider.UserFirstName,
 		&provider.UserLastName,
+		&provider.Faculty,
 	)
 
 	return provider, err
@@ -250,6 +251,10 @@ func newProviderFromModel(provider models.Provider) entities.Provider {
 		p.DeletedAt = provider.DeletedAt.String
 	}
 
+	if provider.Faculty.Valid {
+		p.Faculty = entities.Faculty(provider.Faculty.String)
+	}
+
 	return p
 }
 
@@ -264,5 +269,6 @@ func newProviderModelFromEntities(provider entities.Provider) models.Provider {
 		Bio:        toNullString(provider.Bio),
 		Code:       toNullString(provider.Code),
 		IsActive:   provider.IsActive,
+		Faculty:    toNullString(string(provider.Faculty)),
 	}
 }

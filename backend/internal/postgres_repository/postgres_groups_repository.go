@@ -100,27 +100,26 @@ func (r *PostgresRepository) CreateGroup(ctx context.Context, gr entities.Extens
 	return lastInsertedID, nil
 }
 
-// CreateGroupWithRequest creates a group and its authorization request in a single transaction
-func (r *PostgresRepository) CreateGroupWithRequest(ctx context.Context, group entities.ExtensionGroup, request entities.GroupRequest) (groupID int64, requestID int64, err error) {
-	// Begin transaction
+// CreateGroupWithRequests creates a group and its authorization requests in a single transaction
+func (r *PostgresRepository) CreateGroupWithRequests(ctx context.Context, group entities.ExtensionGroup, requests []entities.GroupRequest) (groupID int64, err error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		r.logger.Error("failed to begin transaction", zap.Error(err))
-		return -1, -1, fmt.Errorf("failed to begin transaction: %w", err)
+		return -1, fmt.Errorf("failed to begin transaction: %w", err)
 	}
-	defer tx.Rollback() // Rollback if commit is not called
+	defer tx.Rollback()
 
 	// 1. Create the group
 	groupSQL, groupArgs, err := queries.InsertGroup(newGroupToModel(group)).ToSql()
 	if err != nil {
 		r.logger.Error("failed to build group query", zap.Error(err))
-		return -1, -1, fmt.Errorf("failed to build group query: %w", err)
+		return -1, fmt.Errorf("failed to build group query: %w", err)
 	}
 
 	stmt, err := tx.PrepareContext(ctx, groupSQL)
 	if err != nil {
 		r.logger.Error("failed to prepare group statement", zap.Error(err))
-		return -1, -1, fmt.Errorf("failed to prepare group statement: %w", err)
+		return -1, fmt.Errorf("failed to prepare group statement: %w", err)
 	}
 	defer stmt.Close()
 
@@ -128,55 +127,55 @@ func (r *PostgresRepository) CreateGroupWithRequest(ctx context.Context, group e
 	if err != nil {
 		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == pgErrorCodeUniqueViolation {
 			r.logger.Error("duplicate group entry", zap.Error(err))
-			return -1, -1, httperrors.NewDuplicateEntryError(err)
+			return -1, httperrors.NewDuplicateEntryError(err)
 		}
 		r.logger.Error("failed to insert group", zap.Error(err))
-		return -1, -1, fmt.Errorf("failed to insert group: %w", err)
+		return -1, fmt.Errorf("failed to insert group: %w", err)
 	}
 
-	// 2. Create the group authorization request
-	requestSQL, requestArgs, err := queries.InsertGroupRequest(models.GroupRequest{
-		GroupID: groupID,
-		Status:  string(request.Status),
-		Faculty: string(request.Faculty),
-		Comments: sql.NullString{
-			String: request.Comments,
-			Valid:  request.Comments != "",
-		},
-	}).ToSql()
-	if err != nil {
-		r.logger.Error("failed to build request query", zap.Error(err))
-		return -1, -1, fmt.Errorf("failed to build request query: %w", err)
-	}
-
-	stmt2, err := tx.PrepareContext(ctx, requestSQL)
-	if err != nil {
-		r.logger.Error("failed to prepare request statement", zap.Error(err))
-		return -1, -1, fmt.Errorf("failed to prepare request statement: %w", err)
-	}
-	defer stmt2.Close()
-
-	err = stmt2.QueryRowContext(ctx, requestArgs...).Scan(&requestID)
-	if err != nil {
-		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == pgErrorCodeUniqueViolation {
-			r.logger.Error("duplicate group request entry", zap.Error(err))
-			return -1, -1, httperrors.NewDuplicateEntryError(err)
+	// 2. Create each authorization request
+	for _, req := range requests {
+		reqSQL, reqArgs, err := queries.InsertGroupRequest(models.GroupRequest{
+			GroupID: groupID,
+			Status:  string(req.Status),
+			Faculty: string(req.Faculty),
+			Comments: sql.NullString{
+				String: req.Comments,
+				Valid:  req.Comments != "",
+			},
+		}).ToSql()
+		if err != nil {
+			r.logger.Error("failed to build request query", zap.Error(err))
+			return -1, fmt.Errorf("failed to build request query: %w", err)
 		}
-		r.logger.Error("failed to insert group request", zap.Error(err))
-		return -1, -1, fmt.Errorf("failed to insert group request: %w", err)
+
+		reqStmt, err := tx.PrepareContext(ctx, reqSQL)
+		if err != nil {
+			r.logger.Error("failed to prepare request statement", zap.Error(err))
+			return -1, fmt.Errorf("failed to prepare request statement: %w", err)
+		}
+
+		var reqID int64
+		err = reqStmt.QueryRowContext(ctx, reqArgs...).Scan(&reqID)
+		reqStmt.Close()
+		if err != nil {
+			if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == pgErrorCodeUniqueViolation {
+				r.logger.Error("duplicate group request entry", zap.Error(err))
+				return -1, httperrors.NewDuplicateEntryError(err)
+			}
+			r.logger.Error("failed to insert group request", zap.Error(err))
+			return -1, fmt.Errorf("failed to insert group request: %w", err)
+		}
 	}
 
-	// 3. Commit the transaction
+	// 3. Commit
 	if err := tx.Commit(); err != nil {
 		r.logger.Error("failed to commit transaction", zap.Error(err))
-		return -1, -1, fmt.Errorf("failed to commit transaction: %w", err)
+		return -1, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	r.logger.Info("group and request created successfully",
-		zap.Int64("group_id", groupID),
-		zap.Int64("request_id", requestID))
-
-	return groupID, requestID, nil
+	r.logger.Info("group and requests created successfully", zap.Int64("group_id", groupID))
+	return groupID, nil
 }
 
 func (r *PostgresRepository) UpdateGroup(ctx context.Context, group entities.ExtensionGroup) error {

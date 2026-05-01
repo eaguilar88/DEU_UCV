@@ -151,6 +151,7 @@ func makeProviderFromRequest(c echo.Context, userID string, logger *zap.Logger) 
 	name := c.FormValue("nombre")
 	bio := c.FormValue("bio")
 	isInternal := c.FormValue("es_interno")
+	faculty := c.FormValue("facultad")
 
 	if providerType != string(entities.CourseProviderType) && providerType != string(entities.GroupProviderType) {
 		return nil, errors.New("tipo_proveedor must be 'courses' or 'groups'")
@@ -207,6 +208,7 @@ func makeProviderFromRequest(c echo.Context, userID string, logger *zap.Logger) 
 		PartyType:  entities.ProviderPartyType(party),
 		ProfitType: entities.ProviderProfitType(profitType),
 		IsInternal: isInternal == "true",
+		Faculty:    entities.Faculty(faculty),
 		Files: entities.ProviderFiles{
 			CI:   ci,
 			RIF:  rif,

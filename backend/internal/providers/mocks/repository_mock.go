@@ -143,7 +143,10 @@ func (_c *MockRepository_CreateProviderRequest_Call) Run(run func(ctx context.Co
 		if args[1] != nil {
 			arg1 = args[1].(int64)
 		}
-		run(arg0, arg1)
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -270,7 +273,11 @@ func (_c *MockRepository_GetFilesByOwner_Call) Run(run func(ctx context.Context,
 		if args[2] != nil {
 			arg2 = args[2].(entities.OwnerType)
 		}
-		run(arg0, arg1, arg2)
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -478,7 +485,11 @@ func (_c *MockRepository_GetProviders_Call) Run(run func(ctx context.Context, pa
 		if args[2] != nil {
 			arg2 = args[2].(entities.ProviderFilters)
 		}
-		run(arg0, arg1, arg2)
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }

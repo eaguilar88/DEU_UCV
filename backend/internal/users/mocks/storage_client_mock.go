@@ -38,60 +38,6 @@ func (_m *MockStorageClient) EXPECT() *MockStorageClient_Expecter {
 	return &MockStorageClient_Expecter{mock: &_m.Mock}
 }
 
-// UploadFile provides a mock function for the type MockStorageClient
-func (_mock *MockStorageClient) UploadFile(ctx context.Context, files []*entities.File) error {
-	ret := _mock.Called(ctx, files)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UploadFile")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, []*entities.File) error); ok {
-		r0 = returnFunc(ctx, files)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// MockStorageClient_UploadFile_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UploadFile'
-type MockStorageClient_UploadFile_Call struct {
-	*mock.Call
-}
-
-// UploadFile is a helper method to define mock.On call
-//   - ctx context.Context
-//   - files []*entities.File
-func (_e *MockStorageClient_Expecter) UploadFile(ctx interface{}, files interface{}) *MockStorageClient_UploadFile_Call {
-	return &MockStorageClient_UploadFile_Call{Call: _e.mock.On("UploadFile", ctx, files)}
-}
-
-func (_c *MockStorageClient_UploadFile_Call) Run(run func(ctx context.Context, files []*entities.File)) *MockStorageClient_UploadFile_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 []*entities.File
-		if args[1] != nil {
-			arg1 = args[1].([]*entities.File)
-		}
-		run(arg0, arg1)
-	})
-	return _c
-}
-
-func (_c *MockStorageClient_UploadFile_Call) Return(err error) *MockStorageClient_UploadFile_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *MockStorageClient_UploadFile_Call) RunAndReturn(run func(ctx context.Context, files []*entities.File) error) *MockStorageClient_UploadFile_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // GetFileURL provides a mock function for the type MockStorageClient
 func (_mock *MockStorageClient) GetFileURL(ctx context.Context, objectKey string) (string, error) {
 	ret := _mock.Called(ctx, objectKey)
@@ -140,17 +86,77 @@ func (_c *MockStorageClient_GetFileURL_Call) Run(run func(ctx context.Context, o
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		run(arg0, arg1)
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
 
-func (_c *MockStorageClient_GetFileURL_Call) Return(url string, err error) *MockStorageClient_GetFileURL_Call {
-	_c.Call.Return(url, err)
+func (_c *MockStorageClient_GetFileURL_Call) Return(s string, err error) *MockStorageClient_GetFileURL_Call {
+	_c.Call.Return(s, err)
 	return _c
 }
 
 func (_c *MockStorageClient_GetFileURL_Call) RunAndReturn(run func(ctx context.Context, objectKey string) (string, error)) *MockStorageClient_GetFileURL_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UploadFile provides a mock function for the type MockStorageClient
+func (_mock *MockStorageClient) UploadFile(ctx context.Context, files []*entities.File) error {
+	ret := _mock.Called(ctx, files)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UploadFile")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []*entities.File) error); ok {
+		r0 = returnFunc(ctx, files)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockStorageClient_UploadFile_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UploadFile'
+type MockStorageClient_UploadFile_Call struct {
+	*mock.Call
+}
+
+// UploadFile is a helper method to define mock.On call
+//   - ctx context.Context
+//   - files []*entities.File
+func (_e *MockStorageClient_Expecter) UploadFile(ctx interface{}, files interface{}) *MockStorageClient_UploadFile_Call {
+	return &MockStorageClient_UploadFile_Call{Call: _e.mock.On("UploadFile", ctx, files)}
+}
+
+func (_c *MockStorageClient_UploadFile_Call) Run(run func(ctx context.Context, files []*entities.File)) *MockStorageClient_UploadFile_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []*entities.File
+		if args[1] != nil {
+			arg1 = args[1].([]*entities.File)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockStorageClient_UploadFile_Call) Return(err error) *MockStorageClient_UploadFile_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockStorageClient_UploadFile_Call) RunAndReturn(run func(ctx context.Context, files []*entities.File) error) *MockStorageClient_UploadFile_Call {
 	_c.Call.Return(run)
 	return _c
 }

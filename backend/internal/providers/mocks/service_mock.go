@@ -39,7 +39,7 @@ func (_m *MockService) EXPECT() *MockService_Expecter {
 }
 
 // CreateProvider provides a mock function for the type MockService
-func (_mock *MockService) CreateProvider(ctx context.Context, provider *entities.Provider) (int64, string, error) {
+func (_mock *MockService) CreateProvider(ctx context.Context, provider *entities.Provider) (int64, error) {
 	ret := _mock.Called(ctx, provider)
 
 	if len(ret) == 0 {
@@ -47,9 +47,8 @@ func (_mock *MockService) CreateProvider(ctx context.Context, provider *entities
 	}
 
 	var r0 int64
-	var r1 string
-	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *entities.Provider) (int64, string, error)); ok {
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *entities.Provider) (int64, error)); ok {
 		return returnFunc(ctx, provider)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, *entities.Provider) int64); ok {
@@ -57,17 +56,12 @@ func (_mock *MockService) CreateProvider(ctx context.Context, provider *entities
 	} else {
 		r0 = ret.Get(0).(int64)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *entities.Provider) string); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *entities.Provider) error); ok {
 		r1 = returnFunc(ctx, provider)
 	} else {
-		r1 = ret.Get(1).(string)
+		r1 = ret.Error(1)
 	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, *entities.Provider) error); ok {
-		r2 = returnFunc(ctx, provider)
-	} else {
-		r2 = ret.Error(2)
-	}
-	return r0, r1, r2
+	return r0, r1
 }
 
 // MockService_CreateProvider_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateProvider'
@@ -100,12 +94,12 @@ func (_c *MockService_CreateProvider_Call) Run(run func(ctx context.Context, pro
 	return _c
 }
 
-func (_c *MockService_CreateProvider_Call) Return(n int64, s string, err error) *MockService_CreateProvider_Call {
-	_c.Call.Return(n, s, err)
+func (_c *MockService_CreateProvider_Call) Return(n int64, err error) *MockService_CreateProvider_Call {
+	_c.Call.Return(n, err)
 	return _c
 }
 
-func (_c *MockService_CreateProvider_Call) RunAndReturn(run func(ctx context.Context, provider *entities.Provider) (int64, string, error)) *MockService_CreateProvider_Call {
+func (_c *MockService_CreateProvider_Call) RunAndReturn(run func(ctx context.Context, provider *entities.Provider) (int64, error)) *MockService_CreateProvider_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -360,7 +354,11 @@ func (_c *MockService_GetProviders_Call) Run(run func(ctx context.Context, pageS
 		if args[2] != nil {
 			arg2 = args[2].(entities.ProviderFilters)
 		}
-		run(arg0, arg1, arg2)
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }

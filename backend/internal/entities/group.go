@@ -4,9 +4,10 @@ type GroupType string
 
 const (
 	// Group types
-	CulturalGroupType = "cultural"
-	SportsGroupType   = "sports"
-	AcademicGroupType = "academic"
+	CulturalGroupType          = "cultural"
+	SportsGroupType            = "sports"
+	AcademicGroupType          = "academic"
+	MultidisciplinaryGroupType = "multidisciplinary"
 
 	// File types for groups
 	GroupFileTypeLogo = "logo"

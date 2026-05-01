@@ -61,6 +61,7 @@ type Provider struct {
 	Bio        string
 	Code       string
 	IsActive   bool
+	Faculty    Faculty
 	Files      ProviderFiles
 	CreatedAt  string
 	UpdatedAt  string

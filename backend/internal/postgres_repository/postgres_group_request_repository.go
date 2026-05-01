@@ -144,7 +144,37 @@ func newGroupRequestFromModel(m models.GroupRequest) entities.GroupRequest {
 		}
 	}
 
+	if m.ReviewedAt.Valid {
+		gar.ReviewedAt = m.ReviewedAt.String
+	}
+
 	return gar
+}
+
+func (r *PostgresRepository) GetGroupRequestsByGroupID(ctx context.Context, groupID string) ([]entities.GroupRequest, error) {
+	query, args, err := queries.GetGroupRequestsByGroupID(groupID).ToSql()
+	if err != nil {
+		return nil, err
+	}
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+	rows, err := stmt.QueryContext(ctx, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var requests []entities.GroupRequest
+	for rows.Next() {
+		model, err := scanGroupRequest(rows)
+		if err != nil {
+			return nil, err
+		}
+		requests = append(requests, newGroupRequestFromModel(model))
+	}
+	return requests, nil
 }
 
 func scanGroupRequest(row scannable) (models.GroupRequest, error) {

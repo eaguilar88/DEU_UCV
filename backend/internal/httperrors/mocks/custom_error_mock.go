@@ -79,6 +79,50 @@ func (_c *MockCustomError_Error_Call) RunAndReturn(run func() string) *MockCusto
 	return _c
 }
 
+// SafeMessage provides a mock function for the type MockCustomError
+func (_mock *MockCustomError) SafeMessage() string {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for SafeMessage")
+	}
+
+	var r0 string
+	if returnFunc, ok := ret.Get(0).(func() string); ok {
+		r0 = returnFunc()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	return r0
+}
+
+// MockCustomError_SafeMessage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SafeMessage'
+type MockCustomError_SafeMessage_Call struct {
+	*mock.Call
+}
+
+// SafeMessage is a helper method to define mock.On call
+func (_e *MockCustomError_Expecter) SafeMessage() *MockCustomError_SafeMessage_Call {
+	return &MockCustomError_SafeMessage_Call{Call: _e.mock.On("SafeMessage")}
+}
+
+func (_c *MockCustomError_SafeMessage_Call) Run(run func()) *MockCustomError_SafeMessage_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockCustomError_SafeMessage_Call) Return(s string) *MockCustomError_SafeMessage_Call {
+	_c.Call.Return(s)
+	return _c
+}
+
+func (_c *MockCustomError_SafeMessage_Call) RunAndReturn(run func() string) *MockCustomError_SafeMessage_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // StatusCode provides a mock function for the type MockCustomError
 func (_mock *MockCustomError) StatusCode() int {
 	ret := _mock.Called()

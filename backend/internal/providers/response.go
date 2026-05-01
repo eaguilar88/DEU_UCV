@@ -13,6 +13,7 @@ type GetProviderResponse struct {
 	Logo       string        `json:"provider_avatar_url,omitempty"`
 	Type       string        `json:"tipo,omitempty"`
 	ProfitType string        `json:"tipo_lucro,omitempty"`
+	Faculty    string        `json:"facultad,omitempty"`
 	Contact    []string      `json:"emails_contacto,omitempty"`
 	Phones     []string      `json:"telefonos_contacto,omitempty"`
 	Webpage    string        `json:"sitio_web,omitempty"`
@@ -39,6 +40,7 @@ func providerToResponse(entity entities.Provider) GetProviderResponse {
 		Bio:        entity.Bio,
 		Type:       string(entity.Type),
 		ProfitType: string(entity.ProfitType),
+		Faculty:    string(entity.Faculty),
 	}
 
 	files := ProviderFiles{}
