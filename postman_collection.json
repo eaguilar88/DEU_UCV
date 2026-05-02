@@ -60,6 +60,255 @@
       ]
     },
     {
+      "name": "Providers",
+      "item": [
+        {
+          "name": "List Providers",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/providers?page=1&per_page=10",
+              "host": ["{{base_url}}"],
+              "path": ["providers"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "per_page", "value": "10" },
+                { "key": "type", "value": "courses", "disabled": true },
+                { "key": "is_active", "value": "true", "disabled": true }
+              ]
+            },
+            "description": "List providers with optional filters: type (courses|groups), party_type, profit_type, is_internal, is_active, code, created_at_from, created_at_to."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"providers\": [\n    {\n      \"id\": \"1\",\n      \"name\": \"Proveedor A\",\n      \"code\": \"ECP-abc123\",\n      \"party_type\": \"natural\",\n      \"profit_type\": \"lucrativo\",\n      \"is_internal\": false,\n      \"is_active\": true,\n      \"facultad\": \"Ingeniería\",\n      \"user\": { \"id\": \"5\", \"email\": \"provider@ucv.ve\" },\n      \"created_at\": \"2025-01-15T10:00:00Z\"\n    }\n  ],\n  \"pagination\": { \"page\": 1, \"per_page\": 10, \"count\": 1 }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Provider by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/providers/1",
+              "host": ["{{base_url}}"],
+              "path": ["providers", "1"]
+            },
+            "description": "Get a single provider by numeric ID. Returns provider data including associated files (CI, RIF, ISLR, logo, resumes, intention letter, commitment letters) with pre-signed URLs."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": \"1\",\n  \"name\": \"Proveedor A\",\n  \"code\": \"ECP-abc123\",\n  \"party_type\": \"natural\",\n  \"profit_type\": \"lucrativo\",\n  \"is_internal\": false,\n  \"is_active\": true,\n  \"facultad\": \"Ingeniería\",\n  \"user\": { \"id\": \"5\", \"email\": \"provider@ucv.ve\", \"first_name\": \"Ana\", \"last_name\": \"Gómez\" },\n  \"created_at\": \"2025-01-15T10:00:00Z\"\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "body": "{ \"error\": \"provider not found\" }"
+            }
+          ]
+        },
+        {
+          "name": "Create Provider",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/providers",
+              "host": ["{{base_url}}"],
+              "path": ["providers"]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "tipo_proveedor", "value": "courses", "type": "text", "description": "courses or groups" },
+                { "key": "tipo_persona", "value": "natural", "type": "text", "description": "natural or juridical" },
+                { "key": "tipo_lucro", "value": "lucrativo", "type": "text", "description": "lucrativo or no_lucrativo" },
+                { "key": "nombre", "value": "Proveedor de Prueba", "type": "text" },
+                { "key": "bio", "value": "Breve descripción del proveedor", "type": "text" },
+                { "key": "es_interno", "value": "false", "type": "text" },
+                { "key": "facultad", "value": "Ingeniería", "type": "text", "description": "faculty_enum value, e.g. Ingeniería, Medicina, Ciencias, DEU" },
+                { "key": "ci", "type": "file", "src": "", "description": "Cédula de identidad (required)" },
+                { "key": "rif", "type": "file", "src": "", "description": "RIF document (required)" },
+                { "key": "islr", "type": "file", "src": "", "description": "ISLR document (required)" },
+                { "key": "logo", "type": "file", "src": "", "description": "Provider logo (required)" },
+                { "key": "resumes", "type": "file", "src": "", "description": "At least one resume required" },
+                { "key": "others", "type": "file", "src": "", "disabled": true, "description": "Additional documents (optional)" }
+              ]
+            },
+            "description": "Register a new provider. All file fields (ci, rif, islr, logo) are required along with at least one resume. Returns the new provider's database ID. A confirmation email is sent to the user's registered email."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{ \"id\": \"42\" }"
+            },
+            {
+              "name": "400 Bad Request — Missing field",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{ \"error\": \"ci is required\" }"
+            },
+            {
+              "name": "401 Unauthorized",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{ \"error\": \"authentication required\" }"
+            },
+            {
+              "name": "409 Conflict — Duplicate entry",
+              "status": "Conflict",
+              "code": 409,
+              "body": "{ \"error\": \"duplicate entry\" }"
+            }
+          ]
+        },
+        {
+          "name": "Upload Provider Documents",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/providers/documents",
+              "host": ["{{base_url}}"],
+              "path": ["providers", "documents"]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "carta_compromiso", "type": "file", "src": "", "description": "Commitment letter (required). Auto-versioned: first upload is _v1, second is _v2, etc." },
+                { "key": "carta_intencion", "type": "file", "src": "", "disabled": true, "description": "Intention letter (required on first document upload; optional if one already exists in DB)" }
+              ]
+            },
+            "description": "Upload legal documents for the authenticated provider.\n\n- carta_compromiso is always required.\n- carta_intencion is only required if no intention letter exists in the database for this provider.\n- Each commitment letter is versioned automatically (v1, v2, …); the version is appended to the filename.\n- After upload, all provider courses created since the previous commitment letter are automatically marked with has_documentation=true."
+          },
+          "response": [
+            {
+              "name": "201 Created — Documents uploaded",
+              "status": "Created",
+              "code": 201
+            },
+            {
+              "name": "400 Bad Request — Missing carta_compromiso",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{ \"error\": \"carta_compromiso es requerida\" }"
+            },
+            {
+              "name": "400 Bad Request — No intention letter on file",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{ \"error\": \"a new provider requires an intention letter\" }"
+            },
+            {
+              "name": "401 Unauthorized",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{ \"error\": \"authentication required\" }"
+            },
+            {
+              "name": "404 Not Found — Provider not found for user",
+              "status": "Not Found",
+              "code": 404,
+              "body": "{ \"error\": \"provider not found\" }"
+            }
+          ]
+        },
+        {
+          "name": "Update Provider",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/providers/1",
+              "host": ["{{base_url}}"],
+              "path": ["providers", "1"]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "tipo_proveedor", "value": "courses", "type": "text" },
+                { "key": "tipo_persona", "value": "natural", "type": "text" },
+                { "key": "tipo_lucro", "value": "lucrativo", "type": "text" },
+                { "key": "nombre", "value": "Proveedor Actualizado", "type": "text" },
+                { "key": "bio", "value": "Nueva descripción", "type": "text" },
+                { "key": "es_interno", "value": "false", "type": "text" },
+                { "key": "facultad", "value": "Medicina", "type": "text" },
+                { "key": "ci", "type": "file", "src": "" },
+                { "key": "rif", "type": "file", "src": "" },
+                { "key": "islr", "type": "file", "src": "" },
+                { "key": "logo", "type": "file", "src": "" },
+                { "key": "resumes", "type": "file", "src": "" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "202 Accepted",
+              "status": "Accepted",
+              "code": 202
+            },
+            {
+              "name": "404 Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "body": "{ \"error\": \"provider not found\" }"
+            }
+          ]
+        },
+        {
+          "name": "Delete Provider",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/providers/1",
+              "host": ["{{base_url}}"],
+              "path": ["providers", "1"]
+            }
+          },
+          "response": [
+            {
+              "name": "204 No Content",
+              "status": "No Content",
+              "code": 204
+            },
+            {
+              "name": "404 Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "body": "{ \"error\": \"provider not found\" }"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "Users",
       "item": [
         {

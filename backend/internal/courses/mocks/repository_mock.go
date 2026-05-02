@@ -439,6 +439,80 @@ func (_c *MockRepository_GetCourses_Call) RunAndReturn(run func(ctx context.Cont
 	return _c
 }
 
+// GetFilesByOwner provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetFilesByOwner(ctx context.Context, ownerID string, ownerType entities.OwnerType) (entities.GroupedFiles, error) {
+	ret := _mock.Called(ctx, ownerID, ownerType)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetFilesByOwner")
+	}
+
+	var r0 entities.GroupedFiles
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, entities.OwnerType) (entities.GroupedFiles, error)); ok {
+		return returnFunc(ctx, ownerID, ownerType)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, entities.OwnerType) entities.GroupedFiles); ok {
+		r0 = returnFunc(ctx, ownerID, ownerType)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(entities.GroupedFiles)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, entities.OwnerType) error); ok {
+		r1 = returnFunc(ctx, ownerID, ownerType)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetFilesByOwner_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetFilesByOwner'
+type MockRepository_GetFilesByOwner_Call struct {
+	*mock.Call
+}
+
+// GetFilesByOwner is a helper method to define mock.On call
+//   - ctx context.Context
+//   - ownerID string
+//   - ownerType entities.OwnerType
+func (_e *MockRepository_Expecter) GetFilesByOwner(ctx interface{}, ownerID interface{}, ownerType interface{}) *MockRepository_GetFilesByOwner_Call {
+	return &MockRepository_GetFilesByOwner_Call{Call: _e.mock.On("GetFilesByOwner", ctx, ownerID, ownerType)}
+}
+
+func (_c *MockRepository_GetFilesByOwner_Call) Run(run func(ctx context.Context, ownerID string, ownerType entities.OwnerType)) *MockRepository_GetFilesByOwner_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 entities.OwnerType
+		if args[2] != nil {
+			arg2 = args[2].(entities.OwnerType)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetFilesByOwner_Call) Return(groupedFiles entities.GroupedFiles, err error) *MockRepository_GetFilesByOwner_Call {
+	_c.Call.Return(groupedFiles, err)
+	return _c
+}
+
+func (_c *MockRepository_GetFilesByOwner_Call) RunAndReturn(run func(ctx context.Context, ownerID string, ownerType entities.OwnerType) (entities.GroupedFiles, error)) *MockRepository_GetFilesByOwner_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetLatestCoursePeriod provides a mock function for the type MockRepository
 func (_mock *MockRepository) GetLatestCoursePeriod(ctx context.Context, courseID string) (entities.CoursePeriod, error) {
 	ret := _mock.Called(ctx, courseID)
@@ -567,6 +641,63 @@ func (_c *MockRepository_GetProviderByUserID_Call) Return(provider entities.Prov
 }
 
 func (_c *MockRepository_GetProviderByUserID_Call) RunAndReturn(run func(ctx context.Context, userID string) (entities.Provider, error)) *MockRepository_GetProviderByUserID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SaveFilesToDB provides a mock function for the type MockRepository
+func (_mock *MockRepository) SaveFilesToDB(ctx context.Context, file []*entities.File) error {
+	ret := _mock.Called(ctx, file)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SaveFilesToDB")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []*entities.File) error); ok {
+		r0 = returnFunc(ctx, file)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockRepository_SaveFilesToDB_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SaveFilesToDB'
+type MockRepository_SaveFilesToDB_Call struct {
+	*mock.Call
+}
+
+// SaveFilesToDB is a helper method to define mock.On call
+//   - ctx context.Context
+//   - file []*entities.File
+func (_e *MockRepository_Expecter) SaveFilesToDB(ctx interface{}, file interface{}) *MockRepository_SaveFilesToDB_Call {
+	return &MockRepository_SaveFilesToDB_Call{Call: _e.mock.On("SaveFilesToDB", ctx, file)}
+}
+
+func (_c *MockRepository_SaveFilesToDB_Call) Run(run func(ctx context.Context, file []*entities.File)) *MockRepository_SaveFilesToDB_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []*entities.File
+		if args[1] != nil {
+			arg1 = args[1].([]*entities.File)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_SaveFilesToDB_Call) Return(err error) *MockRepository_SaveFilesToDB_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockRepository_SaveFilesToDB_Call) RunAndReturn(run func(ctx context.Context, file []*entities.File) error) *MockRepository_SaveFilesToDB_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -44,7 +44,7 @@ func toUserEntity(req CreateUserRequest) (entities.User, error) {
 		Address:        req.Address,
 		Password:       password,
 		Roles: []string{
-			entities.RoleNameFromID(entities.RoleCoordinador),
+			entities.RoleNameFromID(entities.RoleVisitante),
 		},
 	}, nil
 }

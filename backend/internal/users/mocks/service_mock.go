@@ -91,7 +91,11 @@ func (_c *MockService_CreateUser_Call) Run(run func(ctx context.Context, user en
 		if args[2] != nil {
 			arg2 = args[2].(*entities.File)
 		}
-		run(arg0, arg1, arg2)
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }

@@ -745,7 +745,124 @@ Antes de hacer deploy a producción, verifica:
 
 ---
 
-**Última actualización**: 2026-01-30
-**Versión del documento**: 1.0
-**Mantenedor**: Equipo DEU UCV
+---
+
+## 6. Agregar Proyectos Independientes (Frontend + Backend + DB propios)
+
+Esta sección cubre el caso donde se integra un proyecto completo nuevo al compose: con su propio frontend, su propio backend y opcionalmente su propia base de datos. Aplica para proyectos Node.js+Vue, Ruby+React, etc.
+
+### Principios
+
+- El **frontend** se expone vía Traefik con su propio DNS.
+- El **backend** NO se expone vía Traefik — solo es accesible internamente por nombre de servicio Docker.
+- El frontend se comunica con su backend usando la URL interna (configurada como variable de entorno en el build o en runtime).
+- Si el proyecto necesita base de datos aislada, se agrega un contenedor `db-<proyecto>` con su propio volumen. Si puede compartir el Postgres existente, se usa una base de datos distinta dentro del mismo contenedor (`POSTGRES_DB`).
+- Todos los servicios van en la red `web` para poder comunicarse entre sí.
+
+### Template
+
+```yaml
+# === Proyecto: "proyecto-x" ===
+
+  proyecto-x-frontend:
+    build:
+      context: "./proyecto-x/frontend"
+      dockerfile: "Dockerfile"
+    restart: unless-stopped
+    depends_on:
+      - proyecto-x-api
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.proyecto-x.rule=Host(`proyecto-x.extension.ucv.ve`)"
+      - "traefik.http.routers.proyecto-x.entrypoints=web"
+      - "traefik.http.services.proyecto-x.loadbalancer.server.port=80"
+    networks:
+      - web
+
+  proyecto-x-api:
+    build:
+      context: "./proyecto-x/backend"
+      dockerfile: "Dockerfile"
+    restart: unless-stopped
+    depends_on:
+      db:                        # o db-proyecto-x si usa base de datos propia
+        condition: service_healthy
+    env_file:
+      - ./proyecto-x/.env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/proyecto_x
+    labels:
+      - "traefik.enable=false"   # No exponer públicamente
+    networks:
+      - web
+```
+
+### Cómo conecta el frontend con su backend
+
+El frontend (Vue/React) hace sus llamadas API a una URL configurada en tiempo de build o como variable de entorno. Esa URL debe apuntar al nombre de servicio interno del backend y su puerto:
+
+```
+http://proyecto-x-api:3000
+```
+
+Esto funciona porque ambos contenedores están en la misma red Docker (`web`). Desde afuera del compose esa URL no es accesible — solo entre contenedores.
+
+Si el frontend es una SPA (Single Page Application) que corre en el navegador del usuario, la comunicación no pasa por la red Docker. En ese caso el backend **sí necesita un dominio público** y debe exponerse vía Traefik:
+
+```yaml
+  proyecto-x-api:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.proyecto-x-api.rule=Host(`api-proyecto-x.extension.ucv.ve`)"
+      - "traefik.http.routers.proyecto-x-api.entrypoints=web"
+      - "traefik.http.services.proyecto-x-api.loadbalancer.server.port=3000"
+```
+
+### Base de datos aislada (opcional)
+
+Agregar solo si el proyecto no puede compartir el Postgres existente (diferente versión, propietario externo, etc.). En la mayoría de casos es más simple usar una base de datos distinta dentro del mismo contenedor `db`.
+
+```yaml
+  db-proyecto-x:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    volumes:
+      - proyecto_x_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${PROYECTO_X_DB_USER}
+      POSTGRES_PASSWORD: ${PROYECTO_X_DB_PASSWORD}
+      POSTGRES_DB: ${PROYECTO_X_DB_NAME}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $PROYECTO_X_DB_USER"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - web
+```
+
+No olvidar agregar el volumen al final del archivo:
+
+```yaml
+volumes:
+  postgres_data:
+  landing_storage:
+  proyecto_x_data:    # agregar aquí
+```
+
+### Checklist para cada proyecto nuevo
+
+- [ ] El frontend tiene `traefik.enable=true` con el DNS correcto
+- [ ] El backend tiene `traefik.enable=false` (o su propio DNS si es SPA)
+- [ ] Ambos están en la red `web`
+- [ ] El backend tiene `depends_on` apuntando a su base de datos con `condition: service_healthy`
+- [ ] Las variables de entorno del backend están en un `.env` propio del proyecto (o en el `.env` raíz)
+- [ ] Si usa DB propia: el volumen está declarado al final del compose
+- [ ] Los nombres de router y servicio en los labels de Traefik son únicos en todo el compose
+
+---
+
+**Última actualización**: 2026-04-17
+**Versión del documento**: 1.1
+**Responsable**: Equipo DEU UCV
 

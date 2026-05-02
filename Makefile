@@ -4,7 +4,6 @@ loadenv:
 	@set -a && source .env && set +a && env | grep -E '^HTTP_'
 
 start-backend:
-	git submodule update --recursive --remote
 	docker compose up --build -d
 
 start-prod:
@@ -20,7 +19,6 @@ seed-landing:
 	docker compose -f docker-compose.prod.yml exec landing ./bin/rails db:seed
 
 start-db:
-	git submodule update --recursive --remote
 	docker compose -f docker-compose.dev.yml up  --build -d
 
 stop-backend:
@@ -33,13 +31,12 @@ stop-db:
 	docker compose -f docker-compose.dev.yml down
 
 generate-mocks:
-	docker run --user 1000:1000 --rm -v ${PWD}/backend:/src -w /src vektra/mockery:v3 --config .mockery.yaml
+	docker pull vektra/mockery:v3.7.0 && docker run --user 1000:1000 --rm -v ${PWD}/backend:/src -w /src vektra/mockery:v3.7.0 --config .mockery.yaml
 
 go-test:
 	cd backend && go test -count=1 -short -cover ./...
 
 git-pull:
-	git submodule update --recursive --remote
 	git pull
 
 quality:

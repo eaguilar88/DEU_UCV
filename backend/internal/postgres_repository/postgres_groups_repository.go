@@ -34,7 +34,12 @@ func (r *PostgresRepository) GetGroupByID(ctx context.Context, groupID string) (
 		}
 		return entities.ExtensionGroup{}, err
 	}
-	return newGroupFromModel(group), nil
+	eg := newGroupFromModel(group)
+	eg.Members, err = r.getGroupMembers(ctx, groupID)
+	if err != nil {
+		return entities.ExtensionGroup{}, err
+	}
+	return eg, nil
 }
 
 func (r *PostgresRepository) GetGroups(ctx context.Context, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error) {
@@ -58,7 +63,12 @@ func (r *PostgresRepository) GetGroups(ctx context.Context, pageScope entities.P
 		if err != nil {
 			return nil, entities.PageScope{}, err
 		}
-		groups = append(groups, newGroupFromModel(group))
+		eg := newGroupFromModel(group)
+		eg.Members, err = r.getGroupMembers(ctx, eg.ID)
+		if err != nil {
+			return nil, entities.PageScope{}, err
+		}
+		groups = append(groups, eg)
 	}
 	return groups, pageScope, nil
 }
@@ -83,30 +93,33 @@ func (r *PostgresRepository) CreateGroup(ctx context.Context, gr entities.Extens
 		r.logger.Error("error inserting group", zap.Error(err))
 		return -1, httperrors.NewInternalError(err)
 	}
+	if err := r.insertGroupMembers(ctx, lastInsertedID, gr.Members); err != nil {
+		r.logger.Error("error inserting group members", zap.Error(err))
+		return -1, err
+	}
 	return lastInsertedID, nil
 }
 
-// CreateGroupWithRequest creates a group and its authorization request in a single transaction
-func (r *PostgresRepository) CreateGroupWithRequest(ctx context.Context, group entities.ExtensionGroup, request entities.GroupRequest) (groupID int64, requestID int64, err error) {
-	// Begin transaction
+// CreateGroupWithRequests creates a group and its authorization requests in a single transaction
+func (r *PostgresRepository) CreateGroupWithRequests(ctx context.Context, group entities.ExtensionGroup, requests []entities.GroupRequest) (groupID int64, err error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		r.logger.Error("failed to begin transaction", zap.Error(err))
-		return -1, -1, fmt.Errorf("failed to begin transaction: %w", err)
+		return -1, fmt.Errorf("failed to begin transaction: %w", err)
 	}
-	defer tx.Rollback() // Rollback if commit is not called
+	defer tx.Rollback()
 
 	// 1. Create the group
 	groupSQL, groupArgs, err := queries.InsertGroup(newGroupToModel(group)).ToSql()
 	if err != nil {
 		r.logger.Error("failed to build group query", zap.Error(err))
-		return -1, -1, fmt.Errorf("failed to build group query: %w", err)
+		return -1, fmt.Errorf("failed to build group query: %w", err)
 	}
 
 	stmt, err := tx.PrepareContext(ctx, groupSQL)
 	if err != nil {
 		r.logger.Error("failed to prepare group statement", zap.Error(err))
-		return -1, -1, fmt.Errorf("failed to prepare group statement: %w", err)
+		return -1, fmt.Errorf("failed to prepare group statement: %w", err)
 	}
 	defer stmt.Close()
 
@@ -114,55 +127,55 @@ func (r *PostgresRepository) CreateGroupWithRequest(ctx context.Context, group e
 	if err != nil {
 		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == pgErrorCodeUniqueViolation {
 			r.logger.Error("duplicate group entry", zap.Error(err))
-			return -1, -1, httperrors.NewDuplicateEntryError(err)
+			return -1, httperrors.NewDuplicateEntryError(err)
 		}
 		r.logger.Error("failed to insert group", zap.Error(err))
-		return -1, -1, fmt.Errorf("failed to insert group: %w", err)
+		return -1, fmt.Errorf("failed to insert group: %w", err)
 	}
 
-	// 2. Create the group authorization request
-	requestSQL, requestArgs, err := queries.InsertGroupRequest(models.GroupRequest{
-		GroupID: groupID,
-		Status:  string(request.Status),
-		Faculty: string(request.Faculty),
-		Comments: sql.NullString{
-			String: request.Comments,
-			Valid:  request.Comments != "",
-		},
-	}).ToSql()
-	if err != nil {
-		r.logger.Error("failed to build request query", zap.Error(err))
-		return -1, -1, fmt.Errorf("failed to build request query: %w", err)
-	}
-
-	stmt2, err := tx.PrepareContext(ctx, requestSQL)
-	if err != nil {
-		r.logger.Error("failed to prepare request statement", zap.Error(err))
-		return -1, -1, fmt.Errorf("failed to prepare request statement: %w", err)
-	}
-	defer stmt2.Close()
-
-	err = stmt2.QueryRowContext(ctx, requestArgs...).Scan(&requestID)
-	if err != nil {
-		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == pgErrorCodeUniqueViolation {
-			r.logger.Error("duplicate group request entry", zap.Error(err))
-			return -1, -1, httperrors.NewDuplicateEntryError(err)
+	// 2. Create each authorization request
+	for _, req := range requests {
+		reqSQL, reqArgs, err := queries.InsertGroupRequest(models.GroupRequest{
+			GroupID: groupID,
+			Status:  string(req.Status),
+			Faculty: string(req.Faculty),
+			Comments: sql.NullString{
+				String: req.Comments,
+				Valid:  req.Comments != "",
+			},
+		}).ToSql()
+		if err != nil {
+			r.logger.Error("failed to build request query", zap.Error(err))
+			return -1, fmt.Errorf("failed to build request query: %w", err)
 		}
-		r.logger.Error("failed to insert group request", zap.Error(err))
-		return -1, -1, fmt.Errorf("failed to insert group request: %w", err)
+
+		reqStmt, err := tx.PrepareContext(ctx, reqSQL)
+		if err != nil {
+			r.logger.Error("failed to prepare request statement", zap.Error(err))
+			return -1, fmt.Errorf("failed to prepare request statement: %w", err)
+		}
+
+		var reqID int64
+		err = reqStmt.QueryRowContext(ctx, reqArgs...).Scan(&reqID)
+		reqStmt.Close()
+		if err != nil {
+			if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == pgErrorCodeUniqueViolation {
+				r.logger.Error("duplicate group request entry", zap.Error(err))
+				return -1, httperrors.NewDuplicateEntryError(err)
+			}
+			r.logger.Error("failed to insert group request", zap.Error(err))
+			return -1, fmt.Errorf("failed to insert group request: %w", err)
+		}
 	}
 
-	// 3. Commit the transaction
+	// 3. Commit
 	if err := tx.Commit(); err != nil {
 		r.logger.Error("failed to commit transaction", zap.Error(err))
-		return -1, -1, fmt.Errorf("failed to commit transaction: %w", err)
+		return -1, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	r.logger.Info("group and request created successfully",
-		zap.Int64("group_id", groupID),
-		zap.Int64("request_id", requestID))
-
-	return groupID, requestID, nil
+	r.logger.Info("group and requests created successfully", zap.Int64("group_id", groupID))
+	return groupID, nil
 }
 
 func (r *PostgresRepository) UpdateGroup(ctx context.Context, group entities.ExtensionGroup) error {
@@ -320,5 +333,80 @@ func newGroupFromModel(group models.ExtensionGroup) entities.ExtensionGroup {
 		CreatedAt: group.CreatedAt,
 		UpdatedAt: group.UpdatedAt,
 		DeletedAt: group.DeletedAt.String,
+	}
+}
+
+func (r *PostgresRepository) insertGroupMembers(ctx context.Context, groupID int64, members []entities.GroupMember) error {
+	for _, m := range members {
+		model := models.GroupMember{
+			Name:         m.Name,
+			CI:           m.CI,
+			Phone:        sql.NullString{String: m.Phone, Valid: m.Phone != ""},
+			Email:        sql.NullString{String: m.Email, Valid: m.Email != ""},
+			Coordination: sql.NullString{String: m.Coordination, Valid: m.Coordination != ""},
+			Year:         sql.NullInt64{Int64: int64(m.Year), Valid: m.Year != 0},
+			Faculty:      string(m.Faculty),
+			School:       sql.NullString{String: m.School, Valid: m.School != ""},
+			Document:     sql.NullString{String: m.Document, Valid: m.Document != ""},
+			IsActive:     m.IsActive,
+		}
+		query, args, err := queries.InsertGroupMember(groupID, model).ToSql()
+		if err != nil {
+			return err
+		}
+		stmt, err := r.db.PrepareContext(ctx, query)
+		if err != nil {
+			return err
+		}
+		var id int64
+		err = stmt.QueryRowContext(ctx, args...).Scan(&id)
+		stmt.Close()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *PostgresRepository) getGroupMembers(ctx context.Context, groupID string) ([]entities.GroupMember, error) {
+	query, args, err := queries.SelectGroupMembers(groupID).ToSql()
+	if err != nil {
+		return nil, err
+	}
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+	rows, err := stmt.QueryContext(ctx, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var members []entities.GroupMember
+	for rows.Next() {
+		var m models.GroupMember
+		err := rows.Scan(&m.ID, &m.Name, &m.CI, &m.Phone, &m.Email, &m.Coordination, &m.Year, &m.Faculty, &m.School, &m.Document, &m.IsActive)
+		if err != nil {
+			return nil, err
+		}
+		members = append(members, groupMemberFromModel(m))
+	}
+	return members, nil
+}
+
+func groupMemberFromModel(m models.GroupMember) entities.GroupMember {
+	return entities.GroupMember{
+		ID:           m.ID,
+		Name:         m.Name,
+		CI:           m.CI,
+		Phone:        m.Phone.String,
+		Email:        m.Email.String,
+		Coordination: m.Coordination.String,
+		Year:         int(m.Year.Int64),
+		Faculty:      entities.Faculty(m.Faculty),
+		School:       m.School.String,
+		Document:     m.Document.String,
+		IsActive:     m.IsActive,
 	}
 }

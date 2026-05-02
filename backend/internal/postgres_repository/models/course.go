@@ -21,6 +21,7 @@ type Course struct {
 	Faculty           sql.NullString
 	Location          sql.NullString
 	IsActive          bool
+	HasDocumentation  bool
 	CreatedAt         string
 	UpdatedAt         string
 	DeletedAt         sql.NullString

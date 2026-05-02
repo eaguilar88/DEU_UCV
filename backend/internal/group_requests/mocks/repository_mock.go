@@ -151,8 +151,8 @@ func (_c *MockRepository_GetGroupRequestByID_Call) Run(run func(ctx context.Cont
 	return _c
 }
 
-func (_c *MockRepository_GetGroupRequestByID_Call) Return(groupAuthRequest entities.GroupRequest, err error) *MockRepository_GetGroupRequestByID_Call {
-	_c.Call.Return(groupAuthRequest, err)
+func (_c *MockRepository_GetGroupRequestByID_Call) Return(groupRequest entities.GroupRequest, err error) *MockRepository_GetGroupRequestByID_Call {
+	_c.Call.Return(groupRequest, err)
 	return _c
 }
 
@@ -231,12 +231,80 @@ func (_c *MockRepository_GetGroupRequestsByFaculty_Call) Run(run func(ctx contex
 	return _c
 }
 
-func (_c *MockRepository_GetGroupRequestsByFaculty_Call) Return(groupAuthRequests []entities.GroupRequest, pageScope1 entities.PageScope, err error) *MockRepository_GetGroupRequestsByFaculty_Call {
-	_c.Call.Return(groupAuthRequests, pageScope1, err)
+func (_c *MockRepository_GetGroupRequestsByFaculty_Call) Return(groupRequests []entities.GroupRequest, pageScope1 entities.PageScope, err error) *MockRepository_GetGroupRequestsByFaculty_Call {
+	_c.Call.Return(groupRequests, pageScope1, err)
 	return _c
 }
 
 func (_c *MockRepository_GetGroupRequestsByFaculty_Call) RunAndReturn(run func(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.GroupRequest, entities.PageScope, error)) *MockRepository_GetGroupRequestsByFaculty_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetGroupRequestsByGroupID provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetGroupRequestsByGroupID(ctx context.Context, groupID string) ([]entities.GroupRequest, error) {
+	ret := _mock.Called(ctx, groupID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetGroupRequestsByGroupID")
+	}
+
+	var r0 []entities.GroupRequest
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]entities.GroupRequest, error)); ok {
+		return returnFunc(ctx, groupID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []entities.GroupRequest); ok {
+		r0 = returnFunc(ctx, groupID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]entities.GroupRequest)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, groupID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetGroupRequestsByGroupID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetGroupRequestsByGroupID'
+type MockRepository_GetGroupRequestsByGroupID_Call struct {
+	*mock.Call
+}
+
+// GetGroupRequestsByGroupID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - groupID string
+func (_e *MockRepository_Expecter) GetGroupRequestsByGroupID(ctx interface{}, groupID interface{}) *MockRepository_GetGroupRequestsByGroupID_Call {
+	return &MockRepository_GetGroupRequestsByGroupID_Call{Call: _e.mock.On("GetGroupRequestsByGroupID", ctx, groupID)}
+}
+
+func (_c *MockRepository_GetGroupRequestsByGroupID_Call) Run(run func(ctx context.Context, groupID string)) *MockRepository_GetGroupRequestsByGroupID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetGroupRequestsByGroupID_Call) Return(groupRequests []entities.GroupRequest, err error) *MockRepository_GetGroupRequestsByGroupID_Call {
+	_c.Call.Return(groupRequests, err)
+	return _c
+}
+
+func (_c *MockRepository_GetGroupRequestsByGroupID_Call) RunAndReturn(run func(ctx context.Context, groupID string) ([]entities.GroupRequest, error)) *MockRepository_GetGroupRequestsByGroupID_Call {
 	_c.Call.Return(run)
 	return _c
 }

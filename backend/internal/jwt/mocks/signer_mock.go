@@ -89,7 +89,11 @@ func (_c *MockSigner_GenerateJWT_Call) Run(run func(userID string, roles []entit
 		if args[2] != nil {
 			arg2 = args[2].(string)
 		}
-		run(arg0, arg1, arg2)
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -149,7 +153,9 @@ func (_c *MockSigner_ValidateToken_Call) Run(run func(tokenString string)) *Mock
 		if args[0] != nil {
 			arg0 = args[0].(string)
 		}
-		run(arg0)
+		run(
+			arg0,
+		)
 	})
 	return _c
 }

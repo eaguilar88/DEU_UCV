@@ -91,3 +91,18 @@ func DeleteGroup(groupID string) sq.DeleteBuilder {
 	return psql.Delete(groupsTableName).
 		Where(sq.Eq{"id": groupID})
 }
+
+var groupMembersTableName = fmt.Sprintf("%s.group_members", schema)
+
+func InsertGroupMember(groupID int64, m models.GroupMember) sq.InsertBuilder {
+	return psql.Insert(groupMembersTableName).
+		Columns("group_id", "name", "ci", "phone", "email", "coordination", "year", "faculty", "school", "document", "is_active").
+		Values(groupID, m.Name, m.CI, m.Phone, m.Email, m.Coordination, m.Year, m.Faculty, m.School, m.Document, m.IsActive).
+		Suffix("RETURNING id")
+}
+
+func SelectGroupMembers(groupID string) sq.SelectBuilder {
+	return psql.Select("id", "name", "ci", "phone", "email", "coordination", "year", "faculty", "school", "document", "is_active").
+		From(groupMembersTableName).
+		Where(sq.Eq{"group_id": groupID, "deleted_at": nil})
+}

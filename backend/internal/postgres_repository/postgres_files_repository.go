@@ -80,6 +80,7 @@ func (r *PostgresRepository) scanFile(rows scannable) (models.File, error) {
 		&file.UploadedBy,
 		&file.CreatedAt,
 		&file.DeletedAt,
+		&file.Version,
 	)
 	if err != nil {
 		return file, err
@@ -100,6 +101,7 @@ func newFileFromEntity(file entities.File) models.File {
 		FileKey:    file.Key,
 		Public:     file.Public,
 		Purpose:    file.Purpose,
+		Version:    file.Version,
 		Metadata:   file.MetaData,
 		UploadedBy: file.UploadedBy,
 		CreatedAt:  file.CreatedAt,
@@ -118,6 +120,7 @@ func newFileFromModel(file models.File) *entities.File {
 		OwnerType:  entities.OwnerType(file.OwnerType),
 		Public:     file.Public,
 		Purpose:    file.Purpose,
+		Version:    file.Version,
 		MetaData:   file.Metadata,
 		Key:        file.FileKey,
 		UploadedBy: file.UploadedBy,
@@ -129,4 +132,37 @@ func newFileFromModel(file models.File) *entities.File {
 	}
 
 	return model
+}
+
+func (r *PostgresRepository) GetFilesByOwnerAndPurpose(ctx context.Context, ownerID, ownerType, purpose string) ([]*entities.File, error) {
+	query, args, err := queries.GetFilesByOwnerAndPurpose(ownerID, ownerType, purpose).ToSql()
+	if err != nil {
+		return nil, err
+	}
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+	rows, err := stmt.QueryContext(ctx, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var files []*entities.File
+	for rows.Next() {
+		file, err := r.scanFile(rows)
+		if err != nil {
+			return nil, err
+		}
+		files = append(files, newFileFromModel(file))
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if files == nil {
+		files = []*entities.File{}
+	}
+	return files, nil
 }

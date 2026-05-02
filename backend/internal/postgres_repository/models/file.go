@@ -9,6 +9,7 @@ type File struct {
 	FileKey    string
 	Public     bool
 	Purpose    string
+	Version    int
 	Metadata   map[string]string
 	UploadedBy string
 	CreatedAt  string

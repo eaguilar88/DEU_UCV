@@ -24,6 +24,7 @@ var providerQuerySelectCommon = []string{
 	"u.email",
 	"u.first_name",
 	"u.last_name",
+	"p.faculty",
 }
 
 func GetProviderByID(id string, status, isDeleted bool) sq.SelectBuilder {
@@ -44,6 +45,13 @@ func GetProviderByCode(code string) sq.SelectBuilder {
 		From(fmt.Sprintf("%s AS p", providersTableName)).
 		Join(fmt.Sprintf("%s AS u ON u.id = p.user_id", usersTableName)).
 		Where(sq.Eq{"p.code": code})
+}
+
+func GetProviderContactInfoByID(providerID string) sq.SelectBuilder {
+	return psql.Select("u.id", "u.email", "u.first_name", "u.last_name").
+		From(fmt.Sprintf("%s AS p", providersTableName)).
+		Join(fmt.Sprintf("%s AS u ON u.id = p.user_id", usersTableName)).
+		Where(sq.Eq{"p.id": providerID})
 }
 
 func GetProviderByUserID(userID string) sq.SelectBuilder {
@@ -108,6 +116,7 @@ func CreateProvider(provider models.Provider) sq.InsertBuilder {
 			"is_internal",
 			"bio",
 			"code",
+			"faculty",
 		).
 		Values(
 			provider.UserID,
@@ -117,6 +126,7 @@ func CreateProvider(provider models.Provider) sq.InsertBuilder {
 			provider.IsInternal,
 			provider.Bio,
 			provider.Code,
+			provider.Faculty,
 		).
 		Suffix("RETURNING id")
 }
@@ -131,6 +141,7 @@ func UpdateProvider(provider models.Provider) sq.UpdateBuilder {
 		Set("bio", provider.Bio).
 		Set("code", provider.Code).
 		Set("is_active", provider.IsActive).
+		Set("faculty", provider.Faculty).
 		Set("updated_at", sq.Expr("NOW()")).
 		Where(sq.Eq{"id": provider.ID})
 }

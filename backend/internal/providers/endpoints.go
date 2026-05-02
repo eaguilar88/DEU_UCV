@@ -21,6 +21,7 @@ type Service interface {
 	CreateProvider(ctx context.Context, provider *entities.Provider) (int64, error)
 	UpdateProvider(ctx context.Context, providerID string, provider *entities.Provider) error
 	DeleteProvider(ctx context.Context, providerID string) error
+	UploadProviderDocuments(ctx context.Context, userID string, intentionLetter, commitmentLetter *entities.File) error
 }
 
 // Handler holds the HTTP handler dependencies for the providers domain.
@@ -144,6 +145,34 @@ func (h *Handler) DeleteProvider(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
+func (h *Handler) UploadProviderDocuments(c echo.Context) error {
+	userID, ok := c.Get("userID").(string)
+	if !ok {
+		return httperrors.NewUnauthorized("authentication required")
+	}
+
+	commitmentLetter, err := utils.GetFileFrom(c, "carta_compromiso")
+	if err != nil {
+		return httperrors.NewBadRequest("carta_compromiso es requerida")
+	}
+
+	var intentionLetter *entities.File
+	if il, err := utils.GetFileFrom(c, "carta_intencion"); err == nil {
+		intentionLetter = il
+	}
+
+	if err := h.svc.UploadProviderDocuments(c.Request().Context(), userID, intentionLetter, commitmentLetter); err != nil {
+		if errors.Is(err, ErrNoIntentionLetter) {
+			return httperrors.NewBadRequest(err.Error())
+		}
+		if errors.Is(err, ErrProviderNotFound) {
+			return httperrors.NewNotFound("provider not found")
+		}
+		return httperrors.NewInternal(err)
+	}
+	return c.NoContent(http.StatusCreated)
+}
+
 func makeProviderFromRequest(c echo.Context, userID string, logger *zap.Logger) (*entities.Provider, error) {
 	providerType := c.FormValue("tipo_proveedor")
 	party := c.FormValue("tipo_persona")
@@ -151,6 +180,7 @@ func makeProviderFromRequest(c echo.Context, userID string, logger *zap.Logger) 
 	name := c.FormValue("nombre")
 	bio := c.FormValue("bio")
 	isInternal := c.FormValue("es_interno")
+	faculty := c.FormValue("facultad")
 
 	if providerType != string(entities.CourseProviderType) && providerType != string(entities.GroupProviderType) {
 		return nil, errors.New("tipo_proveedor must be 'courses' or 'groups'")
@@ -207,6 +237,7 @@ func makeProviderFromRequest(c echo.Context, userID string, logger *zap.Logger) 
 		PartyType:  entities.ProviderPartyType(party),
 		ProfitType: entities.ProviderProfitType(profitType),
 		IsInternal: isInternal == "true",
+		Faculty:    entities.Faculty(faculty),
 		Files: entities.ProviderFiles{
 			CI:   ci,
 			RIF:  rif,
