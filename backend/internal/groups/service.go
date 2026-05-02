@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+
 	"github.com/eaguilar88/deu/internal/entities"
 	"go.uber.org/zap"
 )
