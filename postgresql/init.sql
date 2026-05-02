@@ -134,6 +134,7 @@ CREATE TABLE
     faculty faculty_enum DEFAULT 'DEU', -- facultad
     location course_location_enum, -- ubicacion
     is_active BOOLEAN DEFAULT FALSE,
+    has_documentation BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT NOW (),
     updated_at TIMESTAMP DEFAULT NOW (),
     deleted_at TIMESTAMP DEFAULT NULL
@@ -309,6 +310,7 @@ files (
   owner_id INTEGER NOT NULL,
   file_key TEXT NOT NULL,
   purpose TEXT NOT NULL,
+  version INTEGER DEFAULT 1,
   public BOOLEAN DEFAULT false,
   metadata JSONB,
   uploaded_by INTEGER REFERENCES deu.users(id),

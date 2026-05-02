@@ -256,6 +256,7 @@ func addProviderRoutes(e *echo.Echo, endpoints *providers.Handler, middlewares .
 	group.GET("/:id", endpoints.GetProvider)
 	group.GET("", endpoints.GetProviders)
 	group.POST("", endpoints.CreateProvider)
+	group.POST("/documents", endpoints.UploadProviderDocuments)
 	group.PUT("/:id", endpoints.UpdateProvider)
 	group.DELETE("/:id", endpoints.DeleteProvider)
 }

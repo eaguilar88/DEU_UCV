@@ -38,9 +38,10 @@ type Course struct {
 	Objectives        string
 	Owner             User
 	Periods           []CoursePeriod
-	Type              CourseType
-	CreatedAt         string
-	UpdatedAt         string
+	Type             CourseType
+	HasDocumentation bool
+	CreatedAt        string
+	UpdatedAt        string
 }
 
 func (ct CourseType) IsValid() bool {

@@ -225,6 +225,7 @@ func scanCourse(row scannable) (models.Course, error) {
 		&course.Faculty,
 		&course.Location,
 		&course.IsActive,
+		&course.HasDocumentation,
 		&course.CreatedAt,
 		&course.UpdatedAt,
 		&course.DeletedAt,
@@ -235,10 +236,11 @@ func scanCourse(row scannable) (models.Course, error) {
 
 func newCourseFromModel(course models.Course) entities.Course {
 	c := entities.Course{
-		ID:        course.ID,
-		Name:      course.Name,
-		CreatedAt: course.CreatedAt,
-		UpdatedAt: course.UpdatedAt,
+		ID:               course.ID,
+		Name:             course.Name,
+		HasDocumentation: course.HasDocumentation,
+		CreatedAt:        course.CreatedAt,
+		UpdatedAt:        course.UpdatedAt,
 	}
 
 	if course.Description.Valid {
@@ -364,8 +366,23 @@ func newCourseModelFromEntities(course entities.Course) models.Course {
 			String: course.Location,
 			Valid:  course.Location != "",
 		},
-		IsActive:  false,
-		CreatedAt: course.CreatedAt,
-		UpdatedAt: course.UpdatedAt,
+		IsActive:         false,
+		HasDocumentation: course.HasDocumentation,
+		CreatedAt:        course.CreatedAt,
+		UpdatedAt:        course.UpdatedAt,
 	}
+}
+
+func (r *PostgresRepository) MarkCoursesWithDocumentation(ctx context.Context, providerID, from, to string) error {
+	query, args, err := queries.MarkCoursesWithDocumentation(providerID, from, to).ToSql()
+	if err != nil {
+		return err
+	}
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	_, err = stmt.ExecContext(ctx, args...)
+	return err
 }

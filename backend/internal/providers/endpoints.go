@@ -21,6 +21,7 @@ type Service interface {
 	CreateProvider(ctx context.Context, provider *entities.Provider) (int64, error)
 	UpdateProvider(ctx context.Context, providerID string, provider *entities.Provider) error
 	DeleteProvider(ctx context.Context, providerID string) error
+	UploadProviderDocuments(ctx context.Context, userID string, intentionLetter, commitmentLetter *entities.File) error
 }
 
 // Handler holds the HTTP handler dependencies for the providers domain.
@@ -142,6 +143,34 @@ func (h *Handler) DeleteProvider(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusNoContent)
+}
+
+func (h *Handler) UploadProviderDocuments(c echo.Context) error {
+	userID, ok := c.Get("userID").(string)
+	if !ok {
+		return httperrors.NewUnauthorized("authentication required")
+	}
+
+	commitmentLetter, err := utils.GetFileFrom(c, "carta_compromiso")
+	if err != nil {
+		return httperrors.NewBadRequest("carta_compromiso es requerida")
+	}
+
+	var intentionLetter *entities.File
+	if il, err := utils.GetFileFrom(c, "carta_intencion"); err == nil {
+		intentionLetter = il
+	}
+
+	if err := h.svc.UploadProviderDocuments(c.Request().Context(), userID, intentionLetter, commitmentLetter); err != nil {
+		if errors.Is(err, ErrNoIntentionLetter) {
+			return httperrors.NewBadRequest(err.Error())
+		}
+		if errors.Is(err, ErrProviderNotFound) {
+			return httperrors.NewNotFound("provider not found")
+		}
+		return httperrors.NewInternal(err)
+	}
+	return c.NoContent(http.StatusCreated)
 }
 
 func makeProviderFromRequest(c echo.Context, userID string, logger *zap.Logger) (*entities.Provider, error) {

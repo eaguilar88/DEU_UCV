@@ -19,6 +19,7 @@ var fileQuerySelectCommon = []string{
 	"f.uploaded_by",
 	"f.created_at",
 	"f.deleted_at",
+	"f.version",
 }
 
 func GetFileByID(fileID string) sq.SelectBuilder {
@@ -40,6 +41,7 @@ func InsertFile(files []models.File) sq.InsertBuilder {
 			"owner_type",
 			"file_key",
 			"purpose",
+			"version",
 			"metadata",
 			"uploaded_by",
 		).
@@ -50,11 +52,20 @@ func InsertFile(files []models.File) sq.InsertBuilder {
 			file.OwnerType,
 			file.FileKey,
 			file.Purpose,
+			file.Version,
 			marshalMetadata(file.Metadata),
 			file.UploadedBy,
 		)
 	}
 	return queryBuilder
+}
+
+func GetFilesByOwnerAndPurpose(ownerID, ownerType, purpose string) sq.SelectBuilder {
+	return psql.Select(fileQuerySelectCommon...).
+		From(fmt.Sprintf("%s AS f", filesTableName)).
+		Where(sq.Eq{"f.owner_id": ownerID, "f.owner_type": ownerType, "f.purpose": purpose}).
+		Where(sq.Eq{"f.deleted_at": nil}).
+		OrderBy("f.version ASC")
 }
 
 func marshalMetadata(metadata map[string]string) string {
