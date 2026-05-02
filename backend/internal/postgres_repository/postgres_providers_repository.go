@@ -81,6 +81,27 @@ func (r *PostgresRepository) GetProviderByUserID(ctx context.Context, userID str
 	return newProviderFromModel(provider), nil
 }
 
+func (r *PostgresRepository) GetProviderContactInfo(ctx context.Context, providerID string) (entities.User, error) {
+	query, args, err := queries.GetProviderContactInfoByID(providerID).ToSql()
+	if err != nil {
+		return entities.User{}, err
+	}
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		return entities.User{}, err
+	}
+	defer stmt.Close()
+	var user entities.User
+	err = stmt.QueryRowContext(ctx, args...).Scan(&user.ID, &user.Email, &user.FirstName, &user.LastName)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return entities.User{}, fmt.Errorf("%w: %w", providers.ErrProviderNotFound, err)
+		}
+		return entities.User{}, err
+	}
+	return user, nil
+}
+
 func (r *PostgresRepository) GetProviders(ctx context.Context, pageScope entities.PageScope, filters entities.ProviderFilters) ([]entities.Provider, entities.PageScope, error) {
 	query, args, err := queries.GetProviders(filters, pageScope.PerPage, pageScope.Offset()).ToSql()
 	if err != nil {

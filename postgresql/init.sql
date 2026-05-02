@@ -41,6 +41,22 @@ CREATE TABLE
     deleted_at TIMESTAMP DEFAULT NULL
   );
 
+CREATE TYPE faculty_enum AS ENUM (
+  'Agronomía',
+  'Arquitectura y Urbanismo',
+  'Ciencias',
+  'Ciencias Económicas y Sociales',
+  'Ciencias Jurídicas y Políticas',
+  'Ciencias Veterinarias',
+  'Farmacia',
+  'Humanidades y Educación',
+  'Ingeniería',
+  'Medicina',
+  'Odontología',
+  'DEU',
+  'NA'
+);
+
 -- Tabla para almacenar información de proveedores. Un proveedor es aquel que tiene código de proveedor asignado por la DEU.
 -- Únicamente los coordinadores de cursos y los representantes de grupos de extensión pueden ser proveedores
 CREATE TABLE
@@ -70,22 +86,6 @@ CREATE TABLE
     updated_at TIMESTAMP DEFAULT NOW (),
     deleted_at TIMESTAMP DEFAULT NULL
   );
-
-CREATE TYPE faculty_enum AS ENUM (
-  'Agronomía',
-  'Arquitectura y Urbanismo',
-  'Ciencias',
-  'Ciencias Económicas y Sociales',
-  'Ciencias Jurídicas y Políticas',
-  'Ciencias Veterinarias',
-  'Farmacia',
-  'Humanidades y Educación',
-  'Ingeniería',
-  'Medicina',
-  'Odontología',
-  'DEU',
-  'NA'
-);
 
 -- Tabla para almacenar relaciones usuario-rol
 CREATE TABLE deu.user_roles (

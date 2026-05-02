@@ -38,6 +38,7 @@ type Repository interface {
 	CreateProviderRequest(ctx context.Context, providerID int64) error
 
 	GetProviderByUserID(ctx context.Context, userID string) (entities.Provider, error)
+	GetProviderContactInfo(ctx context.Context, providerID string) (entities.User, error)
 
 	// Files
 	GetFilesByOwner(ctx context.Context, ownerID string, ownerType entities.OwnerType) (entities.GroupedFiles, error)
@@ -213,21 +214,17 @@ func (s *service) CreateProvider(ctx context.Context, provider *entities.Provide
 		return -1, fmt.Errorf("failed to create provider request: %w", err)
 	}
 
-	p, err := s.repo.GetProvider(ctx, provider.ID)
+	contact, err := s.repo.GetProviderContactInfo(ctx, provider.ID)
 	if err != nil {
-		s.logger.Error("failed to get provider", zap.Error(err))
+		s.logger.Error("failed to get provider contact info", zap.Error(err))
 		return -1, err
 	}
 
-	provider.User.Email = p.User.Email
-	provider.User.FirstName = p.User.FirstName
-	provider.User.LastName = p.User.LastName
-	if err := s.emailClient.Send(ctx, provider.User.Email, "Solicitud de registro recibida", "Tu solicitud de registro como proveedor ha sido recibida y está bajo revisión. Recibirás una notificación cuando sea procesada."); err != nil {
-		s.logger.Error("failed to send provider registration email",
+	if err := s.emailClient.Send(ctx, contact.Email, "Solicitud de registro recibida", "Tu solicitud de registro como proveedor ha sido recibida y está bajo revisión. Recibirás una notificación cuando sea procesada."); err != nil {
+		s.logger.Warn("failed to send provider registration email",
 			zap.Error(err),
 			zap.String("action", "send_email"),
 		)
-		return -1, fmt.Errorf("error sending provider registration email: %w", err)
 	}
 
 	return createdProviderID, nil

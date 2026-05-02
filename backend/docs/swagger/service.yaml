@@ -116,7 +116,7 @@ components:
           enum: [ natural, juridica ]
         profit_type:
           type: string
-          enum: [ lucrativa, no_lucrativa ]
+          enum: [ lucrativo, no_lucrativo ]
         is_internal:
           type: boolean
         bio:
@@ -125,6 +125,9 @@ components:
           type: string
         is_active:
           type: boolean
+        facultad:
+          type: string
+          description: Faculty the provider belongs to (faculty_enum value)
         user:
           $ref: "#/components/schemas/User"
         created_at:
@@ -317,20 +320,39 @@ components:
 
     # ── Group Requests ────────────────────────────────────────────────────────
 
+    ApprovalItem:
+      type: object
+      properties:
+        id:
+          type: string
+        facultad:
+          type: string
+        estado:
+          $ref: "#/components/schemas/RequestStatus"
+        revisado_en:
+          type: string
+          format: date-time
+
     GroupRequest:
       type: object
       properties:
         id:
           type: string
-        group_id:
+        grupo_id:
           type: string
-        status:
+        estado:
           $ref: "#/components/schemas/RequestStatus"
-        comments:
+        facultad:
           type: string
-        created_at:
+        comentarios:
           type: string
-        updated_at:
+        aprobaciones:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApprovalItem"
+        creado_en:
+          type: string
+        actualizado_en:
           type: string
 
     # ── Provider Requests ─────────────────────────────────────────────────────
@@ -559,11 +581,113 @@ paths:
       tags: [ Providers ]
       security:
         - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [ tipo_proveedor, tipo_persona, tipo_lucro, ci, rif, islr, logo ]
+              properties:
+                tipo_proveedor:
+                  type: string
+                  enum: [ courses, groups ]
+                tipo_persona:
+                  type: string
+                  enum: [ natural, juridical ]
+                tipo_lucro:
+                  type: string
+                  enum: [ lucrativo, no_lucrativo ]
+                nombre:
+                  type: string
+                bio:
+                  type: string
+                es_interno:
+                  type: string
+                  enum: [ "true", "false" ]
+                facultad:
+                  type: string
+                  description: faculty_enum value (e.g. Ingeniería, Medicina, DEU)
+                ci:
+                  type: string
+                  format: binary
+                rif:
+                  type: string
+                  format: binary
+                islr:
+                  type: string
+                  format: binary
+                logo:
+                  type: string
+                  format: binary
+                resumes:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: At least one resume file is required
+                others:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
       responses:
         "201":
           description: Provider created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+        "400":
+          description: Missing or invalid fields
+        "401":
+          description: Unauthorized
         "409":
           description: Duplicate entry
+
+  /providers/documents:
+    post:
+      summary: Upload provider documents
+      description: >
+        Upload an intention letter and/or commitment letter for the authenticated provider.
+        The commitment letter is required; the intention letter is optional if one already exists in the database.
+        Each commitment letter upload is versioned automatically (v1, v2, …).
+        After upload, all courses for this provider created since the previous commitment letter are marked as has_documentation=true.
+      tags: [ Providers ]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [ carta_compromiso ]
+              properties:
+                carta_compromiso:
+                  type: string
+                  format: binary
+                  description: Commitment letter (required). Versioned automatically.
+                carta_intencion:
+                  type: string
+                  format: binary
+                  description: Intention letter (required only if none exists in the database yet).
+      responses:
+        "201":
+          description: Documents uploaded and courses marked
+        "400":
+          description: carta_compromiso missing, or no intention letter on file and none provided
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+        "404":
+          description: Provider not found for the authenticated user
 
   /providers/{id}:
     get:

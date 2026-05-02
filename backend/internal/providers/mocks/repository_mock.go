@@ -570,6 +570,72 @@ func (_c *MockRepository_GetProviderByUserID_Call) RunAndReturn(run func(ctx con
 	return _c
 }
 
+// GetProviderContactInfo provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetProviderContactInfo(ctx context.Context, providerID string) (entities.User, error) {
+	ret := _mock.Called(ctx, providerID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetProviderContactInfo")
+	}
+
+	var r0 entities.User
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (entities.User, error)); ok {
+		return returnFunc(ctx, providerID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) entities.User); ok {
+		r0 = returnFunc(ctx, providerID)
+	} else {
+		r0 = ret.Get(0).(entities.User)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, providerID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetProviderContactInfo_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetProviderContactInfo'
+type MockRepository_GetProviderContactInfo_Call struct {
+	*mock.Call
+}
+
+// GetProviderContactInfo is a helper method to define mock.On call
+//   - ctx context.Context
+//   - providerID string
+func (_e *MockRepository_Expecter) GetProviderContactInfo(ctx interface{}, providerID interface{}) *MockRepository_GetProviderContactInfo_Call {
+	return &MockRepository_GetProviderContactInfo_Call{Call: _e.mock.On("GetProviderContactInfo", ctx, providerID)}
+}
+
+func (_c *MockRepository_GetProviderContactInfo_Call) Run(run func(ctx context.Context, providerID string)) *MockRepository_GetProviderContactInfo_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetProviderContactInfo_Call) Return(user entities.User, err error) *MockRepository_GetProviderContactInfo_Call {
+	_c.Call.Return(user, err)
+	return _c
+}
+
+func (_c *MockRepository_GetProviderContactInfo_Call) RunAndReturn(run func(ctx context.Context, providerID string) (entities.User, error)) *MockRepository_GetProviderContactInfo_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetProviders provides a mock function for the type MockRepository
 func (_mock *MockRepository) GetProviders(ctx context.Context, pageScope entities.PageScope, filters entities.ProviderFilters) ([]entities.Provider, entities.PageScope, error) {
 	ret := _mock.Called(ctx, pageScope, filters)

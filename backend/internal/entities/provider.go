@@ -25,12 +25,14 @@ const (
 	GroupProviderType  ProviderType = "groups"
 
 	// File types for providers
-	ProviderFileTypeCI     = "ci"
-	ProviderFileTypeRIF    = "rif"
-	ProviderFileTypeISLR   = "islr"
-	ProviderFileTypeResume = "resume"
-	ProviderFileTypeOther  = "other"
-	ProviderFileTypeLogo   = "logo"
+	ProviderFileTypeCI               = "ci"
+	ProviderFileTypeRIF              = "rif"
+	ProviderFileTypeISLR             = "islr"
+	ProviderFileTypeResume           = "curriculums"
+	ProviderFileTypeOther            = "otros"
+	ProviderFileTypeLogo             = "logo"
+	ProviderFileTypeIntentionLetter  = "carta_intencion"
+	ProviderFileTypeCommitmentLetter = "carta_compromiso"
 
 	// Legal identity types
 	PartyTypeNatural   ProviderPartyType = "natural"
@@ -42,12 +44,14 @@ const (
 )
 
 type ProviderFiles struct {
-	Logo    *File
-	CI      *File
-	RIF     *File
-	ISLR    *File
-	Resumes []*File
-	Others  []*File
+	Logo              *File
+	CI                *File
+	RIF               *File
+	ISLR              *File
+	Resumes           []*File
+	Others            []*File
+	IntentionLetter   *File
+	CommitmentLetters []*File
 }
 
 type Provider struct {

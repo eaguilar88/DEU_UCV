@@ -47,6 +47,13 @@ func GetProviderByCode(code string) sq.SelectBuilder {
 		Where(sq.Eq{"p.code": code})
 }
 
+func GetProviderContactInfoByID(providerID string) sq.SelectBuilder {
+	return psql.Select("u.id", "u.email", "u.first_name", "u.last_name").
+		From(fmt.Sprintf("%s AS p", providersTableName)).
+		Join(fmt.Sprintf("%s AS u ON u.id = p.user_id", usersTableName)).
+		Where(sq.Eq{"p.id": providerID})
+}
+
 func GetProviderByUserID(userID string) sq.SelectBuilder {
 	return psql.Select(providerQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS p", providersTableName)).
