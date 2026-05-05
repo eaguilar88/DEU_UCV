@@ -9,14 +9,14 @@ import (
 )
 
 const (
-	clientDateFormat  = "2-1-2006"   // D-M-YYYY used on the API surface
+	clientDateFormat  = "02-01-2006" // DD-MM-YYYY used on the API surface
 	storageDateFormat = "2006-01-02" // YYYY-MM-DD stored in DB
 )
 
 func parseDateOfBirth(raw string) (string, error) {
 	dob, err := time.Parse(clientDateFormat, raw)
 	if err != nil || dob.Format(clientDateFormat) != raw {
-		return "", errors.New("fecha_de_nacimiento must be in D-M-YYYY format")
+		return "", errors.New("fecha_de_nacimiento must be in DD-MM-YYYY format")
 	}
 	return dob.Format(storageDateFormat), nil
 }

@@ -14,13 +14,13 @@ func TestToUserEntity(t *testing.T) {
 		wantErr     bool
 	}{
 		{
-			name:        "valid date D-M-YYYY",
-			dateOfBirth: "15-3-1990",
+			name:        "valid date DD-MM-YYYY",
+			dateOfBirth: "15-03-1990",
 			wantDOB:     "1990-03-15",
 		},
 		{
 			name:        "valid date single digit day and month",
-			dateOfBirth: "1-1-2000",
+			dateOfBirth: "01-01-2000",
 			wantDOB:     "2000-01-01",
 		},
 		{
@@ -29,8 +29,8 @@ func TestToUserEntity(t *testing.T) {
 			wantDOB:     "1985-12-25",
 		},
 		{
-			name:        "wrong order M-D-YYYY with impossible month",
-			dateOfBirth: "3-15-1990",
+			name:        "wrong order DD-MM-YYYY with impossible month",
+			dateOfBirth: "03-15-1990",
 			wantErr:     true,
 		},
 		{
