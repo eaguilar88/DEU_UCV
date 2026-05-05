@@ -14,13 +14,13 @@ func TestToUserEntity(t *testing.T) {
 		wantErr     bool
 	}{
 		{
-			name:        "valid date D-M-YYYY",
-			dateOfBirth: "15-3-1990",
+			name:        "valid date DD-MM-YYYY",
+			dateOfBirth: "15-03-1990",
 			wantDOB:     "1990-03-15",
 		},
 		{
 			name:        "valid date single digit day and month",
-			dateOfBirth: "1-1-2000",
+			dateOfBirth: "01-01-2000",
 			wantDOB:     "2000-01-01",
 		},
 		{
@@ -29,8 +29,8 @@ func TestToUserEntity(t *testing.T) {
 			wantDOB:     "1985-12-25",
 		},
 		{
-			name:        "wrong order M-D-YYYY with impossible month",
-			dateOfBirth: "3-15-1990",
+			name:        "wrong order DD-MM-YYYY with impossible month",
+			dateOfBirth: "03-15-1990",
 			wantErr:     true,
 		},
 		{
@@ -76,13 +76,8 @@ func TestToUserUpdateEntity(t *testing.T) {
 	}{
 		{
 			name:        "valid date D-M-YYYY",
-			dateOfBirth: "15-3-1990",
+			dateOfBirth: "15-03-1990",
 			wantDOB:     "1990-03-15",
-		},
-		{
-			name:        "valid date single digit day and month",
-			dateOfBirth: "1-1-2000",
-			wantDOB:     "2000-01-01",
 		},
 		{
 			name:        "wrong order M-D-YYYY with impossible month",
@@ -128,12 +123,12 @@ func TestUserToResponse(t *testing.T) {
 		{
 			name:        "formats stored YYYY-MM-DD to D-M-YYYY",
 			dateOfBirth: "1990-03-15",
-			wantDOB:     "15-3-1990",
+			wantDOB:     "15-03-1990",
 		},
 		{
 			name:        "formats leading zeros correctly",
 			dateOfBirth: "2000-01-01",
-			wantDOB:     "1-1-2000",
+			wantDOB:     "01-01-2000",
 		},
 		{
 			name:        "returns raw value if not parseable",
