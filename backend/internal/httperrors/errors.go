@@ -8,12 +8,11 @@ import (
 )
 
 var (
-	errScan            = errors.New("scan error")
-	errBadQuery        = errors.New("bad query error")
-	errDuplicateEntry  = errors.New("duplicated entry")
-	errNotFound        = errors.New("rows not found")
-	errInvalidPassword = errors.New("invalid password")
-	errInternal        = errors.New("internal error")
+	errScan           = errors.New("scan error")
+	errBadQuery       = errors.New("bad query error")
+	errDuplicateEntry = errors.New("duplicated entry")
+	errNotFound       = errors.New("rows not found")
+	errInternal       = errors.New("internal error")
 )
 
 type CustomError interface {
