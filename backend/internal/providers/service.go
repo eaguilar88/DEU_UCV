@@ -35,6 +35,7 @@ type Repository interface {
 	CreateProvider(ctx context.Context, provider entities.Provider) (int64, error)
 	UpdateProvider(ctx context.Context, providerID string, provider entities.Provider) error
 	DeleteProvider(ctx context.Context, providerID string) error
+	UpdateProviderStatus(ctx context.Context, providerID string) error
 	CreateProviderRequest(ctx context.Context, providerID int64) error
 
 	GetProviderByUserID(ctx context.Context, userID string) (entities.Provider, error)
@@ -365,6 +366,14 @@ func (s *service) DeleteProvider(ctx context.Context, providerID string) error {
 	if err != nil {
 		s.logger.Error("failed to delete provider", zap.Error(err))
 		return err
+	}
+	return nil
+}
+
+// ApproveProvider changes the status of a provider to active
+func (s *service) ApproveProvider(ctx context.Context, providerID string) error {
+	if err := s.repo.UpdateProviderStatus(ctx, providerID); err != nil {
+		s.logger.Error("error enabling provider", zap.Error(err))
 	}
 	return nil
 }

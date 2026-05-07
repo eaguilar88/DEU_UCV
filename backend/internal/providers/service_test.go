@@ -304,8 +304,12 @@ func TestService_GetProviders(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:    "filter by is_active true",
-			filters: entities.ProviderFilters{IsActive: &trueVal},
+			name: "filter by is_active true",
+			filters: entities.ProviderFilters{
+				ProviderAdminFilters: entities.ProviderAdminFilters{
+					IsActive: &trueVal,
+				},
+			},
 			prepare: func(repoMock *mocks.MockRepository) {
 				repoMock.EXPECT().GetProviders(mock.Anything, mock.Anything, mock.Anything).
 					RunAndReturn(func(_ context.Context, ps entities.PageScope, f entities.ProviderFilters) ([]entities.Provider, entities.PageScope, error) {

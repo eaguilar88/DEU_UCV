@@ -2,6 +2,7 @@ package users
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/eaguilar88/deu/internal/entities"
@@ -15,8 +16,12 @@ const (
 
 func parseDateOfBirth(raw string) (string, error) {
 	dob, err := time.Parse(clientDateFormat, raw)
-	if err != nil || dob.Format(clientDateFormat) != raw {
-		return "", errors.New("fecha_de_nacimiento must be in DD-MM-YYYY format")
+	if err != nil {
+		return "", fmt.Errorf("error con la fecha de nacimiento: %v", err)
+	}
+
+	if dob.Format(clientDateFormat) != raw {
+		return "", errors.New("fecha_de_nacimiento debe estar en formato DD-MM-YYYY")
 	}
 	return dob.Format(storageDateFormat), nil
 }

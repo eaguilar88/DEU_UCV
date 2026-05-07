@@ -83,7 +83,7 @@ func (r *PostgresRepository) CreateCourse(ctx context.Context, course entities.C
 			return -1, httperrors.NewDuplicateEntryError(err)
 		}
 		r.logger.Error("error inserting user", zap.Error(err))
-		return -1, httperrors.NewInternalError(err)
+		return -1, httperrors.NewInternal(err)
 	}
 	return lastInsertedID, nil
 }

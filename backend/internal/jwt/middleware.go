@@ -32,7 +32,7 @@ func JWTMiddleware(signer Signer, logger *zap.Logger) echo.MiddlewareFunc {
 			}
 
 			// Extract "v1" map from claims
-			v1Claims, ok := claims["v1"].(map[string]interface{})
+			v1Claims, ok := claims["v1"].(map[string]any)
 			if !ok {
 				logger.Error("v1 claims missing or invalid")
 				return echo.NewHTTPError(http.StatusUnauthorized, authErrorMessage)
@@ -47,7 +47,7 @@ func JWTMiddleware(signer Signer, logger *zap.Logger) echo.MiddlewareFunc {
 
 			// Extract roles from v1 map
 			var roles []string
-			if rolesRaw, ok := v1Claims["roles"].([]interface{}); ok {
+			if rolesRaw, ok := v1Claims["roles"].([]any); ok {
 				for _, r := range rolesRaw {
 					if roleName, ok := r.(string); ok {
 						roles = append(roles, roleName)

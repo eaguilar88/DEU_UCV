@@ -73,7 +73,12 @@ type Provider struct {
 }
 
 type ProviderFilters struct {
-	Type          ProviderType
+	Faculty Faculty
+	Type    ProviderType
+	ProviderAdminFilters
+}
+
+type ProviderAdminFilters struct {
 	PartyType     ProviderPartyType
 	ProfitType    ProviderProfitType
 	IsInternal    *bool
