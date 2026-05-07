@@ -89,8 +89,7 @@ func (h *Handler) GetProviders(c echo.Context) error {
 		}
 	}
 
-	roles := c.Get("roles").([]string)
-	if slices.Contains(roles, "faculty_admin") {
+	if roles, ok := c.Get("roles").([]string); ok && slices.Contains(roles, "faculty_admin") {
 		filters.PartyType = entities.ProviderPartyType(c.QueryParam("party_type"))
 		filters.ProfitType = entities.ProviderProfitType(c.QueryParam("profit_type"))
 		filters.Code = c.QueryParam("code")
