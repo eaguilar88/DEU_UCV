@@ -904,3 +904,60 @@ func (_c *MockRepository_UpdateProvider_Call) RunAndReturn(run func(ctx context.
 	_c.Call.Return(run)
 	return _c
 }
+
+// UpdateProviderStatus provides a mock function for the type MockRepository
+func (_mock *MockRepository) UpdateProviderStatus(ctx context.Context, providerID string) error {
+	ret := _mock.Called(ctx, providerID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateProviderStatus")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, providerID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockRepository_UpdateProviderStatus_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateProviderStatus'
+type MockRepository_UpdateProviderStatus_Call struct {
+	*mock.Call
+}
+
+// UpdateProviderStatus is a helper method to define mock.On call
+//   - ctx context.Context
+//   - providerID string
+func (_e *MockRepository_Expecter) UpdateProviderStatus(ctx interface{}, providerID interface{}) *MockRepository_UpdateProviderStatus_Call {
+	return &MockRepository_UpdateProviderStatus_Call{Call: _e.mock.On("UpdateProviderStatus", ctx, providerID)}
+}
+
+func (_c *MockRepository_UpdateProviderStatus_Call) Run(run func(ctx context.Context, providerID string)) *MockRepository_UpdateProviderStatus_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_UpdateProviderStatus_Call) Return(err error) *MockRepository_UpdateProviderStatus_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockRepository_UpdateProviderStatus_Call) RunAndReturn(run func(ctx context.Context, providerID string) error) *MockRepository_UpdateProviderStatus_Call {
+	_c.Call.Return(run)
+	return _c
+}

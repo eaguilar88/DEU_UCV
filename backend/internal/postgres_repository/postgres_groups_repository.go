@@ -91,7 +91,7 @@ func (r *PostgresRepository) CreateGroup(ctx context.Context, gr entities.Extens
 			return -1, httperrors.NewDuplicateEntryError(err)
 		}
 		r.logger.Error("error inserting group", zap.Error(err))
-		return -1, httperrors.NewInternalError(err)
+		return -1, httperrors.NewInternal(err)
 	}
 	if err := r.insertGroupMembers(ctx, lastInsertedID, gr.Members); err != nil {
 		r.logger.Error("error inserting group members", zap.Error(err))
@@ -256,7 +256,7 @@ func (r *PostgresRepository) CreateGroupRequest(ctx context.Context, req entitie
 			return -1, httperrors.NewDuplicateEntryError(err)
 		}
 		r.logger.Error("error inserting group request", zap.Error(err), zap.String("group_id", req.GroupID))
-		return -1, httperrors.NewInternalError(err)
+		return -1, httperrors.NewInternal(err)
 	}
 
 	if err := tx.Commit(); err != nil {

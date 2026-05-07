@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/httperrors"
@@ -22,6 +23,7 @@ type Service interface {
 	UpdateProvider(ctx context.Context, providerID string, provider *entities.Provider) error
 	DeleteProvider(ctx context.Context, providerID string) error
 	UploadProviderDocuments(ctx context.Context, userID string, intentionLetter, commitmentLetter *entities.File) error
+	ApproveProvider(ctx context.Context, providerID string) error
 }
 
 // Handler holds the HTTP handler dependencies for the providers domain.
@@ -38,10 +40,23 @@ func NewHandler(svc Service, log *zap.Logger) *Handler {
 	}
 }
 
+func (h *Handler) RegisterProviderAdminEndpoints(g *echo.Group) {
+	gr := g.Group("/providers")
+	gr.GET("", h.GetProviders)
+	gr.POST("/:id/enable", h.ApproveProvider)
+}
+
+func (h *Handler) ApproveProvider(c echo.Context) error {
+	ctx := c.Request().Context()
+	if err := h.svc.ApproveProvider(ctx, c.Param("id")); err != nil {
+		return httperrors.NewInternal(err)
+	}
+	return c.JSON(http.StatusAccepted, nil)
+}
+
 func (h *Handler) GetProvider(c echo.Context) error {
 	ctx := c.Request().Context()
-	req := GetProviderRequest{ID: c.Param("id")}
-	provider, err := h.svc.GetProvider(ctx, req.ID)
+	provider, err := h.svc.GetProvider(ctx, c.Param("id"))
 	if err != nil {
 		if errors.Is(err, ErrProviderNotFound) {
 			return httperrors.NewNotFound("provider not found")
@@ -62,20 +77,33 @@ func (h *Handler) GetProviders(c echo.Context) error {
 	scope.GetPerPageFromVars(c.QueryParam("per_page"))
 
 	filters := entities.ProviderFilters{
-		Type:          entities.ProviderType(c.QueryParam("type")),
-		PartyType:     entities.ProviderPartyType(c.QueryParam("party_type")),
-		ProfitType:    entities.ProviderProfitType(c.QueryParam("profit_type")),
-		Code:          c.QueryParam("code"),
-		CreatedAtFrom: c.QueryParam("created_at_from"),
-		CreatedAtTo:   c.QueryParam("created_at_to"),
+		Type: entities.ProviderType(c.QueryParam("type")),
 	}
-	if v := c.QueryParam("is_internal"); v != "" {
-		b := v == "true"
-		filters.IsInternal = &b
+
+	if v := c.QueryParam("faculty"); v != "" {
+		f, err := entities.FromString(v)
+		if err != nil {
+			h.log.Warn("invalid faculty. skipping filter")
+		} else {
+			filters.Faculty = f
+		}
 	}
-	if v := c.QueryParam("is_active"); v != "" {
-		b := v == "true"
-		filters.IsActive = &b
+
+	roles := c.Get("roles").([]string)
+	if slices.Contains(roles, "faculty_admin") {
+		filters.PartyType = entities.ProviderPartyType(c.QueryParam("party_type"))
+		filters.ProfitType = entities.ProviderProfitType(c.QueryParam("profit_type"))
+		filters.Code = c.QueryParam("code")
+		filters.CreatedAtFrom = c.QueryParam("created_at_from")
+		filters.CreatedAtTo = c.QueryParam("created_at_to")
+		if v := c.QueryParam("is_internal"); v != "" {
+			b := v == "true"
+			filters.IsInternal = &b
+		}
+		if v := c.QueryParam("is_active"); v != "" {
+			b := v == "true"
+			filters.IsActive = &b
+		}
 	}
 
 	providers, pages, err := h.svc.GetProviders(ctx, scope, filters)

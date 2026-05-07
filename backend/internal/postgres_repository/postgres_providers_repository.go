@@ -149,7 +149,7 @@ func (r *PostgresRepository) CreateProvider(ctx context.Context, provider entiti
 			return -1, httperrors.NewDuplicateEntryError(err)
 		}
 		r.logger.Error("error inserting provider", zap.Error(err))
-		return -1, httperrors.NewInternalError(err)
+		return -1, httperrors.NewInternal(err)
 	}
 	return lastInsertedID, nil
 }
@@ -180,6 +180,30 @@ func (r *PostgresRepository) UpdateProvider(ctx context.Context, providerID stri
 
 func (r *PostgresRepository) DeleteProvider(ctx context.Context, providerID string) error {
 	query, args, err := queries.DeleteProvider(providerID).ToSql()
+	if err != nil {
+		return httperrors.NewBadQueryError(err)
+	}
+
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		return httperrors.NewBadQueryError(err)
+	}
+	defer stmt.Close()
+
+	result, err := stmt.ExecContext(ctx, args...)
+	if err != nil {
+		return err
+	}
+
+	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
+		return fmt.Errorf("%w: %w", providers.ErrProviderNotFound, err)
+	}
+
+	return nil
+}
+
+func (r *PostgresRepository) UpdateProviderStatus(ctx context.Context, providerID string) error {
+	query, args, err := queries.ActivateProvider(providerID).ToSql()
 	if err != nil {
 		return httperrors.NewBadQueryError(err)
 	}

@@ -103,6 +103,9 @@ func GetProviders(filters entities.ProviderFilters, limit, offset int) sq.Select
 	if filters.CreatedAtTo != "" {
 		q = q.Where(sq.LtOrEq{"p.created_at": filters.CreatedAtTo})
 	}
+	if filters.Faculty != "" {
+		q = q.Where(sq.Eq{"p.faculty": filters.Faculty})
+	}
 	return q
 }
 
@@ -139,8 +142,6 @@ func UpdateProvider(provider models.Provider) sq.UpdateBuilder {
 		Set("profit_type", provider.ProfitType).
 		Set("is_internal", provider.IsInternal).
 		Set("bio", provider.Bio).
-		Set("code", provider.Code).
-		Set("is_active", provider.IsActive).
 		Set("faculty", provider.Faculty).
 		Set("updated_at", sq.Expr("NOW()")).
 		Where(sq.Eq{"id": provider.ID})
@@ -155,5 +156,12 @@ func DeleteProvider(id string) sq.UpdateBuilder {
 
 func HardDeleteProvider(id string) sq.DeleteBuilder {
 	return psql.Delete(providersTableName).
+		Where(sq.Eq{"id": id})
+}
+
+func ActivateProvider(id string) sq.UpdateBuilder {
+	return psql.Update(providersTableName).
+		Set("is_active", true).
+		Set("updated_at", sq.Expr("NOW()")).
 		Where(sq.Eq{"id": id})
 }
