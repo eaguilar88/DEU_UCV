@@ -117,9 +117,74 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+  espacios-db:
+    image: postgres:18
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      TZ: ${TZ:-America/Caracas}
+      PGTZ: ${TZ:-America/Caracas}
+    volumes:
+      - espacios_postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${DB_USER} -d $${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 8
+    networks:
+      - web
+
+  espacios-backend:
+    build:
+      context: "./espacios-universitarios/backend"
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      PORT: 3000
+      DB_HOST: espacios-db
+      DB_PORT: 5432
+      TZ: ${TZ:-America/Caracas}
+      NODE_ENV: production
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://${APP_DOMAIN},http://${APP_DOMAIN}}
+    volumes:
+      - espacios_uploads:/app/uploads
+    depends_on:
+      espacios-db:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.espacios-api.rule=Host(`${APP_DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/uploads`))"
+      - "traefik.http.routers.espacios-api.entrypoints=web"
+      - "traefik.http.services.espacios-api.loadbalancer.server.port=3000"
+    networks:
+      - web
+
+  espacios-frontend:
+    build:
+      context: "./espacios-universitarios/frontend"
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: /api
+        VITE_MEDIA_BASE_URL: /
+    restart: unless-stopped
+    depends_on:
+      - espacios-backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.espacios-web.rule=Host(`${APP_DOMAIN}`)"
+      - "traefik.http.routers.espacios-web.entrypoints=web"
+      - "traefik.http.services.espacios-web.loadbalancer.server.port=80"
+    networks:
+      - web
 volumes:
   postgres_data:
   landing_storage:
+  espacios_postgres_data:
+  espacios_uploads:
 networks:
   web:
     driver: bridge
