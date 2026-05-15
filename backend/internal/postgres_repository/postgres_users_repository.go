@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -61,6 +62,9 @@ func (r *PostgresRepository) GetUser(ctx context.Context, userID string) (*entit
 	rows := stmt.QueryRowContext(ctx, args...)
 	user, err = scanUser(rows)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("%w: %w", users.ErrUserNotFound, err)
+		}
 		return nil, err
 	}
 

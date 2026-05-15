@@ -106,6 +106,157 @@
                     "raw": "{\n  \"ci\": \"V-18245415\",\n  \"first_name\": \"Ellery\",\n  \"last_name\": \"Aguilar\",\n  \"date_of_birth\": \"1988-09-03T00:00:00Z\",\n  \"gender\": \"masculino\",\n  \"education_level\": \"bachiller\",\n  \"address\": \"venezuela\"\n}"
                 }
             }
+        },
+        {
+            "name": "Group Resource Requests",
+            "item": [
+                {
+                    "name": "POST create group resource request",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}:{{port}}/group-resource-requests",
+                            "path": [
+                                "group-resource-requests"
+                            ],
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "port": "{{port}}"
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            },
+                            "raw": "{\n  \"grupo_id\": \"1\",\n  \"tipo\": \"espacio\",\n  \"contenido\": \"necesitamos un salon\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "GET group resource requests by faculty (admin)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}:{{port}}/admin/group-resource-requests?faculty=Humanidades%20y%20Educaci%C3%B3n&page=1&pageSize=10",
+                            "path": [
+                                "admin",
+                                "group-resource-requests"
+                            ],
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "port": "{{port}}",
+                            "query": [
+                                {
+                                    "key": "faculty",
+                                    "value": "Humanidades y Educación"
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "pageSize",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "GET group resource request by ID (admin)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}:{{port}}/admin/group-resource-requests/1",
+                            "path": [
+                                "admin",
+                                "group-resource-requests",
+                                "1"
+                            ],
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "port": "{{port}}"
+                        }
+                    }
+                },
+                {
+                    "name": "POST approve group resource request (admin)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}:{{port}}/admin/group-resource-requests/1/approve",
+                            "path": [
+                                "admin",
+                                "group-resource-requests",
+                                "1",
+                                "approve"
+                            ],
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "port": "{{port}}"
+                        }
+                    }
+                },
+                {
+                    "name": "POST reject group resource request (admin)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}:{{port}}/admin/group-resource-requests/2/reject",
+                            "path": [
+                                "admin",
+                                "group-resource-requests",
+                                "2",
+                                "reject"
+                            ],
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "port": "{{port}}"
+                        }
+                    }
+                }
+            ]
         }
     ]
 }

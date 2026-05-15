@@ -26,6 +26,7 @@ type File struct {
 	URL        string
 	Public     bool
 	Purpose    string
+	Version    int
 	Body       io.Reader
 	MetaData   map[string]string
 	UploadedBy string

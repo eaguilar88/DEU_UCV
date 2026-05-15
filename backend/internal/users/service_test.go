@@ -284,7 +284,8 @@ func TestService_CreateUser(t *testing.T) {
 						return errors.New("mail error")
 					})
 			},
-			wantErr: true,
+			wantID:  1,
+			wantErr: false,
 		},
 	}
 

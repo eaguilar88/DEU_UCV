@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/httperrors"
@@ -21,6 +22,8 @@ type Service interface {
 	CreateProvider(ctx context.Context, provider *entities.Provider) (int64, error)
 	UpdateProvider(ctx context.Context, providerID string, provider *entities.Provider) error
 	DeleteProvider(ctx context.Context, providerID string) error
+	UploadProviderDocuments(ctx context.Context, userID string, intentionLetter, commitmentLetter *entities.File) error
+	ApproveProvider(ctx context.Context, providerID string) error
 }
 
 // Handler holds the HTTP handler dependencies for the providers domain.
@@ -37,10 +40,23 @@ func NewHandler(svc Service, log *zap.Logger) *Handler {
 	}
 }
 
+func (h *Handler) RegisterProviderAdminEndpoints(g *echo.Group) {
+	gr := g.Group("/providers")
+	gr.GET("", h.GetProviders)
+	gr.POST("/:id/enable", h.ApproveProvider)
+}
+
+func (h *Handler) ApproveProvider(c echo.Context) error {
+	ctx := c.Request().Context()
+	if err := h.svc.ApproveProvider(ctx, c.Param("id")); err != nil {
+		return httperrors.NewInternal(err)
+	}
+	return c.JSON(http.StatusAccepted, nil)
+}
+
 func (h *Handler) GetProvider(c echo.Context) error {
 	ctx := c.Request().Context()
-	req := GetProviderRequest{ID: c.Param("id")}
-	provider, err := h.svc.GetProvider(ctx, req.ID)
+	provider, err := h.svc.GetProvider(ctx, c.Param("id"))
 	if err != nil {
 		if errors.Is(err, ErrProviderNotFound) {
 			return httperrors.NewNotFound("provider not found")
@@ -61,20 +77,32 @@ func (h *Handler) GetProviders(c echo.Context) error {
 	scope.GetPerPageFromVars(c.QueryParam("per_page"))
 
 	filters := entities.ProviderFilters{
-		Type:          entities.ProviderType(c.QueryParam("type")),
-		PartyType:     entities.ProviderPartyType(c.QueryParam("party_type")),
-		ProfitType:    entities.ProviderProfitType(c.QueryParam("profit_type")),
-		Code:          c.QueryParam("code"),
-		CreatedAtFrom: c.QueryParam("created_at_from"),
-		CreatedAtTo:   c.QueryParam("created_at_to"),
+		Type: entities.ProviderType(c.QueryParam("type")),
 	}
-	if v := c.QueryParam("is_internal"); v != "" {
-		b := v == "true"
-		filters.IsInternal = &b
+
+	if v := c.QueryParam("faculty"); v != "" {
+		f, err := entities.FromString(v)
+		if err != nil {
+			h.log.Warn("invalid faculty. skipping filter")
+		} else {
+			filters.Faculty = f
+		}
 	}
-	if v := c.QueryParam("is_active"); v != "" {
-		b := v == "true"
-		filters.IsActive = &b
+
+	if roles, ok := c.Get("roles").([]string); ok && slices.Contains(roles, "faculty_admin") {
+		filters.PartyType = entities.ProviderPartyType(c.QueryParam("party_type"))
+		filters.ProfitType = entities.ProviderProfitType(c.QueryParam("profit_type"))
+		filters.Code = c.QueryParam("code")
+		filters.CreatedAtFrom = c.QueryParam("created_at_from")
+		filters.CreatedAtTo = c.QueryParam("created_at_to")
+		if v := c.QueryParam("is_internal"); v != "" {
+			b := v == "true"
+			filters.IsInternal = &b
+		}
+		if v := c.QueryParam("is_active"); v != "" {
+			b := v == "true"
+			filters.IsActive = &b
+		}
 	}
 
 	providers, pages, err := h.svc.GetProviders(ctx, scope, filters)
@@ -144,6 +172,34 @@ func (h *Handler) DeleteProvider(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
+func (h *Handler) UploadProviderDocuments(c echo.Context) error {
+	userID, ok := c.Get("userID").(string)
+	if !ok {
+		return httperrors.NewUnauthorized("authentication required")
+	}
+
+	commitmentLetter, err := utils.GetFileFrom(c, "carta_compromiso")
+	if err != nil {
+		return httperrors.NewBadRequest("carta_compromiso es requerida")
+	}
+
+	var intentionLetter *entities.File
+	if il, err := utils.GetFileFrom(c, "carta_intencion"); err == nil {
+		intentionLetter = il
+	}
+
+	if err := h.svc.UploadProviderDocuments(c.Request().Context(), userID, intentionLetter, commitmentLetter); err != nil {
+		if errors.Is(err, ErrNoIntentionLetter) {
+			return httperrors.NewBadRequest(err.Error())
+		}
+		if errors.Is(err, ErrProviderNotFound) {
+			return httperrors.NewNotFound("provider not found")
+		}
+		return httperrors.NewInternal(err)
+	}
+	return c.NoContent(http.StatusCreated)
+}
+
 func makeProviderFromRequest(c echo.Context, userID string, logger *zap.Logger) (*entities.Provider, error) {
 	providerType := c.FormValue("tipo_proveedor")
 	party := c.FormValue("tipo_persona")
@@ -151,6 +207,7 @@ func makeProviderFromRequest(c echo.Context, userID string, logger *zap.Logger) 
 	name := c.FormValue("nombre")
 	bio := c.FormValue("bio")
 	isInternal := c.FormValue("es_interno")
+	faculty := c.FormValue("facultad")
 
 	if providerType != string(entities.CourseProviderType) && providerType != string(entities.GroupProviderType) {
 		return nil, errors.New("tipo_proveedor must be 'courses' or 'groups'")
@@ -207,6 +264,7 @@ func makeProviderFromRequest(c echo.Context, userID string, logger *zap.Logger) 
 		PartyType:  entities.ProviderPartyType(party),
 		ProfitType: entities.ProviderProfitType(profitType),
 		IsInternal: isInternal == "true",
+		Faculty:    entities.Faculty(faculty),
 		Files: entities.ProviderFiles{
 			CI:   ci,
 			RIF:  rif,

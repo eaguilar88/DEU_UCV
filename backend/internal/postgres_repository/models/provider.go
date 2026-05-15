@@ -12,6 +12,7 @@ type Provider struct {
 	Bio           sql.NullString
 	Code          sql.NullString
 	IsActive      bool
+	Faculty       sql.NullString
 	CreatedAt     sql.NullString
 	UpdatedAt     sql.NullString
 	DeletedAt     sql.NullString

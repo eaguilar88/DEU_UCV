@@ -304,8 +304,12 @@ func TestService_GetProviders(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:    "filter by is_active true",
-			filters: entities.ProviderFilters{IsActive: &trueVal},
+			name: "filter by is_active true",
+			filters: entities.ProviderFilters{
+				ProviderAdminFilters: entities.ProviderAdminFilters{
+					IsActive: &trueVal,
+				},
+			},
 			prepare: func(repoMock *mocks.MockRepository) {
 				repoMock.EXPECT().GetProviders(mock.Anything, mock.Anything, mock.Anything).
 					RunAndReturn(func(_ context.Context, ps entities.PageScope, f entities.ProviderFilters) ([]entities.Provider, entities.PageScope, error) {
@@ -584,9 +588,9 @@ func TestService_uploadAndSave(t *testing.T) {
 					RunAndReturn(func(_ context.Context, _ []*entities.File) error { return nil })
 				repoMock.EXPECT().CreateProviderRequest(mock.Anything, int64(1)).
 					RunAndReturn(func(_ context.Context, _ int64) error { return nil })
-				repoMock.EXPECT().GetProvider(mock.Anything, "1").
-					RunAndReturn(func(_ context.Context, _ string) (entities.Provider, error) {
-						return entities.Provider{User: entities.User{Email: "user@test.com", FirstName: "Test", LastName: "User"}}, nil
+				repoMock.EXPECT().GetProviderContactInfo(mock.Anything, "1").
+					RunAndReturn(func(_ context.Context, _ string) (entities.User, error) {
+						return entities.User{Email: "user@test.com", FirstName: "Test", LastName: "User"}, nil
 					})
 				mailMock.EXPECT().Send(mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).
 					RunAndReturn(func(_ context.Context, _, _, _ string) error { return nil })
@@ -627,6 +631,27 @@ func TestService_uploadAndSave(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "error getting contact info",
+			prepare: func(ctx context.Context, repoMock *mocks.MockRepository, storageMock *mocks.MockStorageClient, _ *mocks.MockMailClient) {
+				repoMock.EXPECT().CreateProvider(mock.Anything, mock.AnythingOfType("entities.Provider")).
+					RunAndReturn(func(_ context.Context, _ entities.Provider) (int64, error) {
+						return int64(1), nil
+					})
+				storageMock.EXPECT().UploadFile(mock.Anything, mock.Anything).
+					RunAndReturn(func(_ context.Context, _ []*entities.File) error { return nil })
+				repoMock.EXPECT().SaveFilesToDB(mock.Anything, mock.Anything).
+					RunAndReturn(func(_ context.Context, _ []*entities.File) error { return nil })
+				repoMock.EXPECT().CreateProviderRequest(mock.Anything, int64(1)).
+					RunAndReturn(func(_ context.Context, _ int64) error { return nil })
+				repoMock.EXPECT().GetProviderContactInfo(mock.Anything, "1").
+					RunAndReturn(func(_ context.Context, _ string) (entities.User, error) {
+						return entities.User{}, errors.New("db error")
+					})
+			},
+			wantID:  int64(-1),
+			wantErr: true,
+		},
+		{
 			name: "error sending email",
 			prepare: func(ctx context.Context, repoMock *mocks.MockRepository, storageMock *mocks.MockStorageClient, mailMock *mocks.MockMailClient) {
 				repoMock.EXPECT().CreateProvider(mock.Anything, mock.AnythingOfType("entities.Provider")).
@@ -639,17 +664,17 @@ func TestService_uploadAndSave(t *testing.T) {
 					RunAndReturn(func(_ context.Context, _ []*entities.File) error { return nil })
 				repoMock.EXPECT().CreateProviderRequest(mock.Anything, int64(1)).
 					RunAndReturn(func(_ context.Context, _ int64) error { return nil })
-				repoMock.EXPECT().GetProvider(mock.Anything, "1").
-					RunAndReturn(func(_ context.Context, _ string) (entities.Provider, error) {
-						return entities.Provider{User: entities.User{Email: "user@test.com", FirstName: "Test", LastName: "User"}}, nil
+				repoMock.EXPECT().GetProviderContactInfo(mock.Anything, "1").
+					RunAndReturn(func(_ context.Context, _ string) (entities.User, error) {
+						return entities.User{Email: "user@test.com", FirstName: "Test", LastName: "User"}, nil
 					})
 				mailMock.EXPECT().Send(mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).
 					RunAndReturn(func(_ context.Context, _, _, _ string) error {
 						return errors.New("email failed")
 					})
 			},
-			wantID:  int64(-1),
-			wantErr: true,
+			wantID:  int64(1),
+			wantErr: false,
 		},
 	}
 

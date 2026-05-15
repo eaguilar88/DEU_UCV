@@ -151,8 +151,8 @@ func (_c *MockService_GetGroupRequestByID_Call) Run(run func(ctx context.Context
 	return _c
 }
 
-func (_c *MockService_GetGroupRequestByID_Call) Return(groupAuthRequest entities.GroupRequest, err error) *MockService_GetGroupRequestByID_Call {
-	_c.Call.Return(groupAuthRequest, err)
+func (_c *MockService_GetGroupRequestByID_Call) Return(groupRequest entities.GroupRequest, err error) *MockService_GetGroupRequestByID_Call {
+	_c.Call.Return(groupRequest, err)
 	return _c
 }
 
@@ -231,8 +231,8 @@ func (_c *MockService_GetGroupRequestsByFaculty_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *MockService_GetGroupRequestsByFaculty_Call) Return(groupAuthRequests []entities.GroupRequest, pageScope1 entities.PageScope, err error) *MockService_GetGroupRequestsByFaculty_Call {
-	_c.Call.Return(groupAuthRequests, pageScope1, err)
+func (_c *MockService_GetGroupRequestsByFaculty_Call) Return(groupRequests []entities.GroupRequest, pageScope1 entities.PageScope, err error) *MockService_GetGroupRequestsByFaculty_Call {
+	_c.Call.Return(groupRequests, pageScope1, err)
 	return _c
 }
 

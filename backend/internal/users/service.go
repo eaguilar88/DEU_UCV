@@ -106,7 +106,7 @@ func (s *service) CreateUser(ctx context.Context, user entities.User, profilePic
 	}
 
 	if err := s.emailClient.Send(ctx, user.Email, "Welcome to DEU", "Welcome to DEU"); err != nil {
-		return -1, fmt.Errorf("error sending welcome email: %w", err)
+		s.log.Warn("failed to send welcome email", zap.Error(err))
 	}
 	return id, nil
 }

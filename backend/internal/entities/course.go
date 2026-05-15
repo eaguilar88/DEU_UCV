@@ -39,6 +39,7 @@ type Course struct {
 	Owner             User
 	Periods           []CoursePeriod
 	Type              CourseType
+	HasDocumentation  bool
 	CreatedAt         string
 	UpdatedAt         string
 }

@@ -41,6 +41,22 @@ CREATE TABLE
     deleted_at TIMESTAMP DEFAULT NULL
   );
 
+CREATE TYPE faculty_enum AS ENUM (
+  'Agronomía',
+  'Arquitectura y Urbanismo',
+  'Ciencias',
+  'Ciencias Económicas y Sociales',
+  'Ciencias Jurídicas y Políticas',
+  'Ciencias Veterinarias',
+  'Farmacia',
+  'Humanidades y Educación',
+  'Ingeniería',
+  'Medicina',
+  'Odontología',
+  'DEU',
+  'NA'
+);
+
 -- Tabla para almacenar información de proveedores. Un proveedor es aquel que tiene código de proveedor asignado por la DEU.
 -- Únicamente los coordinadores de cursos y los representantes de grupos de extensión pueden ser proveedores
 CREATE TABLE
@@ -54,6 +70,7 @@ CREATE TABLE
     bio text,
     code VARCHAR,
     is_active BOOLEAN DEFAULT FALSE,
+    faculty faculty_enum NULL,
     created_at TIMESTAMP DEFAULT NOW (),
     updated_at TIMESTAMP DEFAULT NOW (),
     deleted_at TIMESTAMP DEFAULT NULL
@@ -69,21 +86,6 @@ CREATE TABLE
     updated_at TIMESTAMP DEFAULT NOW (),
     deleted_at TIMESTAMP DEFAULT NULL
   );
-
-CREATE TYPE faculty_enum AS ENUM (
-  'Agronomía',
-  'Arquitectura y Urbanismo',
-  'Ciencias',
-  'Ciencias Económicas y Sociales',
-  'Ciencias Jurídicas y Políticas',
-  'Ciencias Veterinarias',
-  'Farmacia',
-  'Humanidades y Educación',
-  'Ingeniería',
-  'Medicina',
-  'Odontología',
-  'DEU'
-);
 
 -- Tabla para almacenar relaciones usuario-rol
 CREATE TABLE deu.user_roles (
@@ -132,6 +134,7 @@ CREATE TABLE
     faculty faculty_enum DEFAULT 'DEU', -- facultad
     location course_location_enum, -- ubicacion
     is_active BOOLEAN DEFAULT FALSE,
+    has_documentation BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT NOW (),
     updated_at TIMESTAMP DEFAULT NOW (),
     deleted_at TIMESTAMP DEFAULT NULL
@@ -307,6 +310,7 @@ files (
   owner_id INTEGER NOT NULL,
   file_key TEXT NOT NULL,
   purpose TEXT NOT NULL,
+  version INTEGER DEFAULT 1,
   public BOOLEAN DEFAULT false,
   metadata JSONB,
   uploaded_by INTEGER REFERENCES deu.users(id),
@@ -416,21 +420,21 @@ VALUES
 
 -- Insert mock data for user_roles
 INSERT INTO
-  deu.user_roles (user_id, role_id, domain_type)
+  deu.user_roles (user_id, role_id, domain_type, faculty)
 VALUES
-  (13, 1, 'all'), -- root user
-  (1, 2, 'all'), -- deu_admin
-  (2, 2, 'all'), -- deu_admin
-  (3, 3, 'all'), -- faculty_admin
-  (4, 3, 'all'), -- faculty_admin
-  (5, 4, 'course'), -- course_admin
-  (6, 5, 'course'), -- course_manager
-  (7, 6, 'course'), -- visitante
-  (8, 6, 'course'), -- visitante
-  (9, 6, 'course'), -- visitante
-  (10, 6, 'course'), -- visitante
-  (11, 7, 'group'), -- group_admin
-  (12, 8, 'group'); -- group_helper
+  (13, 1, 'all','DEU'), -- root user
+  (1, 2, 'all','DEU'), -- deu_admin
+  (2, 2, 'all','DEU'), -- deu_admin
+  (3, 3, 'all', 'Ciencias'), -- faculty_admin
+  (4, 3, 'all', 'Medicina'), -- faculty_admin
+  (5, 4, 'course','NA'), -- course_admin
+  (6, 5, 'course','NA'), -- course_manager
+  (7, 6, 'course','NA'), -- visitante
+  (8, 6, 'course','NA'), -- visitante
+  (9, 6, 'course','NA'), -- visitante
+  (10, 6, 'course','NA'), -- visitante
+  (11, 7, 'group','NA'), -- group_admin
+  (12, 8, 'group','NA'); -- group_helper
 
   -- Insert mock data for providers
   INSERT INTO

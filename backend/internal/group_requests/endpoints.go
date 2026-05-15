@@ -104,8 +104,10 @@ func (h *Handler) GetGroupRequestsByFaculty(c echo.Context) error {
 			GroupID:   req.GroupID,
 			Comments:  req.Comments,
 			Status:    string(req.Status),
+			Faculty:   string(req.Faculty),
 			CreatedAt: req.CreatedAt,
 			UpdatedAt: req.UpdatedAt,
+			Approvals: toApprovals(req.Approvals),
 		})
 	}
 
@@ -132,8 +134,10 @@ func (h *Handler) GetGroupRequestByID(c echo.Context) error {
 		GroupID:   req.GroupID,
 		Comments:  req.Comments,
 		Status:    string(req.Status),
+		Faculty:   string(req.Faculty),
 		CreatedAt: req.CreatedAt,
 		UpdatedAt: req.UpdatedAt,
+		Approvals: toApprovals(req.Approvals),
 	}
 
 	return c.JSON(http.StatusOK, response)

@@ -2,6 +2,7 @@ package users
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/eaguilar88/deu/internal/entities"
@@ -9,14 +10,18 @@ import (
 )
 
 const (
-	clientDateFormat  = "2-1-2006"   // D-M-YYYY used on the API surface
+	clientDateFormat  = "02-01-2006" // DD-MM-YYYY used on the API surface
 	storageDateFormat = "2006-01-02" // YYYY-MM-DD stored in DB
 )
 
 func parseDateOfBirth(raw string) (string, error) {
 	dob, err := time.Parse(clientDateFormat, raw)
-	if err != nil || dob.Format(clientDateFormat) != raw {
-		return "", errors.New("fecha_de_nacimiento must be in D-M-YYYY format")
+	if err != nil {
+		return "", fmt.Errorf("error con la fecha de nacimiento: %v", err)
+	}
+
+	if dob.Format(clientDateFormat) != raw {
+		return "", errors.New("fecha_de_nacimiento debe estar en formato DD-MM-YYYY")
 	}
 	return dob.Format(storageDateFormat), nil
 }
@@ -44,7 +49,7 @@ func toUserEntity(req CreateUserRequest) (entities.User, error) {
 		Address:        req.Address,
 		Password:       password,
 		Roles: []string{
-			entities.RoleNameFromID(entities.RoleCoordinador),
+			entities.RoleNameFromID(entities.RoleVisitante),
 		},
 	}, nil
 }

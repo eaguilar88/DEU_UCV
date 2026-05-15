@@ -20,6 +20,7 @@ type UpdateProviderRequest struct {
 	UserID     string
 	Type       string
 	IsInternal bool
+	Faculty    string
 	CI         *multipart.FileHeader
 	RIF        *multipart.FileHeader
 	ISLR       *multipart.FileHeader

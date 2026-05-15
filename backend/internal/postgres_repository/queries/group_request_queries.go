@@ -66,6 +66,13 @@ func InsertGroupRequest(req models.GroupRequest) sq.InsertBuilder {
 		).Suffix("RETURNING id")
 }
 
+func GetGroupRequestsByGroupID(groupID string) sq.SelectBuilder {
+	return psql.Select(
+		groupAuthRequestQuerySelectCommon...,
+	).From(groupRequestsTableName).Where(sq.Eq{"group_id": groupID}).
+		OrderBy("faculty")
+}
+
 func CountGroupRequestsByFaculty(faculty string) sq.SelectBuilder {
 	return psql.Select("COUNT(*)").From(groupRequestsTableName).Where(sq.Eq{"faculty": faculty})
 }

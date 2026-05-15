@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -17,11 +19,12 @@ import (
 
 // Custom domain errors
 var (
-	ErrProviderNotFound = errors.New("provider not found")
-	ErrInvalidProvider  = errors.New("invalid provider data")
-	ErrProviderExists   = errors.New("provider already exists")
-	ErrFileUploadFailed = errors.New("failed to upload file")
-	ErrFileNotFound     = errors.New("file not found")
+	ErrProviderNotFound  = errors.New("provider not found")
+	ErrInvalidProvider   = errors.New("invalid provider data")
+	ErrProviderExists    = errors.New("provider already exists")
+	ErrFileUploadFailed  = errors.New("failed to upload file")
+	ErrFileNotFound      = errors.New("file not found")
+	ErrNoIntentionLetter = errors.New("a new provider requires an intention letter")
 )
 
 // Repository defines the data access operations required by the providers service.
@@ -32,11 +35,17 @@ type Repository interface {
 	CreateProvider(ctx context.Context, provider entities.Provider) (int64, error)
 	UpdateProvider(ctx context.Context, providerID string, provider entities.Provider) error
 	DeleteProvider(ctx context.Context, providerID string) error
+	UpdateProviderStatus(ctx context.Context, providerID string) error
 	CreateProviderRequest(ctx context.Context, providerID int64) error
+
+	GetProviderByUserID(ctx context.Context, userID string) (entities.Provider, error)
+	GetProviderContactInfo(ctx context.Context, providerID string) (entities.User, error)
 
 	// Files
 	GetFilesByOwner(ctx context.Context, ownerID string, ownerType entities.OwnerType) (entities.GroupedFiles, error)
+	GetFilesByOwnerAndPurpose(ctx context.Context, ownerID, ownerType, purpose string) ([]*entities.File, error)
 	SaveFilesToDB(ctx context.Context, file []*entities.File) error
+	MarkCoursesWithDocumentation(ctx context.Context, providerID, from, to string) error
 }
 
 // MailClient defines the email sending operations required by the providers service.
@@ -206,21 +215,17 @@ func (s *service) CreateProvider(ctx context.Context, provider *entities.Provide
 		return -1, fmt.Errorf("failed to create provider request: %w", err)
 	}
 
-	p, err := s.repo.GetProvider(ctx, provider.ID)
+	contact, err := s.repo.GetProviderContactInfo(ctx, provider.ID)
 	if err != nil {
-		s.logger.Error("failed to get provider", zap.Error(err))
+		s.logger.Error("failed to get provider contact info", zap.Error(err))
 		return -1, err
 	}
 
-	provider.User.Email = p.User.Email
-	provider.User.FirstName = p.User.FirstName
-	provider.User.LastName = p.User.LastName
-	if err := s.emailClient.Send(ctx, provider.User.Email, "Solicitud de registro recibida", "Tu solicitud de registro como proveedor ha sido recibida y está bajo revisión. Recibirás una notificación cuando sea procesada."); err != nil {
-		s.logger.Error("failed to send provider registration email",
+	if err := s.emailClient.Send(ctx, contact.Email, "Solicitud de registro recibida", "Tu solicitud de registro como proveedor ha sido recibida y está bajo revisión. Recibirás una notificación cuando sea procesada."); err != nil {
+		s.logger.Warn("failed to send provider registration email",
 			zap.Error(err),
 			zap.String("action", "send_email"),
 		)
-		return -1, fmt.Errorf("error sending provider registration email: %w", err)
 	}
 
 	return createdProviderID, nil
@@ -275,12 +280,100 @@ func (s *service) UpdateProvider(ctx context.Context, providerID string, provide
 	return nil
 }
 
+// UploadProviderDocuments uploads an intention letter (optional) and a commitment letter (required)
+// for the provider associated with the given user. It gates on the intention letter existence,
+// versions the commitment letter, and marks provider courses as documented.
+func (s *service) UploadProviderDocuments(ctx context.Context, userID string, intentionLetter, commitmentLetter *entities.File) error {
+	provider, err := s.repo.GetProviderByUserID(ctx, userID)
+	if err != nil {
+		s.logger.Error("failed to get provider by user ID", zap.Error(err), zap.String("user_id", userID))
+		if errors.Is(err, ErrProviderNotFound) {
+			return ErrProviderNotFound
+		}
+		return fmt.Errorf("failed to get provider: %w", err)
+	}
+
+	existingIntention, err := s.repo.GetFilesByOwnerAndPurpose(ctx, provider.ID, string(entities.OwnerTypeProvider), entities.ProviderFileTypeIntentionLetter)
+	if err != nil {
+		s.logger.Error("failed to check intention letter", zap.Error(err))
+		return fmt.Errorf("failed to check intention letter: %w", err)
+	}
+	if len(existingIntention) == 0 && intentionLetter == nil {
+		return ErrNoIntentionLetter
+	}
+
+	existingCommitment, err := s.repo.GetFilesByOwnerAndPurpose(ctx, provider.ID, string(entities.OwnerTypeProvider), entities.ProviderFileTypeCommitmentLetter)
+	if err != nil {
+		s.logger.Error("failed to check commitment letters", zap.Error(err))
+		return fmt.Errorf("failed to check commitment letters: %w", err)
+	}
+	nextVersion := len(existingCommitment) + 1
+	prevDate := ""
+	if len(existingCommitment) > 0 {
+		prevDate = existingCommitment[len(existingCommitment)-1].CreatedAt
+	}
+
+	providerIDInt, err := strconv.ParseInt(provider.ID, 10, 64)
+	if err != nil {
+		s.logger.Error("invalid provider ID", zap.Error(err))
+		return fmt.Errorf("invalid provider ID: %w", err)
+	}
+	metadata := map[string]string{
+		"provider_id":      provider.ID,
+		"provider_type":    string(provider.Type),
+		"provider_user_id": userID,
+	}
+
+	var filesToUpload []*entities.File
+	if intentionLetter != nil {
+		intentionLetter.Purpose = entities.ProviderFileTypeIntentionLetter
+		intentionLetter.Version = 1
+		filesToUpload = append(filesToUpload, makeFileEntityFromFilePointer(intentionLetter, providerIDInt, userID, entities.OwnerTypeProvider, metadata))
+	}
+
+	ext := filepath.Ext(commitmentLetter.Name)
+	base := strings.TrimSuffix(commitmentLetter.Name, ext)
+	commitmentLetter.Name = fmt.Sprintf("%s_v%d%s", base, nextVersion, ext)
+	commitmentLetter.Purpose = entities.ProviderFileTypeCommitmentLetter
+	commitmentLetter.Version = nextVersion
+	filesToUpload = append(filesToUpload, makeFileEntityFromFilePointer(commitmentLetter, providerIDInt, userID, entities.OwnerTypeProvider, metadata))
+
+	if err := s.storage.UploadFile(ctx, filesToUpload); err != nil {
+		s.logger.Error("failed to upload provider documents", zap.Error(err))
+		return fmt.Errorf("failed to upload documents: %w", err)
+	}
+	if err := s.repo.SaveFilesToDB(ctx, filesToUpload); err != nil {
+		s.logger.Error("failed to save provider documents to DB", zap.Error(err))
+		return fmt.Errorf("failed to save documents: %w", err)
+	}
+
+	now := time.Now().Format(time.RFC3339)
+	if err := s.repo.MarkCoursesWithDocumentation(ctx, provider.ID, prevDate, now); err != nil {
+		s.logger.Error("failed to mark courses with documentation", zap.Error(err))
+		return fmt.Errorf("failed to mark courses: %w", err)
+	}
+
+	s.logger.Info("provider documents uploaded successfully",
+		zap.String("provider_id", provider.ID),
+		zap.Int("commitment_version", nextVersion),
+	)
+	return nil
+}
+
 // DeleteProvider soft-deletes a provider by ID.
 func (s *service) DeleteProvider(ctx context.Context, providerID string) error {
 	err := s.repo.DeleteProvider(ctx, providerID)
 	if err != nil {
 		s.logger.Error("failed to delete provider", zap.Error(err))
 		return err
+	}
+	return nil
+}
+
+// ApproveProvider changes the status of a provider to active
+func (s *service) ApproveProvider(ctx context.Context, providerID string) error {
+	if err := s.repo.UpdateProviderStatus(ctx, providerID); err != nil {
+		s.logger.Error("error enabling provider", zap.Error(err))
 	}
 	return nil
 }
@@ -380,11 +473,13 @@ func (s *service) getFilesForProvider(ctx context.Context, providerID string) (e
 	}
 
 	result := entities.ProviderFiles{
-		CI:      files.GetSingleFile(entities.ProviderFileTypeCI),
-		RIF:     files.GetSingleFile(entities.ProviderFileTypeRIF),
-		ISLR:    files.GetSingleFile(entities.ProviderFileTypeISLR),
-		Resumes: files.GetMultipleFiles(entities.ProviderFileTypeResume),
-		Others:  files.GetMultipleFiles(entities.ProviderFileTypeOther),
+		CI:                files.GetSingleFile(entities.ProviderFileTypeCI),
+		RIF:               files.GetSingleFile(entities.ProviderFileTypeRIF),
+		ISLR:              files.GetSingleFile(entities.ProviderFileTypeISLR),
+		Resumes:           files.GetMultipleFiles(entities.ProviderFileTypeResume),
+		Others:            files.GetMultipleFiles(entities.ProviderFileTypeOther),
+		IntentionLetter:   files.GetSingleFile(entities.ProviderFileTypeIntentionLetter),
+		CommitmentLetters: files.GetMultipleFiles(entities.ProviderFileTypeCommitmentLetter),
 	}
 
 	s.logger.Debug("files retrieved successfully",

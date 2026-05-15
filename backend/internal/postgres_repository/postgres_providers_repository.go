@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/eaguilar88/deu/internal/entities"
@@ -28,7 +29,7 @@ func (r *PostgresRepository) GetProvider(ctx context.Context, providerID string)
 	row := stmt.QueryRowContext(ctx, args...)
 	provider, err = scanProvider(row)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return entities.Provider{}, fmt.Errorf("%w: %w", providers.ErrProviderNotFound, err)
 		}
 		return entities.Provider{}, err
@@ -50,7 +51,7 @@ func (r *PostgresRepository) GetProviderByCode(ctx context.Context, code string)
 	row := stmt.QueryRowContext(ctx, args...)
 	provider, err = scanProvider(row)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return entities.Provider{}, fmt.Errorf("%w: %w", providers.ErrProviderNotFound, err)
 		}
 		return entities.Provider{}, err
@@ -78,6 +79,27 @@ func (r *PostgresRepository) GetProviderByUserID(ctx context.Context, userID str
 		return entities.Provider{}, err
 	}
 	return newProviderFromModel(provider), nil
+}
+
+func (r *PostgresRepository) GetProviderContactInfo(ctx context.Context, providerID string) (entities.User, error) {
+	query, args, err := queries.GetProviderContactInfoByID(providerID).ToSql()
+	if err != nil {
+		return entities.User{}, err
+	}
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		return entities.User{}, err
+	}
+	defer stmt.Close()
+	var user entities.User
+	err = stmt.QueryRowContext(ctx, args...).Scan(&user.ID, &user.Email, &user.FirstName, &user.LastName)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return entities.User{}, fmt.Errorf("%w: %w", providers.ErrProviderNotFound, err)
+		}
+		return entities.User{}, err
+	}
+	return user, nil
 }
 
 func (r *PostgresRepository) GetProviders(ctx context.Context, pageScope entities.PageScope, filters entities.ProviderFilters) ([]entities.Provider, entities.PageScope, error) {
@@ -127,7 +149,7 @@ func (r *PostgresRepository) CreateProvider(ctx context.Context, provider entiti
 			return -1, httperrors.NewDuplicateEntryError(err)
 		}
 		r.logger.Error("error inserting provider", zap.Error(err))
-		return -1, httperrors.NewInternalError(err)
+		return -1, httperrors.NewInternal(err)
 	}
 	return lastInsertedID, nil
 }
@@ -180,6 +202,30 @@ func (r *PostgresRepository) DeleteProvider(ctx context.Context, providerID stri
 	return nil
 }
 
+func (r *PostgresRepository) UpdateProviderStatus(ctx context.Context, providerID string) error {
+	query, args, err := queries.ActivateProvider(providerID).ToSql()
+	if err != nil {
+		return httperrors.NewBadQueryError(err)
+	}
+
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		return httperrors.NewBadQueryError(err)
+	}
+	defer stmt.Close()
+
+	result, err := stmt.ExecContext(ctx, args...)
+	if err != nil {
+		return err
+	}
+
+	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
+		return fmt.Errorf("%w: %w", providers.ErrProviderNotFound, err)
+	}
+
+	return nil
+}
+
 func scanProvider(row scannable) (models.Provider, error) {
 	var provider models.Provider
 	err := row.Scan(
@@ -198,6 +244,7 @@ func scanProvider(row scannable) (models.Provider, error) {
 		&provider.UserEmail,
 		&provider.UserFirstName,
 		&provider.UserLastName,
+		&provider.Faculty,
 	)
 
 	return provider, err
@@ -249,6 +296,10 @@ func newProviderFromModel(provider models.Provider) entities.Provider {
 		p.DeletedAt = provider.DeletedAt.String
 	}
 
+	if provider.Faculty.Valid {
+		p.Faculty = entities.Faculty(provider.Faculty.String)
+	}
+
 	return p
 }
 
@@ -263,5 +314,6 @@ func newProviderModelFromEntities(provider entities.Provider) models.Provider {
 		Bio:        toNullString(provider.Bio),
 		Code:       toNullString(provider.Code),
 		IsActive:   provider.IsActive,
+		Faculty:    toNullString(string(provider.Faculty)),
 	}
 }

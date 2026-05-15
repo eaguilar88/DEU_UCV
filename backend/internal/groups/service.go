@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"time"
 
 	"github.com/eaguilar88/deu/internal/entities"
 	"go.uber.org/zap"
@@ -15,7 +14,7 @@ type Repository interface {
 	GetGroups(ctx context.Context, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error)
 
 	// Unit of Work: Atomic operations
-	CreateGroupWithRequest(ctx context.Context, group entities.ExtensionGroup, request entities.GroupRequest) (groupID int64, requestID int64, err error)
+	CreateGroupWithRequests(ctx context.Context, group entities.ExtensionGroup, requests []entities.GroupRequest) (int64, error)
 
 	// Individual operations (for flexibility)
 	CreateGroup(ctx context.Context, group entities.ExtensionGroup) (int64, error)
@@ -76,24 +75,33 @@ func (s *service) CreateGroup(ctx context.Context, group entities.ExtensionGroup
 		return -1, "", fmt.Errorf("failed to generate provider code: %w", err)
 	}
 
-	// Create a group authorization request
-	groupReq := entities.GroupRequest{
-		Faculty:   group.Faculty,
-		Status:    entities.RequestStatus_UNDER_REVIEW,
-		Comments:  "New group creation request",
-		CreatedAt: time.Now().Format(time.RFC3339),
-		UpdatedAt: time.Now().Format(time.RFC3339),
+	// Build approval requests based on group type
+	base := entities.GroupRequest{
+		Status:   entities.RequestStatus_UNDER_REVIEW,
+		Comments: "New group creation request",
+	}
+	var requests []entities.GroupRequest
+	if group.Type == entities.GroupType(entities.MultidisciplinaryGroupType) {
+		deuReq := base
+		deuReq.Faculty = entities.FacultyDEU
+		requests = []entities.GroupRequest{deuReq}
+	} else {
+		facultyReq := base
+		facultyReq.Faculty = group.Faculty
+		deuReq := base
+		deuReq.Faculty = entities.FacultyDEU
+		requests = []entities.GroupRequest{facultyReq, deuReq}
 	}
 
-	// Create group and request in a single transaction
-	groupID, requestID, err := s.repo.CreateGroupWithRequest(ctx, group, groupReq)
+	// Create group and requests in a single transaction
+	groupID, err := s.repo.CreateGroupWithRequests(ctx, group, requests)
 	if err != nil {
-		s.log.Error("failed to create group with request",
+		s.log.Error("failed to create group with requests",
 			zap.Error(err),
-			zap.String("action", "create_group_with_request"),
+			zap.String("action", "create_group_with_requests"),
 			zap.String("group_name", group.Name),
 		)
-		return -1, "", fmt.Errorf("failed to create group with request: %w", err)
+		return -1, "", fmt.Errorf("failed to create group with requests: %w", err)
 	}
 
 	// Prepare files metadata
@@ -119,9 +127,8 @@ func (s *service) CreateGroup(ctx context.Context, group entities.ExtensionGroup
 		return -1, "", fmt.Errorf("failed to save files: %w", err)
 	}
 
-	s.log.Info("group, request, and files created successfully",
+	s.log.Info("group, requests, and files created successfully",
 		zap.Int64("group_id", groupID),
-		zap.Int64("request_id", requestID),
 		zap.Int("file_count", len(files)))
 
 	return groupID, providerCode, nil
