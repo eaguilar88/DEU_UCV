@@ -213,12 +213,12 @@ func TestService_GetActivities(t *testing.T) {
 
 func TestService_CreateActivity(t *testing.T) {
 	type testCase struct {
-		name      string
-		activity  entities.Activity
-		files     []*entities.File
-		prepare   func(repo *mocks.MockRepository, storage *mocks.MockStorageClient)
-		wantID    int64
-		wantErr   bool
+		name     string
+		activity entities.Activity
+		files    []*entities.File
+		prepare  func(repo *mocks.MockRepository, storage *mocks.MockStorageClient)
+		wantID   int64
+		wantErr  bool
 	}
 
 	tests := []testCase{
@@ -464,4 +464,3 @@ func TestService_DeleteActivity(t *testing.T) {
 		})
 	}
 }
-

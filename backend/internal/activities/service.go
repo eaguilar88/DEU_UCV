@@ -19,7 +19,6 @@ type Repository interface {
 	SaveFilesToDB(ctx context.Context, files []*entities.File) error
 }
 
-
 type StorageClient interface {
 	UploadFile(ctx context.Context, files []*entities.File) error
 	GetFileURL(ctx context.Context, objectKey string) (string, error)
