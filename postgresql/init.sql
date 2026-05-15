@@ -274,14 +274,11 @@ CREATE TABLE
     allies VARCHAR, -- Aliados o colaboradores de la actividad
     stimated_participants INTEGER, -- Participantes estimados
     actual_participants INTEGER, -- Participantes reales
-    active_members INTEGER, -- Miembros activos del grupo
-    path VARCHAR,
-    location VARCHAR,
-    assistants INTEGER,
-    comments TEXT,
+    financing VARCHAR, -- Financiamiento
+    comments TEXT, -- Observaciones
     created_at TIMESTAMP DEFAULT NOW (),
     updated_at TIMESTAMP DEFAULT NOW (),
-    deleted_at TIMESTAMP DEFAULT NULL
+    deleted_at TIMESTAMP
   );
 
 CREATE TYPE contact_type_enum AS ENUM ('email', 'phone');
