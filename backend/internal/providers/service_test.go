@@ -259,7 +259,6 @@ func TestService_GetProviders(t *testing.T) {
 		wantErr   bool
 	}
 
-	trueVal := true
 	tests := []testCase{
 		{
 			name: "success empty list",
@@ -304,23 +303,23 @@ func TestService_GetProviders(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "filter by is_active true",
+			name: "filter by status active",
 			filters: entities.ProviderFilters{
 				ProviderAdminFilters: entities.ProviderAdminFilters{
-					IsActive: &trueVal,
+					Status: entities.ProviderStatusActive,
 				},
 			},
 			prepare: func(repoMock *mocks.MockRepository) {
 				repoMock.EXPECT().GetProviders(mock.Anything, mock.Anything, mock.Anything).
 					RunAndReturn(func(_ context.Context, ps entities.PageScope, f entities.ProviderFilters) ([]entities.Provider, entities.PageScope, error) {
-						return []entities.Provider{{ID: "3", IsActive: true}}, ps, nil
+						return []entities.Provider{{ID: "3", Status: entities.ProviderStatusActive}}, ps, nil
 					})
 				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "3", entities.OwnerTypeProvider).
 					RunAndReturn(func(_ context.Context, _ string, _ entities.OwnerType) (entities.GroupedFiles, error) {
 						return entities.GroupedFiles{}, nil
 					})
 			},
-			want:    []entities.Provider{{ID: "3", IsActive: true}},
+			want:    []entities.Provider{{ID: "3", Status: entities.ProviderStatusActive}},
 			wantErr: false,
 		},
 		{
@@ -586,8 +585,6 @@ func TestService_uploadAndSave(t *testing.T) {
 					RunAndReturn(func(_ context.Context, _ []*entities.File) error { return nil })
 				repoMock.EXPECT().SaveFilesToDB(mock.Anything, mock.Anything).
 					RunAndReturn(func(_ context.Context, _ []*entities.File) error { return nil })
-				repoMock.EXPECT().CreateProviderRequest(mock.Anything, int64(1)).
-					RunAndReturn(func(_ context.Context, _ int64) error { return nil })
 				repoMock.EXPECT().GetProviderContactInfo(mock.Anything, "1").
 					RunAndReturn(func(_ context.Context, _ string) (entities.User, error) {
 						return entities.User{Email: "user@test.com", FirstName: "Test", LastName: "User"}, nil
@@ -641,8 +638,6 @@ func TestService_uploadAndSave(t *testing.T) {
 					RunAndReturn(func(_ context.Context, _ []*entities.File) error { return nil })
 				repoMock.EXPECT().SaveFilesToDB(mock.Anything, mock.Anything).
 					RunAndReturn(func(_ context.Context, _ []*entities.File) error { return nil })
-				repoMock.EXPECT().CreateProviderRequest(mock.Anything, int64(1)).
-					RunAndReturn(func(_ context.Context, _ int64) error { return nil })
 				repoMock.EXPECT().GetProviderContactInfo(mock.Anything, "1").
 					RunAndReturn(func(_ context.Context, _ string) (entities.User, error) {
 						return entities.User{}, errors.New("db error")
@@ -662,8 +657,6 @@ func TestService_uploadAndSave(t *testing.T) {
 					RunAndReturn(func(_ context.Context, _ []*entities.File) error { return nil })
 				repoMock.EXPECT().SaveFilesToDB(mock.Anything, mock.Anything).
 					RunAndReturn(func(_ context.Context, _ []*entities.File) error { return nil })
-				repoMock.EXPECT().CreateProviderRequest(mock.Anything, int64(1)).
-					RunAndReturn(func(_ context.Context, _ int64) error { return nil })
 				repoMock.EXPECT().GetProviderContactInfo(mock.Anything, "1").
 					RunAndReturn(func(_ context.Context, _ string) (entities.User, error) {
 						return entities.User{Email: "user@test.com", FirstName: "Test", LastName: "User"}, nil

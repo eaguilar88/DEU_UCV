@@ -81,7 +81,7 @@ func (r *PostgresRepository) GetProviderRequests(ctx context.Context, pageScope 
 	return requests, pageScope, nil
 }
 
-func (r *PostgresRepository) ApproveProviderRequest(ctx context.Context, id, reviewerID string, providerID int64, code string) error {
+func (r *PostgresRepository) ApproveProviderRequest(ctx context.Context, id, reviewerID string, providerID int64) error {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -98,15 +98,6 @@ func (r *PostgresRepository) ApproveProviderRequest(ctx context.Context, id, rev
 	}
 	if _, err = tx.ExecContext(ctx, approveQuery, approveArgs...); err != nil {
 		r.logger.Error("error approving provider request", zap.Error(err))
-		return err
-	}
-
-	activateQuery, activateArgs, err := queries.SetProviderActive(providerID, code).ToSql()
-	if err != nil {
-		return httperrors.NewBadQueryError(err)
-	}
-	if _, err = tx.ExecContext(ctx, activateQuery, activateArgs...); err != nil {
-		r.logger.Error("error activating provider", zap.Error(err))
 		return err
 	}
 

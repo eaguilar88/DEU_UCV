@@ -39,16 +39,16 @@ func (_m *MockRepository) EXPECT() *MockRepository_Expecter {
 }
 
 // ApproveProviderRequest provides a mock function for the type MockRepository
-func (_mock *MockRepository) ApproveProviderRequest(ctx context.Context, id string, reviewerID string, providerID int64, code string) error {
-	ret := _mock.Called(ctx, id, reviewerID, providerID, code)
+func (_mock *MockRepository) ApproveProviderRequest(ctx context.Context, id string, reviewerID string, providerID int64) error {
+	ret := _mock.Called(ctx, id, reviewerID, providerID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ApproveProviderRequest")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, int64, string) error); ok {
-		r0 = returnFunc(ctx, id, reviewerID, providerID, code)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, int64) error); ok {
+		r0 = returnFunc(ctx, id, reviewerID, providerID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -65,12 +65,11 @@ type MockRepository_ApproveProviderRequest_Call struct {
 //   - id string
 //   - reviewerID string
 //   - providerID int64
-//   - code string
-func (_e *MockRepository_Expecter) ApproveProviderRequest(ctx interface{}, id interface{}, reviewerID interface{}, providerID interface{}, code interface{}) *MockRepository_ApproveProviderRequest_Call {
-	return &MockRepository_ApproveProviderRequest_Call{Call: _e.mock.On("ApproveProviderRequest", ctx, id, reviewerID, providerID, code)}
+func (_e *MockRepository_Expecter) ApproveProviderRequest(ctx interface{}, id interface{}, reviewerID interface{}, providerID interface{}) *MockRepository_ApproveProviderRequest_Call {
+	return &MockRepository_ApproveProviderRequest_Call{Call: _e.mock.On("ApproveProviderRequest", ctx, id, reviewerID, providerID)}
 }
 
-func (_c *MockRepository_ApproveProviderRequest_Call) Run(run func(ctx context.Context, id string, reviewerID string, providerID int64, code string)) *MockRepository_ApproveProviderRequest_Call {
+func (_c *MockRepository_ApproveProviderRequest_Call) Run(run func(ctx context.Context, id string, reviewerID string, providerID int64)) *MockRepository_ApproveProviderRequest_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -88,16 +87,11 @@ func (_c *MockRepository_ApproveProviderRequest_Call) Run(run func(ctx context.C
 		if args[3] != nil {
 			arg3 = args[3].(int64)
 		}
-		var arg4 string
-		if args[4] != nil {
-			arg4 = args[4].(string)
-		}
 		run(
 			arg0,
 			arg1,
 			arg2,
 			arg3,
-			arg4,
 		)
 	})
 	return _c
@@ -108,7 +102,7 @@ func (_c *MockRepository_ApproveProviderRequest_Call) Return(err error) *MockRep
 	return _c
 }
 
-func (_c *MockRepository_ApproveProviderRequest_Call) RunAndReturn(run func(ctx context.Context, id string, reviewerID string, providerID int64, code string) error) *MockRepository_ApproveProviderRequest_Call {
+func (_c *MockRepository_ApproveProviderRequest_Call) RunAndReturn(run func(ctx context.Context, id string, reviewerID string, providerID int64) error) *MockRepository_ApproveProviderRequest_Call {
 	_c.Call.Return(run)
 	return _c
 }

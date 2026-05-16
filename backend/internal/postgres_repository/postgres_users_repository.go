@@ -263,6 +263,20 @@ func (r *PostgresRepository) AddRoleToUser(ctx context.Context, tx *sql.Tx, user
 	return prepareAndExecute(ctx, r.db, query, args, r.logger)
 }
 
+func (r *PostgresRepository) UpdateUserRole(ctx context.Context, userID, fromRole, toRole string) error {
+	query, args, err := queries.UpdateUserRole(userID, fromRole, toRole).ToSql()
+	if err != nil {
+		return err
+	}
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	_, err = stmt.ExecContext(ctx, args...)
+	return err
+}
+
 func (r *PostgresRepository) GetUsersByCoursePeriodID(ctx context.Context, periodID string) ([]entities.User, error) {
 	query, args, err := queries.GetUsersByCoursePeriodID(periodID).ToSql()
 	if err != nil {

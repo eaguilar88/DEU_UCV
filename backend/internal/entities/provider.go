@@ -15,6 +15,8 @@ type ProviderPartyType string
 
 type ProviderProfitType string
 
+type ProviderStatus string
+
 const (
 	// Provider code prefixes
 	CourseProvider ProviderPrefix = "ECP"
@@ -41,6 +43,12 @@ const (
 	// Profit types
 	ProfitTypeLucrativo   ProviderProfitType = "lucrativo"
 	ProfitTypeNoLucrativo ProviderProfitType = "no_lucrativo"
+
+	// Provider statuses
+	ProviderStatusUnderReview ProviderStatus = "under_review"
+	ProviderStatusRejected    ProviderStatus = "rejected"
+	ProviderStatusActive      ProviderStatus = "active"
+	ProviderStatusInactive    ProviderStatus = "inactive"
 )
 
 type ProviderFiles struct {
@@ -64,7 +72,7 @@ type Provider struct {
 	IsInternal bool
 	Bio        string
 	Code       string
-	IsActive   bool
+	Status     ProviderStatus
 	Faculty    Faculty
 	Files      ProviderFiles
 	CreatedAt  string
@@ -82,8 +90,9 @@ type ProviderAdminFilters struct {
 	PartyType     ProviderPartyType
 	ProfitType    ProviderProfitType
 	IsInternal    *bool
-	IsActive      *bool
+	Status        ProviderStatus
 	Code          string
+	IsAdmin       bool
 	CreatedAtFrom string
 	CreatedAtTo   string
 }

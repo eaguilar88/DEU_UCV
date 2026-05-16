@@ -17,7 +17,7 @@ var (
 type Repository interface {
 	GetProviderRequests(ctx context.Context, pageScope entities.PageScope) ([]entities.ProviderRequest, entities.PageScope, error)
 	GetProviderRequestByID(ctx context.Context, id string) (entities.ProviderRequest, error)
-	ApproveProviderRequest(ctx context.Context, id, reviewerID string, providerID int64, code string) error
+	ApproveProviderRequest(ctx context.Context, id, reviewerID string, providerID int64) error
 	RejectProviderRequest(ctx context.Context, id, reviewerID, comments string) error
 	GetProvider(ctx context.Context, providerID string) (entities.Provider, error)
 }
@@ -57,18 +57,12 @@ func (s *service) ApproveProviderRequest(ctx context.Context, id, reviewerID str
 		return err
 	}
 
-	code, err := entities.GenerateProviderCode(provider.Type)
-	if err != nil {
-		s.logger.Error("failed to generate provider code", zap.Error(err))
-		return err
-	}
-
-	if err := s.repo.ApproveProviderRequest(ctx, id, reviewerID, existing.ProviderID, code); err != nil {
+	if err := s.repo.ApproveProviderRequest(ctx, id, reviewerID, existing.ProviderID); err != nil {
 		s.logger.Error("failed to approve provider request", zap.Error(err))
 		return err
 	}
 
-	if err := s.emailClient.Send(ctx, provider.User.Email, "Solicitud de registro aprobada", fmt.Sprintf("Tu solicitud de registro como proveedor ha sido aprobada. Tu código de proveedor es: %s", code)); err != nil {
+	if err := s.emailClient.Send(ctx, provider.User.Email, "Solicitud de registro aprobada", "Tu solicitud ha sido aprobada"); err != nil {
 		s.logger.Error("failed to send approval email", zap.Error(err))
 		return fmt.Errorf("error sending approval email: %w", err)
 	}

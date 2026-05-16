@@ -17,7 +17,7 @@ type GetProviderResponse struct {
 	Contact    []string      `json:"emails_contacto,omitempty"`
 	Phones     []string      `json:"telefonos_contacto,omitempty"`
 	Webpage    string        `json:"sitio_web,omitempty"`
-	Active     bool          `json:"activo"`
+	Status     string        `json:"estado"`
 }
 
 type ProviderFiles struct {
@@ -36,7 +36,7 @@ func providerToResponse(entity entities.Provider) GetProviderResponse {
 		Name:       entity.User.FirstName + " " + entity.User.LastName,
 		Internal:   entity.IsInternal,
 		Code:       entity.Code,
-		Active:     entity.DeletedAt == "",
+		Status:     string(entity.Status),
 		Bio:        entity.Bio,
 		Type:       string(entity.Type),
 		ProfitType: string(entity.ProfitType),
