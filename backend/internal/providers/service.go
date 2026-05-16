@@ -35,8 +35,10 @@ type Repository interface {
 	CreateProvider(ctx context.Context, provider entities.Provider) (int64, error)
 	UpdateProvider(ctx context.Context, providerID string, provider entities.Provider) error
 	DeleteProvider(ctx context.Context, providerID string) error
-	UpdateProviderStatus(ctx context.Context, providerID string) error
+	ApproveProvider(ctx context.Context, providerID string) error
+	RejectProvider(ctx context.Context, providerID string) error
 	CreateProviderRequest(ctx context.Context, providerID int64) error
+	UpdateUserRole(ctx context.Context, userID, fromRole, toRole string) error
 
 	GetProviderByUserID(ctx context.Context, userID string) (entities.Provider, error)
 	GetProviderContactInfo(ctx context.Context, providerID string) (entities.User, error)
@@ -171,7 +173,13 @@ func (s *service) GetProviders(ctx context.Context, pageScope entities.PageScope
 // saves file metadata to the database, creates a provider request for admin review,
 // and sends a confirmation email. Returns the new provider's database ID.
 func (s *service) CreateProvider(ctx context.Context, provider *entities.Provider) (int64, error) {
-	provider.IsActive = false
+	code, err := entities.GenerateProviderCode(provider.Type)
+	if err != nil {
+		s.logger.Error("failed to generate provider code", zap.Error(err))
+		return -1, err
+	}
+	provider.Status = entities.ProviderStatusUnderReview
+	provider.Code = code
 	createdProviderID, err := s.repo.CreateProvider(ctx, *provider)
 	if err != nil {
 		s.logger.Error("failed to create provider", zap.Error(err))
@@ -200,19 +208,6 @@ func (s *service) CreateProvider(ctx context.Context, provider *entities.Provide
 			zap.String("action", "save_metadata"),
 		)
 		return -1, fmt.Errorf("failed to save file metadata: %w", err)
-	}
-
-	s.logger.Debug("successfully uploaded and saved files",
-		zap.Int("file_count", len(files)),
-		zap.String("action", "upload_and_save"),
-	)
-
-	if err := s.repo.CreateProviderRequest(ctx, createdProviderID); err != nil {
-		s.logger.Error("failed to create provider request",
-			zap.Error(err),
-			zap.String("action", "create_provider_request"),
-		)
-		return -1, fmt.Errorf("failed to create provider request: %w", err)
 	}
 
 	contact, err := s.repo.GetProviderContactInfo(ctx, provider.ID)
@@ -370,9 +365,22 @@ func (s *service) DeleteProvider(ctx context.Context, providerID string) error {
 	return nil
 }
 
-// ApproveProvider changes the status of a provider to active
-func (s *service) ApproveProvider(ctx context.Context, providerID string) error {
-	if err := s.repo.UpdateProviderStatus(ctx, providerID); err != nil {
+// ApproveProvider sets the provider status to approved and promotes the user role from visitante to coordinador.
+func (s *service) ApproveProvider(ctx context.Context, providerID, userID string) error {
+	if err := s.repo.ApproveProvider(ctx, providerID); err != nil {
+		s.logger.Error("error approving provider", zap.Error(err))
+		return err
+	}
+	if err := s.repo.UpdateUserRole(ctx, userID, entities.RoleNameFromID(entities.RoleVisitante), entities.RoleNameFromID(entities.RoleCoordinador)); err != nil {
+		s.logger.Error("error updating user role after provider approval", zap.Error(err))
+		return err
+	}
+	return nil
+}
+
+// RejectProvider changes the status of a provider to active
+func (s *service) RejectProvider(ctx context.Context, providerID string) error {
+	if err := s.repo.RejectProvider(ctx, providerID); err != nil {
 		s.logger.Error("error enabling provider", zap.Error(err))
 	}
 	return nil

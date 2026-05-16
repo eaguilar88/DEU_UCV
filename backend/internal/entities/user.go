@@ -66,7 +66,7 @@ var roleNames = map[int]string{
 	RoleCoordinador:  "coordinador",
 	RoleFacilitador:  "facilitador",
 	RoleParticipante: "participante",
-	RoleExtension:    "extensión",
+	RoleExtension:    "extension",
 	RoleVisitante:    "visitante",
 }
 
@@ -77,7 +77,7 @@ var roleIDs = map[string]int{
 	"coordinador":            RoleCoordinador,
 	"facilitador":            RoleFacilitador,
 	"participante":           RoleParticipante,
-	"extensión":              RoleExtension,
+	"extension":              RoleExtension,
 	"visitante":              RoleVisitante,
 }
 

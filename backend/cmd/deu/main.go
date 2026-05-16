@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/eaguilar88/deu/docs"
+	"github.com/eaguilar88/deu/internal/activities"
 	"github.com/eaguilar88/deu/internal/auth"
 	"github.com/eaguilar88/deu/internal/config"
 	"github.com/eaguilar88/deu/internal/course_cycle_close_requests"
@@ -96,6 +97,9 @@ func main() {
 	cpService := course_periods.NewService(repository, logger)
 	cpEndpoints := course_periods.NewHandler(cpService, logger)
 
+	activityService := activities.NewService(repository, bbClient, logger)
+	activityEndpoints := activities.NewHandler(activityService, logger)
+
 	groupService := groups.NewService(repository, logger)
 	groupEndpoints := groups.NewHandler(groupService, logger)
 
@@ -135,9 +139,11 @@ func main() {
 	addCourseRoutes(e, courseEndpoints, middlewares...)
 	addCoursePeriodRoutes(e, cpEndpoints, middlewares...)
 	addGroupsRoutes(e, groupEndpoints, middlewares...)
+	addActivityRoutes(e, activityEndpoints, middlewares...)
 	addGroupResourceRequestRoutes(e, groupResourceRequestEndpoints, middlewares...)
 
 	addAdminRoutes(e, middlewares,
+		providerEndpoints.RegisterProviderAdminEndpoints,
 		groupRequestEndpoints.RegisterGroupRequestAdminEndpoints,
 		groupResourceRequestEndpoints.RegisterGroupResourceRequestAdminEndpoints,
 		courseRequestEndpoints.RegisterCourseRequestAdminEndpoints,
@@ -234,6 +240,16 @@ func addCoursePeriodRoutes(e *echo.Echo, endpoints *course_periods.Handler, midd
 func addGroupResourceRequestRoutes(e *echo.Echo, endpoints *group_resource_requests.Handler, middlewares ...echo.MiddlewareFunc) {
 	protected := e.Group("", middlewares...)
 	endpoints.RegisterGroupResourceRequestEndpoints(protected)
+}
+
+func addActivityRoutes(e *echo.Echo, endpoints *activities.Handler, middlewares ...echo.MiddlewareFunc) {
+	publicGroup := e.Group("/activities")
+	publicGroup.GET("/:id", endpoints.GetActivity)
+	publicGroup.GET("", endpoints.GetActivities)
+	protectedGroup := e.Group("/activities", middlewares...)
+	protectedGroup.POST("", endpoints.CreateActivity)
+	protectedGroup.PUT("/:id", endpoints.UpdateActivity)
+	protectedGroup.DELETE("/:id", endpoints.DeleteActivity)
 }
 
 func addGroupsRoutes(e *echo.Echo, endpoints *groups.Handler, middlewares ...echo.MiddlewareFunc) {

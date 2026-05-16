@@ -17,7 +17,7 @@ var providerQuerySelectCommon = []string{
 	"p.is_internal",
 	"p.bio",
 	"p.code",
-	"p.is_active",
+	"p.status",
 	"p.created_at",
 	"p.updated_at",
 	"p.deleted_at",
@@ -27,17 +27,12 @@ var providerQuerySelectCommon = []string{
 	"p.faculty",
 }
 
-func GetProviderByID(id string, status, isDeleted bool) sq.SelectBuilder {
-	builder := psql.Select(providerQuerySelectCommon...).
+func GetProviderByID(id string) sq.SelectBuilder {
+	return psql.Select(providerQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS p", providersTableName)).
 		Join(fmt.Sprintf("%s AS u ON u.id = p.user_id", usersTableName)).
-		Where(sq.Eq{"p.is_active": status}).
+		Where(sq.Eq{"p.deleted_at": nil}).
 		Where(sq.Eq{"p.id": id})
-
-	if isDeleted {
-		builder = builder.Where(sq.NotEq{"p.deleted_at": nil})
-	}
-	return builder
 }
 
 func GetProviderByCode(code string) sq.SelectBuilder {
@@ -82,27 +77,37 @@ func GetProviders(filters entities.ProviderFilters, limit, offset int) sq.Select
 	case entities.GroupProviderType:
 		q = q.Where(sq.Like{"p.code": "GEX-%"})
 	}
+
 	if filters.PartyType != "" {
 		q = q.Where(sq.Eq{"p.party_type": string(filters.PartyType)})
 	}
+
 	if filters.ProfitType != "" {
 		q = q.Where(sq.Eq{"p.profit_type": string(filters.ProfitType)})
 	}
+
 	if filters.IsInternal != nil {
 		q = q.Where(sq.Eq{"p.is_internal": *filters.IsInternal})
 	}
-	if filters.IsActive != nil {
-		q = q.Where(sq.Eq{"p.is_active": *filters.IsActive})
-	}
+
 	if filters.Code != "" {
 		q = q.Where(sq.Eq{"p.code": filters.Code})
 	}
+
+	if filters.IsAdmin && filters.Status != "" {
+		q = q.Where(sq.Eq{"p.status": string(filters.Status)})
+	} else {
+		q = q.Where(sq.Eq{"p.status": entities.ProviderStatusActive})
+	}
+
 	if filters.CreatedAtFrom != "" {
 		q = q.Where(sq.GtOrEq{"p.created_at": filters.CreatedAtFrom})
 	}
+
 	if filters.CreatedAtTo != "" {
 		q = q.Where(sq.LtOrEq{"p.created_at": filters.CreatedAtTo})
 	}
+
 	if filters.Faculty != "" {
 		q = q.Where(sq.Eq{"p.faculty": filters.Faculty})
 	}
@@ -150,7 +155,7 @@ func UpdateProvider(provider models.Provider) sq.UpdateBuilder {
 func DeleteProvider(id string) sq.UpdateBuilder {
 	return psql.Update(providersTableName).
 		Set("deleted_at", sq.Expr("NOW()")).
-		Set("is_active", false).
+		Set("status", "inactive").
 		Where(sq.Eq{"id": id})
 }
 
@@ -159,9 +164,16 @@ func HardDeleteProvider(id string) sq.DeleteBuilder {
 		Where(sq.Eq{"id": id})
 }
 
-func ActivateProvider(id string) sq.UpdateBuilder {
+func SetProviderApproved(id string) sq.UpdateBuilder {
 	return psql.Update(providersTableName).
-		Set("is_active", true).
+		Set("status", "active").
+		Set("updated_at", sq.Expr("NOW()")).
+		Where(sq.Eq{"id": id})
+}
+
+func SetProviderRejected(id string) sq.UpdateBuilder {
+	return psql.Update(providersTableName).
+		Set("status", "rejected").
 		Set("updated_at", sq.Expr("NOW()")).
 		Where(sq.Eq{"id": id})
 }

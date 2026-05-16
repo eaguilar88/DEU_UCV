@@ -134,3 +134,14 @@ func SoftDeleteUser(userID string) sq.UpdateBuilder {
 		Where(sq.Eq{"deleted_at": nil}).
 		Where(sq.Eq{"id": userID})
 }
+
+func UpdateUserRole(userID, fromRoleName, toRoleName string) sq.UpdateBuilder {
+	return psql.Update(pivotTableName).
+		Set("role_id", sq.Expr(
+			fmt.Sprintf("(SELECT id FROM %s WHERE name = ? AND deleted_at IS NULL)", rolesTableName), toRoleName,
+		)).
+		Where(sq.Eq{"user_id": userID}).
+		Where(sq.Expr(
+			fmt.Sprintf("role_id = (SELECT id FROM %s WHERE name = ? AND deleted_at IS NULL)", rolesTableName), fromRoleName,
+		))
+}

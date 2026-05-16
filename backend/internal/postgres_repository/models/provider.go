@@ -11,7 +11,7 @@ type Provider struct {
 	IsInternal    sql.NullBool
 	Bio           sql.NullString
 	Code          sql.NullString
-	IsActive      bool
+	Status        string
 	Faculty       sql.NullString
 	CreatedAt     sql.NullString
 	UpdatedAt     sql.NullString

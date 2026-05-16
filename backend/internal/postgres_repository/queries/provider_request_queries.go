@@ -64,11 +64,3 @@ func RejectProviderRequest(id, reviewerID, comments string) sq.UpdateBuilder {
 		Set("updated_at", sq.Expr("NOW()")).
 		Where(sq.Eq{"id": id})
 }
-
-func SetProviderActive(providerID int64, code string) sq.UpdateBuilder {
-	return psql.Update(providersTableName).
-		Set("is_active", true).
-		Set("code", code).
-		Set("updated_at", sq.Expr("NOW()")).
-		Where(sq.Eq{"id": providerID})
-}

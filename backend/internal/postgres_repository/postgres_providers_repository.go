@@ -16,7 +16,7 @@ import (
 )
 
 func (r *PostgresRepository) GetProvider(ctx context.Context, providerID string) (entities.Provider, error) {
-	query, args, err := queries.GetProviderByID(providerID, true, false).ToSql()
+	query, args, err := queries.GetProviderByID(providerID).ToSql()
 	if err != nil {
 		return entities.Provider{}, err
 	}
@@ -202,8 +202,32 @@ func (r *PostgresRepository) DeleteProvider(ctx context.Context, providerID stri
 	return nil
 }
 
-func (r *PostgresRepository) UpdateProviderStatus(ctx context.Context, providerID string) error {
-	query, args, err := queries.ActivateProvider(providerID).ToSql()
+func (r *PostgresRepository) ApproveProvider(ctx context.Context, providerID string) error {
+	query, args, err := queries.SetProviderApproved(providerID).ToSql()
+	if err != nil {
+		return httperrors.NewBadQueryError(err)
+	}
+
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		return httperrors.NewBadQueryError(err)
+	}
+	defer stmt.Close()
+
+	result, err := stmt.ExecContext(ctx, args...)
+	if err != nil {
+		return err
+	}
+
+	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
+		return fmt.Errorf("%w: %w", providers.ErrProviderNotFound, err)
+	}
+
+	return nil
+}
+
+func (r *PostgresRepository) RejectProvider(ctx context.Context, providerID string) error {
+	query, args, err := queries.SetProviderRejected(providerID).ToSql()
 	if err != nil {
 		return httperrors.NewBadQueryError(err)
 	}
@@ -237,7 +261,7 @@ func scanProvider(row scannable) (models.Provider, error) {
 		&provider.IsInternal,
 		&provider.Bio,
 		&provider.Code,
-		&provider.IsActive,
+		&provider.Status,
 		&provider.CreatedAt,
 		&provider.UpdatedAt,
 		&provider.DeletedAt,
@@ -259,7 +283,7 @@ func newProviderFromModel(provider models.Provider) entities.Provider {
 			FirstName: provider.UserFirstName,
 			LastName:  provider.UserLastName,
 		},
-		IsActive: provider.IsActive,
+		Status: entities.ProviderStatus(provider.Status),
 	}
 
 	if provider.Name.Valid {
@@ -313,7 +337,7 @@ func newProviderModelFromEntities(provider entities.Provider) models.Provider {
 		IsInternal: toNullBool(provider.IsInternal),
 		Bio:        toNullString(provider.Bio),
 		Code:       toNullString(provider.Code),
-		IsActive:   provider.IsActive,
+		Status:     string(provider.Status),
 		Faculty:    toNullString(string(provider.Faculty)),
 	}
 }

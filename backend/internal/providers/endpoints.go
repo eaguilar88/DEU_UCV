@@ -23,7 +23,8 @@ type Service interface {
 	UpdateProvider(ctx context.Context, providerID string, provider *entities.Provider) error
 	DeleteProvider(ctx context.Context, providerID string) error
 	UploadProviderDocuments(ctx context.Context, userID string, intentionLetter, commitmentLetter *entities.File) error
-	ApproveProvider(ctx context.Context, providerID string) error
+	ApproveProvider(ctx context.Context, providerID, userID string) error
+	RejectProvider(ctx context.Context, providerID string) error
 }
 
 // Handler holds the HTTP handler dependencies for the providers domain.
@@ -43,12 +44,25 @@ func NewHandler(svc Service, log *zap.Logger) *Handler {
 func (h *Handler) RegisterProviderAdminEndpoints(g *echo.Group) {
 	gr := g.Group("/providers")
 	gr.GET("", h.GetProviders)
-	gr.POST("/:id/enable", h.ApproveProvider)
+	gr.POST("/:id/approve", h.ApproveProvider)
+	gr.POST("/:id/reject", h.RejectProvider)
 }
 
 func (h *Handler) ApproveProvider(c echo.Context) error {
 	ctx := c.Request().Context()
-	if err := h.svc.ApproveProvider(ctx, c.Param("id")); err != nil {
+	userID, ok := c.Get("userID").(string)
+	if !ok {
+		return httperrors.NewUnauthorized("authentication required")
+	}
+	if err := h.svc.ApproveProvider(ctx, c.Param("id"), userID); err != nil {
+		return httperrors.NewInternal(err)
+	}
+	return c.JSON(http.StatusAccepted, nil)
+}
+
+func (h *Handler) RejectProvider(c echo.Context) error {
+	ctx := c.Request().Context()
+	if err := h.svc.RejectProvider(ctx, c.Param("id")); err != nil {
 		return httperrors.NewInternal(err)
 	}
 	return c.JSON(http.StatusAccepted, nil)
@@ -80,16 +94,20 @@ func (h *Handler) GetProviders(c echo.Context) error {
 		Type: entities.ProviderType(c.QueryParam("type")),
 	}
 
-	if v := c.QueryParam("faculty"); v != "" {
-		f, err := entities.FromString(v)
-		if err != nil {
-			h.log.Warn("invalid faculty. skipping filter")
-		} else {
-			filters.Faculty = f
+	if faculty, ok := c.Get("faculty").(string); ok {
+		// the logged user has a faculty on its claims
+		filters.Faculty = entities.Faculty(faculty)
+	} else {
+		if v := c.QueryParam("faculty"); v != "" {
+			f, err := entities.FromString(v)
+			if err == nil {
+				filters.Faculty = f
+			}
 		}
 	}
 
-	if roles, ok := c.Get("roles").([]string); ok && slices.Contains(roles, "faculty_admin") {
+	if roles, ok := c.Get("roles").([]string); ok && isAdmin(roles) {
+		filters.IsAdmin = true
 		filters.PartyType = entities.ProviderPartyType(c.QueryParam("party_type"))
 		filters.ProfitType = entities.ProviderProfitType(c.QueryParam("profit_type"))
 		filters.Code = c.QueryParam("code")
@@ -99,9 +117,8 @@ func (h *Handler) GetProviders(c echo.Context) error {
 			b := v == "true"
 			filters.IsInternal = &b
 		}
-		if v := c.QueryParam("is_active"); v != "" {
-			b := v == "true"
-			filters.IsActive = &b
+		if v := c.QueryParam("status"); v != "" {
+			filters.Status = entities.ProviderStatus(v)
 		}
 	}
 
@@ -303,4 +320,10 @@ func makeProviderFromRequest(c echo.Context, userID string, logger *zap.Logger) 
 	provider.Files.Others = others
 
 	return provider, nil
+}
+
+func isAdmin(roles []string) bool {
+	return slices.Contains(roles, "faculty_admin") ||
+		slices.Contains(roles, "deu_admin") ||
+		slices.Contains(roles, "group_admin")
 }
