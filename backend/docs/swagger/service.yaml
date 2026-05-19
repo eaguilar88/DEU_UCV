@@ -38,11 +38,10 @@ components:
 
     LoginRequest:
       type: object
-      required: [ email, password ]
+      required: [ usuario, password ]
       properties:
-        email:
+        usuario:
           type: string
-          format: email
         password:
           type: string
 
@@ -51,8 +50,21 @@ components:
       properties:
         token:
           type: string
-        user:
-          $ref: "#/components/schemas/User"
+        usuario:
+          type: object
+          properties:
+            id:
+              type: string
+            nombre:
+              type: string
+            roles:
+              type: array
+              items:
+                type: string
+        facultad:
+          type: string
+        codigoProveedor:
+          type: string
 
     # ── Users ─────────────────────────────────────────────────────────────────
 
@@ -209,6 +221,56 @@ components:
           type: string
         updated_at:
           type: string
+
+    # ── Activities ────────────────────────────────────────────────────────────
+
+    ActivityFile:
+      type: object
+      properties:
+        id:
+          type: string
+        nombre:
+          type: string
+        url:
+          type: string
+        proposito:
+          type: string
+
+    Activity:
+      type: object
+      properties:
+        id:
+          type: string
+        group_id:
+          type: string
+        nombre:
+          type: string
+        descripcion:
+          type: string
+        fecha:
+          type: string
+        area_conocimiento:
+          type: string
+        aliados:
+          type: string
+        participantes_estimados:
+          type: integer
+        participantes_reales:
+          type: integer
+        financiamiento:
+          type: string
+        observaciones:
+          type: string
+        archivos:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityFile"
+        creado_en:
+          type: string
+          format: date-time
+        actualizado_en:
+          type: string
+          format: date-time
 
     # ── Groups ────────────────────────────────────────────────────────────────
 
@@ -1022,6 +1084,188 @@ paths:
       responses:
         "201":
           description: Announcement created
+
+  # ── Activities ────────────────────────────────────────────────────────────
+
+  /activities:
+    get:
+      summary: List activities
+      tags: [ Activities ]
+      parameters:
+        - name: group_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: date
+          in: query
+          schema:
+            type: string
+        - name: actual_participants
+          in: query
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: true
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          required: true
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Paginated activity list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  actividades:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Activity"
+                  pagina:
+                    $ref: "#/components/schemas/Pagination"
+        "400":
+          description: Missing required query parameters
+    post:
+      summary: Create activity
+      tags: [ Activities ]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [ group_id, nombre ]
+              properties:
+                group_id:
+                  type: string
+                nombre:
+                  type: string
+                descripcion:
+                  type: string
+                fecha:
+                  type: string
+                area_conocimiento:
+                  type: string
+                aliados:
+                  type: string
+                participantes_estimados:
+                  type: integer
+                participantes_reales:
+                  type: integer
+                financiamiento:
+                  type: string
+                observaciones:
+                  type: string
+                reporte:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Optional report files
+      responses:
+        "201":
+          description: Activity created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+        "400":
+          description: Validation error
+        "401":
+          description: Unauthorized
+
+  /activities/{id}:
+    get:
+      summary: Get activity by ID
+      tags: [ Activities ]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Activity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Activity"
+        "404":
+          description: Activity not found
+    put:
+      summary: Update activity
+      tags: [ Activities ]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                nombre:
+                  type: string
+                descripcion:
+                  type: string
+                fecha:
+                  type: string
+                area_conocimiento:
+                  type: string
+                aliados:
+                  type: string
+                participantes_estimados:
+                  type: integer
+                participantes_reales:
+                  type: integer
+                financiamiento:
+                  type: string
+                observaciones:
+                  type: string
+      responses:
+        "202":
+          description: Updated
+        "401":
+          description: Unauthorized
+        "404":
+          description: Activity not found
+    delete:
+      summary: Delete activity
+      tags: [ Activities ]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Unauthorized
+        "404":
+          description: Activity not found
 
   # ── Groups ────────────────────────────────────────────────────────────────
 

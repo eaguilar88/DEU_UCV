@@ -83,7 +83,7 @@ func main() {
 
 	repository := repository.NewRepository(postgres, config.FilePath, logger)
 	authService := auth.NewService(repository, signer, logger)
-	authEndpoints := auth.NewHandler(authService, logger)
+	authEndpoints := auth.NewHandler(authService)
 	mailClient := email.NewMailgunClient(config.Email, logger)
 	userSvc := users.NewService(repository, mailClient, bbClient, logger)
 	userEndpoints := users.NewHandler(userSvc, logger)

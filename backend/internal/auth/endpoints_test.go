@@ -14,27 +14,23 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 )
 
 func TestNewHandler(t *testing.T) {
 	type testCase struct {
 		name string
 		svc  Service
-		log  *zap.Logger
 		want Handler
 	}
 	tc := testCase{
 		name: "success",
 		svc:  &mocks.MockService{},
-		log:  zap.NewNop(),
 		want: Handler{
 			svc: &mocks.MockService{},
-			log: zap.NewNop(),
 		},
 	}
 	t.Run(tc.name, func(t *testing.T) {
-		got := NewHandler(tc.svc, tc.log)
+		got := NewHandler(tc.svc)
 		assert.Equal(t, tc.want.svc, got.svc)
 	})
 }
@@ -81,7 +77,6 @@ func TestAuthEndpointsHandler_LoginHandleHTTP(t *testing.T) {
 		},
 	}
 
-	loggerMock := zap.NewNop()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			jsonBytes, err := json.Marshal(tt.req)
@@ -95,7 +90,7 @@ func TestAuthEndpointsHandler_LoginHandleHTTP(t *testing.T) {
 				tt.prepare(ctx, &tt)
 			}
 
-			h := NewHandler(tt.svc, loggerMock)
+			h := NewHandler(tt.svc)
 
 			err = h.LoginHandleHTTP(ctx)
 			assertCustomError(t, tt.wantErr, err)

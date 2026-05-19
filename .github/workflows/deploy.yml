@@ -72,10 +72,11 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          script_stop: true
           script: |
+            set -e
             cd /root/DEU_UCV
             git fetch --all --tags
+            git pull
             git checkout ${{ github.ref_name || github.sha }}
             SERVICE="${{ inputs.service || 'all' }}"
             echo "$(date -u '+%Y-%m-%dT%H:%M:%SZ') | deployed by: ${{ github.actor }} | service: $SERVICE | ref: ${{ github.ref_name || github.sha }}" >> /root/DEU_UCV/deploy.log
