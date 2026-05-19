@@ -25,10 +25,10 @@ stop-backend:
 	docker compose down
 
 stop-prod:
-	docker compose -f docker-compose.prod.yml down
+	docker compose -f docker-compose.prod.yml down -v
 
 stop-db:
-	docker compose -f docker-compose.dev.yml down
+	docker compose -f docker-compose.dev.yml down -v
 
 generate-mocks:
 	docker pull vektra/mockery:v3.7.0 && docker run --user 1000:1000 --rm -v ${PWD}/backend:/src -w /src vektra/mockery:v3.7.0 --config .mockery.yaml
@@ -48,3 +48,5 @@ quality:
 	go test -count=1 -race -short -cover ./...
 
 refresh: stop-db start-db
+
+refresh-prod: stop-PROD start-prod

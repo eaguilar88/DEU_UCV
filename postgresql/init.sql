@@ -458,7 +458,7 @@ VALUES
   ),
   (
     103,
-    'admin_agronomia@extension.ucv.ve',
+    'coordinador_agronomia@extension.ucv.ve',
     'Admin',
     'Agronomía',
     '2000-01-01',
@@ -469,7 +469,7 @@ VALUES
   ),
   (
     104,
-    'admin_arquitectura_y_urbanismo@extension.ucv.ve',
+    'coordinador_arquitectura@extension.ucv.ve',
     'Admin',
     'Arquitectura y Urbanismo',
     '2000-01-01',
@@ -480,7 +480,7 @@ VALUES
   ),
   (
     105,
-    'admin_ciencias@extension.ucv.ve',
+    'coordinador_ciencias@extension.ucv.ve',
     'Admin',
     'Ciencias',
     '2000-01-01',
@@ -491,7 +491,7 @@ VALUES
   ),
   (
     106,
-    'admin_ciencias_economicas_y_sociales@extension.ucv.ve',
+    'coordinador_fases@extension.ucv.ve',
     'Admin',
     'Ciencias Económicas y Sociales',
     '2000-01-01',
@@ -502,7 +502,7 @@ VALUES
   ),
   (
     107,
-    'admin_ciencias_juridicas_y_politicas@extension.ucv.ve',
+    'coordinador_ciencias_politicas@extension.ucv.ve',
     'Admin',
     'Ciencias Jurídicas y Políticas',
     '2000-01-01',
@@ -513,7 +513,7 @@ VALUES
   ),
   (
     108,
-    'admin_ciencias_veterinarias@extension.ucv.ve',
+    'coordinador_veterinaria@extension.ucv.ve',
     'Admin',
     'Ciencias Veterinarias',
     '2000-01-01',
@@ -524,7 +524,7 @@ VALUES
   ),
   (
     109,
-    'admin_farmacia@extension.ucv.ve',
+    'coordinador_farmacia@extension.ucv.ve',
     'Admin',
     'Farmacia',
     '2000-01-01',
@@ -535,7 +535,7 @@ VALUES
   ),
   (
     110,
-    'admin_humanidades_y_educacion@extension.ucv.ve',
+    'coordinador_humanidades@extension.ucv.ve',
     'Admin',
     'Humanidades y Educación',
     '2000-01-01',
@@ -546,7 +546,7 @@ VALUES
   ),
   (
     111,
-    'admin_ingenieria@extension.ucv.ve',
+    'coordinador_ingenieria@extension.ucv.ve',
     'Admin',
     'Ingeniería',
     '2000-01-01',
@@ -557,7 +557,7 @@ VALUES
   ),
   (
     112,
-    'admin_medicina@extension.ucv.ve',
+    'coordinador_medicina@extension.ucv.ve',
     'Admin',
     'Medicina',
     '2000-01-01',
@@ -568,7 +568,7 @@ VALUES
   ),
   (
     113,
-    'admin_odontologia@extension.ucv.ve',
+    'coordinador_odontologia@extension.ucv.ve',
     'Admin',
     'Odontología',
     '2000-01-01',
