@@ -1,4 +1,4 @@
-.PHONY: loadenv start-prod-landing seed-landing start-landing stop-landing start-espacios stop-espacios
+.PHONY: loadenv start-prod-landing seed-landing start-landing stop-landing start-espacios stop-espacios start-deu stop-deu
 
 loadenv:
 	@set -a && source .env && set +a && env | grep -E '^HTTP_'
@@ -7,8 +7,15 @@ start-backend:
 	docker compose up --build -d
 
 start-prod:
-	git submodule update --recursive
+	git submodule update --init --recursive
 	docker compose -f docker-compose.prod.yml up  --build -d
+
+start-deu: start-prod start-prod-landing start-espacios
+
+stop-deu:
+	docker compose -f docker-compose.prod.yml down
+	docker compose -f docker-compose.landing.yml down
+	docker compose -f docker-compose.espacios.yml down
 
 start-prod-landing:
 	git submodule sync -- landing

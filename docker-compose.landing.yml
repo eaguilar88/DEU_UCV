@@ -16,7 +16,6 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${POSTGRES_PORT}/${POSTGRES_DB}
       DEU_SEED_PASSWORD: ${DEU_SEED_PASSWORD:-123123}
       DEU_SUPER_ADMIN_EMAILS: ${DEU_SUPER_ADMIN_EMAILS:-danielito.moros03@gmail.com}
-    command: ["./bin/rails", "server", "-b", "0.0.0.0", "-p", "3000"]
     volumes:
       - landing_storage:/rails/storage
     labels:
@@ -33,3 +32,4 @@ volumes:
 networks:
   web:
     external: true
+    name: deu_web

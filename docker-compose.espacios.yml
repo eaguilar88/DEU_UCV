@@ -29,6 +29,7 @@ services:
       PORT: 3000
       DB_HOST: espacios-db
       DB_PORT: 5432
+      DB_DIALECT: postgres
       TZ: ${TZ:-America/Caracas}
       NODE_ENV: production
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://${APP_DOMAIN},http://${APP_DOMAIN}}
@@ -70,3 +71,4 @@ volumes:
 networks:
   web:
     external: true
+    name: deu_web
