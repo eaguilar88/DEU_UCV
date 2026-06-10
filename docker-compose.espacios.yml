@@ -38,11 +38,6 @@ services:
     depends_on:
       espacios-db:
         condition: service_healthy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.espacios-api.rule=Host(`${APP_DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/uploads`))"
-      - "traefik.http.routers.espacios-api.entrypoints=web"
-      - "traefik.http.services.espacios-api.loadbalancer.server.port=3000"
     networks:
       - web
 
