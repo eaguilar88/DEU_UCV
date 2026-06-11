@@ -1,6 +1,6 @@
 services:
   traefik:
-    image: traefik:v3.3
+    image: traefik:latest
     restart: unless-stopped
     command:
       - "--api.dashboard=true" # Enable the dashboard
@@ -10,12 +10,17 @@ services:
       - "--entrypoints.web.address=:80" # Define entrypoint for HTTP
       - "--entrypoints.websecure.address=:443" # Enable HTTPS
       - "--log.level=DEBUG" # Set log level to warn
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.letsencrypt.acme.email=danielito.moros03@gmail.com"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
     ports:
       - "80:80" # Expose HTTP
       - "443:443" # Expose HTTPS
       - "8080:8080" # Expose Traefik dashboard (optional)
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro" # Allow Traefik to talk to Docker
+      - "letsencrypt:/letsencrypt"
     networks:
       - web
   diplomados:
@@ -89,6 +94,7 @@ services:
       retries: 5
 volumes:
   postgres_data:
+  letsencrypt:
 networks:
   web:
     driver: bridge

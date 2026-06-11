@@ -38,5 +38,12 @@ RUN npm ci --omit=dev
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 USER appuser
 
+# Install only production deps in the final image
+RUN npm ci --omit=dev
+
+# Run as non-root user
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+USER appuser
+
 EXPOSE 80
 CMD ["npm", "run", "start"]

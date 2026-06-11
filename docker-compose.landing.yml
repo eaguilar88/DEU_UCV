@@ -20,8 +20,16 @@ services:
       - landing_storage:/rails/storage
     labels:
       - "traefik.enable=true"
+      # HTTP -> redirige a HTTPS
       - "traefik.http.routers.landing.rule=Host(`extension.ucv.ve`)"
       - "traefik.http.routers.landing.entrypoints=web"
+      - "traefik.http.routers.landing.middlewares=landing-https-redirect"
+      - "traefik.http.middlewares.landing-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.landing-https-redirect.redirectscheme.permanent=true"
+      # HTTPS con certificado Let's Encrypt
+      - "traefik.http.routers.landing-secure.rule=Host(`extension.ucv.ve`)"
+      - "traefik.http.routers.landing-secure.entrypoints=websecure"
+      - "traefik.http.routers.landing-secure.tls.certresolver=letsencrypt"
       - "traefik.http.services.landing.loadbalancer.server.port=3000"
     networks:
       - web

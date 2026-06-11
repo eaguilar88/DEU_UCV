@@ -38,6 +38,19 @@ services:
     depends_on:
       espacios-db:
         condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      # HTTP -> redirige a HTTPS
+      - 'traefik.http.routers.espacios-api.rule=Host(`${APP_DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/uploads`))'
+      - "traefik.http.routers.espacios-api.entrypoints=web"
+      - "traefik.http.routers.espacios-api.middlewares=espacios-https-redirect"
+      - "traefik.http.middlewares.espacios-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.espacios-https-redirect.redirectscheme.permanent=true"
+      # HTTPS con certificado Let's Encrypt
+      - 'traefik.http.routers.espacios-api-secure.rule=Host(`${APP_DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/uploads`))'
+      - "traefik.http.routers.espacios-api-secure.entrypoints=websecure"
+      - "traefik.http.routers.espacios-api-secure.tls.certresolver=letsencrypt"
+      - "traefik.http.services.espacios-api.loadbalancer.server.port=3000"
     networks:
       - web
 
@@ -53,8 +66,14 @@ services:
       - espacios-backend
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.espacios-web.rule=Host(`${APP_DOMAIN}`)"
+      # HTTP -> redirige a HTTPS
+      - "traefik.http.routers.espacios-web.rule=Host(`${APP_DOMAIN}`) && !PathPrefix(`/api`) && !PathPrefix(`/uploads`)"
       - "traefik.http.routers.espacios-web.entrypoints=web"
+      - "traefik.http.routers.espacios-web.middlewares=espacios-https-redirect"
+      # HTTPS con certificado Let's Encrypt
+      - "traefik.http.routers.espacios-web-secure.rule=Host(`${APP_DOMAIN}`) && !PathPrefix(`/api`) && !PathPrefix(`/uploads`)"
+      - "traefik.http.routers.espacios-web-secure.entrypoints=websecure"
+      - "traefik.http.routers.espacios-web-secure.tls.certresolver=letsencrypt"
       - "traefik.http.services.espacios-web.loadbalancer.server.port=80"
     networks:
       - web

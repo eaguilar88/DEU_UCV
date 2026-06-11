@@ -1,7 +1,7 @@
 .PHONY: loadenv start-prod-landing seed-landing start-landing stop-landing start-espacios stop-espacios start-deu stop-deu
 
 loadenv:
-	@set -a && source .env && set +a && env | grep -E '^HTTP_'
+	@set -a && . .env && set +a && env | grep -E '^HTTP_'
 
 start-backend:
 	docker compose up --build -d
@@ -67,4 +67,4 @@ quality:
 
 refresh: stop-db start-db
 
-refresh-prod: stop-PROD start-prod
+refresh-prod: stop-prod start-prod
