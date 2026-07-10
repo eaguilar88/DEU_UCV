@@ -1,22 +1,40 @@
-.PHONY: loadenv start-prod-landing seed-landing
+.PHONY: loadenv start-prod-landing seed-landing start-landing stop-landing start-espacios stop-espacios start-deu stop-deu
 
 loadenv:
-	@set -a && source .env && set +a && env | grep -E '^HTTP_'
+	@set -a && . .env && set +a && env | grep -E '^HTTP_'
 
 start-backend:
 	docker compose up --build -d
 
 start-prod:
-	git submodule update --recursive
+	git submodule update --init --recursive
 	docker compose -f docker-compose.prod.yml up  --build -d
+
+start-deu: start-prod start-prod-landing start-espacios
+
+stop-deu:
+	docker compose -f docker-compose.prod.yml down
+	docker compose -f docker-compose.landing.yml down
+	docker compose -f docker-compose.espacios.yml down
 
 start-prod-landing:
 	git submodule sync -- landing
 	git submodule update --init --recursive landing
-	docker compose -f docker-compose.prod.yml up -d --build traefik db backend landing
+	docker compose -f docker-compose.landing.yml up -d --build
+
+stop-landing:
+	docker compose -f docker-compose.landing.yml down
 
 seed-landing:
-	docker compose -f docker-compose.prod.yml exec landing ./bin/rails db:seed
+	docker compose -f docker-compose.landing.yml exec landing ./bin/rails db:seed
+
+start-espacios:
+	git submodule sync -- espacios-universitarios
+	git submodule update --init --recursive espacios-universitarios
+	docker compose -f docker-compose.espacios.yml up -d --build
+
+stop-espacios:
+	docker compose -f docker-compose.espacios.yml down
 
 start-db:
 	docker compose -f docker-compose.dev.yml up  --build -d
@@ -49,4 +67,4 @@ quality:
 
 refresh: stop-db start-db
 
-refresh-prod: stop-PROD start-prod
+refresh-prod: stop-prod start-prod

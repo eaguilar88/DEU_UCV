@@ -1,262 +1,2610 @@
 {
     "info": {
-        "_postman_id": "b9c9367d-6149-4585-843f-334d8cf98fee",
+        "_postman_id": "ef9040ad-f2ea-4a45-a3b7-78b197be2f6c",
         "name": "Tesis",
+        "description": "# 🚀 Get started here\n\nThis template guides you through CRUD operations (GET, POST, PUT, DELETE), variables, and tests.\n\n## 🔖 **How to use this template**\n\n#### **Step 1: Send requests**\n\nRESTful APIs allow you to perform CRUD operations using the POST, GET, PUT, and DELETE HTTP methods.\n\nThis collection contains each of these [request](https://learning.postman.com/docs/sending-requests/requests/) types. Open each request and click \"Send\" to see what happens.\n\n#### **Step 2: View responses**\n\nObserve the response tab for status code (200 OK), response time, and size.\n\n#### **Step 3: Send new Body data**\n\nUpdate or add new data in \"Body\" in the POST request. Typically, Body data is also used in PUT request.\n\n```\n{\n    \"name\": \"Add your name in the body\"\n}\n\n ```\n\n#### **Step 4: Update the variable**\n\nVariables enable you to store and reuse values in Postman. We have created a [variable](https://learning.postman.com/docs/sending-requests/variables/) called `base_url` with the sample request [https://postman-api-learner.glitch.me](https://postman-api-learner.glitch.me). Replace it with your API endpoint to customize this collection.\n\n#### **Step 5: Add tests in the \"Scripts\" tab**\n\nAdding tests to your requests can help you confirm that your API is working as expected. You can write test scripts in JavaScript and view the output in the \"Test Results\" tab.\n\n<img src=\"https://content.pstmn.io/fa30ea0a-373d-4545-a668-e7b283cca343/aW1hZ2UucG5n\" alt=\"\" height=\"1530\" width=\"2162\">\n\n## 💪 Pro tips\n\n- Use folders to group related requests and organize the collection.\n    \n- Add more [scripts](https://learning.postman.com/docs/writing-scripts/intro-to-scripts/) to verify if the API works as expected and execute workflows.\n    \n\n## 💡Related templates\n\n[API testing basics](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=e9a37a28-055b-49cd-8c7e-97494a21eb54&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)  \n[API documentation](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=e9c28f47-1253-44af-a2f3-20dce4da1f18&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)  \n[Authorization methods](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=31a9a6ed-4cdf-4ced-984c-d12c9aec1c27&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-        "description": ""
+        "_exporter_id": "923907"
     },
     "item": [
         {
-            "name": "GET user by ID",
-            "request": {
-                "method": "GET",
-                "url": {
-                    "raw": "{{base_url}}:{{port}}/users/1",
-                    "path": [
-                        "users",
-                        "1"
-                    ],
-                    "host": [
-                        "{{base_url}}"
-                    ],
-                    "port": "{{port}}"
-                }
-            }
-        },
-        {
-            "name": "POST create User",
-            "request": {
-                "method": "POST",
-                "url": {
-                    "raw": "{{base_url}}:{{port}}/users",
-                    "path": [
-                        "users"
-                    ],
-                    "host": [
-                        "{{base_url}}"
-                    ],
-                    "port": "{{port}}"
-                },
-                "body": {
-                    "mode": "raw",
-                    "options": {
-                        "raw": {
-                            "language": "json"
-                        }
-                    },
-                    "raw": "{\n  \"ci\": \"V-12345679\",\n  \"username\": \"user23\",\n  \"first_name\": \"John\",\n  \"last_name\": \"Doe\",\n  \"date_of_birth\": \"2000-12-24\",\n  \"gender\": \"masculino\",\n  \"education_level\": \"universitario_incompleta\",\n  \"address\": \"Av Victoria, Caracas\",\n  \"password\": \"nolodire222\"\n}"
-                }
-            }
-        },
-        {
-            "name": "GET users",
-            "request": {
-                "method": "GET",
-                "url": {
-                    "raw": "{{base_url}}:{{port}}/users",
-                    "path": [
-                        "users"
-                    ],
-                    "host": [
-                        "{{base_url}}"
-                    ],
-                    "port": "{{port}}"
-                }
-            }
-        },
-        {
-            "name": "DELETE user by ID",
-            "request": {
-                "method": "DELETE",
-                "url": {
-                    "raw": "{{base_url}}:{{port}}/users/1",
-                    "path": [
-                        "users",
-                        "1"
-                    ],
-                    "host": [
-                        "{{base_url}}"
-                    ],
-                    "port": "{{port}}"
-                }
-            }
-        },
-        {
-            "name": "PUT update user by ID",
-            "request": {
-                "method": "PUT",
-                "url": {
-                    "raw": "{{base_url}}:{{port}}/users/100",
-                    "path": [
-                        "users",
-                        "100"
-                    ],
-                    "host": [
-                        "{{base_url}}"
-                    ],
-                    "port": "{{port}}"
-                },
-                "body": {
-                    "mode": "raw",
-                    "options": {
-                        "raw": {
-                            "language": "json"
-                        }
-                    },
-                    "raw": "{\n  \"ci\": \"V-18245415\",\n  \"first_name\": \"Ellery\",\n  \"last_name\": \"Aguilar\",\n  \"date_of_birth\": \"1988-09-03T00:00:00Z\",\n  \"gender\": \"masculino\",\n  \"education_level\": \"bachiller\",\n  \"address\": \"venezuela\"\n}"
-                }
-            }
-        },
-        {
-            "name": "Group Resource Requests",
+            "name": "Usuarios",
             "item": [
                 {
-                    "name": "POST create group resource request",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            },
-                            {
-                                "key": "Authorization",
-                                "value": "Bearer {{token}}"
+                    "name": "Get Users",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});"
+                                ],
+                                "type": "text/javascript",
+                                "packages": {}
                             }
-                        ],
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
                         "url": {
-                            "raw": "{{base_url}}:{{port}}/group-resource-requests",
-                            "path": [
-                                "group-resource-requests"
-                            ],
+                            "raw": "{{base_url}}/users",
                             "host": [
                                 "{{base_url}}"
                             ],
-                            "port": "{{port}}"
+                            "path": [
+                                "users"
+                            ]
                         },
+                        "description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get User by ID",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});"
+                                ],
+                                "type": "text/javascript",
+                                "packages": {}
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/users/{{user_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "users",
+                                "{{user_id}}"
+                            ]
+                        },
+                        "description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create User",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Successful POST request\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                                    "});",
+                                    ""
+                                ],
+                                "type": "text/javascript",
+                                "packages": {},
+                                "requests": {}
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "cedula",
+                                    "value": "18245415",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "nombres",
+                                    "value": "Ellery",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "apellidos",
+                                    "value": "Aguilar",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "fecha_de_nacimiento",
+                                    "value": "03-09-1988",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "genero",
+                                    "value": " masculino",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "nivel_educativo",
+                                    "value": "bachiller",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "direccion",
+                                    "value": " caracas",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "email",
+                                    "value": "esaulagj@gmail.com",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "password",
+                                    "type": "text",
+                                    "value": "nolodire"
+                                },
+                                {
+                                    "key": "profile_picture",
+                                    "type": "file",
+                                    "uuid": "f716ad48-0653-4115-a888-a81488b207dc",
+                                    "value": null
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/users",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "users"
+                            ]
+                        },
+                        "description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update User",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Successful PUT request\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                                    "});",
+                                    ""
+                                ],
+                                "type": "text/javascript",
+                                "packages": {},
+                                "requests": {}
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "PUT",
+                        "header": [],
                         "body": {
                             "mode": "raw",
+                            "raw": "{\n\t\"cedula\": \"18245417\",\n    \"nombres\": \"Ellery\",\n    \"apellidos\": \"Aguilar\",\n    \"fecha_de_nacimiento\": \"1988-09-03\",\n    \"genero\": \"masculino\",\n    \"nivel_educativo\": \"universitaria_incompleta\",\n    \"direccion\": \"caracas\",\n    \"email\": \"esaulagj@gmail.com\",\n    \"password\": \"nolodire\"\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
                                 }
-                            },
-                            "raw": "{\n  \"grupo_id\": \"1\",\n  \"tipo\": \"espacio\",\n  \"contenido\": \"necesitamos un salon\"\n}"
-                        }
-                    }
-                },
-                {
-                    "name": "GET group resource requests by faculty (admin)",
-                    "request": {
-                        "method": "GET",
-                        "header": [
-                            {
-                                "key": "Authorization",
-                                "value": "Bearer {{token}}"
                             }
-                        ],
+                        },
                         "url": {
-                            "raw": "{{base_url}}:{{port}}/admin/group-resource-requests?faculty=Humanidades%20y%20Educaci%C3%B3n&page=1&pageSize=10",
-                            "path": [
-                                "admin",
-                                "group-resource-requests"
-                            ],
+                            "raw": "{{base_url}}/users/2",
                             "host": [
                                 "{{base_url}}"
                             ],
-                            "port": "{{port}}",
-                            "query": [
-                                {
-                                    "key": "faculty",
-                                    "value": "Humanidades y Educación"
-                                },
-                                {
-                                    "key": "page",
-                                    "value": "1"
-                                },
-                                {
-                                    "key": "pageSize",
-                                    "value": "10"
-                                }
+                            "path": [
+                                "users",
+                                "2"
                             ]
-                        }
-                    }
+                        },
+                        "description": "This is a PUT request and it is used to overwrite an existing piece of data. For instance, after you create an entity with a POST request, you may want to modify that later. You can do that using a PUT request. You typically identify the entity being updated by including an identifier in the URL (eg. `id=1`).\n\nA successful PUT request typically returns a `200 OK`, `201 Created`, or `204 No Content` response code."
+                    },
+                    "response": []
                 },
                 {
-                    "name": "GET group resource request by ID (admin)",
-                    "request": {
-                        "method": "GET",
-                        "header": [
-                            {
-                                "key": "Authorization",
-                                "value": "Bearer {{token}}"
+                    "name": "Delete User",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Successful DELETE request\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 202, 204]);",
+                                    "});",
+                                    ""
+                                ],
+                                "type": "text/javascript",
+                                "packages": {}
                             }
-                        ],
+                        }
+                    ],
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
                         "url": {
-                            "raw": "{{base_url}}:{{port}}/admin/group-resource-requests/1",
-                            "path": [
-                                "admin",
-                                "group-resource-requests",
-                                "1"
-                            ],
+                            "raw": "{{base_url}}/users/{{user_id}}",
                             "host": [
                                 "{{base_url}}"
                             ],
-                            "port": "{{port}}"
-                        }
+                            "path": [
+                                "users",
+                                "{{user_id}}"
+                            ]
+                        },
+                        "description": "This is a DELETE request, and it is used to delete data that was previously created via a POST request. You typically identify the entity being updated by including an identifier in the URL (eg. `id=1`).\n\nA successful DELETE request typically returns a `200 OK`, `202 Accepted`, or `204 No Content` response code."
+                    },
+                    "response": []
+                }
+            ],
+            "auth": {
+                "type": "bearer",
+                "bearer": [
+                    {
+                        "key": "token",
+                        "value": "{{jwt}}",
+                        "type": "string"
+                    }
+                ]
+            },
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "packages": {},
+                        "exec": [
+                            ""
+                        ]
                     }
                 },
                 {
-                    "name": "POST approve group resource request (admin)",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Authorization",
-                                "value": "Bearer {{token}}"
-                            }
-                        ],
-                        "url": {
-                            "raw": "{{base_url}}:{{port}}/admin/group-resource-requests/1/approve",
-                            "path": [
-                                "admin",
-                                "group-resource-requests",
-                                "1",
-                                "approve"
-                            ],
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "port": "{{port}}"
-                        }
-                    }
-                },
-                {
-                    "name": "POST reject group resource request (admin)",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Authorization",
-                                "value": "Bearer {{token}}"
-                            }
-                        ],
-                        "url": {
-                            "raw": "{{base_url}}:{{port}}/admin/group-resource-requests/2/reject",
-                            "path": [
-                                "admin",
-                                "group-resource-requests",
-                                "2",
-                                "reject"
-                            ],
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "port": "{{port}}"
-                        }
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "packages": {},
+                        "exec": [
+                            ""
+                        ]
                     }
                 }
             ]
+        },
+        {
+            "name": "Cursos",
+            "item": [
+                {
+                    "name": "Get Courses",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});"
+                                ],
+                                "type": "text/javascript",
+                                "packages": {},
+                                "requests": {}
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/courses",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "courses"
+                            ]
+                        },
+                        "description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Course by ID",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});"
+                                ],
+                                "type": "text/javascript",
+                                "packages": {}
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/courses/{{course_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "courses",
+                                "{{course_id}}"
+                            ]
+                        },
+                        "description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create Course",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Successful POST request\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                                    "    var resp = pm.response.json()",
+                                    "    pm.environment.set('course_requests_id', resp.id)",
+                                    "});",
+                                    "",
+                                    ""
+                                ],
+                                "type": "text/javascript",
+                                "packages": {},
+                                "requests": {}
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "nombre",
+                                    "value": " Introducción a la Programación con Python",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "descripcion",
+                                    "value": " Curso práctico orientado al aprendizaje de los fundamentos de la programación usando Python como lenguaje base.",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "objetivos",
+                                    "value": " Desarrollar habilidades básicas de programación y resolución de problemas mediante el uso de Python.",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "fundamentacion",
+                                    "value": " La demanda de profesionales con competencias en programación ha crecido significativamente en todos los sectores productivos del país.",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "duracion",
+                                    "value": " 40 horas",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "estructura_costos",
+                                    "value": " Bs. 150.000",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "perfil_docente",
+                                    "value": " Profesional con título universitario en Computación, Ingeniería de Sistemas o afín, con experiencia docente mínima de 2 años.",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "perfiles",
+                                    "value": " Estudiantes universitarios, profesionales en ejercicio y público en general interesados en iniciarse en la programación.",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "exigencias",
+                                    "value": " Manejo básico de computadora. No se requieren conocimientos previos de programación.",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "estructura_curricular",
+                                    "value": " Módulo 1: Variables y tipos de datos. Módulo 2: Estructuras de control. Módulo 3: Funciones. Módulo 4: Listas y diccionarios. Módulo 5: Proyecto final.",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "evaluacion",
+                                    "value": " Participación en clase (20%), ejercicios prácticos (40%), proyecto final (40%).",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "cronograma",
+                                    "value": " Sesiones los sábados de 8:00am a 12:00pm durante 10 semanas.",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "tipo",
+                                    "value": " skill_development",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "facultad",
+                                    "value": " Ingeniería",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "ubicacion",
+                                    "value": "online",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "portada",
+                                    "type": "file",
+                                    "uuid": "45fc3f74-f814-49ed-8431-470a96bcebb8",
+                                    "src": "/C:/Users/User/Pictures/3-25-updated-betrayal-cheatsheet-website-for-custom-v0-tcdjgedzf2ed1.webp"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/courses",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "courses"
+                            ]
+                        },
+                        "description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Course",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Successful PUT request\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                                    "});",
+                                    ""
+                                ],
+                                "type": "text/javascript",
+                                "packages": {}
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "PUT",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"ci\": \"V-18245415\",\n    \"first_name\": \"Ellery\",\n    \"last_name\": \"Aguilar\",\n    \"date_of_birth\": \"1988-09-03\",\n    \"gender\": \"masculino\",\n    \"education_level\": \"universitario_incompleta\",\n    \"address\": \"caracas\",\n    \"username\": \"ellery@gmail.com\",\n    \"password\": \"nolodire\",\n    \"role\": \"admin\"\n\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/courses/{{course_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "courses",
+                                "{{course_id}}"
+                            ]
+                        },
+                        "description": "This is a PUT request and it is used to overwrite an existing piece of data. For instance, after you create an entity with a POST request, you may want to modify that later. You can do that using a PUT request. You typically identify the entity being updated by including an identifier in the URL (eg. `id=1`).\n\nA successful PUT request typically returns a `200 OK`, `201 Created`, or `204 No Content` response code."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Course",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Successful DELETE request\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 202, 204]);",
+                                    "});",
+                                    ""
+                                ],
+                                "type": "text/javascript",
+                                "packages": {}
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/courses/{{course_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "courses",
+                                "{{course_id}}"
+                            ]
+                        },
+                        "description": "This is a DELETE request, and it is used to delete data that was previously created via a POST request. You typically identify the entity being updated by including an identifier in the URL (eg. `id=1`).\n\nA successful DELETE request typically returns a `200 OK`, `202 Accepted`, or `204 No Content` response code."
+                    },
+                    "response": []
+                }
+            ],
+            "auth": {
+                "type": "bearer",
+                "bearer": [
+                    {
+                        "key": "token",
+                        "value": "{{jwt}}",
+                        "type": "string"
+                    }
+                ]
+            },
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "packages": {},
+                        "exec": [
+                            ""
+                        ]
+                    }
+                },
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "packages": {},
+                        "exec": [
+                            ""
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Cohortes de Cursos",
+            "item": [
+                {
+                    "name": "Get Course Periods",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});"
+                                ],
+                                "type": "text/javascript",
+                                "packages": {}
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/courses/{{course_id}}/periods",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "courses",
+                                "{{course_id}}",
+                                "periods"
+                            ]
+                        },
+                        "description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Course Period by ID",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});"
+                                ],
+                                "type": "text/javascript",
+                                "packages": {}
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/courses/{{course_id}}/periods/{{period_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "courses",
+                                "{{course_id}}",
+                                "periods",
+                                "{{period_id}}"
+                            ]
+                        },
+                        "description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create Course Period",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Successful POST request\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                                    "});",
+                                    ""
+                                ],
+                                "type": "text/javascript",
+                                "packages": {},
+                                "requests": {}
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"fecha_inicio\": \"2026-06-01\",\n\t\"fecha_fin\": \"2026-08-01\",\n\t\"fecha_inscripcion\": \"2026-05-15\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/courses/{{course_id}}/periods",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "courses",
+                                "{{course_id}}",
+                                "periods"
+                            ]
+                        },
+                        "description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Agregar Anuncio",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Successful POST request\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                                    "});",
+                                    ""
+                                ],
+                                "type": "text/javascript",
+                                "packages": {},
+                                "requests": {}
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"titulo\": \"Modalidad del curso\",\n\t\"contenido\": \"El curso es virtual\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/course-periods/{{period_id}}/announcements",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "course-periods",
+                                "{{period_id}}",
+                                "announcements"
+                            ]
+                        },
+                        "description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Actualizar Anuncio",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Successful POST request\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                                    "});",
+                                    ""
+                                ],
+                                "type": "text/javascript",
+                                "packages": {},
+                                "requests": {}
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "PUT",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"titulo\": \"Modalidad del curso\",\n\t\"contenido\": \"El curso es es presencial en la UCV\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/course-periods/{{period_id}}/announcements/{{announcement_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "course-periods",
+                                "{{period_id}}",
+                                "announcements",
+                                "{{announcement_id}}"
+                            ]
+                        },
+                        "description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Announcement",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/course-periods/{{period_id}}/announcements/{{announcement_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["course-periods", "{{period_id}}", "announcements", "{{announcement_id}}"]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Eliminar Anuncio",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/course-periods/{{period_id}}/announcements/{{announcement_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["course-periods", "{{period_id}}", "announcements", "{{announcement_id}}"]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Course Period",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Successful PUT request\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                                    "});",
+                                    ""
+                                ],
+                                "type": "text/javascript",
+                                "packages": {}
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "PUT",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"ci\": \"V-18245415\",\n    \"first_name\": \"Ellery\",\n    \"last_name\": \"Aguilar\",\n    \"date_of_birth\": \"1988-09-03\",\n    \"gender\": \"masculino\",\n    \"education_level\": \"universitario_incompleta\",\n    \"address\": \"caracas\",\n    \"username\": \"ellery@gmail.com\",\n    \"password\": \"nolodire\",\n    \"role\": \"admin\"\n\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/courses/{{course_id}}/periods/{{period_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "courses",
+                                "{{course_id}}",
+                                "periods",
+                                "{{period_id}}"
+                            ]
+                        },
+                        "description": "This is a PUT request and it is used to overwrite an existing piece of data. For instance, after you create an entity with a POST request, you may want to modify that later. You can do that using a PUT request. You typically identify the entity being updated by including an identifier in the URL (eg. `id=1`).\n\nA successful PUT request typically returns a `200 OK`, `201 Created`, or `204 No Content` response code."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Course Period",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Successful DELETE request\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 202, 204]);",
+                                    "});",
+                                    ""
+                                ],
+                                "type": "text/javascript",
+                                "packages": {}
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/courses/{{course_id}}/periods/{{period_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "courses",
+                                "{{course_id}}",
+                                "periods",
+                                "{{period_id}}"
+                            ]
+                        },
+                        "description": "This is a DELETE request, and it is used to delete data that was previously created via a POST request. You typically identify the entity being updated by including an identifier in the URL (eg. `id=1`).\n\nA successful DELETE request typically returns a `200 OK`, `202 Accepted`, or `204 No Content` response code."
+                    },
+                    "response": []
+                }
+            ],
+            "auth": {
+                "type": "bearer",
+                "bearer": [
+                    {
+                        "key": "token",
+                        "value": "{{jwt}}",
+                        "type": "string"
+                    }
+                ]
+            },
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "packages": {},
+                        "exec": [
+                            ""
+                        ]
+                    }
+                },
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "packages": {},
+                        "exec": [
+                            ""
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Grupos de Extensión",
+            "item": [
+                {
+                    "name": "Get Groups",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});"
+                                ],
+                                "type": "text/javascript",
+                                "packages": {}
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/groups",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "groups"
+                            ]
+                        },
+                        "description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Group by ID",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});"
+                                ],
+                                "type": "text/javascript",
+                                "packages": {}
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/groups/{{group_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "groups",
+                                "{{group_id}}"
+                            ]
+                        },
+                        "description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create Group",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Successful POST request\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                                    "});",
+                                    ""
+                                ],
+                                "type": "text/javascript",
+                                "packages": {},
+                                "requests": {}
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "name",
+                                    "value": "Mi nuevo grupo",
+                                    "type": "text",
+                                    "uuid": "f0144032-8fad-4c96-893d-76fef6251f17"
+                                },
+                                {
+                                    "key": "description",
+                                    "value": "Este es un nuevo grupo",
+                                    "type": "text",
+                                    "uuid": "99a0d67a-b370-44ca-a93d-b64bd8779ad3"
+                                },
+                                {
+                                    "key": "logo",
+                                    "type": "file",
+                                    "uuid": "994c3de2-6823-4296-ae0f-245beda83c90",
+                                    "src": "/C:/Users/User/Pictures/download.png"
+                                },
+                                {
+                                    "key": "financing_plan",
+                                    "type": "file",
+                                    "uuid": "0206c12d-c265-45fd-b783-bc3b5e32a9ee",
+                                    "src": "/C:/Users/User/Pictures/wp2919066-argonath-wallpaper.png"
+                                },
+                                {
+                                    "key": "group_project",
+                                    "type": "file",
+                                    "uuid": "beaa7a5b-d939-42d4-be22-633d4072534b",
+                                    "src": "/C:/Users/User/Pictures/download.png"
+                                },
+                                {
+                                    "key": "leader_name",
+                                    "value": "John Doe",
+                                    "type": "text",
+                                    "uuid": "1eebc24b-b1c5-45da-a4e6-efad609fb8ae"
+                                },
+                                {
+                                    "key": "type",
+                                    "value": "ciencias",
+                                    "type": "text",
+                                    "uuid": "6b38f8a7-9195-47b2-b83e-dd0cbc5f7bb3"
+                                },
+                                {
+                                    "key": "faculty",
+                                    "value": "Ciencias",
+                                    "type": "text",
+                                    "uuid": "53abcb25-52cf-4893-9fa6-74e83f86365c"
+                                },
+                                {
+                                    "key": "objective",
+                                    "value": "test my new group",
+                                    "type": "text",
+                                    "uuid": "abba82b3-0995-4cac-aee9-7bd66111cb7a"
+                                },
+                                {
+                                    "key": "location",
+                                    "value": "edificio de computación",
+                                    "type": "text",
+                                    "uuid": "8b64c726-95e7-4d4e-95c1-0e4981cb195c"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/groups/requests",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "groups",
+                                "requests"
+                            ]
+                        },
+                        "description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Group",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Successful PUT request\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                                    "});",
+                                    ""
+                                ],
+                                "type": "text/javascript",
+                                "packages": {}
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "PUT",
+                        "header": [],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "name",
+                                    "value": "Grupo actualizado",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "description",
+                                    "value": "Descripción actualizada",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/groups/requests/{{group_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "groups",
+                                "requests",
+                                "{{group_id}}"
+                            ]
+                        },
+                        "description": "This is a PUT request and it is used to overwrite an existing piece of data. For instance, after you create an entity with a POST request, you may want to modify that later. You can do that using a PUT request. You typically identify the entity being updated by including an identifier in the URL (eg. `id=1`).\n\nA successful PUT request typically returns a `200 OK`, `201 Created`, or `204 No Content` response code."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Group",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Successful DELETE request\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 202, 204]);",
+                                    "});",
+                                    ""
+                                ],
+                                "type": "text/javascript",
+                                "packages": {}
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/groups/requests/{{group_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "groups",
+                                "requests",
+                                "{{group_id}}"
+                            ]
+                        },
+                        "description": "This is a DELETE request, and it is used to delete data that was previously created via a POST request. You typically identify the entity being updated by including an identifier in the URL (eg. `id=1`).\n\nA successful DELETE request typically returns a `200 OK`, `202 Accepted`, or `204 No Content` response code."
+                    },
+                    "response": []
+                }
+            ],
+            "auth": {
+                "type": "bearer",
+                "bearer": [
+                    {
+                        "key": "token",
+                        "value": "{{jwt}}",
+                        "type": "string"
+                    }
+                ]
+            },
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "packages": {},
+                        "exec": [
+                            ""
+                        ]
+                    }
+                },
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "packages": {},
+                        "exec": [
+                            ""
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Actividades",
+            "item": [
+                {
+                    "name": "Get Activities",
+                    "request": {
+                        "auth": {"type": "noauth"},
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/activities?group_id={{group_id}}&page=1&per_page=10",
+                            "host": ["{{base_url}}"],
+                            "path": ["activities"],
+                            "query": [
+                                {"key": "group_id", "value": "{{group_id}}"},
+                                {"key": "date", "value": "", "disabled": true},
+                                {"key": "actual_participants", "value": "", "disabled": true},
+                                {"key": "page", "value": "1"},
+                                {"key": "per_page", "value": "10"}
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Activity by ID",
+                    "request": {
+                        "auth": {"type": "noauth"},
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/activities/{{activity_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["activities", "{{activity_id}}"]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create Activity",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {"key": "group_id", "value": "{{group_id}}", "type": "text"},
+                                {"key": "nombre", "value": "Taller de programación", "type": "text"},
+                                {"key": "descripcion", "value": "Actividad de extensión universitaria", "type": "text"},
+                                {"key": "fecha", "value": "2026-06-15", "type": "text"},
+                                {"key": "area_conocimiento", "value": "Tecnología", "type": "text"},
+                                {"key": "aliados", "value": "", "type": "text"},
+                                {"key": "participantes_estimados", "value": "30", "type": "text"},
+                                {"key": "participantes_reales", "value": "25", "type": "text"},
+                                {"key": "financiamiento", "value": "", "type": "text"},
+                                {"key": "observaciones", "value": "", "type": "text"},
+                                {"key": "reporte", "type": "file", "src": ""}
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/activities",
+                            "host": ["{{base_url}}"],
+                            "path": ["activities"]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Activity",
+                    "request": {
+                        "method": "PUT",
+                        "header": [],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {"key": "nombre", "value": "Taller actualizado", "type": "text"},
+                                {"key": "descripcion", "value": "Descripción actualizada", "type": "text"},
+                                {"key": "participantes_reales", "value": "28", "type": "text"}
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/activities/{{activity_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["activities", "{{activity_id}}"]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Activity",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/activities/{{activity_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["activities", "{{activity_id}}"]
+                        }
+                    },
+                    "response": []
+                }
+            ],
+            "auth": {
+                "type": "bearer",
+                "bearer": [{"key": "token", "value": "{{jwt}}", "type": "string"}]
+            }
+        },
+        {
+            "name": "Solicitudes de Recursos para Grupos",
+            "item": [
+                {
+                    "name": "Create Group Resource Request",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"grupo_id\": \"{{group_id}}\",\n\t\"tipo\": \"espacio\",\n\t\"contenido\": \"Solicitud de sala de reuniones\"\n}",
+                            "options": {"raw": {"language": "json"}}
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/group-resource-requests",
+                            "host": ["{{base_url}}"],
+                            "path": ["group-resource-requests"]
+                        }
+                    },
+                    "response": []
+                }
+            ],
+            "auth": {
+                "type": "bearer",
+                "bearer": [{"key": "token", "value": "{{jwt}}", "type": "string"}]
+            }
+        },
+        {
+            "name": "Cierre de Ciclos de Cursos",
+            "item": [
+                {
+                    "name": "Solicitar Cierre de Ciclo",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"course_cycle_id\": 1,\n\t\"observaciones\": \"El ciclo ha finalizado exitosamente\"\n}",
+                            "options": {"raw": {"language": "json"}}
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/course-cycle-close-requests",
+                            "host": ["{{base_url}}"],
+                            "path": ["course-cycle-close-requests"]
+                        }
+                    },
+                    "response": []
+                }
+            ],
+            "auth": {
+                "type": "bearer",
+                "bearer": [{"key": "token", "value": "{{jwt}}", "type": "string"}]
+            }
+        },
+        {
+            "name": "Proveedores",
+            "item": [
+                {
+                    "name": "Get Providers",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});"
+                                ],
+                                "type": "text/javascript",
+                                "packages": {},
+                                "requests": {}
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/providers?type=courses&status=active",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "providers"
+                            ],
+                            "query": [
+                                {
+                                    "key": "type",
+                                    "value": "courses"
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "active"
+                                }
+                            ]
+                        },
+                        "description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Providers Admin",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});"
+                                ],
+                                "type": "text/javascript",
+                                "packages": {},
+                                "requests": {}
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/admin/providers?type=courses&status=under_review",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "admin",
+                                "providers"
+                            ],
+                            "query": [
+                                {
+                                    "key": "type",
+                                    "value": "courses"
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "under_review"
+                                }
+                            ]
+                        },
+                        "description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Provider by ID",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});"
+                                ],
+                                "type": "text/javascript",
+                                "packages": {}
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/providers/{{provider_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "providers",
+                                "{{provider_id}}"
+                            ]
+                        },
+                        "description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create Provider",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "tipo_proveedor",
+                                    "value": "courses",
+                                    "type": "text",
+                                    "uuid": "7d6c231f-3502-4064-beb3-2c1c673e4387"
+                                },
+                                {
+                                    "key": "es_interno",
+                                    "value": "external",
+                                    "type": "text",
+                                    "uuid": "d3e0b56b-526e-4654-a257-b54394b7b9a3"
+                                },
+                                {
+                                    "key": "ci",
+                                    "type": "file",
+                                    "uuid": "2f9aaf31-5ddc-48cb-a6b1-b35e15ed5d51",
+                                    "src": "Deck Matón.png"
+                                },
+                                {
+                                    "key": "rif",
+                                    "type": "file",
+                                    "uuid": "bb63a0fb-5801-4895-8872-e5635055c871",
+                                    "src": "3.25_betrayal.png"
+                                },
+                                {
+                                    "key": "islr",
+                                    "type": "file",
+                                    "uuid": "41520fe9-c198-4b94-9f53-24ff211c864c",
+                                    "src": "download.png"
+                                },
+                                {
+                                    "key": "resumes",
+                                    "type": "file",
+                                    "uuid": "6b6811b2-fe68-45c5-8932-7e09b89d0156",
+                                    "src": "Japanese-Art-monochrome-Japan-samurai-2250916-wallhere.com.jpg"
+                                },
+                                {
+                                    "key": "tipo_persona",
+                                    "value": "natural",
+                                    "type": "text",
+                                    "uuid": "f94b09e2-6c05-4293-91b8-6202fbc87a7d"
+                                },
+                                {
+                                    "key": "nombre",
+                                    "value": "Proveedor de Cursos",
+                                    "type": "text",
+                                    "uuid": "4a83a778-0c5f-437c-a87c-084454394179"
+                                },
+                                {
+                                    "key": "bio",
+                                    "value": "\"Soy un profesional del área que da cursos sobre desarrollo web\"",
+                                    "type": "text",
+                                    "uuid": "0c60b3a8-7f4e-493e-b850-8f7f13784c5b"
+                                },
+                                {
+                                    "key": "logo",
+                                    "type": "file",
+                                    "uuid": "683ffdc8-7aaa-4ece-8dd3-53c22396c307",
+                                    "src": "wp2770573-lotr-desktop-wallpaper.jpg"
+                                },
+                                {
+                                    "key": "tipo_lucro",
+                                    "value": "lucrativo",
+                                    "type": "text",
+                                    "uuid": "40c71787-2517-4488-9169-c3db6e51a734"
+                                },
+                                {
+                                    "key": "tipo_persona",
+                                    "value": "natural",
+                                    "type": "text",
+                                    "uuid": "7ba06c52-f7cd-4891-9d44-2914a808a0fc"
+                                },
+                                {
+                                    "key": "facultad",
+                                    "value": "Ciencias",
+                                    "type": "text",
+                                    "uuid": "f99ee0df-d122-4d17-9424-7c7c157c4e3c"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/providers",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "providers"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Provider",
+                    "request": {
+                        "method": "PUT",
+                        "header": [],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "provider_type",
+                                    "value": "courses",
+                                    "type": "text",
+                                    "uuid": "7d6c231f-3502-4064-beb3-2c1c673e4387"
+                                },
+                                {
+                                    "key": "is_internal",
+                                    "value": "external",
+                                    "type": "text",
+                                    "uuid": "d3e0b56b-526e-4654-a257-b54394b7b9a3"
+                                },
+                                {
+                                    "key": "ci",
+                                    "type": "file",
+                                    "uuid": "2f9aaf31-5ddc-48cb-a6b1-b35e15ed5d51",
+                                    "src": "/C:/Users/User/Pictures/3.25_betrayal.png"
+                                },
+                                {
+                                    "key": "rif",
+                                    "type": "file",
+                                    "uuid": "bb63a0fb-5801-4895-8872-e5635055c871",
+                                    "src": "/C:/Users/User/Pictures/download.png"
+                                },
+                                {
+                                    "key": "islr",
+                                    "type": "file",
+                                    "uuid": "41520fe9-c198-4b94-9f53-24ff211c864c",
+                                    "src": "/C:/Users/User/Pictures/Japanese-Art-monochrome-Japan-samurai-2250916-wallhere.com.jpg"
+                                },
+                                {
+                                    "key": "resumes",
+                                    "type": "file",
+                                    "uuid": "6b6811b2-fe68-45c5-8932-7e09b89d0156",
+                                    "src": [
+                                        "/C:/Users/User/Pictures/wallpaperflare.com_wallpaper.jpg",
+                                        "/C:/Users/User/Pictures/wp2770573-lotr-desktop-wallpaper.jpg",
+                                        "/C:/Users/User/Pictures/wp2919066-argonath-wallpaper.png"
+                                    ]
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/providers/{{provider_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "providers",
+                                "{{provider_id}}"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Upload Provider Documents",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {"key": "carta_compromiso", "type": "file", "src": ""},
+                                {"key": "carta_intencion", "type": "file", "src": ""}
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/providers/documents",
+                            "host": ["{{base_url}}"],
+                            "path": ["providers", "documents"]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Approve",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/admin/providers/{{provider_id}}/approve",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "admin",
+                                "providers",
+                                "{{provider_id}}",
+                                "approve"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Reject",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/admin/providers/{{provider_id}}/reject",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "admin",
+                                "providers",
+                                "{{provider_id}}",
+                                "reject"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Provider",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Successful DELETE request\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 202, 204]);",
+                                    "});",
+                                    ""
+                                ],
+                                "type": "text/javascript",
+                                "packages": {}
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/providers/{{provider_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "providers",
+                                "{{provider_id}}"
+                            ]
+                        },
+                        "description": "This is a DELETE request, and it is used to delete data that was previously created via a POST request. You typically identify the entity being updated by including an identifier in the URL (eg. `id=1`).\n\nA successful DELETE request typically returns a `200 OK`, `202 Accepted`, or `204 No Content` response code."
+                    },
+                    "response": []
+                }
+            ],
+            "auth": {
+                "type": "bearer",
+                "bearer": [
+                    {
+                        "key": "token",
+                        "value": "{{jwt}}",
+                        "type": "string"
+                    }
+                ]
+            },
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "packages": {},
+                        "exec": [
+                            ""
+                        ]
+                    }
+                },
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "packages": {},
+                        "exec": [
+                            ""
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Autenticación",
+            "item": [
+                {
+                    "name": "Login",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Successful POST request\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                                    "    var resp = pm.response.json()",
+                                    "    pm.environment.set('jwt', resp.token)",
+                                    "    pm.environment.set('user_id', resp.user.id)",
+                                    "});",
+                                    ""
+                                ],
+                                "type": "text/javascript",
+                                "packages": {},
+                                "requests": {}
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n\t\"usuario\": \"faculty_admin1@example.com\",\n    \"password\": \"nolodire\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/login",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "login"
+                            ]
+                        },
+                        "description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Admin",
+            "item": [
+                {
+                    "name": "Grupos",
+                    "item": [
+                        {
+                            "name": "Solicitudes de Grupos por Facultad",
+                            "protocolProfileBehavior": {
+                                "disableBodyPruning": true
+                            },
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "body": {
+                                    "mode": "formdata",
+                                    "formdata": [
+                                        {
+                                            "key": "name",
+                                            "value": "Mi nuevo grupo",
+                                            "type": "text",
+                                            "uuid": "f0144032-8fad-4c96-893d-76fef6251f17"
+                                        },
+                                        {
+                                            "key": "description",
+                                            "value": "Este es un nuevo grupo",
+                                            "type": "text",
+                                            "uuid": "99a0d67a-b370-44ca-a93d-b64bd8779ad3"
+                                        },
+                                        {
+                                            "key": "logo",
+                                            "type": "file",
+                                            "uuid": "994c3de2-6823-4296-ae0f-245beda83c90",
+                                            "src": "/C:/Users/User/Pictures/Japanese-Art-monochrome-Japan-samurai-2250916-wallhere.com.jpg"
+                                        },
+                                        {
+                                            "key": "financing_plan",
+                                            "type": "file",
+                                            "uuid": "0206c12d-c265-45fd-b783-bc3b5e32a9ee",
+                                            "src": "/C:/Users/User/Pictures/Japanese-Art-monochrome-Japan-samurai-2250916-wallhere.com.jpg"
+                                        },
+                                        {
+                                            "key": "group_project",
+                                            "type": "file",
+                                            "uuid": "beaa7a5b-d939-42d4-be22-633d4072534b",
+                                            "src": "/C:/Users/User/Pictures/Japanese-Art-monochrome-Japan-samurai-2250916-wallhere.com.jpg"
+                                        },
+                                        {
+                                            "key": "leader_name",
+                                            "value": "John Doe",
+                                            "type": "text",
+                                            "uuid": "1eebc24b-b1c5-45da-a4e6-efad609fb8ae"
+                                        },
+                                        {
+                                            "key": "type",
+                                            "value": "ciencias",
+                                            "type": "text",
+                                            "uuid": "6b38f8a7-9195-47b2-b83e-dd0cbc5f7bb3"
+                                        },
+                                        {
+                                            "key": "faculty",
+                                            "value": "Ciencias",
+                                            "type": "text",
+                                            "uuid": "53abcb25-52cf-4893-9fa6-74e83f86365c"
+                                        },
+                                        {
+                                            "key": "objective",
+                                            "value": "test my new group",
+                                            "type": "text",
+                                            "uuid": "abba82b3-0995-4cac-aee9-7bd66111cb7a"
+                                        },
+                                        {
+                                            "key": "location",
+                                            "value": "edificio de computación",
+                                            "type": "text",
+                                            "uuid": "8b64c726-95e7-4d4e-95c1-0e4981cb195c"
+                                        }
+                                    ]
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/admin/group-requests?faculty=ciencias",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "admin",
+                                        "group-requests"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "faculty",
+                                            "value": "ciencias"
+                                        }
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Solicitudes de Grupos por ID",
+                            "protocolProfileBehavior": {
+                                "disableBodyPruning": true
+                            },
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "body": {
+                                    "mode": "formdata",
+                                    "formdata": [
+                                        {
+                                            "key": "name",
+                                            "value": "Mi nuevo grupo",
+                                            "type": "text",
+                                            "uuid": "f0144032-8fad-4c96-893d-76fef6251f17"
+                                        },
+                                        {
+                                            "key": "description",
+                                            "value": "Este es un nuevo grupo",
+                                            "type": "text",
+                                            "uuid": "99a0d67a-b370-44ca-a93d-b64bd8779ad3"
+                                        },
+                                        {
+                                            "key": "logo",
+                                            "type": "file",
+                                            "uuid": "994c3de2-6823-4296-ae0f-245beda83c90",
+                                            "src": "/C:/Users/User/Pictures/Japanese-Art-monochrome-Japan-samurai-2250916-wallhere.com.jpg"
+                                        },
+                                        {
+                                            "key": "financing_plan",
+                                            "type": "file",
+                                            "uuid": "0206c12d-c265-45fd-b783-bc3b5e32a9ee",
+                                            "src": "/C:/Users/User/Pictures/Japanese-Art-monochrome-Japan-samurai-2250916-wallhere.com.jpg"
+                                        },
+                                        {
+                                            "key": "group_project",
+                                            "type": "file",
+                                            "uuid": "beaa7a5b-d939-42d4-be22-633d4072534b",
+                                            "src": "/C:/Users/User/Pictures/Japanese-Art-monochrome-Japan-samurai-2250916-wallhere.com.jpg"
+                                        },
+                                        {
+                                            "key": "leader_name",
+                                            "value": "John Doe",
+                                            "type": "text",
+                                            "uuid": "1eebc24b-b1c5-45da-a4e6-efad609fb8ae"
+                                        },
+                                        {
+                                            "key": "type",
+                                            "value": "ciencias",
+                                            "type": "text",
+                                            "uuid": "6b38f8a7-9195-47b2-b83e-dd0cbc5f7bb3"
+                                        },
+                                        {
+                                            "key": "faculty",
+                                            "value": "Ciencias",
+                                            "type": "text",
+                                            "uuid": "53abcb25-52cf-4893-9fa6-74e83f86365c"
+                                        },
+                                        {
+                                            "key": "objective",
+                                            "value": "test my new group",
+                                            "type": "text",
+                                            "uuid": "abba82b3-0995-4cac-aee9-7bd66111cb7a"
+                                        },
+                                        {
+                                            "key": "location",
+                                            "value": "edificio de computación",
+                                            "type": "text",
+                                            "uuid": "8b64c726-95e7-4d4e-95c1-0e4981cb195c"
+                                        }
+                                    ]
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/admin/group-requests/{{group_requests_id}}",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "admin",
+                                        "group-requests",
+                                        "{{group_requests_id}}"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Aprobar Solicitud de Grupo",
+                            "request": {
+                                "method": "POST",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{base_url}}/admin/group-requests/{{group_requests_id}}/approve",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "admin",
+                                        "group-requests",
+                                        "{{group_requests_id}}",
+                                        "approve"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Aprobar Solicitud de Grupo Copy",
+                            "request": {
+                                "method": "POST",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{base_url}}/admin/group-requests/{{group_requests_id}}/reject",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "admin",
+                                        "group-requests",
+                                        "{{group_requests_id}}",
+                                        "reject"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "name": "Cursos",
+                    "item": [
+                        {
+                            "name": "Solicitudes por Facultad",
+                            "protocolProfileBehavior": {
+                                "disableBodyPruning": true
+                            },
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "body": {
+                                    "mode": "formdata",
+                                    "formdata": [
+                                        {
+                                            "key": "name",
+                                            "value": "Mi nuevo grupo",
+                                            "type": "text",
+                                            "uuid": "f0144032-8fad-4c96-893d-76fef6251f17"
+                                        },
+                                        {
+                                            "key": "description",
+                                            "value": "Este es un nuevo grupo",
+                                            "type": "text",
+                                            "uuid": "99a0d67a-b370-44ca-a93d-b64bd8779ad3"
+                                        },
+                                        {
+                                            "key": "logo",
+                                            "type": "file",
+                                            "uuid": "994c3de2-6823-4296-ae0f-245beda83c90",
+                                            "src": "/C:/Users/User/Pictures/Japanese-Art-monochrome-Japan-samurai-2250916-wallhere.com.jpg"
+                                        },
+                                        {
+                                            "key": "financing_plan",
+                                            "type": "file",
+                                            "uuid": "0206c12d-c265-45fd-b783-bc3b5e32a9ee",
+                                            "src": "/C:/Users/User/Pictures/Japanese-Art-monochrome-Japan-samurai-2250916-wallhere.com.jpg"
+                                        },
+                                        {
+                                            "key": "group_project",
+                                            "type": "file",
+                                            "uuid": "beaa7a5b-d939-42d4-be22-633d4072534b",
+                                            "src": "/C:/Users/User/Pictures/Japanese-Art-monochrome-Japan-samurai-2250916-wallhere.com.jpg"
+                                        },
+                                        {
+                                            "key": "leader_name",
+                                            "value": "John Doe",
+                                            "type": "text",
+                                            "uuid": "1eebc24b-b1c5-45da-a4e6-efad609fb8ae"
+                                        },
+                                        {
+                                            "key": "type",
+                                            "value": "ciencias",
+                                            "type": "text",
+                                            "uuid": "6b38f8a7-9195-47b2-b83e-dd0cbc5f7bb3"
+                                        },
+                                        {
+                                            "key": "faculty",
+                                            "value": "Ciencias",
+                                            "type": "text",
+                                            "uuid": "53abcb25-52cf-4893-9fa6-74e83f86365c"
+                                        },
+                                        {
+                                            "key": "objective",
+                                            "value": "test my new group",
+                                            "type": "text",
+                                            "uuid": "abba82b3-0995-4cac-aee9-7bd66111cb7a"
+                                        },
+                                        {
+                                            "key": "location",
+                                            "value": "edificio de computación",
+                                            "type": "text",
+                                            "uuid": "8b64c726-95e7-4d4e-95c1-0e4981cb195c"
+                                        }
+                                    ]
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/admin/course-requests?faculty=ciencias",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "admin",
+                                        "course-requests"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "faculty",
+                                            "value": "ciencias"
+                                        }
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Solicitud por ID",
+                            "protocolProfileBehavior": {
+                                "disableBodyPruning": true
+                            },
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "body": {
+                                    "mode": "formdata",
+                                    "formdata": [
+                                        {
+                                            "key": "name",
+                                            "value": "Mi nuevo grupo",
+                                            "type": "text",
+                                            "uuid": "f0144032-8fad-4c96-893d-76fef6251f17"
+                                        },
+                                        {
+                                            "key": "description",
+                                            "value": "Este es un nuevo grupo",
+                                            "type": "text",
+                                            "uuid": "99a0d67a-b370-44ca-a93d-b64bd8779ad3"
+                                        },
+                                        {
+                                            "key": "logo",
+                                            "type": "file",
+                                            "uuid": "994c3de2-6823-4296-ae0f-245beda83c90",
+                                            "src": "/C:/Users/User/Pictures/Japanese-Art-monochrome-Japan-samurai-2250916-wallhere.com.jpg"
+                                        },
+                                        {
+                                            "key": "financing_plan",
+                                            "type": "file",
+                                            "uuid": "0206c12d-c265-45fd-b783-bc3b5e32a9ee",
+                                            "src": "/C:/Users/User/Pictures/Japanese-Art-monochrome-Japan-samurai-2250916-wallhere.com.jpg"
+                                        },
+                                        {
+                                            "key": "group_project",
+                                            "type": "file",
+                                            "uuid": "beaa7a5b-d939-42d4-be22-633d4072534b",
+                                            "src": "/C:/Users/User/Pictures/Japanese-Art-monochrome-Japan-samurai-2250916-wallhere.com.jpg"
+                                        },
+                                        {
+                                            "key": "leader_name",
+                                            "value": "John Doe",
+                                            "type": "text",
+                                            "uuid": "1eebc24b-b1c5-45da-a4e6-efad609fb8ae"
+                                        },
+                                        {
+                                            "key": "type",
+                                            "value": "ciencias",
+                                            "type": "text",
+                                            "uuid": "6b38f8a7-9195-47b2-b83e-dd0cbc5f7bb3"
+                                        },
+                                        {
+                                            "key": "faculty",
+                                            "value": "Ciencias",
+                                            "type": "text",
+                                            "uuid": "53abcb25-52cf-4893-9fa6-74e83f86365c"
+                                        },
+                                        {
+                                            "key": "objective",
+                                            "value": "test my new group",
+                                            "type": "text",
+                                            "uuid": "abba82b3-0995-4cac-aee9-7bd66111cb7a"
+                                        },
+                                        {
+                                            "key": "location",
+                                            "value": "edificio de computación",
+                                            "type": "text",
+                                            "uuid": "8b64c726-95e7-4d4e-95c1-0e4981cb195c"
+                                        }
+                                    ]
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/admin/course-requests/{{course_requests_id}}",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "admin",
+                                        "course-requests",
+                                        "{{course_requests_id}}"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Aprobar Solicitud",
+                            "request": {
+                                "method": "POST",
+                                "header": [],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\r\n    \"tipo_curso\": \"skill_development\",\r\n    \"observaciones\": \"queda pendiente el pago y la carta de compromiso\"\r\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/admin/course-requests/{{course_requests_id}}/approve",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "admin",
+                                        "course-requests",
+                                        "{{course_requests_id}}",
+                                        "approve"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Redirigir Solicitud",
+                            "request": {
+                                "method": "POST",
+                                "header": [],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\r\n    \"facultad\": \"Ciencias Económicas y Sociales\",\r\n    \"motivo\": \"a petición de la parte interesada\"\r\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/admin/course-requests/{{course_requests_id}}/redirect",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "admin",
+                                        "course-requests",
+                                        "{{course_requests_id}}",
+                                        "redirect"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Rechazar Solicitud",
+                            "request": {
+                                "method": "POST",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{base_url}}/admin/course-requests/{{course_requests_id}}/reject",
+                                    "host": ["{{base_url}}"],
+                                    "path": ["admin", "course-requests", "{{course_requests_id}}", "reject"]
+                                }
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "name": "Solicitudes de Recursos para Grupos",
+                    "item": [
+                        {
+                            "name": "Get Group Resource Requests",
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{base_url}}/admin/group-resource-requests?faculty=ciencias",
+                                    "host": ["{{base_url}}"],
+                                    "path": ["admin", "group-resource-requests"],
+                                    "query": [{"key": "faculty", "value": "ciencias"}]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Get Group Resource Request by ID",
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{base_url}}/admin/group-resource-requests/{{group_resource_request_id}}",
+                                    "host": ["{{base_url}}"],
+                                    "path": ["admin", "group-resource-requests", "{{group_resource_request_id}}"]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Aprobar Solicitud de Recurso",
+                            "request": {
+                                "method": "POST",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{base_url}}/admin/group-resource-requests/{{group_resource_request_id}}/approve",
+                                    "host": ["{{base_url}}"],
+                                    "path": ["admin", "group-resource-requests", "{{group_resource_request_id}}", "approve"]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Rechazar Solicitud de Recurso",
+                            "request": {
+                                "method": "POST",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{base_url}}/admin/group-resource-requests/{{group_resource_request_id}}/reject",
+                                    "host": ["{{base_url}}"],
+                                    "path": ["admin", "group-resource-requests", "{{group_resource_request_id}}", "reject"]
+                                }
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "name": "Solicitudes de Proveedores",
+                    "item": [
+                        {
+                            "name": "Get Provider Requests",
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{base_url}}/admin/provider-requests",
+                                    "host": ["{{base_url}}"],
+                                    "path": ["admin", "provider-requests"]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Get Provider Request by ID",
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{base_url}}/admin/provider-requests/{{provider_request_id}}",
+                                    "host": ["{{base_url}}"],
+                                    "path": ["admin", "provider-requests", "{{provider_request_id}}"]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Aprobar Solicitud de Proveedor",
+                            "request": {
+                                "method": "POST",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{base_url}}/admin/provider-requests/{{provider_request_id}}/approve",
+                                    "host": ["{{base_url}}"],
+                                    "path": ["admin", "provider-requests", "{{provider_request_id}}", "approve"]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Rechazar Solicitud de Proveedor",
+                            "request": {
+                                "method": "POST",
+                                "header": [],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n\t\"observaciones\": \"Documentación incompleta\"\n}",
+                                    "options": {"raw": {"language": "json"}}
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/admin/provider-requests/{{provider_request_id}}/reject",
+                                    "host": ["{{base_url}}"],
+                                    "path": ["admin", "provider-requests", "{{provider_request_id}}", "reject"]
+                                }
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "name": "Cierre de Ciclos de Cursos",
+                    "item": [
+                        {
+                            "name": "Get Close Requests",
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{base_url}}/admin/course-cycle-close-requests",
+                                    "host": ["{{base_url}}"],
+                                    "path": ["admin", "course-cycle-close-requests"]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Get Close Request by ID",
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{base_url}}/admin/course-cycle-close-requests/{{close_request_id}}",
+                                    "host": ["{{base_url}}"],
+                                    "path": ["admin", "course-cycle-close-requests", "{{close_request_id}}"]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Aprobar Cierre de Ciclo",
+                            "request": {
+                                "method": "POST",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{base_url}}/admin/course-cycle-close-requests/{{close_request_id}}/approve",
+                                    "host": ["{{base_url}}"],
+                                    "path": ["admin", "course-cycle-close-requests", "{{close_request_id}}", "approve"]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Rechazar Cierre de Ciclo",
+                            "request": {
+                                "method": "POST",
+                                "header": [],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n\t\"observaciones\": \"Falta documentación de cierre\"\n}",
+                                    "options": {"raw": {"language": "json"}}
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/admin/course-cycle-close-requests/{{close_request_id}}/reject",
+                                    "host": ["{{base_url}}"],
+                                    "path": ["admin", "course-cycle-close-requests", "{{close_request_id}}", "reject"]
+                                }
+                            },
+                            "response": []
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{jwt}}",
+                "type": "string"
+            }
+        ]
+    },
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    ""
+                ]
+            }
+        },
+        {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    ""
+                ]
+            }
+        }
+    ],
+    "variable": [
+        {
+            "key": "id",
+            "value": "1"
+        },
+        {
+            "key": "base_url",
+            "value": "https://postman-rest-api-learner.glitch.me/"
         }
     ]
 }
