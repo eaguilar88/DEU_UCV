@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/httperrors"
@@ -14,9 +16,18 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	defaultRandomGroupsLimit = 3
+	maxRandomGroupsLimit     = 5
+
+	clientDateFormat  = "02-01-2006" // DD-MM-YYYY, matches internal/users/decoders.go's client-facing format
+	storageDateFormat = "2006-01-02"
+)
+
 type Service interface {
 	GetGroup(ctx context.Context, groupID string) (entities.ExtensionGroup, error)
-	GetGroups(ctx context.Context, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error)
+	GetGroups(ctx context.Context, filter entities.GroupFilter, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error)
+	GetRandomActiveGroups(ctx context.Context, limit int) ([]entities.ExtensionGroup, error)
 	CreateGroup(ctx context.Context, group entities.ExtensionGroup) (int64, string, error)
 	UpdateGroup(ctx context.Context, groupID string, group entities.ExtensionGroup) error
 	DeleteGroup(ctx context.Context, groupID, userID string) error
@@ -50,6 +61,31 @@ func (h *Handler) GetGroup(c echo.Context) error {
 
 func (h *Handler) GetGroups(c echo.Context) error {
 	ctx := c.Request().Context()
+
+	if c.QueryParam("random") == "true" {
+		limit := defaultRandomGroupsLimit
+		if l, err := strconv.Atoi(c.QueryParam("limit")); err == nil && l > 0 {
+			limit = l
+		}
+		if limit > maxRandomGroupsLimit {
+			limit = maxRandomGroupsLimit
+		}
+
+		groups, err := h.svc.GetRandomActiveGroups(ctx, limit)
+		if err != nil {
+			return httperrors.NewInternal(err)
+		}
+
+		return c.JSON(http.StatusOK, GetGroupsResponse{
+			Groups: groupsToResponse(groups),
+		})
+	}
+
+	filter, err := h.buildFilters(c)
+	if err != nil {
+		return err
+	}
+
 	scope := entities.PageScope{}
 
 	//nolint:errcheck
@@ -57,7 +93,7 @@ func (h *Handler) GetGroups(c echo.Context) error {
 	//nolint:errcheck
 	scope.GetPerPageFromVars(c.QueryParam("per_page"))
 
-	groups, pageScope, err := h.svc.GetGroups(ctx, scope)
+	groups, pageScope, err := h.svc.GetGroups(ctx, filter, scope)
 	if err != nil {
 		return httperrors.NewInternal(err)
 	}
@@ -66,6 +102,75 @@ func (h *Handler) GetGroups(c echo.Context) error {
 		Groups:    groupsToResponse(groups),
 		PageScope: pageScope,
 	})
+}
+
+// buildFilters parses and validates the faculty, type, active, deleted, start_date,
+// and end_date query params into an entities.GroupFilter.
+func (h *Handler) buildFilters(c echo.Context) (entities.GroupFilter, error) {
+	filter := entities.GroupFilter{}
+
+	if facultyStr := c.QueryParam("faculty"); facultyStr != "" {
+		faculty, err := ValidateFaculty(facultyStr)
+		if err != nil {
+			return entities.GroupFilter{}, httperrors.NewBadRequest(err.Error())
+		}
+		filter.Faculty = faculty
+	}
+
+	if typeStr := c.QueryParam("type"); typeStr != "" {
+		groupType := entities.GroupType(typeStr)
+		if !groupType.IsValid() {
+			return entities.GroupFilter{}, httperrors.NewBadRequest(fmt.Sprintf("invalid type: %s", typeStr))
+		}
+		filter.Type = groupType
+	}
+
+	if activeStr := c.QueryParam("active"); activeStr != "" {
+		active, err := strconv.ParseBool(activeStr)
+		if err != nil {
+			return entities.GroupFilter{}, httperrors.NewBadRequest("active must be true or false")
+		}
+		filter.Active = &active
+	}
+
+	if deletedStr := c.QueryParam("deleted"); deletedStr != "" {
+		deleted, err := strconv.ParseBool(deletedStr)
+		if err != nil {
+			return entities.GroupFilter{}, httperrors.NewBadRequest("deleted must be true or false")
+		}
+		filter.Deleted = deleted
+	}
+
+	startStr := c.QueryParam("start_date")
+	endStr := c.QueryParam("end_date")
+
+	if startStr == "" && endStr != "" {
+		return entities.GroupFilter{}, httperrors.NewBadRequest("start_date is required when end_date is provided")
+	}
+
+	if startStr != "" {
+		start, err := time.Parse(clientDateFormat, startStr)
+		if err != nil {
+			return entities.GroupFilter{}, httperrors.NewBadRequest("start_date must be in DD-MM-YYYY format")
+		}
+
+		end := time.Now()
+		if endStr != "" {
+			end, err = time.Parse(clientDateFormat, endStr)
+			if err != nil {
+				return entities.GroupFilter{}, httperrors.NewBadRequest("end_date must be in DD-MM-YYYY format")
+			}
+		}
+
+		if start.After(end) {
+			return entities.GroupFilter{}, httperrors.NewBadRequest("start_date must not be after end_date")
+		}
+
+		filter.StartDate = start.Format(storageDateFormat)
+		filter.EndDate = end.Format(storageDateFormat)
+	}
+
+	return filter, nil
 }
 
 func (h *Handler) CreateGroup(c echo.Context) error {

@@ -13,6 +13,29 @@ const (
 	GroupFileTypeLogo = "logo"
 )
 
+// ValidGroupTypes contains all valid group type values
+var ValidGroupTypes = map[GroupType]bool{
+	CulturalGroupType:          true,
+	SportsGroupType:            true,
+	AcademicGroupType:          true,
+	MultidisciplinaryGroupType: true,
+}
+
+// IsValid checks if the GroupType value is valid
+func (t GroupType) IsValid() bool {
+	return ValidGroupTypes[t]
+}
+
+// GroupFilter carries the optional filters accepted by GetGroups.
+type GroupFilter struct {
+	Faculty   Faculty
+	Type      GroupType
+	Active    *bool
+	Deleted   bool
+	StartDate string // YYYY-MM-DD, empty means "no date filter"
+	EndDate   string // YYYY-MM-DD
+}
+
 type ExtensionGroup struct {
 	ID          string
 	Name        string

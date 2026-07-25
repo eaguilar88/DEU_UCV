@@ -11,7 +11,8 @@ import (
 
 type Repository interface {
 	GetGroupByID(ctx context.Context, groupID string) (entities.ExtensionGroup, error)
-	GetGroups(ctx context.Context, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error)
+	GetGroups(ctx context.Context, filter entities.GroupFilter, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error)
+	GetRandomActiveGroups(ctx context.Context, limit int) ([]entities.ExtensionGroup, error)
 
 	// Unit of Work: Atomic operations
 	CreateGroupWithRequests(ctx context.Context, group entities.ExtensionGroup, requests []entities.GroupRequest) (int64, error)
@@ -56,12 +57,20 @@ func (s *service) GetGroup(ctx context.Context, groupID string) (entities.Extens
 	return group, nil
 }
 
-func (s *service) GetGroups(ctx context.Context, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error) {
-	groups, page, err := s.repo.GetGroups(ctx, pageScope)
+func (s *service) GetGroups(ctx context.Context, filter entities.GroupFilter, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error) {
+	groups, page, err := s.repo.GetGroups(ctx, filter, pageScope)
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
 	return groups, page, nil
+}
+
+func (s *service) GetRandomActiveGroups(ctx context.Context, limit int) ([]entities.ExtensionGroup, error) {
+	groups, err := s.repo.GetRandomActiveGroups(ctx, limit)
+	if err != nil {
+		return nil, err
+	}
+	return groups, nil
 }
 
 func (s *service) CreateGroup(ctx context.Context, group entities.ExtensionGroup) (int64, string, error) {

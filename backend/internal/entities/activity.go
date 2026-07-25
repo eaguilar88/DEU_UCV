@@ -5,6 +5,7 @@ const ActivityFileTypeReport = "reporte"
 type ActivityFilter struct {
 	GroupID            string
 	Date               string
+	Deleted            bool
 	ActualParticipants *int
 }
 

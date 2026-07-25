@@ -42,8 +42,8 @@ func (r *PostgresRepository) GetGroupByID(ctx context.Context, groupID string) (
 	return eg, nil
 }
 
-func (r *PostgresRepository) GetGroups(ctx context.Context, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error) {
-	query, args, err := queries.GetGroups(pageScope.PerPage, pageScope.Offset()).ToSql()
+func (r *PostgresRepository) GetGroups(ctx context.Context, filter entities.GroupFilter, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error) {
+	query, args, err := queries.GetGroups(filter, pageScope.PerPage, pageScope.Offset()).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
@@ -71,6 +71,37 @@ func (r *PostgresRepository) GetGroups(ctx context.Context, pageScope entities.P
 		groups = append(groups, eg)
 	}
 	return groups, pageScope, nil
+}
+
+func (r *PostgresRepository) GetRandomActiveGroups(ctx context.Context, limit int) ([]entities.ExtensionGroup, error) {
+	query, args, err := queries.GetRandomActiveGroups(limit).ToSql()
+	if err != nil {
+		return nil, err
+	}
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+	rows, err := stmt.QueryContext(ctx, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var groups []entities.ExtensionGroup
+	for rows.Next() {
+		group, err := scanGroup(rows)
+		if err != nil {
+			return nil, err
+		}
+		eg := newGroupFromModel(group)
+		eg.Members, err = r.getGroupMembers(ctx, eg.ID)
+		if err != nil {
+			return nil, err
+		}
+		groups = append(groups, eg)
+	}
+	return groups, nil
 }
 
 func (r *PostgresRepository) CreateGroup(ctx context.Context, gr entities.ExtensionGroup) (int64, error) {

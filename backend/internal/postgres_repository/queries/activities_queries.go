@@ -32,29 +32,39 @@ func GetActivityByID(id string) sq.SelectBuilder {
 func GetActivities(filter entities.ActivityFilter, limit, offset int) sq.SelectBuilder {
 	q := psql.Select(activitySelectCols...).
 		From(activitiesTableName + " AS a").
-		Where(sq.Eq{"a.group_id": filter.GroupID, "a.deleted_at": nil}).
 		Limit(uint64(limit)).
 		Offset(uint64(offset))
 
+	if filter.GroupID != "" {
+		q = q.Where(sq.Eq{"a.group_id": filter.GroupID})
+	}
 	if filter.Date != "" {
 		q = q.Where(sq.Eq{"a.date": filter.Date})
 	}
 	if filter.ActualParticipants != nil {
 		q = q.Where(sq.Eq{"a.actual_participants": *filter.ActualParticipants})
+	}
+	if !filter.Deleted {
+		q = q.Where(sq.Eq{"a.deleted_at": nil})
 	}
 	return q
 }
 
 func CountActivities(filter entities.ActivityFilter) sq.SelectBuilder {
 	q := psql.Select("COUNT(*)").
-		From(activitiesTableName + " AS a").
-		Where(sq.Eq{"a.group_id": filter.GroupID, "a.deleted_at": nil})
+		From(activitiesTableName + " AS a")
 
+	if filter.GroupID != "" {
+		q = q.Where(sq.Eq{"a.group_id": filter.GroupID})
+	}
 	if filter.Date != "" {
 		q = q.Where(sq.Eq{"a.date": filter.Date})
 	}
 	if filter.ActualParticipants != nil {
 		q = q.Where(sq.Eq{"a.actual_participants": *filter.ActualParticipants})
+	}
+	if !filter.Deleted {
+		q = q.Where(sq.Eq{"a.deleted_at": nil})
 	}
 	return q
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/postgres_repository/models"
 )
 
@@ -33,11 +34,38 @@ func GetGroupByID(groupID string) sq.SelectBuilder {
 		Where(sq.Eq{"g.id": groupID})
 }
 
-func GetGroups(limit, offset int) sq.SelectBuilder {
-	return psql.Select(groupQuerySelectCommon...).
+func GetGroups(filter entities.GroupFilter, limit, offset int) sq.SelectBuilder {
+	q := psql.Select(groupQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS g", groupsTableName)).
 		Limit(uint64(limit)).
 		Offset(uint64(offset))
+
+	if filter.Faculty != "" {
+		q = q.Where(sq.Eq{"g.faculty": filter.Faculty})
+	}
+	if filter.Type != "" {
+		q = q.Where(sq.Eq{"g.type": filter.Type})
+	}
+	if filter.Active != nil {
+		q = q.Where(sq.Eq{"g.is_active": *filter.Active})
+	}
+	if filter.StartDate != "" {
+		// EndDate is always populated alongside StartDate (defaulted to today by the caller);
+		// cast to ::date + 1 day so the end day is inclusive of its full 24h span.
+		q = q.Where(sq.Expr("g.created_at >= ? AND g.created_at < ?::date + interval '1 day'", filter.StartDate, filter.EndDate))
+	}
+	if !filter.Deleted {
+		q = q.Where(sq.Eq{"g.deleted_at": nil})
+	}
+	return q
+}
+
+func GetRandomActiveGroups(limit int) sq.SelectBuilder {
+	return psql.Select(groupQuerySelectCommon...).
+		From(fmt.Sprintf("%s AS g", groupsTableName)).
+		Where(sq.Eq{"g.is_active": true}).
+		OrderBy("random()").
+		Limit(uint64(limit))
 }
 
 func InsertGroup(group models.ExtensionGroup) sq.InsertBuilder {
