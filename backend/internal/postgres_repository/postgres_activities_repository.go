@@ -149,6 +149,7 @@ func scanActivity(row scannable) (models.Activity, error) {
 		&a.ActualParticipants,
 		&a.Financing,
 		&a.Comments,
+		&a.GalleryURL,
 		&a.CreatedAt,
 		&a.UpdatedAt,
 		&a.DeletedAt,
@@ -172,6 +173,7 @@ func newActivityToModel(a entities.Activity) models.Activity {
 		ActualParticipants:    sql.NullInt64{Int64: int64(a.ActualParticipants), Valid: a.ActualParticipants != 0},
 		Financing:             toNullString(a.Financing),
 		Comments:              toNullString(a.Comments),
+		GalleryURL:            toNullString(a.GalleryURL),
 	}
 }
 
@@ -188,6 +190,7 @@ func newActivityFromModel(a models.Activity) entities.Activity {
 		ActualParticipants:    int(a.ActualParticipants.Int64),
 		Financing:             a.Financing.String,
 		Comments:              a.Comments.String,
+		GalleryURL:            a.GalleryURL.String,
 		CreatedAt:             a.CreatedAt.String,
 		UpdatedAt:             a.UpdatedAt.String,
 		DeletedAt:             a.DeletedAt.String,

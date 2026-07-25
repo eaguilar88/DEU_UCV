@@ -28,12 +28,10 @@ func (t GroupType) IsValid() bool {
 
 // GroupFilter carries the optional filters accepted by GetGroups.
 type GroupFilter struct {
-	Faculty   Faculty
-	Type      GroupType
-	Active    *bool
-	Deleted   bool
-	StartDate string // YYYY-MM-DD, empty means "no date filter"
-	EndDate   string // YYYY-MM-DD
+	Faculty Faculty
+	Type    GroupType
+	Active  *bool
+	Deleted bool
 }
 
 type ExtensionGroup struct {

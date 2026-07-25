@@ -39,8 +39,8 @@ func (_m *MockService) EXPECT() *MockService_Expecter {
 }
 
 // CreateActivity provides a mock function for the type MockService
-func (_mock *MockService) CreateActivity(ctx context.Context, activity entities.Activity, files []*entities.File) (int64, error) {
-	ret := _mock.Called(ctx, activity, files)
+func (_mock *MockService) CreateActivity(ctx context.Context, activity entities.Activity) (int64, error) {
+	ret := _mock.Called(ctx, activity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateActivity")
@@ -48,16 +48,16 @@ func (_mock *MockService) CreateActivity(ctx context.Context, activity entities.
 
 	var r0 int64
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.Activity, []*entities.File) (int64, error)); ok {
-		return returnFunc(ctx, activity, files)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.Activity) (int64, error)); ok {
+		return returnFunc(ctx, activity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.Activity, []*entities.File) int64); ok {
-		r0 = returnFunc(ctx, activity, files)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.Activity) int64); ok {
+		r0 = returnFunc(ctx, activity)
 	} else {
 		r0 = ret.Get(0).(int64)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.Activity, []*entities.File) error); ok {
-		r1 = returnFunc(ctx, activity, files)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.Activity) error); ok {
+		r1 = returnFunc(ctx, activity)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -72,12 +72,11 @@ type MockService_CreateActivity_Call struct {
 // CreateActivity is a helper method to define mock.On call
 //   - ctx context.Context
 //   - activity entities.Activity
-//   - files []*entities.File
-func (_e *MockService_Expecter) CreateActivity(ctx interface{}, activity interface{}, files interface{}) *MockService_CreateActivity_Call {
-	return &MockService_CreateActivity_Call{Call: _e.mock.On("CreateActivity", ctx, activity, files)}
+func (_e *MockService_Expecter) CreateActivity(ctx interface{}, activity interface{}) *MockService_CreateActivity_Call {
+	return &MockService_CreateActivity_Call{Call: _e.mock.On("CreateActivity", ctx, activity)}
 }
 
-func (_c *MockService_CreateActivity_Call) Run(run func(ctx context.Context, activity entities.Activity, files []*entities.File)) *MockService_CreateActivity_Call {
+func (_c *MockService_CreateActivity_Call) Run(run func(ctx context.Context, activity entities.Activity)) *MockService_CreateActivity_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -87,14 +86,9 @@ func (_c *MockService_CreateActivity_Call) Run(run func(ctx context.Context, act
 		if args[1] != nil {
 			arg1 = args[1].(entities.Activity)
 		}
-		var arg2 []*entities.File
-		if args[2] != nil {
-			arg2 = args[2].([]*entities.File)
-		}
 		run(
 			arg0,
 			arg1,
-			arg2,
 		)
 	})
 	return _c
@@ -105,7 +99,7 @@ func (_c *MockService_CreateActivity_Call) Return(n int64, err error) *MockServi
 	return _c
 }
 
-func (_c *MockService_CreateActivity_Call) RunAndReturn(run func(ctx context.Context, activity entities.Activity, files []*entities.File) (int64, error)) *MockService_CreateActivity_Call {
+func (_c *MockService_CreateActivity_Call) RunAndReturn(run func(ctx context.Context, activity entities.Activity) (int64, error)) *MockService_CreateActivity_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -3,6 +3,11 @@ package activities
 import "github.com/eaguilar88/deu/internal/entities"
 
 func activityToResponse(a entities.Activity) GetActivityResponse {
+	var coverURL string
+	if a.CoverImage != nil {
+		coverURL = a.CoverImage.URL
+	}
+
 	return GetActivityResponse{
 		ID:                    a.ID,
 		GroupID:               a.GroupID,
@@ -15,7 +20,8 @@ func activityToResponse(a entities.Activity) GetActivityResponse {
 		ActualParticipants:    a.ActualParticipants,
 		Financing:             a.Financing,
 		Comments:              a.Comments,
-		Files:                 filesToResponse(a.Files.GetAllFiles()),
+		CoverImage:            coverURL,
+		GalleryURL:            a.GalleryURL,
 		CreatedAt:             a.CreatedAt,
 		UpdatedAt:             a.UpdatedAt,
 	}
@@ -25,22 +31,6 @@ func activitiesToResponse(list []entities.Activity) []GetActivityResponse {
 	res := make([]GetActivityResponse, 0, len(list))
 	for _, a := range list {
 		res = append(res, activityToResponse(a))
-	}
-	return res
-}
-
-func filesToResponse(files []*entities.File) []FileResponse {
-	if len(files) == 0 {
-		return nil
-	}
-	res := make([]FileResponse, 0, len(files))
-	for _, f := range files {
-		res = append(res, FileResponse{
-			ID:      f.ID,
-			Name:    f.Name,
-			URL:     f.URL,
-			Purpose: f.Purpose,
-		})
 	}
 	return res
 }
@@ -57,6 +47,7 @@ func createActivityEntityFromRequest(req CreateActivityRequest) entities.Activit
 		ActualParticipants:    req.ActualParticipants,
 		Financing:             req.Financing,
 		Comments:              req.Comments,
+		GalleryURL:            req.GalleryURL,
 	}
 }
 

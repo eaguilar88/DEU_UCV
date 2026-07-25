@@ -14,6 +14,7 @@ type Activity struct {
 	ActualParticipants    sql.NullInt64
 	Financing             sql.NullString
 	Comments              sql.NullString
+	GalleryURL            sql.NullString
 	CreatedAt             sql.NullString
 	UpdatedAt             sql.NullString
 	DeletedAt             sql.NullString

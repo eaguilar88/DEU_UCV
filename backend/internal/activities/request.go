@@ -6,7 +6,6 @@ type GetActivityRequest struct {
 
 type GetActivitiesRequest struct {
 	GroupID            string `query:"group_id" validate:"required"`
-	Date               string `query:"date"`
 	ActualParticipants *int   `query:"actual_participants"`
 	Page               int    `query:"page" validate:"required"`
 	PerPage            int    `query:"per_page" validate:"required"`
@@ -23,6 +22,7 @@ type CreateActivityRequest struct {
 	ActualParticipants    int    `form:"participantes_reales"`
 	Financing             string `form:"financiamiento"`
 	Comments              string `form:"observaciones"`
+	GalleryURL            string `form:"gallery_url"`
 }
 
 type UpdateActivityRequest struct {

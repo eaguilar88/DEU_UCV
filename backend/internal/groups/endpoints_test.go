@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/groups/mocks"
@@ -198,36 +197,6 @@ func TestHandler_GetGroups(t *testing.T) {
 			svc:     &mocks.MockService{},
 			wantErr: httperrors.NewBadRequest("deleted must be true or false"),
 		},
-		{
-			name: "start and end date filter passed through",
-			url:  "/groups?start_date=01-01-2026&end_date=31-01-2026",
-			svc:  &mocks.MockService{},
-			prepare: func(ctx echo.Context, tc *testCase) {
-				tc.svc.On("GetGroups", ctx.Request().Context(), entities.GroupFilter{StartDate: "2026-01-01", EndDate: "2026-01-31"}, mock.AnythingOfType("entities.PageScope")).
-					Return([]entities.ExtensionGroup{{ID: "1"}}, entities.PageScope{}, nil)
-			},
-			resp: GetGroupsResponse{
-				Groups: []GetGroupResponse{{ID: "1"}},
-			},
-		},
-		{
-			name:    "end date without start date returns bad request",
-			url:     "/groups?end_date=31-01-2026",
-			svc:     &mocks.MockService{},
-			wantErr: httperrors.NewBadRequest("start_date is required when end_date is provided"),
-		},
-		{
-			name:    "start date after end date returns bad request",
-			url:     "/groups?start_date=31-01-2026&end_date=01-01-2026",
-			svc:     &mocks.MockService{},
-			wantErr: httperrors.NewBadRequest("start_date must not be after end_date"),
-		},
-		{
-			name:    "malformed start date returns bad request",
-			url:     "/groups?start_date=2026-01-01",
-			svc:     &mocks.MockService{},
-			wantErr: httperrors.NewBadRequest("start_date must be in DD-MM-YYYY format"),
-		},
 	}
 
 	logger := zap.NewNop()
@@ -251,17 +220,4 @@ func TestHandler_GetGroups(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestHandler_buildFilters_StartDateOnlyDefaultsEndToToday(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/groups?start_date=01-01-2020", nil)
-	rec := httptest.NewRecorder()
-	ctx := echo.New().NewContext(req, rec)
-
-	h := NewHandler(&mocks.MockService{}, zap.NewNop())
-	filter, err := h.buildFilters(ctx)
-
-	require.NoError(t, err)
-	assert.Equal(t, "2020-01-01", filter.StartDate)
-	assert.Equal(t, time.Now().Format(storageDateFormat), filter.EndDate)
 }

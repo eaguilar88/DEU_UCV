@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/httperrors"
@@ -19,9 +18,6 @@ import (
 const (
 	defaultRandomGroupsLimit = 3
 	maxRandomGroupsLimit     = 5
-
-	clientDateFormat  = "02-01-2006" // DD-MM-YYYY, matches internal/users/decoders.go's client-facing format
-	storageDateFormat = "2006-01-02"
 )
 
 type Service interface {
@@ -104,8 +100,8 @@ func (h *Handler) GetGroups(c echo.Context) error {
 	})
 }
 
-// buildFilters parses and validates the faculty, type, active, deleted, start_date,
-// and end_date query params into an entities.GroupFilter.
+// buildFilters parses and validates the faculty, type, active, and deleted
+// query params into an entities.GroupFilter.
 func (h *Handler) buildFilters(c echo.Context) (entities.GroupFilter, error) {
 	filter := entities.GroupFilter{}
 
@@ -139,35 +135,6 @@ func (h *Handler) buildFilters(c echo.Context) (entities.GroupFilter, error) {
 			return entities.GroupFilter{}, httperrors.NewBadRequest("deleted must be true or false")
 		}
 		filter.Deleted = deleted
-	}
-
-	startStr := c.QueryParam("start_date")
-	endStr := c.QueryParam("end_date")
-
-	if startStr == "" && endStr != "" {
-		return entities.GroupFilter{}, httperrors.NewBadRequest("start_date is required when end_date is provided")
-	}
-
-	if startStr != "" {
-		start, err := time.Parse(clientDateFormat, startStr)
-		if err != nil {
-			return entities.GroupFilter{}, httperrors.NewBadRequest("start_date must be in DD-MM-YYYY format")
-		}
-
-		end := time.Now()
-		if endStr != "" {
-			end, err = time.Parse(clientDateFormat, endStr)
-			if err != nil {
-				return entities.GroupFilter{}, httperrors.NewBadRequest("end_date must be in DD-MM-YYYY format")
-			}
-		}
-
-		if start.After(end) {
-			return entities.GroupFilter{}, httperrors.NewBadRequest("start_date must not be after end_date")
-		}
-
-		filter.StartDate = start.Format(storageDateFormat)
-		filter.EndDate = end.Format(storageDateFormat)
 	}
 
 	return filter, nil

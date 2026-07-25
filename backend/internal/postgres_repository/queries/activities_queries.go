@@ -18,6 +18,7 @@ var activitySelectCols = []string{
 	"a.actual_participants",
 	"a.financing",
 	"a.comments",
+	"a.gallery_url",
 	"a.created_at",
 	"a.updated_at",
 	"a.deleted_at",
@@ -38,8 +39,8 @@ func GetActivities(filter entities.ActivityFilter, limit, offset int) sq.SelectB
 	if filter.GroupID != "" {
 		q = q.Where(sq.Eq{"a.group_id": filter.GroupID})
 	}
-	if filter.Date != "" {
-		q = q.Where(sq.Eq{"a.date": filter.Date})
+	if filter.StartDate != "" {
+		q = q.Where(sq.GtOrEq{"a.date": filter.StartDate}).Where(sq.LtOrEq{"a.date": filter.EndDate})
 	}
 	if filter.ActualParticipants != nil {
 		q = q.Where(sq.Eq{"a.actual_participants": *filter.ActualParticipants})
@@ -57,8 +58,8 @@ func CountActivities(filter entities.ActivityFilter) sq.SelectBuilder {
 	if filter.GroupID != "" {
 		q = q.Where(sq.Eq{"a.group_id": filter.GroupID})
 	}
-	if filter.Date != "" {
-		q = q.Where(sq.Eq{"a.date": filter.Date})
+	if filter.StartDate != "" {
+		q = q.Where(sq.GtOrEq{"a.date": filter.StartDate}).Where(sq.LtOrEq{"a.date": filter.EndDate})
 	}
 	if filter.ActualParticipants != nil {
 		q = q.Where(sq.Eq{"a.actual_participants": *filter.ActualParticipants})
@@ -82,6 +83,7 @@ func InsertActivity(a models.Activity) sq.InsertBuilder {
 			"actual_participants",
 			"financing",
 			"comments",
+			"gallery_url",
 			"created_at",
 			"updated_at",
 		).
@@ -96,6 +98,7 @@ func InsertActivity(a models.Activity) sq.InsertBuilder {
 			a.ActualParticipants,
 			a.Financing,
 			a.Comments,
+			a.GalleryURL,
 			sq.Expr("NOW()"),
 			sq.Expr("NOW()"),
 		).Suffix("RETURNING id")
@@ -112,6 +115,7 @@ func UpdateActivity(a models.Activity) sq.UpdateBuilder {
 		Set("actual_participants", a.ActualParticipants).
 		Set("financing", a.Financing).
 		Set("comments", a.Comments).
+		Set("gallery_url", a.GalleryURL).
 		Set("updated_at", sq.Expr("NOW()")).
 		Where(sq.Eq{"id": a.ID, "deleted_at": nil})
 }

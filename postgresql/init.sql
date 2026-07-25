@@ -277,6 +277,7 @@ CREATE TABLE
     actual_participants INTEGER, -- Participantes reales
     financing VARCHAR, -- Financiamiento
     comments TEXT, -- Observaciones
+    gallery_url VARCHAR, -- Enlace a la galería de la actividad en almacenamiento externo
     created_at TIMESTAMP DEFAULT NOW (),
     updated_at TIMESTAMP DEFAULT NOW (),
     deleted_at TIMESTAMP

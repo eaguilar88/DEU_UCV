@@ -1,10 +1,11 @@
 package entities
 
-const ActivityFileTypeReport = "reporte"
+const ActivityFileTypeCoverImage = "cubierta"
 
 type ActivityFilter struct {
 	GroupID            string
-	Date               string
+	StartDate          string // YYYY-MM-DD, empty means "no date filter"
+	EndDate            string // YYYY-MM-DD
 	Deleted            bool
 	ActualParticipants *int
 }
@@ -21,7 +22,8 @@ type Activity struct {
 	ActualParticipants    int
 	Financing             string
 	Comments              string
-	Files                 GroupedFiles
+	GalleryURL            string
+	CoverImage            *File
 	CreatedAt             string
 	UpdatedAt             string
 	DeletedAt             string
