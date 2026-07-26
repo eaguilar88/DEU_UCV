@@ -158,13 +158,26 @@ func (r *PostgresRepository) CreateGroupWithRequests(ctx context.Context, group 
 	if err != nil {
 		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == pgErrorCodeUniqueViolation {
 			r.logger.Error("duplicate group entry", zap.Error(err))
-			return -1, httperrors.NewDuplicateEntryError(err)
+			return -1, fmt.Errorf("duplicate group entry: %w ", err)
 		}
 		r.logger.Error("failed to insert group", zap.Error(err))
 		return -1, fmt.Errorf("failed to insert group: %w", err)
 	}
 
-	// 2. Create each authorization request
+	// 2. Create contacts for the group
+	if group.Email != "" {
+		if err := r.insertContactInformation(ctx, tx, group.Email, entities.ContactTypeEmail, groupID); err != nil {
+			return -1, fmt.Errorf("error saving group contact: %w", err)
+		}
+	}
+
+	if group.Phone != "" {
+		if err := r.insertContactInformation(ctx, tx, group.Phone, entities.ContactTypePhone, groupID); err != nil {
+			return -1, fmt.Errorf("error saving group contact: %w", err)
+		}
+	}
+
+	// 3. Create each authorization request
 	for _, req := range requests {
 		reqSQL, reqArgs, err := queries.InsertGroupRequest(models.GroupRequest{
 			GroupID: groupID,
@@ -199,7 +212,7 @@ func (r *PostgresRepository) CreateGroupWithRequests(ctx context.Context, group 
 		}
 	}
 
-	// 3. Commit
+	// 4. Commit
 	if err := tx.Commit(); err != nil {
 		r.logger.Error("failed to commit transaction", zap.Error(err))
 		return -1, fmt.Errorf("failed to commit transaction: %w", err)
@@ -440,4 +453,32 @@ func groupMemberFromModel(m models.GroupMember) entities.GroupMember {
 		Document:     m.Document.String,
 		IsActive:     m.IsActive,
 	}
+}
+
+func (r *PostgresRepository) insertContactInformation(ctx context.Context, tx *sql.Tx, contactValue string, contactType entities.ContactType, groupID int64) error {
+	contactSQL, contactArgs, err := queries.InsertContact(
+		string(contactType),
+		contactValue,
+		entities.OwnerTypeExtensionGroup.String(),
+		groupID,
+	).ToSql()
+	if err != nil {
+		return fmt.Errorf("error building query: %w", err)
+	}
+
+	contactStmt, err := tx.PrepareContext(ctx, contactSQL)
+	if err != nil {
+		return fmt.Errorf("failed to prepare contact statement: %w", err)
+	}
+	defer contactStmt.Close()
+
+	var contactID string
+	err = contactStmt.QueryRowContext(ctx, contactArgs...).Scan(&contactID)
+	if err != nil {
+		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == pgErrorCodeUniqueViolation {
+			return fmt.Errorf("duplicated contact information: %w", err)
+		}
+		return fmt.Errorf("failed to insert contact: %w", err)
+	}
+	return nil
 }

@@ -122,9 +122,7 @@ func (s *service) CreateGroup(ctx context.Context, group entities.ExtensionGroup
 	}
 
 	files := []*entities.File{
-		makeFileEntityFromFilePointer(group.Files.Logo, groupID, userID, entities.OwnerTypeExtensionGroup, commonMetadata),
-		// makeFileEntityFromFilePointer(group.Files.FinancingPlan, groupID, userID, entities.OwnerTypeExtensionGroup, commonMetadata),
-		// makeFileEntityFromFilePointer(group.Files.GroupProject, groupID, userID, entities.OwnerTypeExtensionGroup, commonMetadata),
+		makeFileEntityFromFilePointer(group.Logo, groupID, userID, entities.OwnerTypeExtensionGroup, commonMetadata),
 	}
 
 	if err := s.repo.SaveFilesToDB(ctx, files); err != nil {

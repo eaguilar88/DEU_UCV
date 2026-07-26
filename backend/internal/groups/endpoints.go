@@ -224,6 +224,8 @@ func makeGroupRequestFromContext(c echo.Context, userID string, log *zap.Logger)
 		Faculty:     c.FormValue("facultad"),
 		Objective:   c.FormValue("objetivo"),
 		Location:    c.FormValue("ubicacion"),
+		Email:       c.FormValue("correo"),
+		Phone:       c.FormValue("telefono"),
 	}
 
 	if raw := c.FormValue("miembros"); raw != "" {
@@ -245,6 +247,6 @@ func makeGroupRequestFromContext(c echo.Context, userID string, log *zap.Logger)
 	}
 
 	group := createGroupEntityFromRequest(req, userID, req.Faculty)
-	group.Files = &entities.GroupFiles{Logo: logo}
+	group.Logo = logo
 	return group, nil
 }

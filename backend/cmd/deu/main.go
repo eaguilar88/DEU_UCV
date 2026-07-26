@@ -142,7 +142,11 @@ func main() {
 	addActivityRoutes(e, activityEndpoints, middlewares...)
 	addGroupResourceRequestRoutes(e, groupResourceRequestEndpoints, middlewares...)
 
-	addAdminRoutes(e, middlewares,
+	adminMiddlewares := append(append([]echo.MiddlewareFunc{}, middlewares...),
+		jwt.RequireRoles("root", "deu_admin", "faculty_admin"),
+	)
+
+	addAdminRoutes(e, adminMiddlewares,
 		providerEndpoints.RegisterProviderAdminEndpoints,
 		groupRequestEndpoints.RegisterGroupRequestAdminEndpoints,
 		groupResourceRequestEndpoints.RegisterGroupResourceRequestAdminEndpoints,

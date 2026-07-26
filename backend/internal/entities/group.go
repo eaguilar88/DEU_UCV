@@ -44,9 +44,11 @@ type ExtensionGroup struct {
 	Location    string
 	Type        GroupType
 	Faculty     Faculty
-	Files       *GroupFiles
+	Logo        *File
 	Members     []GroupMember
 	Active      bool
+	Email       string
+	Phone       string
 	CreatedAt   string
 	UpdatedAt   string
 	DeletedAt   string

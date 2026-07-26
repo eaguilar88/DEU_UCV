@@ -50,6 +50,32 @@ func TestAuthService_Login(t *testing.T) {
 			},
 			wantErr: nil,
 		},
+		{
+			name:     "deu_admin populates faculty from user role",
+			username: "deu.admin@email.com",
+			password: "nolodire",
+			repo:     &mocks.MockRepository{},
+			signer:   &jwtMock.MockSigner{},
+			prepare: func(ctx context.Context, tc *testCase) {
+				userRoles := []entities.UserRole{{Name: "deu_admin", DomainType: "all", Faculty: "DEU"}}
+				tc.repo.On("GetUserByUsername", ctx, tc.username).Return(tc.user, nil)
+				tc.repo.On("GetUserRoles", ctx, tc.user.ID).Return(userRoles, nil)
+				tc.repo.On("GetProviderCodeByUserID", ctx, tc.user.ID).Return("", nil)
+				tc.signer.On("GenerateJWT", "2", userRoles, "").Return(tc.token, nil)
+			},
+			token: "token",
+			user: &entities.User{
+				ID:        "2",
+				FirstName: "Deu",
+				LastName:  "Admin",
+				Password:  "$2a$10$rFfAKJJIvbGaQCay8zC9bulGQ/kOYDOwwVBGr0WyWA1sUTLZsuXpa",
+				Roles: []string{
+					"deu_admin",
+				},
+				Faculty: "DEU",
+			},
+			wantErr: nil,
+		},
 	}
 	ctx := context.Background()
 	loggerMock := zap.NewNop()

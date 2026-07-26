@@ -22,6 +22,8 @@ type CreateGroupRequest struct {
 	Objective   string           `validate:"required" form:"objetivo"`
 	Location    string           `validate:"required" form:"ubicacion"`
 	Members     []GroupMemberDTO `form:"miembros" validate:"dive"`
+	Email       string           `form:"correo" validate:"required"`
+	Phone       string           `form:"telefono"`
 }
 
 type UpdateGroupRequest struct {
@@ -117,6 +119,8 @@ func createGroupEntityFromRequest(req CreateGroupRequest, ownerID, faculty strin
 		Objective: req.Objective,
 		Location:  req.Location,
 		Members:   groupMembersEntityFromRequest(req.Members),
+		Email:     req.Email,
+		Phone:     req.Phone,
 	}
 
 	if entities.Faculty(faculty).IsValid() {

@@ -53,7 +53,7 @@ func (s *service) Login(ctx context.Context, username, password string) (string,
 	user.Roles = roleNames
 
 	for _, r := range userRoles {
-		if r.Name == "faculty_admin" {
+		if r.Faculty != "" {
 			user.Faculty = r.Faculty
 			break
 		}

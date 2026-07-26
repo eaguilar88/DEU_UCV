@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
@@ -75,6 +76,31 @@ func JWTMiddleware(signer Signer, logger *zap.Logger) echo.MiddlewareFunc {
 			c.Set("providerCode", providerCode)
 
 			return next(c)
+		}
+	}
+}
+
+// RequireRoles returns middleware that only allows the request through if
+// the authenticated user's roles (set in context by JWTMiddleware) include
+// at least one of allowedRoles. It must be chained after JWTMiddleware.
+func RequireRoles(allowedRoles ...string) echo.MiddlewareFunc {
+	allowed := make(map[string]struct{}, len(allowedRoles))
+	for _, r := range allowedRoles {
+		allowed[r] = struct{}{}
+	}
+
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			roles, ok := c.Get("roles").([]string)
+			if !ok {
+				return httperrors.NewForbidden("you do not have permission to access this resource")
+			}
+			for _, r := range roles {
+				if _, ok := allowed[r]; ok {
+					return next(c)
+				}
+			}
+			return httperrors.NewForbidden("you do not have permission to access this resource")
 		}
 	}
 }

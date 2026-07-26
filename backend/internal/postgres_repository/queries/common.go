@@ -29,4 +29,5 @@ var (
 	providerRequestsTableName      = fmt.Sprintf("%s.provider_requests", schema)
 	cycleCloseRequestsTableName    = fmt.Sprintf("%s.course_cycle_close_requests", schema)
 	activitiesTableName            = fmt.Sprintf("%s.activities", schema)
+	contactsTableName              = fmt.Sprintf("%s.contacts", schema)
 )
