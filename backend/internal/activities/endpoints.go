@@ -22,8 +22,11 @@ const (
 type Service interface {
 	GetActivity(ctx context.Context, id string) (entities.Activity, error)
 	GetActivities(ctx context.Context, filter entities.ActivityFilter, pageScope entities.PageScope) ([]entities.Activity, entities.PageScope, error)
+	GetGroupDashboardSummary(ctx context.Context, groupID string) (entities.GroupDashboardSummary, error)
 	CreateActivity(ctx context.Context, activity entities.Activity) (int64, error)
 	UpdateActivity(ctx context.Context, id string, activity entities.Activity) error
+	ToggleReportCheck(ctx context.Context, id string, checked bool) error
+	ToggleFeature(ctx context.Context, id string, featured bool) error
 	DeleteActivity(ctx context.Context, id string) error
 }
 
@@ -34,6 +37,11 @@ type Handler struct {
 
 func NewHandler(svc Service, log *zap.Logger) *Handler {
 	return &Handler{svc: svc, log: log}
+}
+
+// RegisterActivityAdminEndpoints registra las rutas restringidas a administradores
+func (h *Handler) RegisterActivityAdminEndpoints(g *echo.Group) {
+	g.PATCH("/activities/report-check", h.ToggleReportCheck)
 }
 
 func (h *Handler) GetActivity(c echo.Context) error {
@@ -51,7 +59,7 @@ func (h *Handler) GetActivity(c echo.Context) error {
 		return httperrors.NewInternal(err)
 	}
 
-	return c.JSON(http.StatusOK, activityToResponse(activity))
+	return c.JSON(http.StatusOK, activityToResponse(activity, true))
 }
 
 func (h *Handler) GetActivities(c echo.Context) error {
@@ -61,9 +69,9 @@ func (h *Handler) GetActivities(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return httperrors.NewBadRequest("invalid query parameters")
 	}
-	if err := c.Validate(req); err != nil {
-		return httperrors.NewBadRequest("group_id is required")
-	}
+	//if err := c.Validate(req); err != nil {
+	//	return httperrors.NewBadRequest("group_id is required")
+	//}
 
 	startDate, endDate, err := h.buildDateFilter(c)
 	if err != nil {
@@ -71,16 +79,24 @@ func (h *Handler) GetActivities(c echo.Context) error {
 	}
 
 	scope := entities.PageScope{}
-	//nolint:errcheck
-	scope.GetPageFromVars(c.QueryParam("page"))
-	//nolint:errcheck
-	scope.GetPerPageFromVars(c.QueryParam("per_page"))
+	if !req.DisablePaging {
+		//nolint:errcheck
+		scope.GetPageFromVars(c.QueryParam("page"))
+		//nolint:errcheck
+		scope.GetPerPageFromVars(c.QueryParam("per_page"))
+	}
 
 	filter := entities.ActivityFilter{
-		GroupID:            req.GroupID,
-		StartDate:          startDate,
-		EndDate:            endDate,
-		ActualParticipants: req.ActualParticipants,
+		GroupID:               req.GroupID,
+		NameSearch:            req.NameSearch,
+		StartDate:             startDate,
+		EndDate:               endDate,
+		ActualParticipants:    req.ActualParticipants,
+		HasActualParticipants: req.HasActualParticipants,
+		IsFeatured:            req.IsFeatured,    
+		ReportChecked:         req.ReportChecked,
+		Order:                 req.Order,
+		DisablePaging:         req.DisablePaging,
 	}
 
 	list, pageScope, err := h.svc.GetActivities(ctx, filter, scope)
@@ -92,6 +108,19 @@ func (h *Handler) GetActivities(c echo.Context) error {
 		Activities: activitiesToResponse(list),
 		PageScope:  pageScope,
 	})
+}
+
+func (h *Handler) GetGroupDashboardSummary(c echo.Context) error {
+	ctx := c.Request().Context()
+	groupID := c.Param("groupId")
+	if groupID == "" {
+		return httperrors.NewBadRequest("group id is required")
+	}
+	summary, err := h.svc.GetGroupDashboardSummary(ctx, groupID)
+	if err != nil {
+		return httperrors.NewInternal(err)
+	}
+	return c.JSON(http.StatusOK, summary)
 }
 
 // buildDateFilter parses and validates the start_date/end_date query params,
@@ -143,13 +172,20 @@ func (h *Handler) CreateActivity(c echo.Context) error {
 		return httperrors.NewBadRequest(err.Error())
 	}
 
-	coverImage, err := utils.GetFileFrom(c, entities.ActivityFileTypeCoverImage)
-	if err != nil {
-		return httperrors.NewBadRequest("cubierta is required")
-	}
+	//coverImage, err := utils.GetFileFrom(c, entities.ActivityFileTypeCoverImage)
+	//if err != nil {
+	//	return httperrors.NewBadRequest("cubierta is required")
+	//}
 
 	activity := createActivityEntityFromRequest(req)
+
+	if coverImage, err := utils.GetFileFrom(c, entities.ActivityFileTypeCoverImage); err == nil {
 	activity.CoverImage = coverImage
+	}
+	if participantList, err := utils.GetFileFrom(c, entities.ActivityFileTypeListParticipants); err == nil {
+		activity.ParticipantList = participantList
+	}
+
 	activityID, err := h.svc.CreateActivity(ctx, activity)
 	if err != nil {
 		return httperrors.NewInternal(err)
@@ -177,7 +213,16 @@ func (h *Handler) UpdateActivity(c echo.Context) error {
 		return httperrors.NewBadRequest(err.Error())
 	}
 
-	err := h.svc.UpdateActivity(ctx, req.ID, updateActivityEntityFromRequest(req))
+	activity := updateActivityEntityFromRequest(req)
+
+	if coverImage, err := utils.GetFileFrom(c, entities.ActivityFileTypeCoverImage); err == nil {
+		activity.CoverImage = coverImage
+	}
+	if participantList, err := utils.GetFileFrom(c, entities.ActivityFileTypeListParticipants); err == nil {
+		activity.ParticipantList = participantList
+	}
+
+	err := h.svc.UpdateActivity(ctx, req.ID, activity)
 	if err != nil {
 		if errors.Is(err, ErrActivityNotFound) {
 			return httperrors.NewNotFound("activity not found")
@@ -186,6 +231,61 @@ func (h *Handler) UpdateActivity(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusAccepted, nil)
+}
+
+func (h *Handler) ToggleReportCheck(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	_, ok := c.Get("userID").(string)
+	if !ok {
+		return httperrors.NewUnauthorized("authentication required")
+	}
+
+	var req ToggleReportCheckRequest
+	if err := c.Bind(&req); err != nil {
+		return httperrors.NewBadRequest("invalid request body")
+	}
+	if err := c.Validate(req); err != nil {
+		return httperrors.NewBadRequest(err.Error())
+	}
+
+	if err := h.svc.ToggleReportCheck(ctx, req.ID, req.ReportChecked); err != nil {
+		if errors.Is(err, ErrActivityNotFound) {
+			return httperrors.NewNotFound("activity not found")
+		}
+		return httperrors.NewInternal(err)
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"message": "status updated successfully"})
+}
+
+func (h *Handler) ToggleFeature(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	_, ok := c.Get("userID").(string)
+	if !ok {
+		return httperrors.NewUnauthorized("authentication required")
+	}
+
+	var req ToggleFeatureRequest
+	if err := c.Bind(&req); err != nil {
+		return httperrors.NewBadRequest("invalid request body")
+	}
+	if err := c.Validate(req); err != nil {
+		return httperrors.NewBadRequest(err.Error())
+	}
+
+	if err := h.svc.ToggleFeature(ctx, req.ID, req.IsFeatured); err != nil {
+		if errors.Is(err, ErrActivityNotFound) {
+			return httperrors.NewNotFound("activity not found")
+		}
+		if errors.Is(err, ErrMaxFeaturedLimitReached) {
+			return httperrors.NewBadRequest("Solo se pueden destacar un máximo de 4 actividades por grupo")
+		}
+		return httperrors.NewInternal(err)
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"message": "status updated successfully"})
 }
 
 func (h *Handler) DeleteActivity(c echo.Context) error {

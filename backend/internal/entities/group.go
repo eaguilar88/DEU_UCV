@@ -31,6 +31,7 @@ type GroupFilter struct {
 	Faculty Faculty
 	Type    GroupType
 	Active  *bool
+	Search  string
 	Deleted bool
 }
 
@@ -40,11 +41,14 @@ type ExtensionGroup struct {
 	Owner       *User
 	LeadName    string
 	Description string
+	Foundation  string
+	IsMultidisciplinary bool
 	Objective   string
 	Location    string
 	Type        GroupType
 	Faculty     Faculty
 	Logo        *File
+	Files       []*File
 	Members     []GroupMember
 	Active      bool
 	Email       string
@@ -61,7 +65,7 @@ type GroupMember struct {
 	Phone        string
 	Email        string
 	Coordination string
-	Year         int
+	Year         string
 	Faculty      Faculty
 	School       string
 	Document     string

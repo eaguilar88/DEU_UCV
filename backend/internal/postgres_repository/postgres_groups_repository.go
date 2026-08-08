@@ -317,6 +317,8 @@ func scanGroup(row scannable) (models.ExtensionGroup, error) {
 		&group.Name,
 		&group.Description,
 		&group.Faculty,
+		&group.Foundation,
+		&group.IsMultidisciplinary,
 		&group.Objective,
 		&group.Code,
 		&group.Director,
@@ -342,8 +344,14 @@ func newGroupToModel(group entities.ExtensionGroup) models.ExtensionGroup {
 			Valid:  true,
 		},
 		Faculty:   group.Faculty.String(),
+		Foundation: sql.NullString{
+			String: group.Foundation,
+			Valid:  group.Foundation != "",
+		},
+		IsMultidisciplinary: group.IsMultidisciplinary, 
 		UserID:    group.Owner.ID,
 		Objective: group.Objective,
+		Type:      string(group.Type),
 		Location: sql.NullString{
 			String: group.Location,
 			Valid:  true,
@@ -355,7 +363,7 @@ func newGroupToModel(group entities.ExtensionGroup) models.ExtensionGroup {
 }
 
 func newGroupFromModel(group models.ExtensionGroup) entities.ExtensionGroup {
-	var description, objective, location string
+	var description, objective, location, foundation string
 	if group.Description.Valid {
 		description = group.Description.String
 	}
@@ -363,11 +371,18 @@ func newGroupFromModel(group models.ExtensionGroup) entities.ExtensionGroup {
 	if group.Location.Valid {
 		location = group.Location.String
 	}
+	if group.Foundation.Valid {
+		foundation = group.Foundation.String
+	}
 
 	return entities.ExtensionGroup{
 		ID:          group.ID,
 		Name:        group.Name,
 		Description: description,
+		Faculty:     entities.Faculty(group.Faculty),
+		Foundation:  foundation,
+		IsMultidisciplinary: group.IsMultidisciplinary,
+		Type:        entities.GroupType(group.Type),
 		Owner: &entities.User{
 			ID: group.UserID,
 		},
@@ -388,7 +403,7 @@ func (r *PostgresRepository) insertGroupMembers(ctx context.Context, groupID int
 			Phone:        sql.NullString{String: m.Phone, Valid: m.Phone != ""},
 			Email:        sql.NullString{String: m.Email, Valid: m.Email != ""},
 			Coordination: sql.NullString{String: m.Coordination, Valid: m.Coordination != ""},
-			Year:         sql.NullInt64{Int64: int64(m.Year), Valid: m.Year != 0},
+			Year:         sql.NullString{String: m.Year, Valid: m.Year != ""},
 			Faculty:      string(m.Faculty),
 			School:       sql.NullString{String: m.School, Valid: m.School != ""},
 			Document:     sql.NullString{String: m.Document, Valid: m.Document != ""},
@@ -447,7 +462,7 @@ func groupMemberFromModel(m models.GroupMember) entities.GroupMember {
 		Phone:        m.Phone.String,
 		Email:        m.Email.String,
 		Coordination: m.Coordination.String,
-		Year:         int(m.Year.Int64),
+		Year:         m.Year.String,
 		Faculty:      entities.Faculty(m.Faculty),
 		School:       m.School.String,
 		Document:     m.Document.String,
@@ -481,4 +496,32 @@ func (r *PostgresRepository) insertContactInformation(ctx context.Context, tx *s
 		return fmt.Errorf("failed to insert contact: %w", err)
 	}
 	return nil
+}
+
+func (r *PostgresRepository) GetContactsByOwner(ctx context.Context, ownerID string, ownerType entities.OwnerType) ([]entities.Contact, error) {
+	query := `
+		SELECT id, contact_type, contact_value, owner_type, owner_id
+		FROM deu.contacts
+		WHERE owner_id = $1 AND owner_type = $2 AND deleted_at IS NULL
+	`
+	rows, err := r.db.QueryContext(ctx, query, ownerID, string(ownerType))
+	if err != nil {
+		return nil, fmt.Errorf("failed to query contacts: %w", err)
+	}
+	defer rows.Close()
+
+	var contacts []entities.Contact
+	for rows.Next() {
+		var c entities.Contact
+		if err := rows.Scan(&c.ID, &c.Type, &c.Value, &c.OwnerType, &c.OwnerID); err != nil {
+			return nil, fmt.Errorf("failed to scan contact: %w", err)
+		}
+		contacts = append(contacts, c)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return contacts, nil
 }

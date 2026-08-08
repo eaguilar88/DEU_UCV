@@ -14,6 +14,8 @@ var groupQuerySelectCommon = []string{
 	"g.name",
 	"g.description",
 	"g.faculty",
+	"g.foundation",
+	"g.is_multidisciplinary",
 	"g.objective",
 	"g.code",
 	"g.group_director",
@@ -28,9 +30,9 @@ var groupQuerySelectCommon = []string{
 func GetGroupByID(groupID string) sq.SelectBuilder {
 	return psql.Select(groupQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS g", groupsTableName)).
-		Join(fmt.Sprintf("%s AS r ON g.request_id = r.id", courseRequestsTableName)).
+		//Join(fmt.Sprintf("%s AS r ON g.request_id = r.id", courseRequestsTableName)).
 		Join(fmt.Sprintf("%s AS owner ON g.user_id = owner.id", usersTableName)).
-		Join(fmt.Sprintf("%s AS reviewer ON r.reviewer_id = reviewer.id", usersTableName)).
+		//Join(fmt.Sprintf("%s AS reviewer ON r.reviewer_id = reviewer.id", usersTableName)).
 		Where(sq.Eq{"g.id": groupID})
 }
 
@@ -38,7 +40,8 @@ func GetGroups(filter entities.GroupFilter, limit, offset int) sq.SelectBuilder 
 	q := psql.Select(groupQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS g", groupsTableName)).
 		Limit(uint64(limit)).
-		Offset(uint64(offset))
+		Offset(uint64(offset)).
+		OrderBy("g.name ASC")
 
 	if filter.Faculty != "" {
 		q = q.Where(sq.Eq{"g.faculty": filter.Faculty})
@@ -48,6 +51,10 @@ func GetGroups(filter entities.GroupFilter, limit, offset int) sq.SelectBuilder 
 	}
 	if filter.Active != nil {
 		q = q.Where(sq.Eq{"g.is_active": *filter.Active})
+	}
+	if filter.Search != "" {
+		// Búsqueda case-insensitive que coincida con cualquier parte del nombre
+		q = q.Where(sq.ILike{"g.name": fmt.Sprintf("%%%s%%", filter.Search)})
 	}
 	if !filter.Deleted {
 		q = q.Where(sq.Eq{"g.deleted_at": nil})
@@ -70,6 +77,8 @@ func InsertGroup(group models.ExtensionGroup) sq.InsertBuilder {
 			"name",
 			"description",
 			"faculty",
+			"foundation",
+			"is_multidisciplinary",
 			"objective",
 			"code",
 			"group_director",
@@ -84,6 +93,8 @@ func InsertGroup(group models.ExtensionGroup) sq.InsertBuilder {
 			group.Name,
 			group.Description,
 			group.Faculty,
+			group.Foundation,
+			group.IsMultidisciplinary,
 			group.Objective,
 			group.Code,
 			group.Director,
@@ -100,6 +111,7 @@ func UpdateGroup(group models.ExtensionGroup) sq.UpdateBuilder {
 		Set("name", group.Name).
 		Set("description", group.Description).
 		Set("faculty", group.Faculty).
+		Set("foundation", group.Foundation).
 		Set("objective", group.Objective).
 		Set("code", group.Code).
 		Set("group_director", group.Director).

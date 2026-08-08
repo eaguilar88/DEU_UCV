@@ -14,6 +14,7 @@ type ApprovalResponse struct {
 type GetGroupRequestResponse struct {
 	ID        string             `json:"id"`
 	GroupID   string             `json:"grupo_id"`
+	GroupName string             `json:"grupo_nombre"`
 	Comments  string             `json:"comentarios"`
 	Status    string             `json:"estado"`
 	Faculty   string             `json:"facultad"`
@@ -23,8 +24,13 @@ type GetGroupRequestResponse struct {
 }
 
 type GetGroupRequestsResponse struct {
-	Requests []GetGroupRequestResponse `json:"solicitudes"`
-	Pages    entities.PageScope        `json:"paginas"`
+	Requests     []GetGroupRequestResponse `json:"solicitudes"`
+	Pages        entities.PageScope        `json:"paginas"`
+	PendingCount int                       `json:"pendientes_facultad"`
+}
+
+type PendingCountsResponse struct {
+	Counts []entities.FacultyPendingCount `json:"conteo_pendientes"`
 }
 
 func toApprovals(reqs []entities.GroupRequest) []ApprovalResponse {

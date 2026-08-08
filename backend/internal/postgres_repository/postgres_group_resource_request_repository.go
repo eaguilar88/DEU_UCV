@@ -72,8 +72,53 @@ func (r *PostgresRepository) GetGroupResourceRequestByID(ctx context.Context, re
 	return newGroupResourceRequestFromModel(m), nil
 }
 
-func (r *PostgresRepository) GetGroupResourceRequestsByFaculty(ctx context.Context, faculty entities.Faculty, scope entities.PageScope) ([]entities.GroupResourceRequest, entities.PageScope, error) {
-	query, args, err := queries.GetGroupResourceRequestsByFaculty(faculty.String(), scope.PerPage, scope.Offset()).ToSql()
+func (r *PostgresRepository) GetGroupResourceRequestsByFaculty(ctx context.Context, faculty entities.Faculty, status string, scope entities.PageScope) ([]entities.GroupResourceRequest, int, entities.PageScope, error) {
+	query, args, err := queries.GetGroupResourceRequestsByFaculty(faculty.String(), status, scope.PerPage, scope.Offset()).ToSql()
+	if err != nil {
+		return nil, 0, entities.PageScope{}, err
+	}
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		return nil, 0, entities.PageScope{}, err
+	}
+	defer stmt.Close()
+	rows, err := stmt.QueryContext(ctx, args...)
+	if err != nil {
+		return nil, 0, entities.PageScope{}, err
+	}
+	defer rows.Close()
+	var reqs []entities.GroupResourceRequest
+	for rows.Next() {
+		m, err := scanGroupResourceRequest(rows)
+		if err != nil {
+			return nil, 0, entities.PageScope{}, err
+		}
+		reqs = append(reqs, newGroupResourceRequestFromModel(m))
+	}
+	var total int
+	cQuery, cArgs, err := queries.CountGroupResourceRequestsByFaculty(faculty.String(), status).ToSql()
+	if err != nil {
+		return nil, 0, entities.PageScope{}, err
+	}
+	if err := r.db.QueryRowContext(ctx, cQuery, cArgs...).Scan(&total); err != nil {
+		return nil, 0, entities.PageScope{}, err
+	}
+	scope.Count = total
+
+	var pendingCount int
+	pQuery, pArgs, err := queries.CountGroupResourceRequestsByFaculty(faculty.String(), "under_review").ToSql()
+	if err != nil {
+		return nil, 0, entities.PageScope{}, err
+	}
+	if err := r.db.QueryRowContext(ctx, pQuery, pArgs...).Scan(&pendingCount); err != nil {
+		return nil, 0, entities.PageScope{}, err
+	}
+
+	return reqs, pendingCount, scope, nil
+}
+
+func (r *PostgresRepository) GetGroupResourceRequestsByGroupID(ctx context.Context, groupID string, status string, scope entities.PageScope) ([]entities.GroupResourceRequest, entities.PageScope, error) {
+	query, args, err := queries.GetGroupResourceRequestsByGroupID(groupID, status, scope.PerPage, scope.Offset()).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
@@ -95,8 +140,9 @@ func (r *PostgresRepository) GetGroupResourceRequestsByFaculty(ctx context.Conte
 		}
 		reqs = append(reqs, newGroupResourceRequestFromModel(m))
 	}
+
 	var total int
-	cQuery, cArgs, err := queries.CountGroupResourceRequestsByFaculty(faculty.String()).ToSql()
+	cQuery, cArgs, err := queries.CountGroupResourceRequestsByGroupID(groupID, status).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
@@ -104,7 +150,37 @@ func (r *PostgresRepository) GetGroupResourceRequestsByFaculty(ctx context.Conte
 		return nil, entities.PageScope{}, err
 	}
 	scope.Count = total
+
 	return reqs, scope, nil
+}
+
+func (r *PostgresRepository) GetPendingGroupResourceRequestsCountByFaculty(ctx context.Context) ([]group_resource_requests.FacultyPendingCount, error) {
+	query, args, err := queries.CountPendingGroupResourceRequestsByFaculty().ToSql()
+	if err != nil {
+		return nil, err
+	}
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.QueryContext(ctx, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []group_resource_requests.FacultyPendingCount
+	for rows.Next() {
+		var f group_resource_requests.FacultyPendingCount
+		if err := rows.Scan(&f.Faculty, &f.PendingCount); err != nil {
+			return nil, err
+		}
+		result = append(result, f)
+	}
+
+	return result, nil
 }
 
 func (r *PostgresRepository) ApproveGroupResourceRequest(ctx context.Context, reqID string) error {
@@ -157,7 +233,7 @@ func (r *PostgresRepository) RejectGroupResourceRequest(ctx context.Context, req
 
 func scanGroupResourceRequest(row scannable) (models.GroupResourceRequest, error) {
 	var m models.GroupResourceRequest
-	err := row.Scan(&m.ID, &m.GroupID, &m.Type, &m.Content, &m.Status, &m.CreatedAt, &m.UpdatedAt)
+	err := row.Scan(&m.ID, &m.GroupID, &m.GroupName, &m.Type, &m.Content, &m.Status, &m.CreatedAt, &m.UpdatedAt)
 	return m, err
 }
 
@@ -165,6 +241,7 @@ func newGroupResourceRequestFromModel(m models.GroupResourceRequest) entities.Gr
 	return entities.GroupResourceRequest{
 		ID:        fmt.Sprintf("%d", m.ID),
 		GroupID:   fmt.Sprintf("%d", m.GroupID),
+		GroupName: m.GroupName.String,
 		Type:      m.Type,
 		Content:   m.Content.String,
 		Status:    m.Status,

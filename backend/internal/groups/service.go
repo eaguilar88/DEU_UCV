@@ -3,7 +3,7 @@ package groups
 import (
 	"context"
 	"fmt"
-	"io"
+	//"io"
 
 	"github.com/eaguilar88/deu/internal/entities"
 	"go.uber.org/zap"
@@ -27,11 +27,12 @@ type Repository interface {
 
 	// Files
 	GetFilesByOwner(ctx context.Context, ownerID string, ownerType entities.OwnerType) (entities.GroupedFiles, error)
+	GetContactsByOwner(ctx context.Context, ownerID string, ownerType entities.OwnerType) ([]entities.Contact, error)
 	SaveFilesToDB(ctx context.Context, file []*entities.File) error
 }
 
 type StorageClient interface {
-	UploadFile(ctx context.Context, file io.Reader, objectKey string, metadata map[string]string) error
+	UploadFile(ctx context.Context, files []*entities.File) error
 	DeleteFile(ctx context.Context, objectKey string) error
 	GetFileURL(ctx context.Context, objectKey string) (string, error)
 	GetFileMetadata(ctx context.Context, objectKey string) (map[string]string, error)
@@ -39,12 +40,14 @@ type StorageClient interface {
 
 type service struct {
 	repo Repository
+	storage StorageClient
 	log  *zap.Logger
 }
 
-func NewService(repository Repository, logger *zap.Logger) Service {
+func NewService(repository Repository, storage StorageClient, logger *zap.Logger) Service {
 	return &service{
 		repo: repository,
+		storage: storage,
 		log:  logger,
 	}
 }
@@ -54,6 +57,29 @@ func (s *service) GetGroup(ctx context.Context, groupID string) (entities.Extens
 	if err != nil {
 		return entities.ExtensionGroup{}, err
 	}
+
+	// 1. Cargar Archivos (Logo)
+	if filesMap, err := s.repo.GetFilesByOwner(ctx, groupID, entities.OwnerTypeExtensionGroup); err == nil {
+		if logoList, ok := filesMap[entities.GroupFileTypeLogo]; ok && len(logoList) > 0 {
+			logo := logoList[0]
+			if url, err := s.storage.GetFileURL(ctx, logo.Key); err == nil {
+				logo.URL = url
+			}
+			group.Logo = logo
+		}
+	}
+
+	// 2. Cargar Contactos (Email / Phone)
+	if contacts, err := s.repo.GetContactsByOwner(ctx, groupID, entities.OwnerTypeExtensionGroup); err == nil {
+		for _, c := range contacts {
+			if c.Type == entities.ContactTypeEmail {
+				group.Email = c.Value
+			} else if c.Type == entities.ContactTypePhone {
+				group.Phone = c.Value
+			}
+		}
+	}
+
 	return group, nil
 }
 
@@ -62,6 +88,12 @@ func (s *service) GetGroups(ctx context.Context, filter entities.GroupFilter, pa
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
+
+	for i := range groups {
+		s.enrichGroupLogo(ctx, &groups[i])
+        s.enrichGroupContacts(ctx, &groups[i]) 
+	}
+
 	return groups, page, nil
 }
 
@@ -70,7 +102,36 @@ func (s *service) GetRandomActiveGroups(ctx context.Context, limit int) ([]entit
 	if err != nil {
 		return nil, err
 	}
+
+	for i := range groups {
+		s.enrichGroupLogo(ctx, &groups[i])
+	}
+
 	return groups, nil
+}
+
+func (s *service) enrichGroupLogo(ctx context.Context, group *entities.ExtensionGroup) {
+	if filesMap, err := s.repo.GetFilesByOwner(ctx, group.ID, entities.OwnerTypeExtensionGroup); err == nil {
+		if logoList, ok := filesMap[entities.GroupFileTypeLogo]; ok && len(logoList) > 0 {
+			logo := logoList[0] 
+			if url, err := s.storage.GetFileURL(ctx, logo.Key); err == nil {
+				logo.URL = url
+			}
+			group.Logo = logo
+		}
+	}
+}
+
+func (s *service) enrichGroupContacts(ctx context.Context, group *entities.ExtensionGroup) {
+    if contacts, err := s.repo.GetContactsByOwner(ctx, group.ID, entities.OwnerTypeExtensionGroup); err == nil {
+        for _, c := range contacts {
+            if c.Type == entities.ContactTypeEmail {
+                group.Email = c.Value
+            } else if c.Type == entities.ContactTypePhone {
+                group.Phone = c.Value
+            }
+        }
+    }
 }
 
 func (s *service) CreateGroup(ctx context.Context, group entities.ExtensionGroup) (int64, string, error) {
@@ -150,8 +211,15 @@ func (s *service) DeleteGroup(ctx context.Context, groupID, userID string) error
 }
 
 func makeFileEntityFromFilePointer(file *entities.File, groupID int64, uploadedBy string, ownerType entities.OwnerType, metadata map[string]string) *entities.File {
+    if file == nil {
+        file = &entities.File{}
+    }
 	file.OwnerID = fmt.Sprintf("%d", groupID)
 	file.OwnerType = ownerType
+	if metadata == nil {
+		metadata = make(map[string]string)
+	}
+	metadata["file_type"] = entities.GroupFileTypeLogo
 	file.Key = fmt.Sprintf("files/groups/%d/%s", groupID, file.Name)
 	file.Public = false
 	file.MetaData = metadata

@@ -129,6 +129,10 @@ func (h *Handler) buildFilters(c echo.Context) (entities.GroupFilter, error) {
 		filter.Active = &active
 	}
 
+	if searchStr := c.QueryParam("q"); searchStr != "" {
+		filter.Search = searchStr
+	}
+
 	if deletedStr := c.QueryParam("deleted"); deletedStr != "" {
 		deleted, err := strconv.ParseBool(deletedStr)
 		if err != nil {
@@ -221,6 +225,8 @@ func makeGroupRequestFromContext(c echo.Context, userID string, log *zap.Logger)
 		Description: c.FormValue("descripcion"),
 		LeaderName:  c.FormValue("nombre_lider"),
 		Type:        c.FormValue("tipo"),
+		Foundation:  c.FormValue("fundacion"),
+		IsMultidisciplinary: c.FormValue("es_multidisciplinario") == "true",
 		Faculty:     c.FormValue("facultad"),
 		Objective:   c.FormValue("objetivo"),
 		Location:    c.FormValue("ubicacion"),

@@ -6,30 +6,70 @@ import (
 )
 
 var groupAuthRequestQuerySelectCommon = []string{
-	"id",
-	"group_id",
-	"faculty",
-	"status",
-	"comments",
-	"created_at",
-	"updated_at",
-	"reviewer_id",
-	"reviewed_at",
+	"gr.id",
+	"gr.group_id",
+	"g.name AS group_name",
+	"gr.faculty",
+	"gr.status",
+	"gr.comments",
+	"gr.created_at",
+	"gr.updated_at",
+	"gr.reviewer_id",
+	"gr.reviewed_at",
 }
 
 func GetGroupRequestByID(requestID string) sq.SelectBuilder {
 	return psql.Select(
 		groupAuthRequestQuerySelectCommon...,
-	).From(groupRequestsTableName).Where(sq.Eq{"id": requestID})
+	).From(groupRequestsTableName + " gr").
+		InnerJoin("deu.extension_groups g ON gr.group_id = g.id").
+	Where(sq.Eq{"gr.id": requestID})
 }
 
-func GetGroupRequestsByFaculty(faculty string, limit, offset int) sq.SelectBuilder {
-	return psql.Select(
+func GetGroupRequestsByFaculty(faculty string, status string, limit, offset int) sq.SelectBuilder {
+	q := psql.Select(
 		groupAuthRequestQuerySelectCommon...,
-	).From(groupRequestsTableName).Where(sq.Eq{"faculty": faculty}).
-		OrderBy("created_at DESC").
+	).From(groupRequestsTableName + " gr").
+		InnerJoin("deu.extension_groups g ON gr.group_id = g.id").
+	Where(sq.Eq{"gr.faculty": faculty})
+
+	if status != "" {
+		q = q.Where(sq.Eq{"gr.status": status})
+	}
+
+	return q.OrderBy("gr.created_at DESC").
 		Limit(uint64(limit)).
 		Offset(uint64(offset))
+}
+
+func CountGroupRequestsByFaculty(faculty string, status string) sq.SelectBuilder {
+	q := psql.Select("COUNT(*)").From(groupRequestsTableName + " gr").Where(sq.Eq{"gr.faculty": faculty})
+	if status != "" {
+		q = q.Where(sq.Eq{"gr.status": status})
+	}
+	return q
+}
+
+func CountPendingGroupRequestsByFaculty(faculty string) sq.SelectBuilder {
+	return psql.Select("COUNT(*)").
+		From(groupRequestsTableName + " gr").
+		Where(sq.Eq{"gr.faculty": faculty, "gr.status": "under_review"})
+}
+
+func GetPendingGroupRequestsCountGroupedByFaculty() sq.SelectBuilder {
+	return psql.Select("faculty", "COUNT(*) as count").
+		From(groupRequestsTableName).
+		Where(sq.Eq{"status": "under_review"}).
+		GroupBy("faculty")
+}
+
+func GetGroupRequestsByGroupID(groupID string) sq.SelectBuilder {
+	return psql.Select(
+		groupAuthRequestQuerySelectCommon...,
+	).From(groupRequestsTableName + " gr").
+		InnerJoin("deu.extension_groups g ON gr.group_id = g.id").
+		Where(sq.Eq{"gr.group_id": groupID}).
+		OrderBy("gr.created_at DESC")
 }
 
 func ApproveGroupRequest(requestID string) sq.UpdateBuilder {
@@ -64,15 +104,4 @@ func InsertGroupRequest(req models.GroupRequest) sq.InsertBuilder {
 			sq.Expr("NOW()"),
 			sq.Expr("NOW()"),
 		).Suffix("RETURNING id")
-}
-
-func GetGroupRequestsByGroupID(groupID string) sq.SelectBuilder {
-	return psql.Select(
-		groupAuthRequestQuerySelectCommon...,
-	).From(groupRequestsTableName).Where(sq.Eq{"group_id": groupID}).
-		OrderBy("faculty")
-}
-
-func CountGroupRequestsByFaculty(faculty string) sq.SelectBuilder {
-	return psql.Select("COUNT(*)").From(groupRequestsTableName).Where(sq.Eq{"faculty": faculty})
 }

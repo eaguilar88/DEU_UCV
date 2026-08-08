@@ -8,6 +8,8 @@ type ExtensionGroup struct {
 	Name        string
 	Description sql.NullString
 	Faculty     string
+	Foundation  sql.NullString
+	IsMultidisciplinary bool
 	Objective   string
 	Code        string
 	Type        string

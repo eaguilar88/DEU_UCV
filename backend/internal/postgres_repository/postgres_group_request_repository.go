@@ -43,40 +43,110 @@ func (r *PostgresRepository) GetGroupRequestByID(ctx context.Context, requestID 
 	return newGroupRequestFromModel(request), nil
 }
 
-func (r *PostgresRepository) GetGroupRequestsByFaculty(ctx context.Context, faculty entities.Faculty, scope entities.PageScope) ([]entities.GroupRequest, entities.PageScope, error) {
-	query, args, err := queries.GetGroupRequestsByFaculty(faculty.String(), scope.PerPage, scope.Offset()).ToSql()
+func (r *PostgresRepository) GetGroupRequestsByFaculty(ctx context.Context, faculty entities.Faculty, status string, scope entities.PageScope) ([]entities.GroupRequest, entities.PageScope, int, error) {
+	query, args, err := queries.GetGroupRequestsByFaculty(faculty.String(), status, scope.PerPage, scope.Offset()).ToSql()
 	if err != nil {
-		return nil, entities.PageScope{}, err
+		return nil, entities.PageScope{}, 0, err
 	}
 	r.logger.Debug("SQL Query: ", zap.String("query", query), zap.Any("args", args))
 	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
-		return nil, entities.PageScope{}, err
+		return nil, entities.PageScope{}, 0, err
 	}
 	defer stmt.Close()
 	rows, err := stmt.QueryContext(ctx, args...)
 	if err != nil {
-		return nil, entities.PageScope{}, err
+		return nil, entities.PageScope{}, 0, err
 	}
 	defer rows.Close()
 	var requests []entities.GroupRequest
 	for rows.Next() {
 		model, err := scanGroupRequest(rows)
 		if err != nil {
-			return nil, entities.PageScope{}, err
+			return nil, entities.PageScope{}, 0, err
 		}
 		requests = append(requests, newGroupRequestFromModel(model))
 	}
 	var total int
-	query, args, err = queries.CountGroupRequestsByFaculty(faculty.String()).ToSql()
+	query, args, err = queries.CountGroupRequestsByFaculty(faculty.String(), status).ToSql()
 	if err != nil {
-		return nil, entities.PageScope{}, err
+		return nil, entities.PageScope{}, 0, err
 	}
 	if err = r.db.QueryRowContext(ctx, query, args...).Scan(&total); err != nil {
-		return nil, entities.PageScope{}, err
+		return nil, entities.PageScope{}, 0, err
 	}
 	scope.Count = total
-	return requests, scope, nil
+
+	var pendingCount int
+	query, args, err = queries.CountPendingGroupRequestsByFaculty(faculty.String()).ToSql()
+	if err != nil {
+		return nil, entities.PageScope{}, 0, err
+	}
+	if err = r.db.QueryRowContext(ctx, query, args...).Scan(&pendingCount); err != nil {
+		return nil, entities.PageScope{}, 0, err
+	}
+
+	return requests, scope, pendingCount, nil
+}
+
+func (r *PostgresRepository) GetPendingGroupRequestsCounts(ctx context.Context) ([]entities.FacultyPendingCount, error) {
+	query, args, err := queries.GetPendingGroupRequestsCountGroupedByFaculty().ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.QueryContext(ctx, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []entities.FacultyPendingCount
+	for rows.Next() {
+		var f string
+		var count int
+		if err := rows.Scan(&f, &count); err != nil {
+			return nil, err
+		}
+		fac, _ := entities.FromString(f)
+		result = append(result, entities.FacultyPendingCount{
+			Faculty: fac,
+			Count:   count,
+		})
+	}
+	return result, nil
+}
+
+func (r *PostgresRepository) GetGroupRequestsByGroupID(ctx context.Context, groupID string) ([]entities.GroupRequest, error) {
+	query, args, err := queries.GetGroupRequestsByGroupID(groupID).ToSql()
+	if err != nil {
+		return nil, err
+	}
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+	rows, err := stmt.QueryContext(ctx, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var requests []entities.GroupRequest
+	for rows.Next() {
+		model, err := scanGroupRequest(rows)
+		if err != nil {
+			return nil, err
+		}
+		requests = append(requests, newGroupRequestFromModel(model))
+	}
+	return requests, nil
 }
 
 func (r *PostgresRepository) ApproveGroupRequest(ctx context.Context, reqID string) error {
@@ -131,6 +201,7 @@ func newGroupRequestFromModel(m models.GroupRequest) entities.GroupRequest {
 	gar := entities.GroupRequest{
 		ID:        fmt.Sprintf("%d", m.ID),
 		GroupID:   fmt.Sprintf("%d", m.GroupID),
+		GroupName: m.GroupName,
 		Faculty:   entities.Faculty(m.Faculty),
 		Status:    entities.RequestStatus(m.Status),
 		Comments:  m.GetComments(),
@@ -151,37 +222,12 @@ func newGroupRequestFromModel(m models.GroupRequest) entities.GroupRequest {
 	return gar
 }
 
-func (r *PostgresRepository) GetGroupRequestsByGroupID(ctx context.Context, groupID string) ([]entities.GroupRequest, error) {
-	query, args, err := queries.GetGroupRequestsByGroupID(groupID).ToSql()
-	if err != nil {
-		return nil, err
-	}
-	stmt, err := r.db.PrepareContext(ctx, query)
-	if err != nil {
-		return nil, err
-	}
-	defer stmt.Close()
-	rows, err := stmt.QueryContext(ctx, args...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var requests []entities.GroupRequest
-	for rows.Next() {
-		model, err := scanGroupRequest(rows)
-		if err != nil {
-			return nil, err
-		}
-		requests = append(requests, newGroupRequestFromModel(model))
-	}
-	return requests, nil
-}
-
 func scanGroupRequest(row scannable) (models.GroupRequest, error) {
 	result := models.GroupRequest{}
 	err := row.Scan(
 		&result.ID,
 		&result.GroupID,
+		&result.GroupName,
 		&result.Faculty,
 		&result.Status,
 		&result.Comments,

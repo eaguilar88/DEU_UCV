@@ -8,6 +8,7 @@ import (
 type GroupResourceRequest struct {
 	ID        int64
 	GroupID   int64
+	GroupName sql.NullString
 	Type      string
 	Content   sql.NullString
 	Status    string
