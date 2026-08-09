@@ -30,6 +30,8 @@ func TestService_GetRandomActiveGroups(t *testing.T) {
 					func(ctx context.Context, limit int) ([]entities.ExtensionGroup, error) {
 						return []entities.ExtensionGroup{{ID: "1"}, {ID: "2"}, {ID: "3"}}, nil
 					})
+				repoMock.EXPECT().GetFilesByOwner(mock.Anything, mock.Anything, entities.OwnerTypeExtensionGroup).
+					Return(entities.GroupedFiles{}, nil)
 			},
 			want: []entities.ExtensionGroup{{ID: "1"}, {ID: "2"}, {ID: "3"}},
 		},
@@ -51,10 +53,11 @@ func TestService_GetRandomActiveGroups(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repoMock := mocks.NewMockRepository(t)
+			storageMock := mocks.NewMockStorageClient(t)
 			if tt.prepare != nil {
 				tt.prepare(repoMock, tt.limit)
 			}
-			s := NewService(repoMock, loggerMock)
+			s := NewService(repoMock, storageMock, loggerMock)
 			got, err := s.GetRandomActiveGroups(ctx, tt.limit)
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
@@ -85,6 +88,10 @@ func TestService_GetGroups(t *testing.T) {
 					func(ctx context.Context, filter entities.GroupFilter, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error) {
 						return []entities.ExtensionGroup{{ID: "1", Faculty: filter.Faculty}}, pageScope, nil
 					})
+				repoMock.EXPECT().GetFilesByOwner(mock.Anything, mock.Anything, entities.OwnerTypeExtensionGroup).
+					Return(entities.GroupedFiles{}, nil)
+				repoMock.EXPECT().GetContactsByOwner(mock.Anything, mock.Anything, entities.OwnerTypeExtensionGroup).
+					Return(nil, nil)
 			},
 			want: []entities.ExtensionGroup{{ID: "1", Faculty: entities.FacultyIngenieria}},
 		},
@@ -106,10 +113,11 @@ func TestService_GetGroups(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repoMock := mocks.NewMockRepository(t)
+			storageMock := mocks.NewMockStorageClient(t)
 			if tt.prepare != nil {
 				tt.prepare(repoMock, tt.filter, tt.pageScope)
 			}
-			s := NewService(repoMock, loggerMock)
+			s := NewService(repoMock, storageMock, loggerMock)
 			got, _, err := s.GetGroups(ctx, tt.filter, tt.pageScope)
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())

@@ -36,26 +36,26 @@ type GroupFilter struct {
 }
 
 type ExtensionGroup struct {
-	ID          string
-	Name        string
-	Owner       *User
-	LeadName    string
-	Description string
-	Foundation  string
+	ID                  string
+	Name                string
+	Owner               *User
+	LeadName            string
+	Description         string
+	Foundation          string
 	IsMultidisciplinary bool
-	Objective   string
-	Location    string
-	Type        GroupType
-	Faculty     Faculty
-	Logo        *File
-	Files       []*File
-	Members     []GroupMember
-	Active      bool
-	Email       string
-	Phone       string
-	CreatedAt   string
-	UpdatedAt   string
-	DeletedAt   string
+	Objective           string
+	Location            string
+	Type                GroupType
+	Faculty             Faculty
+	Logo                *File
+	Files               []*File
+	Members             []GroupMember
+	Active              bool
+	Email               string
+	Phone               string
+	CreatedAt           string
+	UpdatedAt           string
+	DeletedAt           string
 }
 
 type GroupMember struct {

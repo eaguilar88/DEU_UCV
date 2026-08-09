@@ -221,17 +221,17 @@ func (h *Handler) DeleteGroup(c echo.Context) error {
 
 func makeGroupRequestFromContext(c echo.Context, userID string, log *zap.Logger) (entities.ExtensionGroup, error) {
 	req := CreateGroupRequest{
-		Name:        c.FormValue("nombre"),
-		Description: c.FormValue("descripcion"),
-		LeaderName:  c.FormValue("nombre_lider"),
-		Type:        c.FormValue("tipo"),
-		Foundation:  c.FormValue("fundacion"),
+		Name:                c.FormValue("nombre"),
+		Description:         c.FormValue("descripcion"),
+		LeaderName:          c.FormValue("nombre_lider"),
+		Type:                c.FormValue("tipo"),
+		Foundation:          c.FormValue("fundacion"),
 		IsMultidisciplinary: c.FormValue("es_multidisciplinario") == "true",
-		Faculty:     c.FormValue("facultad"),
-		Objective:   c.FormValue("objetivo"),
-		Location:    c.FormValue("ubicacion"),
-		Email:       c.FormValue("correo"),
-		Phone:       c.FormValue("telefono"),
+		Faculty:             c.FormValue("facultad"),
+		Objective:           c.FormValue("objetivo"),
+		Location:            c.FormValue("ubicacion"),
+		Email:               c.FormValue("correo"),
+		Phone:               c.FormValue("telefono"),
 	}
 
 	if raw := c.FormValue("miembros"); raw != "" {

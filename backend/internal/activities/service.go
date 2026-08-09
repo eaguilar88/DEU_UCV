@@ -72,26 +72,26 @@ func (s *service) GetActivity(ctx context.Context, id string) (entities.Activity
 }
 
 func (s *service) GetActivities(ctx context.Context, filter entities.ActivityFilter, pageScope entities.PageScope) ([]entities.Activity, entities.PageScope, error) {
-    activities, scope, err := s.repo.GetActivities(ctx, filter, pageScope)
-    if err != nil {
-        return nil, scope, err
-    }
+	activities, scope, err := s.repo.GetActivities(ctx, filter, pageScope)
+	if err != nil {
+		return nil, scope, err
+	}
 
-    for i := range activities {
-        files, err := s.repo.GetFilesByOwner(ctx, activities[i].ID, entities.OwnerTypeActivity)
-        if err != nil {
-            s.logger.Error("failed to get files for activity", zap.Error(err), zap.String("activity_id", activities[i].ID))
-            continue
-        }
+	for i := range activities {
+		files, err := s.repo.GetFilesByOwner(ctx, activities[i].ID, entities.OwnerTypeActivity)
+		if err != nil {
+			s.logger.Error("failed to get files for activity", zap.Error(err), zap.String("activity_id", activities[i].ID))
+			continue
+		}
 
-        if cover := files.GetSingleFile(entities.ActivityFileTypeCoverImage); cover != nil {
-            url, err := s.storage.GetFileURL(ctx, cover.Key)
-            if err == nil {
-                cover.URL = url
-                activities[i].CoverImage = cover
-            }
-        }
-    }
+		if cover := files.GetSingleFile(entities.ActivityFileTypeCoverImage); cover != nil {
+			url, err := s.storage.GetFileURL(ctx, cover.Key)
+			if err == nil {
+				cover.URL = url
+				activities[i].CoverImage = cover
+			}
+		}
+	}
 
 	return activities, scope, nil
 }
@@ -196,13 +196,15 @@ func (s *service) ToggleFeature(ctx context.Context, id string, featured bool) e
 	if err != nil {
 		return err
 	}
+	if act.IsFeatured == featured {
+		return nil
+	}
 	if featured {
 		isFeatured := true
 		filter := entities.ActivityFilter{
 			GroupID:    act.GroupID,
 			IsFeatured: &isFeatured,
 		}
-		// Desactivar paginación o contar las existentes
 		count, err := s.repo.CountActivities(ctx, filter)
 		if err != nil {
 			return err

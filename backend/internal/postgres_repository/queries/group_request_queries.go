@@ -23,7 +23,7 @@ func GetGroupRequestByID(requestID string) sq.SelectBuilder {
 		groupAuthRequestQuerySelectCommon...,
 	).From(groupRequestsTableName + " gr").
 		InnerJoin("deu.extension_groups g ON gr.group_id = g.id").
-	Where(sq.Eq{"gr.id": requestID})
+		Where(sq.Eq{"gr.id": requestID})
 }
 
 func GetGroupRequestsByFaculty(faculty string, status string, limit, offset int) sq.SelectBuilder {
@@ -31,7 +31,7 @@ func GetGroupRequestsByFaculty(faculty string, status string, limit, offset int)
 		groupAuthRequestQuerySelectCommon...,
 	).From(groupRequestsTableName + " gr").
 		InnerJoin("deu.extension_groups g ON gr.group_id = g.id").
-	Where(sq.Eq{"gr.faculty": faculty})
+		Where(sq.Eq{"gr.faculty": faculty})
 
 	if status != "" {
 		q = q.Where(sq.Eq{"gr.status": status})

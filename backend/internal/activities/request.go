@@ -9,11 +9,11 @@ type GetActivitiesRequest struct {
 	NameSearch            string `query:"name"`
 	ActualParticipants    *int   `query:"actual_participants"`
 	HasActualParticipants *bool  `query:"has_actual_participants"`
-	IsFeatured            *bool  `query:"is_featured"`  
+	IsFeatured            *bool  `query:"is_featured"`
 	ReportChecked         *bool  `query:"report_checked"`
 	StartDate             string `query:"start_date"`
 	EndDate               string `query:"end_date"`
-	Order                 string `query:"order"`   // "asc" | "desc"
+	Order                 string `query:"order"`          // "asc" | "desc"
 	DisablePaging         bool   `query:"disable_paging"` // true para estadísticas del front
 	Page                  int    `query:"page"`
 	PerPage               int    `query:"per_page"`

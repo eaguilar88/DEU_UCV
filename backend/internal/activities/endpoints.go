@@ -69,9 +69,6 @@ func (h *Handler) GetActivities(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return httperrors.NewBadRequest("invalid query parameters")
 	}
-	//if err := c.Validate(req); err != nil {
-	//	return httperrors.NewBadRequest("group_id is required")
-	//}
 
 	startDate, endDate, err := h.buildDateFilter(c)
 	if err != nil {
@@ -93,7 +90,7 @@ func (h *Handler) GetActivities(c echo.Context) error {
 		EndDate:               endDate,
 		ActualParticipants:    req.ActualParticipants,
 		HasActualParticipants: req.HasActualParticipants,
-		IsFeatured:            req.IsFeatured,    
+		IsFeatured:            req.IsFeatured,
 		ReportChecked:         req.ReportChecked,
 		Order:                 req.Order,
 		DisablePaging:         req.DisablePaging,
@@ -180,7 +177,7 @@ func (h *Handler) CreateActivity(c echo.Context) error {
 	activity := createActivityEntityFromRequest(req)
 
 	if coverImage, err := utils.GetFileFrom(c, entities.ActivityFileTypeCoverImage); err == nil {
-	activity.CoverImage = coverImage
+		activity.CoverImage = coverImage
 	}
 	if participantList, err := utils.GetFileFrom(c, entities.ActivityFileTypeListParticipants); err == nil {
 		activity.ParticipantList = participantList

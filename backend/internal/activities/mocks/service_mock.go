@@ -307,6 +307,198 @@ func (_c *MockService_GetActivity_Call) RunAndReturn(run func(ctx context.Contex
 	return _c
 }
 
+// GetGroupDashboardSummary provides a mock function for the type MockService
+func (_mock *MockService) GetGroupDashboardSummary(ctx context.Context, groupID string) (entities.GroupDashboardSummary, error) {
+	ret := _mock.Called(ctx, groupID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetGroupDashboardSummary")
+	}
+
+	var r0 entities.GroupDashboardSummary
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (entities.GroupDashboardSummary, error)); ok {
+		return returnFunc(ctx, groupID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) entities.GroupDashboardSummary); ok {
+		r0 = returnFunc(ctx, groupID)
+	} else {
+		r0 = ret.Get(0).(entities.GroupDashboardSummary)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, groupID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockService_GetGroupDashboardSummary_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetGroupDashboardSummary'
+type MockService_GetGroupDashboardSummary_Call struct {
+	*mock.Call
+}
+
+// GetGroupDashboardSummary is a helper method to define mock.On call
+//   - ctx context.Context
+//   - groupID string
+func (_e *MockService_Expecter) GetGroupDashboardSummary(ctx interface{}, groupID interface{}) *MockService_GetGroupDashboardSummary_Call {
+	return &MockService_GetGroupDashboardSummary_Call{Call: _e.mock.On("GetGroupDashboardSummary", ctx, groupID)}
+}
+
+func (_c *MockService_GetGroupDashboardSummary_Call) Run(run func(ctx context.Context, groupID string)) *MockService_GetGroupDashboardSummary_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockService_GetGroupDashboardSummary_Call) Return(groupDashboardSummary entities.GroupDashboardSummary, err error) *MockService_GetGroupDashboardSummary_Call {
+	_c.Call.Return(groupDashboardSummary, err)
+	return _c
+}
+
+func (_c *MockService_GetGroupDashboardSummary_Call) RunAndReturn(run func(ctx context.Context, groupID string) (entities.GroupDashboardSummary, error)) *MockService_GetGroupDashboardSummary_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ToggleFeature provides a mock function for the type MockService
+func (_mock *MockService) ToggleFeature(ctx context.Context, id string, featured bool) error {
+	ret := _mock.Called(ctx, id, featured)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ToggleFeature")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, bool) error); ok {
+		r0 = returnFunc(ctx, id, featured)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockService_ToggleFeature_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ToggleFeature'
+type MockService_ToggleFeature_Call struct {
+	*mock.Call
+}
+
+// ToggleFeature is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - featured bool
+func (_e *MockService_Expecter) ToggleFeature(ctx interface{}, id interface{}, featured interface{}) *MockService_ToggleFeature_Call {
+	return &MockService_ToggleFeature_Call{Call: _e.mock.On("ToggleFeature", ctx, id, featured)}
+}
+
+func (_c *MockService_ToggleFeature_Call) Run(run func(ctx context.Context, id string, featured bool)) *MockService_ToggleFeature_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 bool
+		if args[2] != nil {
+			arg2 = args[2].(bool)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockService_ToggleFeature_Call) Return(err error) *MockService_ToggleFeature_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockService_ToggleFeature_Call) RunAndReturn(run func(ctx context.Context, id string, featured bool) error) *MockService_ToggleFeature_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ToggleReportCheck provides a mock function for the type MockService
+func (_mock *MockService) ToggleReportCheck(ctx context.Context, id string, checked bool) error {
+	ret := _mock.Called(ctx, id, checked)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ToggleReportCheck")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, bool) error); ok {
+		r0 = returnFunc(ctx, id, checked)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockService_ToggleReportCheck_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ToggleReportCheck'
+type MockService_ToggleReportCheck_Call struct {
+	*mock.Call
+}
+
+// ToggleReportCheck is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - checked bool
+func (_e *MockService_Expecter) ToggleReportCheck(ctx interface{}, id interface{}, checked interface{}) *MockService_ToggleReportCheck_Call {
+	return &MockService_ToggleReportCheck_Call{Call: _e.mock.On("ToggleReportCheck", ctx, id, checked)}
+}
+
+func (_c *MockService_ToggleReportCheck_Call) Run(run func(ctx context.Context, id string, checked bool)) *MockService_ToggleReportCheck_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 bool
+		if args[2] != nil {
+			arg2 = args[2].(bool)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockService_ToggleReportCheck_Call) Return(err error) *MockService_ToggleReportCheck_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockService_ToggleReportCheck_Call) RunAndReturn(run func(ctx context.Context, id string, checked bool) error) *MockService_ToggleReportCheck_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateActivity provides a mock function for the type MockService
 func (_mock *MockService) UpdateActivity(ctx context.Context, id string, activity entities.Activity) error {
 	ret := _mock.Called(ctx, id, activity)

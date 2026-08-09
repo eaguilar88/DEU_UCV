@@ -114,7 +114,10 @@ func (r *PostgresRepository) GetPendingGroupRequestsCounts(ctx context.Context) 
 		if err := rows.Scan(&f, &count); err != nil {
 			return nil, err
 		}
-		fac, _ := entities.FromString(f)
+		fac, err := entities.FromString(f)
+		if err != nil {
+			return nil, err
+		}
 		result = append(result, entities.FacultyPendingCount{
 			Faculty: fac,
 			Count:   count,

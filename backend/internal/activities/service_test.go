@@ -170,6 +170,8 @@ func TestService_GetActivities(t *testing.T) {
 					RunAndReturn(func(_ context.Context, _ entities.ActivityFilter, ps entities.PageScope) ([]entities.Activity, entities.PageScope, error) {
 						return []entities.Activity{{ID: "1"}, {ID: "2"}}, ps, nil
 					})
+				repo.EXPECT().GetFilesByOwner(mock.Anything, mock.Anything, entities.OwnerTypeActivity).
+					Return(entities.GroupedFiles{}, nil)
 			},
 			wantLen: 2,
 			wantErr: false,
@@ -400,6 +402,100 @@ func TestService_UpdateActivity(t *testing.T) {
 				tt.prepare(repo)
 			}
 			err := svc.UpdateActivity(context.Background(), tt.id, tt.activity)
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.errTarget != nil {
+					assert.ErrorIs(t, err, tt.errTarget)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestService_ToggleFeature(t *testing.T) {
+	type testCase struct {
+		name      string
+		id        string
+		featured  bool
+		prepare   func(repo *mocks.MockRepository)
+		wantErr   bool
+		errTarget error
+	}
+
+	tests := []testCase{
+		{
+			name:     "under limit succeeds",
+			id:       "1",
+			featured: true,
+			prepare: func(repo *mocks.MockRepository) {
+				repo.EXPECT().GetActivityByID(mock.Anything, "1").
+					Return(entities.Activity{ID: "1", GroupID: "g1", IsFeatured: false}, nil)
+				isFeatured := true
+				repo.EXPECT().CountActivities(mock.Anything, entities.ActivityFilter{GroupID: "g1", IsFeatured: &isFeatured}).
+					Return(3, nil)
+				repo.EXPECT().UpdateFeatureStatus(mock.Anything, "1", true).
+					Return(nil)
+			},
+			wantErr: false,
+		},
+		{
+			name:     "at limit rejected",
+			id:       "1",
+			featured: true,
+			prepare: func(repo *mocks.MockRepository) {
+				repo.EXPECT().GetActivityByID(mock.Anything, "1").
+					Return(entities.Activity{ID: "1", GroupID: "g1", IsFeatured: false}, nil)
+				isFeatured := true
+				repo.EXPECT().CountActivities(mock.Anything, entities.ActivityFilter{GroupID: "g1", IsFeatured: &isFeatured}).
+					Return(4, nil)
+			},
+			wantErr:   true,
+			errTarget: ErrMaxFeaturedLimitReached,
+		},
+		{
+			name:     "re-toggling an already-featured activity at the limit succeeds (idempotent)",
+			id:       "1",
+			featured: true,
+			prepare: func(repo *mocks.MockRepository) {
+				repo.EXPECT().GetActivityByID(mock.Anything, "1").
+					Return(entities.Activity{ID: "1", GroupID: "g1", IsFeatured: true}, nil)
+			},
+			wantErr: false,
+		},
+		{
+			name:     "unfeaturing does not check the limit",
+			id:       "1",
+			featured: false,
+			prepare: func(repo *mocks.MockRepository) {
+				repo.EXPECT().GetActivityByID(mock.Anything, "1").
+					Return(entities.Activity{ID: "1", GroupID: "g1", IsFeatured: true}, nil)
+				repo.EXPECT().UpdateFeatureStatus(mock.Anything, "1", false).
+					Return(nil)
+			},
+			wantErr: false,
+		},
+		{
+			name:     "not found",
+			id:       "99",
+			featured: true,
+			prepare: func(repo *mocks.MockRepository) {
+				repo.EXPECT().GetActivityByID(mock.Anything, "99").
+					Return(entities.Activity{}, ErrActivityNotFound)
+			},
+			wantErr:   true,
+			errTarget: ErrActivityNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			svc, repo, _ := newTestService(t)
+			if tt.prepare != nil {
+				tt.prepare(repo)
+			}
+			err := svc.ToggleFeature(context.Background(), tt.id, tt.featured)
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.errTarget != nil {

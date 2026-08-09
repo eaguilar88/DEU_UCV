@@ -19,7 +19,7 @@ type GroupMemberResponse struct {
 	Phone        string `json:"telefono,omitempty"`
 	Email        string `json:"correo,omitempty"`
 	Coordination string `json:"coordinacion,omitempty"`
-	Year         string    `json:"año,omitempty"`
+	Year         string `json:"año,omitempty"`
 	Faculty      string `json:"facultad,omitempty"`
 	School       string `json:"escuela,omitempty"`
 	Document     string `json:"documento,omitempty"`

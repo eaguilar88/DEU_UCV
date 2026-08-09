@@ -90,7 +90,7 @@ func applyActivityFilters(q sq.SelectBuilder, filter entities.ActivityFilter) sq
 			q = q.Where(sq.LtOrEq{"a.date_end": filter.EndDate})
 		}
 	}
-	
+
 	if filter.ActualParticipants != nil {
 		q = q.Where(sq.Eq{"a.actual_participants": *filter.ActualParticipants})
 	}

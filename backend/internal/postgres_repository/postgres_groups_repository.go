@@ -343,15 +343,15 @@ func newGroupToModel(group entities.ExtensionGroup) models.ExtensionGroup {
 			String: group.Description,
 			Valid:  true,
 		},
-		Faculty:   group.Faculty.String(),
+		Faculty: group.Faculty.String(),
 		Foundation: sql.NullString{
 			String: group.Foundation,
 			Valid:  group.Foundation != "",
 		},
-		IsMultidisciplinary: group.IsMultidisciplinary, 
-		UserID:    group.Owner.ID,
-		Objective: group.Objective,
-		Type:      string(group.Type),
+		IsMultidisciplinary: group.IsMultidisciplinary,
+		UserID:              group.Owner.ID,
+		Objective:           group.Objective,
+		Type:                string(group.Type),
 		Location: sql.NullString{
 			String: group.Location,
 			Valid:  true,
@@ -376,13 +376,13 @@ func newGroupFromModel(group models.ExtensionGroup) entities.ExtensionGroup {
 	}
 
 	return entities.ExtensionGroup{
-		ID:          group.ID,
-		Name:        group.Name,
-		Description: description,
-		Faculty:     entities.Faculty(group.Faculty),
-		Foundation:  foundation,
+		ID:                  group.ID,
+		Name:                group.Name,
+		Description:         description,
+		Faculty:             entities.Faculty(group.Faculty),
+		Foundation:          foundation,
 		IsMultidisciplinary: group.IsMultidisciplinary,
-		Type:        entities.GroupType(group.Type),
+		Type:                entities.GroupType(group.Type),
 		Owner: &entities.User{
 			ID: group.UserID,
 		},

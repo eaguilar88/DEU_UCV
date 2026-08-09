@@ -1,7 +1,7 @@
 package entities
 
 const (
-	ActivityFileTypeCoverImage = "cubierta"
+	ActivityFileTypeCoverImage       = "cubierta"
 	ActivityFileTypeListParticipants = "lista_participantes"
 )
 
@@ -13,7 +13,7 @@ type ActivityFilter struct {
 	Deleted               bool
 	ActualParticipants    *int
 	HasActualParticipants *bool
-	IsFeatured            *bool 
+	IsFeatured            *bool
 	ReportChecked         *bool
 	Order                 string // "asc" o "desc"
 	DisablePaging         bool   // Si es true, omite el LIMIT / OFFSET para estadísticas
