@@ -14,8 +14,9 @@ import (
 type Service interface {
 	ApproveGroupRequest(ctx context.Context, reqID string) error
 	RejectGroupRequest(ctx context.Context, reqID string) error
-	GetGroupRequestsByFaculty(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.GroupRequest, entities.PageScope, error)
+	GetGroupRequestsByFaculty(ctx context.Context, faculty entities.Faculty, status string, pageScope entities.PageScope) ([]entities.GroupRequest, entities.PageScope, int, error)
 	GetGroupRequestByID(ctx context.Context, reqID string) (entities.GroupRequest, error)
+	GetPendingGroupRequestsCounts(ctx context.Context) ([]entities.FacultyPendingCount, error)
 }
 
 type Handler struct {
@@ -33,6 +34,7 @@ func NewHandler(svc Service, log *zap.Logger) *Handler {
 func (h *Handler) RegisterGroupRequestAdminEndpoints(g *echo.Group) {
 	gr := g.Group("/group-requests")
 	gr.GET("", h.GetGroupRequestsByFaculty)
+	gr.GET("/pending-counts", h.GetPendingGroupRequestsCounts)
 	gr.GET("/:id", h.GetGroupRequestByID)
 	gr.POST("/:id/approve", h.ApproveGroupRequest)
 	gr.POST("/:id/reject", h.RejectGroupRequest)
@@ -72,12 +74,26 @@ func (h *Handler) RejectGroupRequest(c echo.Context) error {
 	return c.NoContent(http.StatusAccepted)
 }
 
+func (h *Handler) GetPendingGroupRequestsCounts(c echo.Context) error {
+	ctx := c.Request().Context()
+	counts, err := h.svc.GetPendingGroupRequestsCounts(ctx)
+	if err != nil {
+		return httperrors.NewInternal(err)
+	}
+
+	return c.JSON(http.StatusOK, PendingCountsResponse{
+		Counts: counts,
+	})
+}
+
 func (h *Handler) GetGroupRequestsByFaculty(c echo.Context) error {
 	ctx := c.Request().Context()
 	faculty, err := entities.FromString(c.QueryParam("faculty"))
 	if err != nil {
 		return httperrors.NewBadRequest("invalid faculty")
 	}
+
+	statusFilter := c.QueryParam("status")
 
 	var pageScope entities.PageScope
 	if err := pageScope.GetPageFromVars(c.QueryParam("page")); err != nil {
@@ -88,20 +104,22 @@ func (h *Handler) GetGroupRequestsByFaculty(c echo.Context) error {
 		return httperrors.NewBadRequest("invalid page size")
 	}
 
-	requests, resultScope, err := h.svc.GetGroupRequestsByFaculty(ctx, faculty, pageScope)
+	requests, resultScope, pendingCount, err := h.svc.GetGroupRequestsByFaculty(ctx, faculty, statusFilter, pageScope)
 	if err != nil {
 		return httperrors.NewInternal(err)
 	}
 
 	response := GetGroupRequestsResponse{
-		Requests: make([]GetGroupRequestResponse, 0, len(requests)),
-		Pages:    resultScope,
+		Requests:     make([]GetGroupRequestResponse, 0, len(requests)),
+		Pages:        resultScope,
+		PendingCount: pendingCount,
 	}
 
 	for _, req := range requests {
 		response.Requests = append(response.Requests, GetGroupRequestResponse{
 			ID:        req.ID,
 			GroupID:   req.GroupID,
+			GroupName: req.GroupName,
 			Comments:  req.Comments,
 			Status:    string(req.Status),
 			Faculty:   string(req.Faculty),
@@ -132,6 +150,7 @@ func (h *Handler) GetGroupRequestByID(c echo.Context) error {
 	response := GetGroupRequestResponse{
 		ID:        reqID,
 		GroupID:   req.GroupID,
+		GroupName: req.GroupName,
 		Comments:  req.Comments,
 		Status:    string(req.Status),
 		Faculty:   string(req.Faculty),

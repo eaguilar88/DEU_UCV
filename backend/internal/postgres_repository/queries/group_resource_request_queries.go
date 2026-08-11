@@ -10,6 +10,7 @@ import (
 var resourceRequestSelectCommon = []string{
 	"r.id",
 	"r.group_id",
+	"COALESCE(g.name, '') AS group_name",
 	"r.type",
 	"r.content",
 	"r.status",
@@ -20,24 +21,65 @@ var resourceRequestSelectCommon = []string{
 func GetGroupResourceRequestByID(reqID string) sq.SelectBuilder {
 	return psql.Select(resourceRequestSelectCommon...).
 		From(fmt.Sprintf("%s AS r", groupResourceRequestsTableName)).
+		LeftJoin(fmt.Sprintf("%s AS g ON r.group_id = g.id", groupsTableName)).
 		Where(sq.Eq{"r.id": reqID, "r.deleted_at": nil})
 }
 
-func GetGroupResourceRequestsByFaculty(faculty string, limit, offset int) sq.SelectBuilder {
-	return psql.Select(resourceRequestSelectCommon...).
+func GetGroupResourceRequestsByFaculty(faculty string, status string, limit, offset int) sq.SelectBuilder {
+	q := psql.Select(resourceRequestSelectCommon...).
 		From(fmt.Sprintf("%s AS r", groupResourceRequestsTableName)).
 		Join(fmt.Sprintf("%s AS g ON r.group_id = g.id", groupsTableName)).
-		Where(sq.Eq{"g.faculty": faculty, "r.deleted_at": nil}).
-		OrderBy("r.created_at DESC").
+		Where(sq.Eq{"g.faculty": faculty, "r.deleted_at": nil})
+
+	if status != "" {
+		q = q.Where(sq.Eq{"r.status": status})
+	}
+
+	return q.OrderBy("r.created_at DESC").
 		Limit(uint64(limit)).
 		Offset(uint64(offset))
 }
 
-func CountGroupResourceRequestsByFaculty(faculty string) sq.SelectBuilder {
+func CountGroupResourceRequestsByFaculty(faculty string, status string) sq.SelectBuilder {
 	return psql.Select("COUNT(*)").
 		From(fmt.Sprintf("%s AS r", groupResourceRequestsTableName)).
 		Join(fmt.Sprintf("%s AS g ON r.group_id = g.id", groupsTableName)).
 		Where(sq.Eq{"g.faculty": faculty, "r.deleted_at": nil})
+}
+
+func GetGroupResourceRequestsByGroupID(groupID string, status string, limit, offset int) sq.SelectBuilder {
+	q := psql.Select(resourceRequestSelectCommon...).
+		From(fmt.Sprintf("%s AS r", groupResourceRequestsTableName)).
+		LeftJoin(fmt.Sprintf("%s AS g ON r.group_id = g.id", groupsTableName)).
+		Where(sq.Eq{"r.group_id": groupID, "r.deleted_at": nil})
+
+	if status != "" {
+		q = q.Where(sq.Eq{"r.status": status})
+	}
+
+	return q.OrderBy("r.created_at DESC").
+		Limit(uint64(limit)).
+		Offset(uint64(offset))
+}
+
+func CountGroupResourceRequestsByGroupID(groupID string, status string) sq.SelectBuilder {
+	q := psql.Select("COUNT(*)").
+		From(fmt.Sprintf("%s AS r", groupResourceRequestsTableName)).
+		Where(sq.Eq{"r.group_id": groupID, "r.deleted_at": nil})
+
+	if status != "" {
+		q = q.Where(sq.Eq{"r.status": status})
+	}
+
+	return q
+}
+
+func CountPendingGroupResourceRequestsByFaculty() sq.SelectBuilder {
+	return psql.Select("g.faculty", "COUNT(r.id) AS pending_count").
+		From(fmt.Sprintf("%s AS r", groupResourceRequestsTableName)).
+		Join(fmt.Sprintf("%s AS g ON r.group_id = g.id", groupsTableName)).
+		Where(sq.Eq{"r.status": "under_review", "r.deleted_at": nil}).
+		GroupBy("g.faculty")
 }
 
 func InsertGroupResourceRequest(m models.GroupResourceRequest) sq.InsertBuilder {

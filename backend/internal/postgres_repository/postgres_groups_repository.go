@@ -42,8 +42,8 @@ func (r *PostgresRepository) GetGroupByID(ctx context.Context, groupID string) (
 	return eg, nil
 }
 
-func (r *PostgresRepository) GetGroups(ctx context.Context, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error) {
-	query, args, err := queries.GetGroups(pageScope.PerPage, pageScope.Offset()).ToSql()
+func (r *PostgresRepository) GetGroups(ctx context.Context, filter entities.GroupFilter, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error) {
+	query, args, err := queries.GetGroups(filter, pageScope.PerPage, pageScope.Offset()).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
@@ -71,6 +71,37 @@ func (r *PostgresRepository) GetGroups(ctx context.Context, pageScope entities.P
 		groups = append(groups, eg)
 	}
 	return groups, pageScope, nil
+}
+
+func (r *PostgresRepository) GetRandomActiveGroups(ctx context.Context, limit int) ([]entities.ExtensionGroup, error) {
+	query, args, err := queries.GetRandomActiveGroups(limit).ToSql()
+	if err != nil {
+		return nil, err
+	}
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+	rows, err := stmt.QueryContext(ctx, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var groups []entities.ExtensionGroup
+	for rows.Next() {
+		group, err := scanGroup(rows)
+		if err != nil {
+			return nil, err
+		}
+		eg := newGroupFromModel(group)
+		eg.Members, err = r.getGroupMembers(ctx, eg.ID)
+		if err != nil {
+			return nil, err
+		}
+		groups = append(groups, eg)
+	}
+	return groups, nil
 }
 
 func (r *PostgresRepository) CreateGroup(ctx context.Context, gr entities.ExtensionGroup) (int64, error) {
@@ -127,13 +158,26 @@ func (r *PostgresRepository) CreateGroupWithRequests(ctx context.Context, group 
 	if err != nil {
 		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == pgErrorCodeUniqueViolation {
 			r.logger.Error("duplicate group entry", zap.Error(err))
-			return -1, httperrors.NewDuplicateEntryError(err)
+			return -1, fmt.Errorf("duplicate group entry: %w ", err)
 		}
 		r.logger.Error("failed to insert group", zap.Error(err))
 		return -1, fmt.Errorf("failed to insert group: %w", err)
 	}
 
-	// 2. Create each authorization request
+	// 2. Create contacts for the group
+	if group.Email != "" {
+		if err := r.insertContactInformation(ctx, tx, group.Email, entities.ContactTypeEmail, groupID); err != nil {
+			return -1, fmt.Errorf("error saving group contact: %w", err)
+		}
+	}
+
+	if group.Phone != "" {
+		if err := r.insertContactInformation(ctx, tx, group.Phone, entities.ContactTypePhone, groupID); err != nil {
+			return -1, fmt.Errorf("error saving group contact: %w", err)
+		}
+	}
+
+	// 3. Create each authorization request
 	for _, req := range requests {
 		reqSQL, reqArgs, err := queries.InsertGroupRequest(models.GroupRequest{
 			GroupID: groupID,
@@ -168,7 +212,7 @@ func (r *PostgresRepository) CreateGroupWithRequests(ctx context.Context, group 
 		}
 	}
 
-	// 3. Commit
+	// 4. Commit
 	if err := tx.Commit(); err != nil {
 		r.logger.Error("failed to commit transaction", zap.Error(err))
 		return -1, fmt.Errorf("failed to commit transaction: %w", err)
@@ -273,6 +317,8 @@ func scanGroup(row scannable) (models.ExtensionGroup, error) {
 		&group.Name,
 		&group.Description,
 		&group.Faculty,
+		&group.Foundation,
+		&group.IsMultidisciplinary,
 		&group.Objective,
 		&group.Code,
 		&group.Director,
@@ -297,9 +343,15 @@ func newGroupToModel(group entities.ExtensionGroup) models.ExtensionGroup {
 			String: group.Description,
 			Valid:  true,
 		},
-		Faculty:   group.Faculty.String(),
-		UserID:    group.Owner.ID,
-		Objective: group.Objective,
+		Faculty: group.Faculty.String(),
+		Foundation: sql.NullString{
+			String: group.Foundation,
+			Valid:  group.Foundation != "",
+		},
+		IsMultidisciplinary: group.IsMultidisciplinary,
+		UserID:              group.Owner.ID,
+		Objective:           group.Objective,
+		Type:                string(group.Type),
 		Location: sql.NullString{
 			String: group.Location,
 			Valid:  true,
@@ -311,7 +363,7 @@ func newGroupToModel(group entities.ExtensionGroup) models.ExtensionGroup {
 }
 
 func newGroupFromModel(group models.ExtensionGroup) entities.ExtensionGroup {
-	var description, objective, location string
+	var description, objective, location, foundation string
 	if group.Description.Valid {
 		description = group.Description.String
 	}
@@ -319,11 +371,18 @@ func newGroupFromModel(group models.ExtensionGroup) entities.ExtensionGroup {
 	if group.Location.Valid {
 		location = group.Location.String
 	}
+	if group.Foundation.Valid {
+		foundation = group.Foundation.String
+	}
 
 	return entities.ExtensionGroup{
-		ID:          group.ID,
-		Name:        group.Name,
-		Description: description,
+		ID:                  group.ID,
+		Name:                group.Name,
+		Description:         description,
+		Faculty:             entities.Faculty(group.Faculty),
+		Foundation:          foundation,
+		IsMultidisciplinary: group.IsMultidisciplinary,
+		Type:                entities.GroupType(group.Type),
 		Owner: &entities.User{
 			ID: group.UserID,
 		},
@@ -344,7 +403,7 @@ func (r *PostgresRepository) insertGroupMembers(ctx context.Context, groupID int
 			Phone:        sql.NullString{String: m.Phone, Valid: m.Phone != ""},
 			Email:        sql.NullString{String: m.Email, Valid: m.Email != ""},
 			Coordination: sql.NullString{String: m.Coordination, Valid: m.Coordination != ""},
-			Year:         sql.NullInt64{Int64: int64(m.Year), Valid: m.Year != 0},
+			Year:         sql.NullString{String: m.Year, Valid: m.Year != ""},
 			Faculty:      string(m.Faculty),
 			School:       sql.NullString{String: m.School, Valid: m.School != ""},
 			Document:     sql.NullString{String: m.Document, Valid: m.Document != ""},
@@ -403,10 +462,66 @@ func groupMemberFromModel(m models.GroupMember) entities.GroupMember {
 		Phone:        m.Phone.String,
 		Email:        m.Email.String,
 		Coordination: m.Coordination.String,
-		Year:         int(m.Year.Int64),
+		Year:         m.Year.String,
 		Faculty:      entities.Faculty(m.Faculty),
 		School:       m.School.String,
 		Document:     m.Document.String,
 		IsActive:     m.IsActive,
 	}
+}
+
+func (r *PostgresRepository) insertContactInformation(ctx context.Context, tx *sql.Tx, contactValue string, contactType entities.ContactType, groupID int64) error {
+	contactSQL, contactArgs, err := queries.InsertContact(
+		string(contactType),
+		contactValue,
+		entities.OwnerTypeExtensionGroup.String(),
+		groupID,
+	).ToSql()
+	if err != nil {
+		return fmt.Errorf("error building query: %w", err)
+	}
+
+	contactStmt, err := tx.PrepareContext(ctx, contactSQL)
+	if err != nil {
+		return fmt.Errorf("failed to prepare contact statement: %w", err)
+	}
+	defer contactStmt.Close()
+
+	var contactID string
+	err = contactStmt.QueryRowContext(ctx, contactArgs...).Scan(&contactID)
+	if err != nil {
+		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == pgErrorCodeUniqueViolation {
+			return fmt.Errorf("duplicated contact information: %w", err)
+		}
+		return fmt.Errorf("failed to insert contact: %w", err)
+	}
+	return nil
+}
+
+func (r *PostgresRepository) GetContactsByOwner(ctx context.Context, ownerID string, ownerType entities.OwnerType) ([]entities.Contact, error) {
+	query := `
+		SELECT id, contact_type, contact_value, owner_type, owner_id
+		FROM deu.contacts
+		WHERE owner_id = $1 AND owner_type = $2 AND deleted_at IS NULL
+	`
+	rows, err := r.db.QueryContext(ctx, query, ownerID, string(ownerType))
+	if err != nil {
+		return nil, fmt.Errorf("failed to query contacts: %w", err)
+	}
+	defer rows.Close()
+
+	var contacts []entities.Contact
+	for rows.Next() {
+		var c entities.Contact
+		if err := rows.Scan(&c.ID, &c.Type, &c.Value, &c.OwnerType, &c.OwnerID); err != nil {
+			return nil, fmt.Errorf("failed to scan contact: %w", err)
+		}
+		contacts = append(contacts, c)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return contacts, nil
 }

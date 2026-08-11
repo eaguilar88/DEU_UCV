@@ -10,18 +10,25 @@ type GetGroupRequest struct {
 	ID string `param:"id" validate:"required"`
 }
 type GetGroupsRequest struct {
-	Page    int `query:"page" validate:"required"`
-	PerPage int `query:"per_page" validate:"required"`
+	Faculty string `form:"facultad"`
+	Active  *bool  `form:"activo"`
+	Search  string `form:"q"`
+	Page    int    `query:"page" validate:"required"`
+	PerPage int    `query:"per_page" validate:"required"`
 }
 type CreateGroupRequest struct {
-	Name        string           `validate:"required" form:"nombre"`
-	Description string           `form:"descripcion"`
-	LeaderName  string           `validate:"required" form:"nombre_lider"`
-	Type        string           `validate:"required" form:"tipo"`
-	Faculty     string           `validate:"required" form:"facultad"`
-	Objective   string           `validate:"required" form:"objetivo"`
-	Location    string           `validate:"required" form:"ubicacion"`
-	Members     []GroupMemberDTO `form:"miembros" validate:"dive"`
+	Name                string           `validate:"required" form:"nombre"`
+	Description         string           `form:"descripcion"`
+	LeaderName          string           `validate:"required" form:"nombre_lider"`
+	Type                string           `validate:"required" form:"tipo"`
+	Foundation          string           `form:"fundacion"`
+	IsMultidisciplinary bool             `form:"es_multidisciplinario"`
+	Faculty             string           `validate:"required" form:"facultad"`
+	Objective           string           `validate:"required" form:"objetivo"`
+	Location            string           `validate:"required" form:"ubicacion"`
+	Members             []GroupMemberDTO `form:"miembros" validate:"dive"`
+	Email               string           `form:"correo" validate:"required"`
+	Phone               string           `form:"telefono"`
 }
 
 type UpdateGroupRequest struct {
@@ -45,7 +52,7 @@ type GroupMemberDTO struct {
 	Phone        string `json:"telefono"     validate:"required"`
 	Email        string `json:"correo"       validate:"required,email"`
 	Coordination string `json:"coordinacion" validate:"required"`
-	Year         int    `json:"año"          validate:"required"`
+	Year         string `json:"año"          validate:"required"`
 	Faculty      string `json:"facultad"     validate:"required"`
 	School       string `json:"escuela"      validate:"required"`
 	Document     string `json:"documento"    validate:"required"`
@@ -107,8 +114,10 @@ func updateGroupEntityFromRequest(req UpdateGroupRequest) entities.ExtensionGrou
 // createGroupEntityFromRequest converts CreateGroupRequest to an ExtensionGroup entity.
 func createGroupEntityFromRequest(req CreateGroupRequest, ownerID, faculty string) entities.ExtensionGroup {
 	eg := entities.ExtensionGroup{
-		Name:        req.Name,
-		Description: req.Description,
+		Name:                req.Name,
+		Description:         req.Description,
+		Foundation:          req.Foundation,
+		IsMultidisciplinary: req.IsMultidisciplinary,
 		Owner: &entities.User{
 			ID: ownerID,
 		},
@@ -117,6 +126,8 @@ func createGroupEntityFromRequest(req CreateGroupRequest, ownerID, faculty strin
 		Objective: req.Objective,
 		Location:  req.Location,
 		Members:   groupMembersEntityFromRequest(req.Members),
+		Email:     req.Email,
+		Phone:     req.Phone,
 	}
 
 	if entities.Faculty(faculty).IsValid() {

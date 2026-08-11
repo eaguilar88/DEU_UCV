@@ -9,6 +9,7 @@ import (
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
 
@@ -36,17 +37,18 @@ func TestNewService(t *testing.T) {
 
 func TestService_GetActivity(t *testing.T) {
 	type testCase struct {
-		name      string
-		id        string
-		prepare   func(repo *mocks.MockRepository, storage *mocks.MockStorageClient)
-		want      entities.Activity
-		wantErr   bool
-		errTarget error
+		name         string
+		id           string
+		prepare      func(repo *mocks.MockRepository, storage *mocks.MockStorageClient)
+		want         entities.Activity
+		wantCoverURL string
+		wantErr      bool
+		errTarget    error
 	}
 
 	tests := []testCase{
 		{
-			name: "success no files",
+			name: "success no cover image",
 			id:   "1",
 			prepare: func(repo *mocks.MockRepository, _ *mocks.MockStorageClient) {
 				repo.EXPECT().GetActivityByID(mock.Anything, "1").
@@ -58,28 +60,29 @@ func TestService_GetActivity(t *testing.T) {
 						return entities.GroupedFiles{}, nil
 					})
 			},
-			want:    entities.Activity{ID: "1", Name: "Test", Files: entities.GroupedFiles{}},
+			want:    entities.Activity{ID: "1", Name: "Test"},
 			wantErr: false,
 		},
 		{
-			name: "success with report files",
+			name: "success with cover image",
 			id:   "1",
 			prepare: func(repo *mocks.MockRepository, storage *mocks.MockStorageClient) {
-				f := &entities.File{Key: "files/activities/1/reporte.pdf", Name: "reporte.pdf", Purpose: entities.ActivityFileTypeReport}
+				f := &entities.File{Key: "files/activities/1/cubierta.jpg", Name: "cubierta.jpg", Purpose: entities.ActivityFileTypeCoverImage}
 				repo.EXPECT().GetActivityByID(mock.Anything, "1").
 					RunAndReturn(func(_ context.Context, _ string) (entities.Activity, error) {
 						return entities.Activity{ID: "1", Name: "Test"}, nil
 					})
 				repo.EXPECT().GetFilesByOwner(mock.Anything, "1", entities.OwnerTypeActivity).
 					RunAndReturn(func(_ context.Context, _ string, _ entities.OwnerType) (entities.GroupedFiles, error) {
-						return entities.GroupedFiles{entities.ActivityFileTypeReport: {f}}, nil
+						return entities.GroupedFiles{entities.ActivityFileTypeCoverImage: {f}}, nil
 					})
 				storage.EXPECT().GetFileURL(mock.Anything, f.Key).
 					RunAndReturn(func(_ context.Context, _ string) (string, error) {
-						return "http://cdn/reporte.pdf", nil
+						return "http://cdn/cubierta.jpg", nil
 					})
 			},
-			wantErr: false,
+			wantCoverURL: "http://cdn/cubierta.jpg",
+			wantErr:      false,
 		},
 		{
 			name: "not found",
@@ -138,6 +141,10 @@ func TestService_GetActivity(t *testing.T) {
 				if tt.want.ID != "" {
 					assert.Equal(t, tt.want.ID, got.ID)
 				}
+				if tt.wantCoverURL != "" {
+					require.NotNil(t, got.CoverImage)
+					assert.Equal(t, tt.wantCoverURL, got.CoverImage.URL)
+				}
 			}
 		})
 	}
@@ -163,6 +170,8 @@ func TestService_GetActivities(t *testing.T) {
 					RunAndReturn(func(_ context.Context, _ entities.ActivityFilter, ps entities.PageScope) ([]entities.Activity, entities.PageScope, error) {
 						return []entities.Activity{{ID: "1"}, {ID: "2"}}, ps, nil
 					})
+				repo.EXPECT().GetFilesByOwner(mock.Anything, mock.Anything, entities.OwnerTypeActivity).
+					Return(entities.GroupedFiles{}, nil)
 			},
 			wantLen: 2,
 			wantErr: false,
@@ -215,7 +224,6 @@ func TestService_CreateActivity(t *testing.T) {
 	type testCase struct {
 		name     string
 		activity entities.Activity
-		files    []*entities.File
 		prepare  func(repo *mocks.MockRepository, storage *mocks.MockStorageClient)
 		wantID   int64
 		wantErr  bool
@@ -223,9 +231,8 @@ func TestService_CreateActivity(t *testing.T) {
 
 	tests := []testCase{
 		{
-			name:     "success no files",
+			name:     "success no cover image",
 			activity: entities.Activity{GroupID: "1", Name: "Workshop"},
-			files:    nil,
 			prepare: func(repo *mocks.MockRepository, _ *mocks.MockStorageClient) {
 				repo.EXPECT().CreateActivity(mock.Anything, entities.Activity{GroupID: "1", Name: "Workshop"}).
 					RunAndReturn(func(_ context.Context, _ entities.Activity) (int64, error) {
@@ -236,10 +243,11 @@ func TestService_CreateActivity(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:     "success with files",
-			activity: entities.Activity{GroupID: "1", Name: "Workshop"},
-			files: []*entities.File{
-				{Name: "0_reporte.pdf", Purpose: entities.ActivityFileTypeReport},
+			name: "success with cover image",
+			activity: entities.Activity{
+				GroupID:    "1",
+				Name:       "Workshop",
+				CoverImage: &entities.File{Name: "cubierta.jpg"},
 			},
 			prepare: func(repo *mocks.MockRepository, storage *mocks.MockStorageClient) {
 				repo.EXPECT().CreateActivity(mock.Anything, mock.Anything).
@@ -248,8 +256,9 @@ func TestService_CreateActivity(t *testing.T) {
 					})
 				storage.EXPECT().UploadFile(mock.Anything, mock.Anything).
 					RunAndReturn(func(_ context.Context, files []*entities.File) error {
-						assert.Equal(t, "files/activities/10/0_reporte.pdf", files[0].Key)
+						assert.Equal(t, "files/activities/10/cubierta.jpg", files[0].Key)
 						assert.Equal(t, entities.OwnerTypeActivity, files[0].OwnerType)
+						assert.Equal(t, entities.ActivityFileTypeCoverImage, files[0].Purpose)
 						return nil
 					})
 				repo.EXPECT().SaveFilesToDB(mock.Anything, mock.Anything).
@@ -263,7 +272,6 @@ func TestService_CreateActivity(t *testing.T) {
 		{
 			name:     "repo create error",
 			activity: entities.Activity{GroupID: "1", Name: "Workshop"},
-			files:    nil,
 			prepare: func(repo *mocks.MockRepository, _ *mocks.MockStorageClient) {
 				repo.EXPECT().CreateActivity(mock.Anything, mock.Anything).
 					RunAndReturn(func(_ context.Context, _ entities.Activity) (int64, error) {
@@ -274,9 +282,12 @@ func TestService_CreateActivity(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:     "storage upload error",
-			activity: entities.Activity{GroupID: "1", Name: "Workshop"},
-			files:    []*entities.File{{Name: "reporte.pdf"}},
+			name: "storage upload error",
+			activity: entities.Activity{
+				GroupID:    "1",
+				Name:       "Workshop",
+				CoverImage: &entities.File{Name: "cubierta.jpg"},
+			},
 			prepare: func(repo *mocks.MockRepository, storage *mocks.MockStorageClient) {
 				repo.EXPECT().CreateActivity(mock.Anything, mock.Anything).
 					RunAndReturn(func(_ context.Context, _ entities.Activity) (int64, error) {
@@ -291,9 +302,12 @@ func TestService_CreateActivity(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:     "save files to DB error",
-			activity: entities.Activity{GroupID: "1", Name: "Workshop"},
-			files:    []*entities.File{{Name: "reporte.pdf"}},
+			name: "save cover image to DB error",
+			activity: entities.Activity{
+				GroupID:    "1",
+				Name:       "Workshop",
+				CoverImage: &entities.File{Name: "cubierta.jpg"},
+			},
 			prepare: func(repo *mocks.MockRepository, storage *mocks.MockStorageClient) {
 				repo.EXPECT().CreateActivity(mock.Anything, mock.Anything).
 					RunAndReturn(func(_ context.Context, _ entities.Activity) (int64, error) {
@@ -319,7 +333,7 @@ func TestService_CreateActivity(t *testing.T) {
 			if tt.prepare != nil {
 				tt.prepare(repo, storage)
 			}
-			got, err := svc.CreateActivity(context.Background(), tt.activity, tt.files)
+			got, err := svc.CreateActivity(context.Background(), tt.activity)
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Equal(t, tt.wantID, got)
@@ -388,6 +402,100 @@ func TestService_UpdateActivity(t *testing.T) {
 				tt.prepare(repo)
 			}
 			err := svc.UpdateActivity(context.Background(), tt.id, tt.activity)
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.errTarget != nil {
+					assert.ErrorIs(t, err, tt.errTarget)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestService_ToggleFeature(t *testing.T) {
+	type testCase struct {
+		name      string
+		id        string
+		featured  bool
+		prepare   func(repo *mocks.MockRepository)
+		wantErr   bool
+		errTarget error
+	}
+
+	tests := []testCase{
+		{
+			name:     "under limit succeeds",
+			id:       "1",
+			featured: true,
+			prepare: func(repo *mocks.MockRepository) {
+				repo.EXPECT().GetActivityByID(mock.Anything, "1").
+					Return(entities.Activity{ID: "1", GroupID: "g1", IsFeatured: false}, nil)
+				isFeatured := true
+				repo.EXPECT().CountActivities(mock.Anything, entities.ActivityFilter{GroupID: "g1", IsFeatured: &isFeatured}).
+					Return(3, nil)
+				repo.EXPECT().UpdateFeatureStatus(mock.Anything, "1", true).
+					Return(nil)
+			},
+			wantErr: false,
+		},
+		{
+			name:     "at limit rejected",
+			id:       "1",
+			featured: true,
+			prepare: func(repo *mocks.MockRepository) {
+				repo.EXPECT().GetActivityByID(mock.Anything, "1").
+					Return(entities.Activity{ID: "1", GroupID: "g1", IsFeatured: false}, nil)
+				isFeatured := true
+				repo.EXPECT().CountActivities(mock.Anything, entities.ActivityFilter{GroupID: "g1", IsFeatured: &isFeatured}).
+					Return(4, nil)
+			},
+			wantErr:   true,
+			errTarget: ErrMaxFeaturedLimitReached,
+		},
+		{
+			name:     "re-toggling an already-featured activity at the limit succeeds (idempotent)",
+			id:       "1",
+			featured: true,
+			prepare: func(repo *mocks.MockRepository) {
+				repo.EXPECT().GetActivityByID(mock.Anything, "1").
+					Return(entities.Activity{ID: "1", GroupID: "g1", IsFeatured: true}, nil)
+			},
+			wantErr: false,
+		},
+		{
+			name:     "unfeaturing does not check the limit",
+			id:       "1",
+			featured: false,
+			prepare: func(repo *mocks.MockRepository) {
+				repo.EXPECT().GetActivityByID(mock.Anything, "1").
+					Return(entities.Activity{ID: "1", GroupID: "g1", IsFeatured: true}, nil)
+				repo.EXPECT().UpdateFeatureStatus(mock.Anything, "1", false).
+					Return(nil)
+			},
+			wantErr: false,
+		},
+		{
+			name:     "not found",
+			id:       "99",
+			featured: true,
+			prepare: func(repo *mocks.MockRepository) {
+				repo.EXPECT().GetActivityByID(mock.Anything, "99").
+					Return(entities.Activity{}, ErrActivityNotFound)
+			},
+			wantErr:   true,
+			errTarget: ErrActivityNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			svc, repo, _ := newTestService(t)
+			if tt.prepare != nil {
+				tt.prepare(repo)
+			}
+			err := svc.ToggleFeature(context.Background(), tt.id, tt.featured)
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.errTarget != nil {

@@ -19,7 +19,7 @@ type GroupMemberResponse struct {
 	Phone        string `json:"telefono,omitempty"`
 	Email        string `json:"correo,omitempty"`
 	Coordination string `json:"coordinacion,omitempty"`
-	Year         int    `json:"año,omitempty"`
+	Year         string `json:"año,omitempty"`
 	Faculty      string `json:"facultad,omitempty"`
 	School       string `json:"escuela,omitempty"`
 	Document     string `json:"documento,omitempty"`
@@ -30,6 +30,12 @@ type GetGroupResponse struct {
 	ID          string                `json:"id,omitempty"`
 	Name        string                `json:"nombre,omitempty"`
 	Description string                `json:"descripcion,omitempty"`
+	Faculty     string                `json:"facultad,omitempty"`
+	Foundation  string                `json:"fundacion,omitempty"`
+	Type        string                `json:"tipo,omitempty"`
+	LogoURL     string                `json:"imagen_url,omitempty"`
+	Email       string                `json:"email,omitempty"`
+	Phone       string                `json:"telefono,omitempty"`
 	Owner       *OwnerInfo            `json:"propietario,omitempty"`
 	Objective   string                `json:"objetivo,omitempty"`
 	Location    string                `json:"ubicacion,omitempty"`
@@ -97,10 +103,21 @@ func groupToResponse(group entities.ExtensionGroup) GetGroupResponse {
 		}
 	}
 
+	var logoURL string
+	if group.Logo != nil {
+		logoURL = group.Logo.URL
+	}
+
 	return GetGroupResponse{
 		ID:          group.ID,
 		Name:        group.Name,
 		Description: group.Description,
+		Faculty:     string(group.Faculty),
+		Foundation:  group.Foundation,
+		Type:        string(group.Type),
+		LogoURL:     logoURL,
+		Email:       group.Email,
+		Phone:       group.Phone,
 		Owner:       owner,
 		Objective:   group.Objective,
 		Location:    group.Location,

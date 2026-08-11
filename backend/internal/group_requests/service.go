@@ -10,10 +10,12 @@ import (
 type Repository interface {
 	ApproveGroupRequest(ctx context.Context, reqID string) error
 	RejectGroupRequest(ctx context.Context, reqID string) error
-	GetGroupRequestsByFaculty(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.GroupRequest, entities.PageScope, error)
+	GetGroupRequestsByFaculty(ctx context.Context, faculty entities.Faculty, status string, pageScope entities.PageScope) ([]entities.GroupRequest, entities.PageScope, int, error)
 	GetGroupRequestByID(ctx context.Context, reqID string) (entities.GroupRequest, error)
 	GetGroupRequestsByGroupID(ctx context.Context, groupID string) ([]entities.GroupRequest, error)
+	GetPendingGroupRequestsCounts(ctx context.Context) ([]entities.FacultyPendingCount, error)
 }
+
 type service struct {
 	repo   Repository
 	logger *zap.Logger
@@ -34,23 +36,23 @@ func (s *service) RejectGroupRequest(ctx context.Context, reqID string) error {
 	return s.repo.RejectGroupRequest(ctx, reqID)
 }
 
-func (s *service) GetGroupRequestsByFaculty(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.GroupRequest, entities.PageScope, error) {
-	requests, ps, err := s.repo.GetGroupRequestsByFaculty(ctx, faculty, pageScope)
+func (s *service) GetGroupRequestsByFaculty(ctx context.Context, faculty entities.Faculty, status string, pageScope entities.PageScope) ([]entities.GroupRequest, entities.PageScope, int, error) {
+	requests, ps, pendingCount, err := s.repo.GetGroupRequestsByFaculty(ctx, faculty, status, pageScope)
 	if err != nil {
 		s.logger.Error("failed to get group requests by faculty", zap.Error(err))
-		return nil, entities.PageScope{}, err
+		return nil, entities.PageScope{}, 0, err
 	}
 
 	for i, req := range requests {
 		approvals, err := s.repo.GetGroupRequestsByGroupID(ctx, req.GroupID)
 		if err != nil {
 			s.logger.Error("failed to get approvals for group request", zap.Error(err), zap.String("group_id", req.GroupID))
-			return nil, entities.PageScope{}, err
+			return nil, entities.PageScope{}, 0, err
 		}
 		requests[i].Approvals = approvals
 	}
 
-	return requests, ps, nil
+	return requests, ps, pendingCount, nil
 }
 
 func (s *service) GetGroupRequestByID(ctx context.Context, reqID string) (entities.GroupRequest, error) {
@@ -66,4 +68,8 @@ func (s *service) GetGroupRequestByID(ctx context.Context, reqID string) (entiti
 	}
 
 	return req, nil
+}
+
+func (s *service) GetPendingGroupRequestsCounts(ctx context.Context) ([]entities.FacultyPendingCount, error) {
+	return s.repo.GetPendingGroupRequestsCounts(ctx)
 }

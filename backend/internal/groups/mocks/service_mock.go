@@ -240,8 +240,8 @@ func (_c *MockService_GetGroup_Call) RunAndReturn(run func(ctx context.Context, 
 }
 
 // GetGroups provides a mock function for the type MockService
-func (_mock *MockService) GetGroups(ctx context.Context, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error) {
-	ret := _mock.Called(ctx, pageScope)
+func (_mock *MockService) GetGroups(ctx context.Context, filter entities.GroupFilter, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error) {
+	ret := _mock.Called(ctx, filter, pageScope)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetGroups")
@@ -250,23 +250,23 @@ func (_mock *MockService) GetGroups(ctx context.Context, pageScope entities.Page
 	var r0 []entities.ExtensionGroup
 	var r1 entities.PageScope
 	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error)); ok {
-		return returnFunc(ctx, pageScope)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.GroupFilter, entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error)); ok {
+		return returnFunc(ctx, filter, pageScope)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.PageScope) []entities.ExtensionGroup); ok {
-		r0 = returnFunc(ctx, pageScope)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.GroupFilter, entities.PageScope) []entities.ExtensionGroup); ok {
+		r0 = returnFunc(ctx, filter, pageScope)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]entities.ExtensionGroup)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.PageScope) entities.PageScope); ok {
-		r1 = returnFunc(ctx, pageScope)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.GroupFilter, entities.PageScope) entities.PageScope); ok {
+		r1 = returnFunc(ctx, filter, pageScope)
 	} else {
 		r1 = ret.Get(1).(entities.PageScope)
 	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, entities.PageScope) error); ok {
-		r2 = returnFunc(ctx, pageScope)
+	if returnFunc, ok := ret.Get(2).(func(context.Context, entities.GroupFilter, entities.PageScope) error); ok {
+		r2 = returnFunc(ctx, filter, pageScope)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -280,24 +280,30 @@ type MockService_GetGroups_Call struct {
 
 // GetGroups is a helper method to define mock.On call
 //   - ctx context.Context
+//   - filter entities.GroupFilter
 //   - pageScope entities.PageScope
-func (_e *MockService_Expecter) GetGroups(ctx interface{}, pageScope interface{}) *MockService_GetGroups_Call {
-	return &MockService_GetGroups_Call{Call: _e.mock.On("GetGroups", ctx, pageScope)}
+func (_e *MockService_Expecter) GetGroups(ctx interface{}, filter interface{}, pageScope interface{}) *MockService_GetGroups_Call {
+	return &MockService_GetGroups_Call{Call: _e.mock.On("GetGroups", ctx, filter, pageScope)}
 }
 
-func (_c *MockService_GetGroups_Call) Run(run func(ctx context.Context, pageScope entities.PageScope)) *MockService_GetGroups_Call {
+func (_c *MockService_GetGroups_Call) Run(run func(ctx context.Context, filter entities.GroupFilter, pageScope entities.PageScope)) *MockService_GetGroups_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 entities.PageScope
+		var arg1 entities.GroupFilter
 		if args[1] != nil {
-			arg1 = args[1].(entities.PageScope)
+			arg1 = args[1].(entities.GroupFilter)
+		}
+		var arg2 entities.PageScope
+		if args[2] != nil {
+			arg2 = args[2].(entities.PageScope)
 		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -308,7 +314,75 @@ func (_c *MockService_GetGroups_Call) Return(extensionGroups []entities.Extensio
 	return _c
 }
 
-func (_c *MockService_GetGroups_Call) RunAndReturn(run func(ctx context.Context, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error)) *MockService_GetGroups_Call {
+func (_c *MockService_GetGroups_Call) RunAndReturn(run func(ctx context.Context, filter entities.GroupFilter, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error)) *MockService_GetGroups_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetRandomActiveGroups provides a mock function for the type MockService
+func (_mock *MockService) GetRandomActiveGroups(ctx context.Context, limit int) ([]entities.ExtensionGroup, error) {
+	ret := _mock.Called(ctx, limit)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetRandomActiveGroups")
+	}
+
+	var r0 []entities.ExtensionGroup
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int) ([]entities.ExtensionGroup, error)); ok {
+		return returnFunc(ctx, limit)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int) []entities.ExtensionGroup); ok {
+		r0 = returnFunc(ctx, limit)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]entities.ExtensionGroup)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int) error); ok {
+		r1 = returnFunc(ctx, limit)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockService_GetRandomActiveGroups_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetRandomActiveGroups'
+type MockService_GetRandomActiveGroups_Call struct {
+	*mock.Call
+}
+
+// GetRandomActiveGroups is a helper method to define mock.On call
+//   - ctx context.Context
+//   - limit int
+func (_e *MockService_Expecter) GetRandomActiveGroups(ctx interface{}, limit interface{}) *MockService_GetRandomActiveGroups_Call {
+	return &MockService_GetRandomActiveGroups_Call{Call: _e.mock.On("GetRandomActiveGroups", ctx, limit)}
+}
+
+func (_c *MockService_GetRandomActiveGroups_Call) Run(run func(ctx context.Context, limit int)) *MockService_GetRandomActiveGroups_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int
+		if args[1] != nil {
+			arg1 = args[1].(int)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockService_GetRandomActiveGroups_Call) Return(extensionGroups []entities.ExtensionGroup, err error) *MockService_GetRandomActiveGroups_Call {
+	_c.Call.Return(extensionGroups, err)
+	return _c
+}
+
+func (_c *MockService_GetRandomActiveGroups_Call) RunAndReturn(run func(ctx context.Context, limit int) ([]entities.ExtensionGroup, error)) *MockService_GetRandomActiveGroups_Call {
 	_c.Call.Return(run)
 	return _c
 }

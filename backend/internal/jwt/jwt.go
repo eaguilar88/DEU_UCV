@@ -70,7 +70,7 @@ func (s *JWTSigner) GenerateJWT(userID string, roles []entities.UserRole, provid
 		if r.DomainType != "all" {
 			domainType = r.DomainType
 		}
-		if r.Name == "faculty_admin" {
+		if faculty == "" && r.Faculty != "" {
 			faculty = r.Faculty
 		}
 	}

@@ -16,7 +16,9 @@ type Service interface {
 	CreateGroupResourceRequest(ctx context.Context, req entities.GroupResourceRequest) (int64, error)
 	ApproveGroupResourceRequest(ctx context.Context, reqID string) error
 	RejectGroupResourceRequest(ctx context.Context, reqID string) error
-	GetGroupResourceRequestsByFaculty(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.GroupResourceRequest, entities.PageScope, error)
+	GetGroupResourceRequestsByFaculty(ctx context.Context, faculty entities.Faculty, status string, pageScope entities.PageScope) ([]entities.GroupResourceRequest, int, entities.PageScope, error)
+	GetGroupResourceRequestsByGroupID(ctx context.Context, groupID string, status string, pageScope entities.PageScope) ([]entities.GroupResourceRequest, entities.PageScope, error)
+	GetPendingGroupResourceRequestsCountByFaculty(ctx context.Context) ([]FacultyPendingCount, error)
 	GetGroupResourceRequestByID(ctx context.Context, reqID string) (entities.GroupResourceRequest, error)
 }
 
@@ -32,11 +34,13 @@ func NewHandler(svc Service, log *zap.Logger) *Handler {
 func (h *Handler) RegisterGroupResourceRequestEndpoints(g *echo.Group) {
 	gr := g.Group("/group-resource-requests")
 	gr.POST("", h.CreateGroupResourceRequest)
+	gr.GET("/group/:groupID", h.GetGroupResourceRequestsByGroupID)
 }
 
 func (h *Handler) RegisterGroupResourceRequestAdminEndpoints(g *echo.Group) {
 	gr := g.Group("/group-resource-requests")
 	gr.GET("", h.GetGroupResourceRequestsByFaculty)
+	gr.GET("/pending-counts", h.GetPendingGroupResourceRequestsCountByFaculty)
 	gr.GET("/:id", h.GetGroupResourceRequestByID)
 	gr.POST("/:id/approve", h.ApproveGroupResourceRequest)
 	gr.POST("/:id/reject", h.RejectGroupResourceRequest)
@@ -110,13 +114,46 @@ func (h *Handler) GetGroupResourceRequestsByFaculty(c echo.Context) error {
 		return httperrors.NewBadRequest("invalid faculty")
 	}
 
+	status := c.QueryParam("status")
+
 	var pageScope entities.PageScope
 	//nolint:errcheck
 	pageScope.GetPageFromVars(c.QueryParam("page"))
 	//nolint:errcheck
 	pageScope.GetPerPageFromVars(c.QueryParam("pageSize"))
 
-	reqs, resultScope, err := h.svc.GetGroupResourceRequestsByFaculty(ctx, faculty, pageScope)
+	reqs, pendingCount, resultScope, err := h.svc.GetGroupResourceRequestsByFaculty(ctx, faculty, status, pageScope)
+	if err != nil {
+		return httperrors.NewInternal(err)
+	}
+
+	response := GetGroupResourceRequestsByFacultyResponse{
+		Requests:     make([]GetGroupResourceRequestResponse, 0, len(reqs)),
+		PendingCount: pendingCount,
+		Pages:        resultScope,
+	}
+	for _, req := range reqs {
+		response.Requests = append(response.Requests, toResponse(req))
+	}
+	return c.JSON(http.StatusOK, response)
+}
+
+func (h *Handler) GetGroupResourceRequestsByGroupID(c echo.Context) error {
+	ctx := c.Request().Context()
+	groupID := c.Param("groupID")
+	if groupID == "" {
+		return httperrors.NewBadRequest("groupID is required")
+	}
+
+	status := c.QueryParam("status")
+
+	var pageScope entities.PageScope
+	//nolint:errcheck
+	pageScope.GetPageFromVars(c.QueryParam("page"))
+	//nolint:errcheck
+	pageScope.GetPerPageFromVars(c.QueryParam("pageSize"))
+
+	reqs, resultScope, err := h.svc.GetGroupResourceRequestsByGroupID(ctx, groupID, status, pageScope)
 	if err != nil {
 		return httperrors.NewInternal(err)
 	}
@@ -129,6 +166,15 @@ func (h *Handler) GetGroupResourceRequestsByFaculty(c echo.Context) error {
 		response.Requests = append(response.Requests, toResponse(req))
 	}
 	return c.JSON(http.StatusOK, response)
+}
+
+func (h *Handler) GetPendingGroupResourceRequestsCountByFaculty(c echo.Context) error {
+	ctx := c.Request().Context()
+	counts, err := h.svc.GetPendingGroupResourceRequestsCountByFaculty(ctx)
+	if err != nil {
+		return httperrors.NewInternal(err)
+	}
+	return c.JSON(http.StatusOK, counts)
 }
 
 func (h *Handler) GetGroupResourceRequestByID(c echo.Context) error {
@@ -151,6 +197,7 @@ func toResponse(r entities.GroupResourceRequest) GetGroupResourceRequestResponse
 	return GetGroupResourceRequestResponse{
 		ID:        r.ID,
 		GroupID:   r.GroupID,
+		GroupName: r.GroupName,
 		Type:      r.Type,
 		Content:   r.Content,
 		Status:    r.Status,

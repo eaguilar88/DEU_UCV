@@ -100,7 +100,7 @@ func main() {
 	activityService := activities.NewService(repository, bbClient, logger)
 	activityEndpoints := activities.NewHandler(activityService, logger)
 
-	groupService := groups.NewService(repository, logger)
+	groupService := groups.NewService(repository, bbClient, logger)
 	groupEndpoints := groups.NewHandler(groupService, logger)
 
 	groupRequestService := group_requests.NewService(repository, logger)
@@ -142,13 +142,18 @@ func main() {
 	addActivityRoutes(e, activityEndpoints, middlewares...)
 	addGroupResourceRequestRoutes(e, groupResourceRequestEndpoints, middlewares...)
 
-	addAdminRoutes(e, middlewares,
+	adminMiddlewares := append(append([]echo.MiddlewareFunc{}, middlewares...),
+		jwt.RequireRoles("root", "deu_admin", "faculty_admin"),
+	)
+
+	addAdminRoutes(e, adminMiddlewares,
 		providerEndpoints.RegisterProviderAdminEndpoints,
 		groupRequestEndpoints.RegisterGroupRequestAdminEndpoints,
 		groupResourceRequestEndpoints.RegisterGroupResourceRequestAdminEndpoints,
 		courseRequestEndpoints.RegisterCourseRequestAdminEndpoints,
 		providerRequestEndpoints.RegisterProviderRequestAdminEndpoints,
 		cycleCloseEndpoints.RegisterAdminEndpoints,
+		activityEndpoints.RegisterActivityAdminEndpoints,
 	)
 
 	addCourseCycleCloseRequestRoutes(e, cycleCloseEndpoints, middlewares...)
@@ -249,7 +254,9 @@ func addActivityRoutes(e *echo.Echo, endpoints *activities.Handler, middlewares 
 	protectedGroup := e.Group("/activities", middlewares...)
 	protectedGroup.POST("", endpoints.CreateActivity)
 	protectedGroup.PUT("/:id", endpoints.UpdateActivity)
+	protectedGroup.PATCH("/feature", endpoints.ToggleFeature)
 	protectedGroup.DELETE("/:id", endpoints.DeleteActivity)
+	protectedGroup.GET("/group-summary/:groupId", endpoints.GetGroupDashboardSummary)
 }
 
 func addGroupsRoutes(e *echo.Echo, endpoints *groups.Handler, middlewares ...echo.MiddlewareFunc) {

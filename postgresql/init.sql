@@ -204,7 +204,9 @@ CREATE TABLE
     user_id INTEGER NOT NULL REFERENCES deu.users (id) ON DELETE CASCADE, -- Usuario que creó el grupo
     name VARCHAR,
     description TEXT,
+    is_multidisciplinary BOOLEAN DEFAULT FALSE, -- Grupo normal o multidisciplinario
     faculty faculty_enum DEFAULT 'DEU', -- Facultad responsable del grupo
+    foundation DATE, -- Fecha de Fundación del Grupo
     objective TEXT,
     code VARCHAR, -- Código asignado por la DEU
     group_director VARCHAR, -- Director del grupo de extensión
@@ -240,7 +242,7 @@ CREATE TABLE
     phone VARCHAR,
     email VARCHAR,
     coordination VARCHAR,
-    year INTEGER,
+    year VARCHAR,
     faculty faculty_enum DEFAULT 'DEU',
     school VARCHAR,
     document VARCHAR,
@@ -270,13 +272,19 @@ CREATE TABLE
     name VARCHAR,
     group_id INTEGER REFERENCES deu.extension_groups (id) ON DELETE SET NULL,
     description TEXT,
-    date DATE,
+    date_start DATE,
+    date_end DATE,
+    location VARCHAR,
     knowledge_area VARCHAR, -- Área de conocimiento relacionada con la actividad
     allies VARCHAR, -- Aliados o colaboradores de la actividad
+    group_participants INTEGER, -- Miembros del grupo que participaron
     stimated_participants INTEGER, -- Participantes estimados
     actual_participants INTEGER, -- Participantes reales
     financing VARCHAR, -- Financiamiento
     comments TEXT, -- Observaciones
+    gallery_url VARCHAR, -- Enlace a la galería de la actividad en almacenamiento externo
+    report_checked BOOLEAN DEFAULT FALSE, -- Campo para marcar si el reporte ya fue chequeado
+    is_featured BOOLEAN DEFAULT FALSE, -- Campo para destacar una actividad
     created_at TIMESTAMP DEFAULT NOW (),
     updated_at TIMESTAMP DEFAULT NOW (),
     deleted_at TIMESTAMP

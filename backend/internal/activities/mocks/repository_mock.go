@@ -38,6 +38,72 @@ func (_m *MockRepository) EXPECT() *MockRepository_Expecter {
 	return &MockRepository_Expecter{mock: &_m.Mock}
 }
 
+// CountActivities provides a mock function for the type MockRepository
+func (_mock *MockRepository) CountActivities(ctx context.Context, filter entities.ActivityFilter) (int, error) {
+	ret := _mock.Called(ctx, filter)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CountActivities")
+	}
+
+	var r0 int
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.ActivityFilter) (int, error)); ok {
+		return returnFunc(ctx, filter)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.ActivityFilter) int); ok {
+		r0 = returnFunc(ctx, filter)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.ActivityFilter) error); ok {
+		r1 = returnFunc(ctx, filter)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_CountActivities_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CountActivities'
+type MockRepository_CountActivities_Call struct {
+	*mock.Call
+}
+
+// CountActivities is a helper method to define mock.On call
+//   - ctx context.Context
+//   - filter entities.ActivityFilter
+func (_e *MockRepository_Expecter) CountActivities(ctx interface{}, filter interface{}) *MockRepository_CountActivities_Call {
+	return &MockRepository_CountActivities_Call{Call: _e.mock.On("CountActivities", ctx, filter)}
+}
+
+func (_c *MockRepository_CountActivities_Call) Run(run func(ctx context.Context, filter entities.ActivityFilter)) *MockRepository_CountActivities_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 entities.ActivityFilter
+		if args[1] != nil {
+			arg1 = args[1].(entities.ActivityFilter)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_CountActivities_Call) Return(n int, err error) *MockRepository_CountActivities_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockRepository_CountActivities_Call) RunAndReturn(run func(ctx context.Context, filter entities.ActivityFilter) (int, error)) *MockRepository_CountActivities_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // CreateActivity provides a mock function for the type MockRepository
 func (_mock *MockRepository) CreateActivity(ctx context.Context, activity entities.Activity) (int64, error) {
 	ret := _mock.Called(ctx, activity)
@@ -381,6 +447,72 @@ func (_c *MockRepository_GetFilesByOwner_Call) RunAndReturn(run func(ctx context
 	return _c
 }
 
+// GetGroupDashboardSummary provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetGroupDashboardSummary(ctx context.Context, groupID string) (entities.GroupDashboardSummary, error) {
+	ret := _mock.Called(ctx, groupID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetGroupDashboardSummary")
+	}
+
+	var r0 entities.GroupDashboardSummary
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (entities.GroupDashboardSummary, error)); ok {
+		return returnFunc(ctx, groupID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) entities.GroupDashboardSummary); ok {
+		r0 = returnFunc(ctx, groupID)
+	} else {
+		r0 = ret.Get(0).(entities.GroupDashboardSummary)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, groupID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetGroupDashboardSummary_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetGroupDashboardSummary'
+type MockRepository_GetGroupDashboardSummary_Call struct {
+	*mock.Call
+}
+
+// GetGroupDashboardSummary is a helper method to define mock.On call
+//   - ctx context.Context
+//   - groupID string
+func (_e *MockRepository_Expecter) GetGroupDashboardSummary(ctx interface{}, groupID interface{}) *MockRepository_GetGroupDashboardSummary_Call {
+	return &MockRepository_GetGroupDashboardSummary_Call{Call: _e.mock.On("GetGroupDashboardSummary", ctx, groupID)}
+}
+
+func (_c *MockRepository_GetGroupDashboardSummary_Call) Run(run func(ctx context.Context, groupID string)) *MockRepository_GetGroupDashboardSummary_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetGroupDashboardSummary_Call) Return(groupDashboardSummary entities.GroupDashboardSummary, err error) *MockRepository_GetGroupDashboardSummary_Call {
+	_c.Call.Return(groupDashboardSummary, err)
+	return _c
+}
+
+func (_c *MockRepository_GetGroupDashboardSummary_Call) RunAndReturn(run func(ctx context.Context, groupID string) (entities.GroupDashboardSummary, error)) *MockRepository_GetGroupDashboardSummary_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SaveFilesToDB provides a mock function for the type MockRepository
 func (_mock *MockRepository) SaveFilesToDB(ctx context.Context, files []*entities.File) error {
 	ret := _mock.Called(ctx, files)
@@ -491,6 +623,132 @@ func (_c *MockRepository_UpdateActivity_Call) Return(err error) *MockRepository_
 }
 
 func (_c *MockRepository_UpdateActivity_Call) RunAndReturn(run func(ctx context.Context, activity entities.Activity) error) *MockRepository_UpdateActivity_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateFeatureStatus provides a mock function for the type MockRepository
+func (_mock *MockRepository) UpdateFeatureStatus(ctx context.Context, id string, featured bool) error {
+	ret := _mock.Called(ctx, id, featured)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateFeatureStatus")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, bool) error); ok {
+		r0 = returnFunc(ctx, id, featured)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockRepository_UpdateFeatureStatus_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateFeatureStatus'
+type MockRepository_UpdateFeatureStatus_Call struct {
+	*mock.Call
+}
+
+// UpdateFeatureStatus is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - featured bool
+func (_e *MockRepository_Expecter) UpdateFeatureStatus(ctx interface{}, id interface{}, featured interface{}) *MockRepository_UpdateFeatureStatus_Call {
+	return &MockRepository_UpdateFeatureStatus_Call{Call: _e.mock.On("UpdateFeatureStatus", ctx, id, featured)}
+}
+
+func (_c *MockRepository_UpdateFeatureStatus_Call) Run(run func(ctx context.Context, id string, featured bool)) *MockRepository_UpdateFeatureStatus_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 bool
+		if args[2] != nil {
+			arg2 = args[2].(bool)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_UpdateFeatureStatus_Call) Return(err error) *MockRepository_UpdateFeatureStatus_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockRepository_UpdateFeatureStatus_Call) RunAndReturn(run func(ctx context.Context, id string, featured bool) error) *MockRepository_UpdateFeatureStatus_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateReportCheckStatus provides a mock function for the type MockRepository
+func (_mock *MockRepository) UpdateReportCheckStatus(ctx context.Context, id string, checked bool) error {
+	ret := _mock.Called(ctx, id, checked)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateReportCheckStatus")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, bool) error); ok {
+		r0 = returnFunc(ctx, id, checked)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockRepository_UpdateReportCheckStatus_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateReportCheckStatus'
+type MockRepository_UpdateReportCheckStatus_Call struct {
+	*mock.Call
+}
+
+// UpdateReportCheckStatus is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - checked bool
+func (_e *MockRepository_Expecter) UpdateReportCheckStatus(ctx interface{}, id interface{}, checked interface{}) *MockRepository_UpdateReportCheckStatus_Call {
+	return &MockRepository_UpdateReportCheckStatus_Call{Call: _e.mock.On("UpdateReportCheckStatus", ctx, id, checked)}
+}
+
+func (_c *MockRepository_UpdateReportCheckStatus_Call) Run(run func(ctx context.Context, id string, checked bool)) *MockRepository_UpdateReportCheckStatus_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 bool
+		if args[2] != nil {
+			arg2 = args[2].(bool)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_UpdateReportCheckStatus_Call) Return(err error) *MockRepository_UpdateReportCheckStatus_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockRepository_UpdateReportCheckStatus_Call) RunAndReturn(run func(ctx context.Context, id string, checked bool) error) *MockRepository_UpdateReportCheckStatus_Call {
 	_c.Call.Return(run)
 	return _c
 }

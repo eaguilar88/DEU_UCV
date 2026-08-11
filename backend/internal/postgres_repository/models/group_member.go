@@ -10,7 +10,7 @@ type GroupMember struct {
 	Phone        sql.NullString
 	Email        sql.NullString
 	Coordination sql.NullString
-	Year         sql.NullInt64
+	Year         sql.NullString
 	Faculty      string
 	School       sql.NullString
 	Document     sql.NullString

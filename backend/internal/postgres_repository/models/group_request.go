@@ -8,6 +8,7 @@ import (
 type GroupRequest struct {
 	ID         int64          `db:"id"`
 	GroupID    int64          `db:"group_id"`
+	GroupName  string         `db:"group_name"`
 	Status     string         `db:"status"`
 	Faculty    string         `db:"faculty"`
 	ReviewerID sql.NullInt64  `db:"reviewer_id"`

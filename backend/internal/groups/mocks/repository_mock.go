@@ -299,6 +299,80 @@ func (_c *MockRepository_DeleteGroup_Call) RunAndReturn(run func(ctx context.Con
 	return _c
 }
 
+// GetContactsByOwner provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetContactsByOwner(ctx context.Context, ownerID string, ownerType entities.OwnerType) ([]entities.Contact, error) {
+	ret := _mock.Called(ctx, ownerID, ownerType)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetContactsByOwner")
+	}
+
+	var r0 []entities.Contact
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, entities.OwnerType) ([]entities.Contact, error)); ok {
+		return returnFunc(ctx, ownerID, ownerType)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, entities.OwnerType) []entities.Contact); ok {
+		r0 = returnFunc(ctx, ownerID, ownerType)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]entities.Contact)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, entities.OwnerType) error); ok {
+		r1 = returnFunc(ctx, ownerID, ownerType)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetContactsByOwner_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetContactsByOwner'
+type MockRepository_GetContactsByOwner_Call struct {
+	*mock.Call
+}
+
+// GetContactsByOwner is a helper method to define mock.On call
+//   - ctx context.Context
+//   - ownerID string
+//   - ownerType entities.OwnerType
+func (_e *MockRepository_Expecter) GetContactsByOwner(ctx interface{}, ownerID interface{}, ownerType interface{}) *MockRepository_GetContactsByOwner_Call {
+	return &MockRepository_GetContactsByOwner_Call{Call: _e.mock.On("GetContactsByOwner", ctx, ownerID, ownerType)}
+}
+
+func (_c *MockRepository_GetContactsByOwner_Call) Run(run func(ctx context.Context, ownerID string, ownerType entities.OwnerType)) *MockRepository_GetContactsByOwner_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 entities.OwnerType
+		if args[2] != nil {
+			arg2 = args[2].(entities.OwnerType)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetContactsByOwner_Call) Return(contacts []entities.Contact, err error) *MockRepository_GetContactsByOwner_Call {
+	_c.Call.Return(contacts, err)
+	return _c
+}
+
+func (_c *MockRepository_GetContactsByOwner_Call) RunAndReturn(run func(ctx context.Context, ownerID string, ownerType entities.OwnerType) ([]entities.Contact, error)) *MockRepository_GetContactsByOwner_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetFilesByOwner provides a mock function for the type MockRepository
 func (_mock *MockRepository) GetFilesByOwner(ctx context.Context, ownerID string, ownerType entities.OwnerType) (entities.GroupedFiles, error) {
 	ret := _mock.Called(ctx, ownerID, ownerType)
@@ -440,8 +514,8 @@ func (_c *MockRepository_GetGroupByID_Call) RunAndReturn(run func(ctx context.Co
 }
 
 // GetGroups provides a mock function for the type MockRepository
-func (_mock *MockRepository) GetGroups(ctx context.Context, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error) {
-	ret := _mock.Called(ctx, pageScope)
+func (_mock *MockRepository) GetGroups(ctx context.Context, filter entities.GroupFilter, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error) {
+	ret := _mock.Called(ctx, filter, pageScope)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetGroups")
@@ -450,23 +524,23 @@ func (_mock *MockRepository) GetGroups(ctx context.Context, pageScope entities.P
 	var r0 []entities.ExtensionGroup
 	var r1 entities.PageScope
 	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error)); ok {
-		return returnFunc(ctx, pageScope)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.GroupFilter, entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error)); ok {
+		return returnFunc(ctx, filter, pageScope)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.PageScope) []entities.ExtensionGroup); ok {
-		r0 = returnFunc(ctx, pageScope)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.GroupFilter, entities.PageScope) []entities.ExtensionGroup); ok {
+		r0 = returnFunc(ctx, filter, pageScope)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]entities.ExtensionGroup)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.PageScope) entities.PageScope); ok {
-		r1 = returnFunc(ctx, pageScope)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.GroupFilter, entities.PageScope) entities.PageScope); ok {
+		r1 = returnFunc(ctx, filter, pageScope)
 	} else {
 		r1 = ret.Get(1).(entities.PageScope)
 	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, entities.PageScope) error); ok {
-		r2 = returnFunc(ctx, pageScope)
+	if returnFunc, ok := ret.Get(2).(func(context.Context, entities.GroupFilter, entities.PageScope) error); ok {
+		r2 = returnFunc(ctx, filter, pageScope)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -480,24 +554,30 @@ type MockRepository_GetGroups_Call struct {
 
 // GetGroups is a helper method to define mock.On call
 //   - ctx context.Context
+//   - filter entities.GroupFilter
 //   - pageScope entities.PageScope
-func (_e *MockRepository_Expecter) GetGroups(ctx interface{}, pageScope interface{}) *MockRepository_GetGroups_Call {
-	return &MockRepository_GetGroups_Call{Call: _e.mock.On("GetGroups", ctx, pageScope)}
+func (_e *MockRepository_Expecter) GetGroups(ctx interface{}, filter interface{}, pageScope interface{}) *MockRepository_GetGroups_Call {
+	return &MockRepository_GetGroups_Call{Call: _e.mock.On("GetGroups", ctx, filter, pageScope)}
 }
 
-func (_c *MockRepository_GetGroups_Call) Run(run func(ctx context.Context, pageScope entities.PageScope)) *MockRepository_GetGroups_Call {
+func (_c *MockRepository_GetGroups_Call) Run(run func(ctx context.Context, filter entities.GroupFilter, pageScope entities.PageScope)) *MockRepository_GetGroups_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 entities.PageScope
+		var arg1 entities.GroupFilter
 		if args[1] != nil {
-			arg1 = args[1].(entities.PageScope)
+			arg1 = args[1].(entities.GroupFilter)
+		}
+		var arg2 entities.PageScope
+		if args[2] != nil {
+			arg2 = args[2].(entities.PageScope)
 		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -508,7 +588,75 @@ func (_c *MockRepository_GetGroups_Call) Return(extensionGroups []entities.Exten
 	return _c
 }
 
-func (_c *MockRepository_GetGroups_Call) RunAndReturn(run func(ctx context.Context, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error)) *MockRepository_GetGroups_Call {
+func (_c *MockRepository_GetGroups_Call) RunAndReturn(run func(ctx context.Context, filter entities.GroupFilter, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error)) *MockRepository_GetGroups_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetRandomActiveGroups provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetRandomActiveGroups(ctx context.Context, limit int) ([]entities.ExtensionGroup, error) {
+	ret := _mock.Called(ctx, limit)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetRandomActiveGroups")
+	}
+
+	var r0 []entities.ExtensionGroup
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int) ([]entities.ExtensionGroup, error)); ok {
+		return returnFunc(ctx, limit)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int) []entities.ExtensionGroup); ok {
+		r0 = returnFunc(ctx, limit)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]entities.ExtensionGroup)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int) error); ok {
+		r1 = returnFunc(ctx, limit)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetRandomActiveGroups_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetRandomActiveGroups'
+type MockRepository_GetRandomActiveGroups_Call struct {
+	*mock.Call
+}
+
+// GetRandomActiveGroups is a helper method to define mock.On call
+//   - ctx context.Context
+//   - limit int
+func (_e *MockRepository_Expecter) GetRandomActiveGroups(ctx interface{}, limit interface{}) *MockRepository_GetRandomActiveGroups_Call {
+	return &MockRepository_GetRandomActiveGroups_Call{Call: _e.mock.On("GetRandomActiveGroups", ctx, limit)}
+}
+
+func (_c *MockRepository_GetRandomActiveGroups_Call) Run(run func(ctx context.Context, limit int)) *MockRepository_GetRandomActiveGroups_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int
+		if args[1] != nil {
+			arg1 = args[1].(int)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetRandomActiveGroups_Call) Return(extensionGroups []entities.ExtensionGroup, err error) *MockRepository_GetRandomActiveGroups_Call {
+	_c.Call.Return(extensionGroups, err)
+	return _c
+}
+
+func (_c *MockRepository_GetRandomActiveGroups_Call) RunAndReturn(run func(ctx context.Context, limit int) ([]entities.ExtensionGroup, error)) *MockRepository_GetRandomActiveGroups_Call {
 	_c.Call.Return(run)
 	return _c
 }

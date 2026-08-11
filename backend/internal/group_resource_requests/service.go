@@ -11,7 +11,9 @@ type Repository interface {
 	CreateGroupResourceRequest(ctx context.Context, req entities.GroupResourceRequest) (int64, error)
 	ApproveGroupResourceRequest(ctx context.Context, reqID string) error
 	RejectGroupResourceRequest(ctx context.Context, reqID string) error
-	GetGroupResourceRequestsByFaculty(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.GroupResourceRequest, entities.PageScope, error)
+	GetGroupResourceRequestsByFaculty(ctx context.Context, faculty entities.Faculty, status string, pageScope entities.PageScope) ([]entities.GroupResourceRequest, int, entities.PageScope, error)
+	GetGroupResourceRequestsByGroupID(ctx context.Context, groupID string, status string, pageScope entities.PageScope) ([]entities.GroupResourceRequest, entities.PageScope, error)
+	GetPendingGroupResourceRequestsCountByFaculty(ctx context.Context) ([]FacultyPendingCount, error)
 	GetGroupResourceRequestByID(ctx context.Context, reqID string) (entities.GroupResourceRequest, error)
 }
 
@@ -41,13 +43,31 @@ func (s *service) RejectGroupResourceRequest(ctx context.Context, reqID string) 
 	return s.repo.RejectGroupResourceRequest(ctx, reqID)
 }
 
-func (s *service) GetGroupResourceRequestsByFaculty(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.GroupResourceRequest, entities.PageScope, error) {
-	reqs, ps, err := s.repo.GetGroupResourceRequestsByFaculty(ctx, faculty, pageScope)
+func (s *service) GetGroupResourceRequestsByFaculty(ctx context.Context, faculty entities.Faculty, status string, pageScope entities.PageScope) ([]entities.GroupResourceRequest, int, entities.PageScope, error) {
+	reqs, pendingCount, ps, err := s.repo.GetGroupResourceRequestsByFaculty(ctx, faculty, status, pageScope)
 	if err != nil {
 		s.logger.Error("failed to get group resource requests by faculty", zap.Error(err))
+		return nil, 0, entities.PageScope{}, err
+	}
+	return reqs, pendingCount, ps, nil
+}
+
+func (s *service) GetGroupResourceRequestsByGroupID(ctx context.Context, groupID string, status string, pageScope entities.PageScope) ([]entities.GroupResourceRequest, entities.PageScope, error) {
+	reqs, ps, err := s.repo.GetGroupResourceRequestsByGroupID(ctx, groupID, status, pageScope)
+	if err != nil {
+		s.logger.Error("failed to get group resource requests by group id", zap.Error(err))
 		return nil, entities.PageScope{}, err
 	}
 	return reqs, ps, nil
+}
+
+func (s *service) GetPendingGroupResourceRequestsCountByFaculty(ctx context.Context) ([]FacultyPendingCount, error) {
+	counts, err := s.repo.GetPendingGroupResourceRequestsCountByFaculty(ctx)
+	if err != nil {
+		s.logger.Error("failed to get pending group resource requests count by faculty", zap.Error(err))
+		return nil, err
+	}
+	return counts, nil
 }
 
 func (s *service) GetGroupResourceRequestByID(ctx context.Context, reqID string) (entities.GroupResourceRequest, error) {
