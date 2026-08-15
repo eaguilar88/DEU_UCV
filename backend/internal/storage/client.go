@@ -112,7 +112,7 @@ func (b *B2Client) DeleteFile(ctx context.Context, objectKey string) error {
 
 func (b *B2Client) GetFileURL(_ context.Context, objectKey string) (string, error) {
 	if b.baseURL != "" {
-		return fmt.Sprintf("%s/files/%s", b.baseURL, objectKey), nil
+		return fmt.Sprintf("%s/%s", b.baseURL, objectKey), nil
 	}
 
 	// Fallback: generate a pre-signed URL when no base URL is configured

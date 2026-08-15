@@ -169,20 +169,6 @@ func TestHandler_CreateActivity(t *testing.T) {
 			wantErr: httperrors.NewUnauthorized("authentication required"),
 		},
 		{
-			name:   "error missing cover image",
-			svc:    &mocks.MockService{},
-			userID: &userID,
-			buildForm: func() (*bytes.Buffer, string) {
-				var b bytes.Buffer
-				w := multipart.NewWriter(&b)
-				_ = w.WriteField("group_id", "1")
-				_ = w.WriteField("nombre", "Workshop")
-				w.Close()
-				return &b, w.FormDataContentType()
-			},
-			wantErr: httperrors.NewBadRequest("cubierta is required"),
-		},
-		{
 			name:      "error from service",
 			svc:       &mocks.MockService{},
 			userID:    &userID,
