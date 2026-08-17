@@ -28,7 +28,7 @@ type Activity struct {
 	DateStart             string
 	DateEnd               string
 	Location              string
-	KnowledgeArea         string
+	KnowledgeArea         []string
 	Allies                string
 	GroupParticipants     int
 	EstimatedParticipants int
@@ -38,6 +38,7 @@ type Activity struct {
 	GalleryURL            string
 	ReportChecked         bool
 	IsFeatured            bool
+	CreatedBy             string
 	CoverImage            *File
 	ParticipantList       *File
 	CreatedAt             string
@@ -54,4 +55,11 @@ type GroupDashboardSummary struct {
 	PlannedCount       int                      `json:"actividades_planificadas"`
 	PendingReportCount int                      `json:"reportes_pendientes"`
 	CurrentActivities  []CurrentActivitySummary `json:"actividades_actuales"`
+}
+
+type ActivityMetrics struct {
+	TotalCount         int `json:"total"`
+	UpcomingCount      int `json:"proximas"`
+	InCourseCount      int `json:"en_curso"`
+	PendingReportCount int `json:"espera_reporte"`
 }

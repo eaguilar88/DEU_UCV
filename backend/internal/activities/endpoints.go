@@ -21,7 +21,7 @@ const (
 
 type Service interface {
 	GetActivity(ctx context.Context, id string) (entities.Activity, error)
-	GetActivities(ctx context.Context, filter entities.ActivityFilter, pageScope entities.PageScope) ([]entities.Activity, entities.PageScope, error)
+	GetActivities(ctx context.Context, filter entities.ActivityFilter, pageScope entities.PageScope) ([]entities.Activity, entities.PageScope, entities.ActivityMetrics, error)
 	GetGroupDashboardSummary(ctx context.Context, groupID string) (entities.GroupDashboardSummary, error)
 	CreateActivity(ctx context.Context, activity entities.Activity) (int64, error)
 	UpdateActivity(ctx context.Context, id string, activity entities.Activity) error
@@ -96,7 +96,7 @@ func (h *Handler) GetActivities(c echo.Context) error {
 		DisablePaging:         req.DisablePaging,
 	}
 
-	list, pageScope, err := h.svc.GetActivities(ctx, filter, scope)
+	list, pageScope, metrics, err := h.svc.GetActivities(ctx, filter, scope)
 	if err != nil {
 		return httperrors.NewInternal(err)
 	}
@@ -104,6 +104,7 @@ func (h *Handler) GetActivities(c echo.Context) error {
 	return c.JSON(http.StatusOK, GetActivitiesResponse{
 		Activities: activitiesToResponse(list),
 		PageScope:  pageScope,
+		Metrics:    metrics,
 	})
 }
 
@@ -156,7 +157,7 @@ func (h *Handler) buildDateFilter(c echo.Context) (string, string, error) {
 func (h *Handler) CreateActivity(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	_, ok := c.Get("userID").(string)
+	userID, ok := c.Get("userID").(string)
 	if !ok {
 		return httperrors.NewUnauthorized("authentication required")
 	}
@@ -169,16 +170,20 @@ func (h *Handler) CreateActivity(c echo.Context) error {
 		return httperrors.NewBadRequest(err.Error())
 	}
 
-	//coverImage, err := utils.GetFileFrom(c, entities.ActivityFileTypeCoverImage)
-	//if err != nil {
-	//	return httperrors.NewBadRequest("cubierta is required")
-	//}
+	coverImage, err := utils.GetFileFrom(c, entities.ActivityFileTypeCoverImage)
+	if err != nil || coverImage == nil {
+		return httperrors.NewBadRequest("cover image is required")
+	}
 
 	activity := createActivityEntityFromRequest(req)
-
-	if coverImage, err := utils.GetFileFrom(c, entities.ActivityFileTypeCoverImage); err == nil {
-		activity.CoverImage = coverImage
+	
+	// Si req.UploadedBy viene vacío del frontend, usa el userID del token
+	if activity.CreatedBy == "" {
+		activity.CreatedBy = userID
 	}
+
+	activity.CoverImage = coverImage
+
 	if participantList, err := utils.GetFileFrom(c, entities.ActivityFileTypeListParticipants); err == nil {
 		activity.ParticipantList = participantList
 	}

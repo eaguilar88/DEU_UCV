@@ -20,39 +20,39 @@ type GetActivitiesRequest struct {
 }
 
 type CreateActivityRequest struct {
-	GroupID               string `form:"group_id" validate:"required"`
-	Name                  string `form:"nombre" validate:"required"`
-	Description           string `form:"descripcion"`
-	DateStart             string `form:"fecha_inicio"`
-	DateEnd               string `form:"fecha_fin"`
-	Location              string `form:"ubicacion"`
-	KnowledgeArea         string `form:"area_conocimiento"`
-	Allies                string `form:"aliados"`
-	GroupParticipants     int    `form:"participantes_grupo"`
-	EstimatedParticipants int    `form:"participantes_estimados"`
-	ActualParticipants    int    `form:"participantes_reales"`
-	Financing             string `form:"financiamiento"`
-	Comments              string `form:"observaciones"`
-	GalleryURL            string `form:"galeria_url"`
-	IsFeatured            bool   `form:"destacado"`
+	GroupID               string   `form:"group_id" validate:"required"`
+	Name                  string   `form:"nombre" validate:"required"`
+	Description           string   `form:"descripcion"`
+	DateStart             string   `form:"fecha_inicio"`
+	DateEnd               string   `form:"fecha_fin"`
+	Location              string   `form:"ubicacion"`
+	KnowledgeArea         []string `form:"area_conocimiento"`
+	Allies                string   `form:"aliados"`
+	GroupParticipants     int      `form:"participantes_grupo"`
+	EstimatedParticipants int      `form:"participantes_estimados"`
+	ActualParticipants    int      `form:"participantes_reales"`
+	Financing             string   `form:"financiamiento"`
+	Comments              string   `form:"observaciones"`
+	GalleryURL            string   `form:"galeria_url"`
+	UploadedBy            string   `form:"uploaded_by"`
 }
 
 type UpdateActivityRequest struct {
-	ID                    string `param:"id" validate:"required"`
-	Name                  string `form:"nombre"`
-	Description           string `form:"descripcion"`
-	DateStart             string `form:"fecha_inicio"`
-	DateEnd               string `form:"fecha_fin"`
-	Location              string `form:"ubicacion"`
-	KnowledgeArea         string `form:"area_conocimiento"`
-	Allies                string `form:"aliados"`
-	GroupParticipants     int    `form:"participantes_grupo"`
-	EstimatedParticipants int    `form:"participantes_estimados"`
-	ActualParticipants    int    `form:"participantes_reales"`
-	Financing             string `form:"financiamiento"`
-	Comments              string `form:"observaciones"`
-	GalleryURL            string `form:"galeria_url"`
-	IsFeatured            bool   `form:"destacado"`
+	ID                    string   `param:"id" validate:"required"`
+	Name                  string   `form:"nombre"`
+	Description           string   `form:"descripcion"`
+	DateStart             string   `form:"fecha_inicio"`
+	DateEnd               string   `form:"fecha_fin"`
+	Location              string   `form:"ubicacion"`
+	KnowledgeArea         []string `form:"area_conocimiento"`
+	Allies                string   `form:"aliados"`
+	GroupParticipants     int      `form:"participantes_grupo"`
+	EstimatedParticipants int      `form:"participantes_estimados"`
+	ActualParticipants    int      `form:"participantes_reales"`
+	Financing             string   `form:"financiamiento"`
+	Comments              string   `form:"observaciones"`
+	GalleryURL            string   `form:"galeria_url"`
+	UploadedBy            string   `form:"uploaded_by"`
 }
 
 type ToggleReportCheckRequest struct {

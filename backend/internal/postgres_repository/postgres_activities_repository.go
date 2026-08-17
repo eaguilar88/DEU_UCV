@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/lib/pq"
+
 	"github.com/eaguilar88/deu/internal/activities"
 	"github.com/eaguilar88/deu/internal/entities"
 
@@ -77,10 +79,36 @@ func (r *PostgresRepository) GetActivities(ctx context.Context, filter entities.
 	return result, pageScope, nil
 }
 
+func (r *PostgresRepository) GetActivityMetrics(ctx context.Context, groupID string) (entities.ActivityMetrics, error) {
+	var metrics entities.ActivityMetrics
+	query, args, err := queries.GetActivityMetrics(groupID).ToSql()
+	if err != nil {
+		return metrics, err
+	}
+
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		return metrics, err
+	}
+	defer stmt.Close()
+
+	err = stmt.QueryRowContext(ctx, args...).Scan(
+		&metrics.TotalCount,
+		&metrics.UpcomingCount,
+		&metrics.InCourseCount,
+		&metrics.PendingReportCount,
+	)
+	if err != nil {
+		return metrics, err
+	}
+
+	return metrics, nil
+}
+
 func (r *PostgresRepository) GetGroupDashboardSummary(ctx context.Context, groupID string) (entities.GroupDashboardSummary, error) {
 	var summary entities.GroupDashboardSummary
 
-	// 1. Actividades planificadas
+	// Actividades planificadas
 	qPlanned, argsPlanned, err := queries.CountPlannedActivitiesByGroupID(groupID).ToSql()
 	if err != nil {
 		return summary, err
@@ -89,7 +117,7 @@ func (r *PostgresRepository) GetGroupDashboardSummary(ctx context.Context, group
 		return summary, err
 	}
 
-	// 2. Reportes pendientes
+	// Reportes pendientes
 	qPending, argsPending, err := queries.CountPendingReportActivitiesByGroupID(groupID).ToSql()
 	if err != nil {
 		return summary, err
@@ -98,7 +126,7 @@ func (r *PostgresRepository) GetGroupDashboardSummary(ctx context.Context, group
 		return summary, err
 	}
 
-	// 3. Actividades actuales
+	// Actividades actuales
 	qCurrent, argsCurrent, err := queries.GetCurrentActivitiesByGroupID(groupID).ToSql()
 	if err != nil {
 		return summary, err
@@ -269,6 +297,11 @@ func scanActivity(row scannable) (models.Activity, error) {
 }
 
 func newActivityToModel(a entities.Activity) models.Activity {
+	knowledgeArea := a.KnowledgeArea
+	if knowledgeArea == nil {
+		knowledgeArea = make([]string, 0)
+	}
+
 	return models.Activity{
 		ID:                    a.ID,
 		GroupID:               a.GroupID,
@@ -277,7 +310,7 @@ func newActivityToModel(a entities.Activity) models.Activity {
 		DateStart:             toNullString(a.DateStart),
 		DateEnd:               toNullString(a.DateEnd),
 		Location:              toNullString(a.Location),
-		KnowledgeArea:         toNullString(a.KnowledgeArea),
+		KnowledgeArea:         pq.StringArray(knowledgeArea),
 		Allies:                toNullString(a.Allies),
 		GroupParticipants:     sql.NullInt64{Int64: int64(a.GroupParticipants), Valid: a.GroupParticipants != 0},
 		EstimatedParticipants: sql.NullInt64{Int64: int64(a.EstimatedParticipants), Valid: a.EstimatedParticipants != 0},
@@ -291,6 +324,11 @@ func newActivityToModel(a entities.Activity) models.Activity {
 }
 
 func newActivityFromModel(a models.Activity) entities.Activity {
+	knowledgeArea := []string(a.KnowledgeArea)
+	if knowledgeArea == nil {
+		knowledgeArea = make([]string, 0)
+	}
+
 	return entities.Activity{
 		ID:                    a.ID,
 		GroupID:               a.GroupID,
@@ -300,7 +338,7 @@ func newActivityFromModel(a models.Activity) entities.Activity {
 		DateStart:             a.DateStart.String,
 		DateEnd:               a.DateEnd.String,
 		Location:              a.Location.String,
-		KnowledgeArea:         a.KnowledgeArea.String,
+		KnowledgeArea:         knowledgeArea,
 		Allies:                a.Allies.String,
 		GroupParticipants:     int(a.GroupParticipants.Int64),
 		EstimatedParticipants: int(a.EstimatedParticipants.Int64),

@@ -23,6 +23,7 @@ type GroupMemberResponse struct {
 	Faculty      string `json:"facultad,omitempty"`
 	School       string `json:"escuela,omitempty"`
 	Document     string `json:"documento,omitempty"`
+	IsLeader     bool   `json:"es_lider"`
 	IsActive     bool   `json:"status"`
 }
 
@@ -30,10 +31,11 @@ type GetGroupResponse struct {
 	ID          string                `json:"id,omitempty"`
 	Name        string                `json:"nombre,omitempty"`
 	Description string                `json:"descripcion,omitempty"`
-	Faculty     string                `json:"facultad,omitempty"`
+	Faculty     []string              `json:"facultad,omitempty"`
 	Foundation  string                `json:"fundacion,omitempty"`
-	Type        string                `json:"tipo,omitempty"`
+	Type        []string              `json:"tipo,omitempty"`
 	LogoURL     string                `json:"imagen_url,omitempty"`
+	ProjectURL  string                `json:"proyecto_url,omitempty"`
 	Email       string                `json:"email,omitempty"`
 	Phone       string                `json:"telefono,omitempty"`
 	Owner       *OwnerInfo            `json:"propietario,omitempty"`
@@ -78,6 +80,7 @@ func memberToResponse(m entities.GroupMember) GroupMemberResponse {
 		Faculty:      string(m.Faculty),
 		School:       m.School,
 		Document:     m.Document,
+		IsLeader:     m.IsLeader,
 		IsActive:     m.IsActive,
 	}
 }
@@ -103,19 +106,33 @@ func groupToResponse(group entities.ExtensionGroup) GetGroupResponse {
 		}
 	}
 
-	var logoURL string
+	var logoURL, projectURL string
 	if group.Logo != nil {
 		logoURL = group.Logo.URL
+	}
+	if group.Project != nil {
+		projectURL = group.Project.URL
+	}
+
+	faculties := make([]string, len(group.Faculty))
+	for i, f := range group.Faculty {
+		faculties[i] = string(f)
+	}
+
+	types := make([]string, len(group.Type))
+	for i, t := range group.Type {
+		types[i] = string(t)
 	}
 
 	return GetGroupResponse{
 		ID:          group.ID,
 		Name:        group.Name,
 		Description: group.Description,
-		Faculty:     string(group.Faculty),
+		Faculty:     faculties,
 		Foundation:  group.Foundation,
-		Type:        string(group.Type),
+		Type:        types,
 		LogoURL:     logoURL,
+		ProjectURL:  projectURL,
 		Email:       group.Email,
 		Phone:       group.Phone,
 		Owner:       owner,

@@ -12,6 +12,7 @@ import (
 type Repository interface {
 	GetActivityByID(ctx context.Context, id string) (entities.Activity, error)
 	GetActivities(ctx context.Context, filter entities.ActivityFilter, pageScope entities.PageScope) ([]entities.Activity, entities.PageScope, error)
+	GetActivityMetrics(ctx context.Context, groupID string) (entities.ActivityMetrics, error)
 	GetGroupDashboardSummary(ctx context.Context, groupID string) (entities.GroupDashboardSummary, error)
 	CreateActivity(ctx context.Context, activity entities.Activity) (int64, error)
 	UpdateActivity(ctx context.Context, activity entities.Activity) error
@@ -71,10 +72,10 @@ func (s *service) GetActivity(ctx context.Context, id string) (entities.Activity
 	return activity, nil
 }
 
-func (s *service) GetActivities(ctx context.Context, filter entities.ActivityFilter, pageScope entities.PageScope) ([]entities.Activity, entities.PageScope, error) {
+func (s *service) GetActivities(ctx context.Context, filter entities.ActivityFilter, pageScope entities.PageScope) ([]entities.Activity, entities.PageScope, entities.ActivityMetrics, error) {
 	activities, scope, err := s.repo.GetActivities(ctx, filter, pageScope)
 	if err != nil {
-		return nil, scope, err
+		return nil, scope, entities.ActivityMetrics{}, err
 	}
 
 	for i := range activities {
@@ -93,7 +94,12 @@ func (s *service) GetActivities(ctx context.Context, filter entities.ActivityFil
 		}
 	}
 
-	return activities, scope, nil
+	metrics, err := s.repo.GetActivityMetrics(ctx, filter.GroupID)
+	if err != nil {
+		s.logger.Error("failed to get activity metrics", zap.Error(err), zap.String("group_id", filter.GroupID))
+	}
+
+	return activities, scope, metrics, nil
 }
 
 func (s *service) GetGroupDashboardSummary(ctx context.Context, groupID string) (entities.GroupDashboardSummary, error) {
@@ -117,7 +123,8 @@ func (s *service) CreateActivity(ctx context.Context, activity entities.Activity
 	activity.CoverImage.OwnerType = entities.OwnerTypeActivity
 	activity.CoverImage.Purpose = entities.ActivityFileTypeCoverImage
 	activity.CoverImage.Key = fmt.Sprintf("files/activities/%d/%s", activityID, activity.CoverImage.Name)
-	activity.CoverImage.Public = false
+	activity.CoverImage.Public = true
+	activity.CoverImage.UploadedBy = activity.CreatedBy
 	activity.CoverImage.CreatedAt = time.Now().Format(time.RFC3339)
 	filesToUpload = append(filesToUpload, activity.CoverImage)
 
@@ -127,6 +134,7 @@ func (s *service) CreateActivity(ctx context.Context, activity entities.Activity
 		activity.ParticipantList.Purpose = entities.ActivityFileTypeListParticipants
 		activity.ParticipantList.Key = fmt.Sprintf("files/activities/%d/participants_%s", activityID, activity.ParticipantList.Name)
 		activity.ParticipantList.Public = false
+		activity.ParticipantList.UploadedBy = activity.CreatedBy
 		activity.ParticipantList.CreatedAt = time.Now().Format(time.RFC3339)
 		filesToUpload = append(filesToUpload, activity.ParticipantList)
 	}
@@ -156,8 +164,9 @@ func (s *service) UpdateActivity(ctx context.Context, id string, activity entiti
 		activity.CoverImage.OwnerID = id
 		activity.CoverImage.OwnerType = entities.OwnerTypeActivity
 		activity.CoverImage.Purpose = entities.ActivityFileTypeCoverImage
-		activity.CoverImage.Key = fmt.Sprintf("files/activities/%s/cover_%s", id, activity.CoverImage.Name)
-		activity.CoverImage.Public = false
+		activity.CoverImage.Key = fmt.Sprintf("files/activities/%s/%s", id, activity.CoverImage.Name)
+		activity.CoverImage.Public = true
+		activity.CoverImage.UploadedBy = activity.CreatedBy
 		activity.CoverImage.CreatedAt = time.Now().Format(time.RFC3339)
 		filesToUpload = append(filesToUpload, activity.CoverImage)
 	}
@@ -168,6 +177,7 @@ func (s *service) UpdateActivity(ctx context.Context, id string, activity entiti
 		activity.ParticipantList.Purpose = entities.ActivityFileTypeListParticipants
 		activity.ParticipantList.Key = fmt.Sprintf("files/activities/%s/participants_%s", id, activity.ParticipantList.Name)
 		activity.ParticipantList.Public = false
+		activity.ParticipantList.UploadedBy = activity.CreatedBy
 		activity.ParticipantList.CreatedAt = time.Now().Format(time.RFC3339)
 		filesToUpload = append(filesToUpload, activity.ParticipantList)
 	}

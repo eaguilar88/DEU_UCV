@@ -13,6 +13,11 @@ func activityToResponse(a entities.Activity, includeParticipantList bool) GetAct
 		participantListURL = a.ParticipantList.URL
 	}
 
+	knowledgeArea := a.KnowledgeArea
+	if knowledgeArea == nil {
+		knowledgeArea = make([]string, 0)
+	}
+
 	return GetActivityResponse{
 		ID:                    a.ID,
 		GroupID:               a.GroupID,
@@ -22,7 +27,7 @@ func activityToResponse(a entities.Activity, includeParticipantList bool) GetAct
 		DateStart:             a.DateStart,
 		DateEnd:               a.DateEnd,
 		Location:              a.Location,
-		KnowledgeArea:         a.KnowledgeArea,
+		KnowledgeArea:         knowledgeArea,
 		Allies:                a.Allies,
 		GroupParticipants:     a.GroupParticipants,
 		EstimatedParticipants: a.EstimatedParticipants,
@@ -48,6 +53,11 @@ func activitiesToResponse(list []entities.Activity) []GetActivityResponse {
 }
 
 func createActivityEntityFromRequest(req CreateActivityRequest) entities.Activity {
+	knowledgeArea := req.KnowledgeArea
+	if knowledgeArea == nil {
+		knowledgeArea = make([]string, 0)
+	}
+
 	return entities.Activity{
 		GroupID:               req.GroupID,
 		Name:                  req.Name,
@@ -55,7 +65,7 @@ func createActivityEntityFromRequest(req CreateActivityRequest) entities.Activit
 		DateStart:             req.DateStart,
 		DateEnd:               req.DateEnd,
 		Location:              req.Location,
-		KnowledgeArea:         req.KnowledgeArea,
+		KnowledgeArea:         knowledgeArea,
 		Allies:                req.Allies,
 		GroupParticipants:     req.GroupParticipants,
 		EstimatedParticipants: req.EstimatedParticipants,
@@ -63,11 +73,15 @@ func createActivityEntityFromRequest(req CreateActivityRequest) entities.Activit
 		Financing:             req.Financing,
 		Comments:              req.Comments,
 		GalleryURL:            req.GalleryURL,
-		IsFeatured:            req.IsFeatured,
 	}
 }
 
 func updateActivityEntityFromRequest(req UpdateActivityRequest) entities.Activity {
+	knowledgeArea := req.KnowledgeArea
+	if knowledgeArea == nil {
+		knowledgeArea = make([]string, 0)
+	}
+
 	return entities.Activity{
 		ID:                    req.ID,
 		Name:                  req.Name,
@@ -75,7 +89,7 @@ func updateActivityEntityFromRequest(req UpdateActivityRequest) entities.Activit
 		DateStart:             req.DateStart,
 		DateEnd:               req.DateEnd,
 		Location:              req.Location,
-		KnowledgeArea:         req.KnowledgeArea,
+		KnowledgeArea:         knowledgeArea,
 		Allies:                req.Allies,
 		GroupParticipants:     req.GroupParticipants,
 		EstimatedParticipants: req.EstimatedParticipants,
@@ -83,6 +97,5 @@ func updateActivityEntityFromRequest(req UpdateActivityRequest) entities.Activit
 		Financing:             req.Financing,
 		Comments:              req.Comments,
 		GalleryURL:            req.GalleryURL,
-		IsFeatured:            req.IsFeatured,
 	}
 }

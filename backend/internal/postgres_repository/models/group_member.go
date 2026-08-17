@@ -14,5 +14,6 @@ type GroupMember struct {
 	Faculty      string
 	School       sql.NullString
 	Document     sql.NullString
+	IsLeader     bool
 	IsActive     bool
 }

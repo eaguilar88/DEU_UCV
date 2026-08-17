@@ -33,10 +33,11 @@ INSERT INTO deu.users (id, ci, email, first_name, last_name, date_of_birth, gend
 (39, 225, 'ingenieria_robotica@extension.ucv.ve', 'Representante', 'ROBÓTICA UCV', '2000-01-01', 'NA', 'universitaria_completa', 'UCV', '$2a$10$rFfAKJJIvbGaQCay8zC9bulGQ/kOYDOwwVBGr0WyWA1sUTLZsuXpa'),
 (40, 226, 'odontologia_comunidad@extension.ucv.ve', 'Representante', 'SONRISA UCV', '2000-01-01', 'NA', 'universitaria_completa', 'UCV', '$2a$10$rFfAKJJIvbGaQCay8zC9bulGQ/kOYDOwwVBGr0WyWA1sUTLZsuXpa'),
 (41, 227, 'deu_voluntariado@extension.ucv.ve', 'Representante', 'VOLUNTARIADO DEU', '2000-01-01', 'NA', 'universitaria_completa', 'UCV', '$2a$10$rFfAKJJIvbGaQCay8zC9bulGQ/kOYDOwwVBGr0WyWA1sUTLZsuXpa'),
-(42, 2288888, 'bobo@amonra.com', 'Juan', 'Jo', '2000-01-01', 'NA', 'universitaria_completa', 'UCV', '$2a$10$rFfAKJJIvbGaQCay8zC9bulGQ/kOYDOwwVBGr0WyWA1sUTLZsuXpa');
+(42, 2288888, 'bobo@amonra.com', 'Juan', 'Jo', '2000-01-01', 'NA', 'universitaria_completa', 'UCV', '$2a$10$rFfAKJJIvbGaQCay8zC9bulGQ/kOYDOwwVBGr0WyWA1sUTLZsuXpa'),
+(43, 229, 'bioingenieria@extension.ucv.ve', 'Representante', 'BIOINGENIERÍA Y SALUD', '2000-01-01', 'NA', 'universitaria_completa', 'UCV', '$2a$10$rFfAKJJIvbGaQCay8zC9bulGQ/kOYDOwwVBGr0WyWA1sUTLZsuXpa');
 
 -- Sincronizar el ID secuencial de la tabla users
-SELECT setval('deu.users_id_seq', 42, true);
+SELECT setval('deu.users_id_seq', 43, true);
 
 -- ============================================================================
 -- 2. ASIGNACIÓN DEL ROL 'group_admin' (ID 7) A LOS NUEVOS USUARIOS
@@ -69,7 +70,8 @@ INSERT INTO deu.user_roles (user_id, role_id, domain_type, faculty) VALUES
 (39, 7, 'group', 'Ingeniería'),
 (40, 7, 'group', 'Odontología'),
 (41, 7, 'group', 'DEU'),
-(42, 8, 'group', 'Ciencias');
+(42, 8, 'group', 'Ciencias'),
+(43, 7, 'group', 'DEU');
 
 -- ============================================================================
 -- 3. INSERCIÓN DE LOS 26 GRUPOS DE EXTENSIÓN (Enlazados a sus usuarios)
@@ -78,34 +80,35 @@ INSERT INTO deu.user_roles (user_id, role_id, domain_type, faculty) VALUES
 -- GEX columna 
 
 INSERT INTO deu.extension_groups (id, user_id, name, description, is_multidisciplinary, faculty, foundation, objective, code, group_director, type, location, is_active) VALUES
-(1, 15, 'LAMUN', 'Grupo de Modelaje de Naciones Unidas de la UCV.', TRUE, 'DEU', '2012-03-15', 'Objetivo institucional LAMUN.', 'GEX-LAMUN-01', 'Director LAMUN', 'MULTIDISCIPLINARIO', 'Sala de Extensión Central', TRUE),
-(2, 16, 'SPECTRUM', 'Grupo enfocado en la divulgación científica y tecnológica.', FALSE, 'Ciencias', '2018-06-20', 'Objetivo de divulgación tecnológica.', 'GEX-SPEC-02', 'Director SPECTRUM', 'ACADÉMICO', 'Facultad de Ciencias', TRUE),
-(3, 17, 'JAM UCV', 'Agrupación musical e intercambio de expresión de ritmos.', FALSE, 'Ciencias', '2015-11-10', 'Promover cultura musical.', 'GEX-JAM-03', 'Director JAM', 'CULTURAL', 'Pasillos de Ciencias', TRUE),
-(4, 18, 'Cecobio', 'Centro de conservación de la biodiversidad biológica.', FALSE, 'Ciencias', '2010-04-05', 'Preservación de especies locales.', 'GEX-CECO-04', 'Director Cecobio', 'CIENTÍFICO', 'Laboratorio de Biología', TRUE),
-(5, 19, 'CUÁSAR', 'Grupo de astronomía y ciencias del espacio.', FALSE, 'Ciencias', '2016-09-12', 'Observación del espacio profundo.', 'GEX-CUAS-05', 'Director CUÁSAR', 'ACADÉMICO', 'Observatorio de Ciencias', TRUE),
-(6, 20, 'CORAL FACULTAD DE CIENCIAS', 'Coro polifónico institucional de la facultad.', FALSE, 'Ciencias', '2005-01-20', 'Canto coral universitario.', 'GEX-CORO-06', 'Director Coral Ciencias', 'CULTURAL', 'Auditorio de Ciencias', TRUE),
-(7, 21, 'GRUPO E.R.A.', 'Equipo de respuesta ambiental y reforestación.', FALSE, 'Ciencias', '2019-02-14', 'Reforestar áreas del campus.', 'GEX-GERA-07', 'Director ERA', 'ECOLÓGICO', 'Áreas Verdes Ciencias', TRUE),
-(8, 22, 'Asociación Geoquímica Ciencias UCV', 'Promoción e investigación de procesos geoquímicos.', FALSE, 'Ciencias', '2014-08-30', 'Estudio químico de suelos.', 'GEX-GEOQ-08', 'Director Geoquímica', 'ACADÉMICO', 'Instituto de Ciencias de la Tierra', TRUE),
-(9, 23, 'BIOSub', 'Grupo de exploraciones submarinas y biología marina.', FALSE, 'Ciencias', '2011-05-18', 'Exploración subacuática.', 'GEX-BSUB-09', 'Director BIOSub', 'DEPORTIVO / ACADÉMICO', 'Piscina UCV / Laboratorio', TRUE),
-(10, 24, 'BAILA CIENCIAS', 'Agrupación de danza tradicional y moderna.', FALSE, 'Ciencias', '2017-10-12', 'Danza folclórica.', 'GEX-BAIL-10', 'Director Baila Ciencias', 'CULTURAL', 'Plaza Cubierta de Ciencias', TRUE),
-(11, 25, 'UCV TANGO', 'Taller y grupo de proyección de Tango.', FALSE, 'Ciencias', '2013-07-07', 'Difusión del tango.', 'GEX-TANG-11', 'Director UCV Tango', 'CULTURAL', 'Sala de Usos Múltiples', TRUE),
-(12, 26, 'PROCIENCIAS', 'Asociación para el desarrollo de proyectos en Farmacia y Química.', FALSE, 'Farmacia', '2015-03-22', 'Innovación farmacológica.', 'GEX-PROC-12', 'Director PROCIENCIAS', 'CIENTÍFICO', 'Facultad de Farmacia', TRUE),
-(13, 27, 'CINECLUB CIENCIAS', 'Espacio para el debate y proyección cinematográfica.', FALSE, 'Medicina', '2008-11-05', 'Cine foro formativo.', 'GEX-CINE-13', 'Director Cineclub', 'CULTURAL', 'Auditorio de Medicina', TRUE),
-(14, 28, 'TEATRO Y CULTURA BÚHO DE CIENCIAS', 'Grupo estable de artes escénicas teatrales.', FALSE, 'Ciencias', '2006-09-15', 'Montajes teatrales.', 'GEX-BUHO-14', 'Director Teatro Búho', 'CULTURAL', 'Teatro de Ciencias', TRUE),
-(15, 29, 'BARRIO MATEMÁTICO', 'Iniciativa de extensión para la enseñanza lúdica de la matemática.', FALSE, 'Ciencias', '2020-01-10', 'Enseñanza interactiva.', 'GEX-BMAT-15', 'Director Barrio Mat.', 'EDUCATIVO', 'Escuela de Matemáticas', TRUE),
-(16, 30, 'PHYSIS', 'Sociedad de estudiantes de física aplicada y teórica.', FALSE, 'Ciencias', '2018-04-12', 'Física experimental.', 'GEX-PHYS-16', 'Director PHYSIS', 'ACADÉMICO', 'Escuela de Física', TRUE),
-(17, 31, 'CONCIENCIA GAITERA', 'Agrupación musical de gaita zuliana de la facultad.', FALSE, 'Ciencias', '2014-11-18', 'Preservación de la gaita.', 'GEX-GAIT-17', 'Director C. Gaitera', 'CULTURAL', 'Estudio de Música Ciencias', TRUE),
-(18, 32, 'CIENCIAS ES RITMO', 'Taller abierto de percusión y ritmos latinos.', FALSE, 'Ciencias', '2019-06-01', 'Percusión afrovenezolana.', 'GEX-RITM-18', 'Director Ciencias es Ritmo', 'CULTURAL', 'Sótano de Ciencias', TRUE),
-(19, 33, 'AgroVerde UCV', 'Taller sustentable y cultivos urbanos campus Maracay.', FALSE, 'Agronomía', '2016-02-10', 'Promover soberanía alimentaria local.', 'GEX-AGRO-19', 'Director AgroVerde', 'ECOLÓGICO', 'Campus Maracay Agronomía', TRUE),
-(20, 34, 'Taller de Diseño Urbano FAU', 'Colectivo de intervenciones arquitectónicas comunitarias.', FALSE, 'Arquitectura y Urbanismo', '2015-08-25', 'Mejoramiento de espacios urbanos.', 'GEX-FAUD-20', 'Director FAU Diseño', 'ACADÉMICO', 'Galpón FAU', TRUE),
-(21, 35, 'FaCES Emprende', 'Incubadora de proyectos y educación financiera comunitaria.', FALSE, 'Ciencias Económicas y Sociales', '2021-03-14', 'Fomentar la cultura emprendedora.', 'GEX-FCSE-21', 'Director FaCES Emprende', 'EDUCATIVO', 'Edificio Trasbordo FaCES', TRUE),
-(22, 36, 'Clínica Jurídica Gratuita', 'Asesoría legal para comunidades vulnerables.', FALSE, 'Ciencias Jurídicas y Políticas', '2009-07-01', 'Atención jurídica accesible.', 'GEX-CJUR-22', 'Director Clínica Jurídica', 'SOCIAL', 'Planta Baja CJP', TRUE),
-(23, 37, 'Veterinarios en Acción', 'Atención zoonótica y jornadas de vacunación.', FALSE, 'Ciencias Veterinarias', '2017-05-12', 'Bienestar animal público.', 'GEX-VETA-23', 'Director Vet en Acción', 'SALUD / SOCIAL', 'Hospital Veterinario Maracay', TRUE),
-(24, 38, 'Letras Vivas', 'Promoción de la lectura y talleres de escritura creativa.', FALSE, 'Humanidades y Educación', '2013-10-30', 'Fomento de la literatura.', 'GEX-LETR-24', 'Director Letras Vivas', 'CULTURAL', 'Biblioteca Central Humanidades', TRUE),
-(25, 39, 'Robótica e Innovación UCV', 'Desarrollo mecatrónico y automatización social.', FALSE, 'Ingeniería', '2018-11-11', 'Divulgación de mecatrónica.', 'GEX-ROBO-25', 'Director Robótica UCV', 'TECNOLÓGICO', 'Escuela de Ingeniería Eléctrica', TRUE),
-(26, 40, 'Sonrisas UCV', 'Jornadas comunitarias de higiene y salud bucal.', FALSE, 'Odontología', '2011-09-09', 'Salud bucal preventiva.', 'GEX-SONR-26', 'Director Sonrisas UCV', 'SALUD / SOCIAL', 'Clínica de Odontología', TRUE);
+(1, 15, 'LAMUN', 'Grupo de Modelaje de Naciones Unidas de la UCV.', TRUE, ARRAY['DEU']::faculty_enum[], '2012-03-15', 'Objetivo institucional LAMUN.', 'GEX-LAMUN-01', 'Director LAMUN', ARRAY['MULTIDISCIPLINARIO']::VARCHAR[], 'Sala de Extensión Central', TRUE),
+(2, 16, 'SPECTRUM', 'Grupo enfocado en la divulgación científica y tecnológica.', FALSE, ARRAY['Ciencias']::faculty_enum[], '2018-06-20', 'Objetivo de divulgación tecnológica.', 'GEX-SPEC-02', 'Director SPECTRUM', ARRAY['ACADÉMICO']::VARCHAR[], 'Facultad de Ciencias', TRUE),
+(3, 17, 'JAM UCV', 'Agrupación musical e intercambio de expresión de ritmos.', FALSE, ARRAY['Ciencias']::faculty_enum[], '2015-11-10', 'Promover cultura musical.', 'GEX-JAM-03', 'Director JAM', ARRAY['CULTURAL']::VARCHAR[], 'Pasillos de Ciencias', TRUE),
+(4, 18, 'Cecobio', 'Centro de conservación de la biodiversidad biológica.', FALSE, ARRAY['Ciencias']::faculty_enum[], '2010-04-05', 'Preservación de especies locales.', 'GEX-CECO-04', 'Director Cecobio', ARRAY['CIENTÍFICO']::VARCHAR[], 'Laboratorio de Biología', TRUE),
+(5, 19, 'CUÁSAR', 'Grupo de astronomía y ciencias del espacio.', FALSE, ARRAY['Ciencias']::faculty_enum[], '2016-09-12', 'Observación del espacio profundo.', 'GEX-CUAS-05', 'Director CUÁSAR', ARRAY['ACADÉMICO']::VARCHAR[], 'Observatorio de Ciencias', TRUE),
+(6, 20, 'CORAL FACULTAD DE CIENCIAS', 'Coro polifónico institucional de la facultad.', FALSE, ARRAY['Ciencias']::faculty_enum[], '2005-01-20', 'Canto coral universitario.', 'GEX-CORO-06', 'Director Coral Ciencias', ARRAY['CULTURAL']::VARCHAR[], 'Auditorio de Ciencias', TRUE),
+(7, 21, 'GRUPO E.R.A.', 'Equipo de respuesta ambiental y reforestación.', FALSE, ARRAY['Ciencias']::faculty_enum[], '2019-02-14', 'Reforestar áreas del campus.', 'GEX-GERA-07', 'Director ERA', ARRAY['ECOLÓGICO']::VARCHAR[], 'Áreas Verdes Ciencias', TRUE),
+(8, 22, 'Asociación Geoquímica Ciencias UCV', 'Promoción e investigación de procesos geoquímicos.', FALSE, ARRAY['Ciencias']::faculty_enum[], '2014-08-30', 'Estudio químico de suelos.', 'GEX-GEOQ-08', 'Director Geoquímica', ARRAY['ACADÉMICO']::VARCHAR[], 'Instituto de Ciencias de la Tierra', TRUE),
+(9, 23, 'BIOSub', 'Grupo de exploraciones submarinas y biología marina.', FALSE, ARRAY['Ciencias']::faculty_enum[], '2011-05-18', 'Exploración subacuática.', 'GEX-BSUB-09', 'Director BIOSub', ARRAY['DEPORTIVO', 'ACADÉMICO']::VARCHAR[], 'Piscina UCV / Laboratorio', TRUE),
+(10, 24, 'BAILA CIENCIAS', 'Agrupación de danza tradicional y moderna.', FALSE, ARRAY['Ciencias']::faculty_enum[], '2017-10-12', 'Danza folclórica.', 'GEX-BAIL-10', 'Director Baila Ciencias', ARRAY['CULTURAL']::VARCHAR[], 'Plaza Cubierta de Ciencias', TRUE),
+(11, 25, 'UCV TANGO', 'Taller y grupo de proyección de Tango.', FALSE, ARRAY['Ciencias']::faculty_enum[], '2013-07-07', 'Difusión del tango.', 'GEX-TANG-11', 'Director UCV Tango', ARRAY['CULTURAL']::VARCHAR[], 'Sala de Usos Múltiples', TRUE),
+(12, 26, 'PROCIENCIAS', 'Asociación para el desarrollo de proyectos en Farmacia y Química.', FALSE, ARRAY['Farmacia']::faculty_enum[], '2015-03-22', 'Innovación farmacológica.', 'GEX-PROC-12', 'Director PROCIENCIAS', ARRAY['CIENTÍFICO']::VARCHAR[], 'Facultad de Farmacia', TRUE),
+(13, 27, 'CINECLUB CIENCIAS', 'Espacio para el debate y proyección cinematográfica.', FALSE, ARRAY['Medicina']::faculty_enum[], '2008-11-05', 'Cine foro formativo.', 'GEX-CINE-13', 'Director Cineclub', ARRAY['CULTURAL']::VARCHAR[], 'Auditorio de Medicina', TRUE),
+(14, 28, 'TEATRO Y CULTURA BÚHO DE CIENCIAS', 'Grupo estable de artes escénicas teatrales.', FALSE, ARRAY['Ciencias']::faculty_enum[], '2006-09-15', 'Montajes teatrales.', 'GEX-BUHO-14', 'Director Teatro Búho', ARRAY['CULTURAL']::VARCHAR[], 'Teatro de Ciencias', TRUE),
+(15, 29, 'BARRIO MATEMÁTICO', 'Iniciativa de extensión para la enseñanza lúdica de la matemática.', FALSE, ARRAY['Ciencias']::faculty_enum[], '2020-01-10', 'Enseñanza interactiva.', 'GEX-BMAT-15', 'Director Barrio Mat.', ARRAY['EDUCATIVO']::VARCHAR[], 'Escuela de Matemáticas', TRUE),
+(16, 30, 'PHYSIS', 'Sociedad de estudiantes de física aplicada y teórica.', FALSE, ARRAY['Ciencias']::faculty_enum[], '2018-04-12', 'Física experimental.', 'GEX-PHYS-16', 'Director PHYSIS', ARRAY['ACADÉMICO']::VARCHAR[], 'Escuela de Física', TRUE),
+(17, 31, 'CONCIENCIA GAITERA', 'Agrupación musical de gaita zuliana de la facultad.', FALSE, ARRAY['Ciencias']::faculty_enum[], '2014-11-18', 'Preservación de la gaita.', 'GEX-GAIT-17', 'Director C. Gaitera', ARRAY['CULTURAL']::VARCHAR[], 'Estudio de Música Ciencias', TRUE),
+(18, 32, 'CIENCIAS ES RITMO', 'Taller abierto de percusión y ritmos latinos.', FALSE, ARRAY['Ciencias']::faculty_enum[], '2019-06-01', 'Percusión afrovenezolana.', 'GEX-RITM-18', 'Director Ciencias es Ritmo', ARRAY['CULTURAL']::VARCHAR[], 'Sótano de Ciencias', TRUE),
+(19, 33, 'AgroVerde UCV', 'Taller sustentable y cultivos urbanos campus Maracay.', FALSE, ARRAY['Agronomía']::faculty_enum[], '2016-02-10', 'Promover soberanía alimentaria local.', 'GEX-AGRO-19', 'Director AgroVerde', ARRAY['ECOLÓGICO']::VARCHAR[], 'Campus Maracay Agronomía', TRUE),
+(20, 34, 'Taller de Diseño Urbano FAU', 'Colectivo de intervenciones arquitectónicas comunitarias.', FALSE, ARRAY['Arquitectura y Urbanismo']::faculty_enum[], '2015-08-25', 'Mejoramiento de espacios urbanos.', 'GEX-FAUD-20', 'Director FAU Diseño', ARRAY['ACADÉMICO']::VARCHAR[], 'Galpón FAU', TRUE),
+(21, 35, 'FaCES Emprende', 'Incubadora de proyectos y educación financiera comunitaria.', FALSE, ARRAY['Ciencias Económicas y Sociales']::faculty_enum[], '2021-03-14', 'Fomentar la cultura emprendedora.', 'GEX-FCSE-21', 'Director FaCES Emprende', ARRAY['EDUCATIVO']::VARCHAR[], 'Edificio Trasbordo FaCES', TRUE),
+(22, 36, 'Clínica Jurídica Gratuita', 'Asesoría legal para comunidades vulnerables.', FALSE, ARRAY['Ciencias Jurídicas y Políticas']::faculty_enum[], '2009-07-01', 'Atención jurídica accesible.', 'GEX-CJUR-22', 'Director Clínica Jurídica', ARRAY['SOCIAL']::VARCHAR[], 'Planta Baja CJP', TRUE),
+(23, 37, 'Veterinarios en Acción', 'Atención zoonótica y jornadas de vacunación.', FALSE, ARRAY['Ciencias Veterinarias']::faculty_enum[], '2017-05-12', 'Bienestar animal público.', 'GEX-VETA-23', 'Director Vet en Acción', ARRAY['SALUD', 'SOCIAL']::VARCHAR[], 'Hospital Veterinario Maracay', TRUE),
+(24, 38, 'Letras Vivas', 'Promoción de la lectura y talleres de escritura creativa.', FALSE, ARRAY['Humanidades y Educación']::faculty_enum[], '2013-10-30', 'Fomento de la literatura.', 'GEX-LETR-24', 'Director Letras Vivas', ARRAY['CULTURAL']::VARCHAR[], 'Biblioteca Central Humanidades', TRUE),
+(25, 39, 'Robótica e Innovación UCV', 'Desarrollo mecatrónico y automatización social.', FALSE, ARRAY['Ingeniería']::faculty_enum[], '2018-11-11', 'Divulgación de mecatrónica.', 'GEX-ROBO-25', 'Director Robótica UCV', ARRAY['TECNOLÓGICO']::VARCHAR[], 'Escuela de Ingeniería Eléctrica', TRUE),
+(26, 40, 'Sonrisas UCV', 'Jornadas comunitarias de higiene y salud bucal.', FALSE, ARRAY['Odontología']::faculty_enum[], '2011-09-09', 'Salud bucal preventiva.', 'GEX-SONR-26', 'Director Sonrisas UCV', ARRAY['SALUD', 'SOCIAL']::VARCHAR[], 'Clínica de Odontología', TRUE),
+(27, 43, 'Iniciativa de Bioingeniería y Salud Comunitaria', 'Colectivo interfacultades dedicado al desarrollo de prótesis biomédicas de bajo costo y tecnología médica asistencial.', TRUE, ARRAY['DEU', 'Ingeniería', 'Ciencias', 'Medicina']::faculty_enum[], '2021-05-10', 'Desarrollar soluciones tecnológicas accesibles para el sector salud comunitario.', 'GEX-BIOS-27', 'Director Bioingeniería', ARRAY['MULTIDISCIPLINARIO']::VARCHAR[], 'Laboratorio de Prototipado Interdisciplinario', TRUE);
 
-SELECT setval('deu.extension_groups_id_seq', 26, true);
+SELECT setval('deu.extension_groups_id_seq', 27, true);
 
 -- ============================================================================
 -- 4. CONTACTOS COMPLETOS PARA CADA GRUPO (Email y Teléfono)
@@ -137,7 +140,8 @@ INSERT INTO contacts (contact_type, contact_value, owner_type, owner_id) VALUES
 ('email', 'contacto.vetaction@email.com', 'group', 23), ('phone', '0416-5555555', 'group', 23),
 ('email', 'contacto.letrasvivas@email.com', 'group', 24), ('phone', '0416-6666666', 'group', 24),
 ('email', 'contacto.robotica@email.com', 'group', 25), ('phone', '0416-7777777', 'group', 25),
-('email', 'contacto.sonrisas@email.com', 'group', 26), ('phone', '0416-8888888', 'group', 26);
+('email', 'contacto.sonrisas@email.com', 'group', 26), ('phone', '0416-8888888', 'group', 26),
+('email', 'contacto.bioingenieria@email.com', 'group', 27), ('phone', '0412-0002727', 'group', 27);
 
 -- ============================================================================
 -- 5. SOLICITUD DE AVAL EN group_auth_requests PARA CADA GRUPO
@@ -169,7 +173,8 @@ INSERT INTO deu.group_auth_requests (group_id, status, faculty, reviewer_id, rev
 (23, 'approved', 'Ciencias Veterinarias', 9, NOW(), 'Jornadas profilácticas asistenciales aprobadas.'),
 (24, 'approved', 'Humanidades y Educación', 11, NOW(), 'Plan de promoción lectora validado.'),
 (25, 'approved', 'Ingeniería', 12, NOW(), 'Proyecto tecnológico de automatización aprobado.'),
-(26, 'approved', 'Odontología', 14, NOW(), 'Aval asistencial odontológico concedido.');
+(26, 'approved', 'Odontología', 14, NOW(), 'Aval asistencial odontológico concedido.'),
+(27, 'approved', 'DEU', 2, NOW(), 'Grupo multidisciplinario avalado centralmente por la DEU.');
 
 -- ============================================================================
 -- 6. SOLICITUDES DE RECURSOS EN group_resource_requests (Pruebas)
@@ -202,7 +207,8 @@ INSERT INTO deu.group_resource_requests (group_id, type, content, status) VALUES
 (23, 'Materiales', 'Vacunas antirrábicas e insumos de sutura.', 'approved'),
 (24, 'Materiales', 'Impresión de folletos y libros para biblioteca móvil.', 'approved'),
 (25, 'Equipos', 'Tarjetas Arduino, Raspberry Pi y sensores mecánicos.', 'approved'),
-(26, 'Materiales', 'Kits profilácticos bucales (cepillos y pasta dental).', 'approved');
+(26, 'Materiales', 'Kits profilácticos bucales (cepillos y pasta dental).', 'approved'),
+(27, 'Equipos', 'Solicitud de cortadora láser y scanner 3D para fabricación de prótesis.', 'under_review');
 
 -- ============================================================================
 -- 7. MIEMBROS DE GRUPOS
@@ -367,7 +373,13 @@ INSERT INTO deu.group_members (group_id, name, ci, phone, email, coordination, y
 (26, 'M2 Grupo 26', 302602, '0416000', 'm262@test.com', 'Clínica', '2', 'Odontología', 'Odontología', 'doc.pdf', TRUE),
 (26, 'M3 Grupo 26', 302603, '0416000', 'm263@test.com', 'Educación', '3', 'Odontología', 'Odontología', 'doc.pdf', TRUE),
 (26, 'M4 Grupo 26', 302604, '0416000', 'm264@test.com', 'Logística', '4', 'Odontología', 'Odontología', 'doc.pdf', TRUE),
-(26, 'M5 Grupo 26', 302605, '0416000', 'm265@test.com', 'Materiales', '5', 'Odontología', 'Odontología', 'doc.pdf', TRUE);
+(26, 'M5 Grupo 26', 302605, '0416000', 'm265@test.com', 'Materiales', '5', 'Odontología', 'Odontología', 'doc.pdf', TRUE),
+
+(27, 'Carlos Mendoza', 27001001, '0412-9000001', 'carlos.mendoza@mail.com', 'Diseño Mecánico', '4', 'Ingeniería', 'Ingeniería Mecánica', 'V-27001001.pdf', TRUE),
+(27, 'Mariana Silva', 27001002, '0414-9000002', 'mariana.silva@mail.com', 'Electrónica y Sensado', '5', 'Ingeniería', 'Ingeniería Eléctrica', 'V-27001002.pdf', TRUE),
+(27, 'Luis Alarcón', 27001003, '0416-9000003', 'luis.alarcon@mail.com', 'Ensayos Biológicos', '3', 'Ciencias', 'Biología', 'V-27001003.pdf', TRUE),
+(27, 'Valeria Morales', 27001004, '0412-9000004', 'valeria.morales@mail.com', 'Validación Clínica', '4', 'Medicina', 'Escuela Luis Razetti', 'V-27001004.pdf', TRUE),
+(27, 'Gabriel Rivas', 27001005, '0414-9000005', 'gabriel.rivas@mail.com', 'Gestión Institucional', '2', 'DEU', 'Estudios Generales', 'V-27001005.pdf', TRUE);
 
 -- ============================================================================
 -- 5. INSERCIÓN DE LOGOS EN LA TABLA FILES PARA LOS 18 GRUPOS DE EXTENSIÓN
@@ -401,27 +413,28 @@ INSERT INTO files (owner_type, owner_id, file_key, purpose, version, public, met
 ('group', 23, 'groups/logos/VETACTION.jpg', 'logo', 1, TRUE, '{"contentType": "image/jpeg"}'::jsonb, 37),
 ('group', 24, 'groups/logos/LETRASVIVAS.jpg', 'logo', 1, TRUE, '{"contentType": "image/jpeg"}'::jsonb, 38),
 ('group', 25, 'groups/logos/ROBOTICA.jpg', 'logo', 1, TRUE, '{"contentType": "image/jpeg"}'::jsonb, 39),
-('group', 26, 'groups/logos/SONRISAS.jpg', 'logo', 1, TRUE, '{"contentType": "image/jpeg"}'::jsonb, 40);
+('group', 26, 'groups/logos/SONRISAS.jpg', 'logo', 1, TRUE, '{"contentType": "image/jpeg"}'::jsonb, 40),
+('group', 27, 'groups/logos/BIOINGENIERIA.jpg', 'logo', 1, TRUE, '{"contentType": "image/jpeg"}'::jsonb, 43);
 
 -- ============================================================================
 -- 6. INSERCIÓN DE ACTIVIDADES (Mapeo estricto del Mock al esquema relacional)
 -- Asignando los IDs correctos de deu.extension_groups
 -- ============================================================================
 INSERT INTO deu.activities (id, name, group_id, description, date_start, date_end, knowledge_area, allies, stimated_participants, actual_participants, location, is_featured) VALUES
-(1, 'Modelo de las Naciones Unidas - 2025 - Caracas', 1, 'Simulación diplomática centralizada.', '2025-11-28', '2025-11-30', 'MULTIDISCIPLINARIO', '', 50, 25, 'Venezuela, Distrito Capital, Caracas, A', true),
-(2, 'Actividad de Divulgación', 2, 'Exposición científica en plaza central.', '2025-03-10', '2025-03-10', 'ACADÉMICO', '', 70, 20, 'Venezuela, Distrito Capital, Libertador, Facultad de Ciencias', true),
-(3, 'Concierto de Ritmos', 3, 'Intercambio acústico libre.', '2026-07-01', '2026-09-01', 'CULTURAL', '', 20, 20, 'Venezuela, Distrito Capital, Libertador, Pasillos de Ciencias', true),
-(4, 'Muestra de Especies', 4, 'Exhibición controlada de biodiversidad.', '2026-04-22', '2026-04-22', 'CIENTÍFICO', '', 20, 20, 'Venezuela, Distrito Capital, Libertador, Laboratorio de Biología', true),
-(5, 'Observación Lunar', 5, 'Taller abierto nocturno astronómico.', '2026-03-12', '2026-03-12', 'ACADÉMICO', '', 10, 20, 'Venezuela, Distrito Capital, Libertador, Observatorio', true),
-(6, 'Gala Coral', 6, 'Presentación del repertorio litúrgico y popular.', '2025-04-22', '2025-04-22', 'CULTURAL', '', 20, 5, 'Venezuela, Distrito Capital, Libertador, Auditorio de Ciencias', true),
-(7, 'Jornada de Reforestación', 7, 'Siembra de plantas autóctonas en áreas verdes.', '2026-01-22', '2026-01-22', 'ECOLÓGICO', '', NULL, NULL, 'Venezuela, Distrito Capital, Libertador, Áreas Verdes Ciencias', true),
-(8, 'Taller de Oratoria', 1, 'Técnicas de expresión oral aplicadas a debates.', '2025-04-20', '2025-04-22', 'CULTURAL, DEBATE', '', 11, 20, 'Venezuela, Distrito Capital, Libertador, Sala de Extensión', false),
-(9, 'Simposio de Física Espacial', 2, 'Ciclo de micro-charlas para estudiantes.', '2027-04-22', '2027-04-22', 'ACADÉMICO', '', NULL, NULL, 'Venezuela, Distrito Capital, Libertador, Auditorio Ciencias', false),
-(10, 'Recolección de Desechos', 7, 'Limpieza profunda de áreas comunes.', '2027-12-10', '2027-12-10', 'ECOLÓGICO', '', NULL, NULL, 'Venezuela, Distrito Capital, Libertador, Campus UCV', false),
-(11, 'Charla Astro-Física', 5, 'Introducción a la cosmología moderna.', '2025-12-22', '2025-12-22', 'ACADÉMICO', '', NULL, NULL, 'Venezuela, Distrito Capital, Libertador, Escuela de Física', false),
-(12, 'Conferencia Geopolítica', 1, 'Análisis de conflictos globales.', '2026-12-20', '2026-12-22', 'MULTIDISCIPLINARIO', '', 11, 30, 'Venezuela, Distrito Capital, Libertador, Sala Central', true),
-(13, 'Simulación Interna', 1, 'Sesión de entrenamiento de delegados.', '2025-12-01', '2025-12-03', 'MULTIDISCIPLINARIO', '', 15, 20, 'Venezuela, Distrito Capital, Libertador, Aula de Clases', false),
-(14, 'Mesa Técnica Suelos', 8, 'Presentación de resultados analíticos de campo.', '2025-12-03', '2025-12-03', 'ACADÉMICO', '', NULL, NULL, 'Venezuela, Distrito Capital, Libertador, Instituto Ciencias de la Tierra', true);
+(1, 'Modelo de las Naciones Unidas - 2025 - Caracas', 1, 'Simulación diplomática centralizada.', '2025-11-28', '2025-11-30', ARRAY['MULTIDISCIPLINARIO']::VARCHAR[], '', 50, 25, 'Venezuela, Distrito Capital, Caracas, A', true),
+(2, 'Actividad de Divulgación', 2, 'Exposición científica en plaza central.', '2025-03-10', '2025-03-10', ARRAY['ACADÉMICO']::VARCHAR[], '', 70, 20, 'Venezuela, Distrito Capital, Libertador, Facultad de Ciencias', true),
+(3, 'Concierto de Ritmos', 3, 'Intercambio acústico libre.', '2026-07-01', '2026-09-01', ARRAY['CULTURAL']::VARCHAR[], '', 20, 20, 'Venezuela, Distrito Capital, Libertador, Pasillos de Ciencias', true),
+(4, 'Muestra de Especies', 4, 'Exhibición controlada de biodiversidad.', '2026-04-22', '2026-04-22', ARRAY['CIENTÍFICO']::VARCHAR[], '', 20, 20, 'Venezuela, Distrito Capital, Libertador, Laboratorio de Biología', true),
+(5, 'Observación Lunar', 5, 'Taller abierto nocturno astronómico.', '2026-03-12', '2026-03-12', ARRAY['ACADÉMICO']::VARCHAR[], '', 10, 20, 'Venezuela, Distrito Capital, Libertador, Observatorio', true),
+(6, 'Gala Coral', 6, 'Presentación del repertorio litúrgico y popular.', '2025-04-22', '2025-04-22', ARRAY['CULTURAL']::VARCHAR[], '', 20, 5, 'Venezuela, Distrito Capital, Libertador, Auditorio de Ciencias', true),
+(7, 'Jornada de Reforestación', 7, 'Siembra de plantas autóctonas en áreas verdes.', '2026-01-22', '2026-01-22', ARRAY['ECOLÓGICO']::VARCHAR[], '', NULL, NULL, 'Venezuela, Distrito Capital, Libertador, Áreas Verdes Ciencias', true),
+(8, 'Taller de Oratoria', 1, 'Técnicas de expresión oral aplicadas a debates.', '2025-04-20', '2025-04-22', ARRAY['CULTURAL', 'DEBATE']::VARCHAR[], '', 11, 20, 'Venezuela, Distrito Capital, Libertador, Sala de Extensión', false),
+(9, 'Simposio de Física Espacial', 2, 'Ciclo de micro-charlas para estudiantes.', '2027-04-22', '2027-04-22', ARRAY['ACADÉMICO']::VARCHAR[], '', NULL, NULL, 'Venezuela, Distrito Capital, Libertador, Auditorio Ciencias', false),
+(10, 'Recolección de Desechos', 7, 'Limpieza profunda de áreas comunes.', '2027-12-10', '2027-12-10', ARRAY['ECOLÓGICO']::VARCHAR[], '', NULL, NULL, 'Venezuela, Distrito Capital, Libertador, Campus UCV', false),
+(11, 'Charla Astro-Física', 5, 'Introducción a la cosmología moderna.', '2025-12-22', '2025-12-22', ARRAY['ACADÉMICO']::VARCHAR[], '', NULL, NULL, 'Venezuela, Distrito Capital, Libertador, Escuela de Física', false),
+(12, 'Conferencia Geopolítica', 1, 'Análisis de conflictos globales.', '2026-12-20', '2026-12-22', ARRAY['MULTIDISCIPLINARIO']::VARCHAR[], '', 11, 30, 'Venezuela, Distrito Capital, Libertador, Sala Central', true),
+(13, 'Simulación Interna', 1, 'Sesión de entrenamiento de delegados.', '2025-12-01', '2025-12-03', ARRAY['MULTIDISCIPLINARIO']::VARCHAR[], '', 15, 20, 'Venezuela, Distrito Capital, Libertador, Aula de Clases', false),
+(14, 'Mesa Técnica Suelos', 8, 'Presentación de resultados analíticos de campo.', '2025-12-03', '2025-12-03', ARRAY['ACADÉMICO']::VARCHAR[], '', NULL, NULL, 'Venezuela, Distrito Capital, Libertador, Instituto Ciencias de la Tierra', true);
 
 -- Sincronizar el ID secuencial de la tabla de actividades
 SELECT setval('deu.activities_id_seq', 14, true);

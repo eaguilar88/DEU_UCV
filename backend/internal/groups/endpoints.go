@@ -178,11 +178,26 @@ func (h *Handler) UpdateGroup(c echo.Context) error {
 		return httperrors.NewUnauthorized("authentication required")
 	}
 	req.OwnerID = userID
+
+	if raw := c.FormValue("miembros"); raw != "" && len(req.Members) == 0 {
+		if err := json.Unmarshal([]byte(raw), &req.Members); err != nil {
+			return httperrors.NewBadRequest("miembros: formato inválido")
+		}
+	}
 	if err := c.Validate(req); err != nil {
 		return httperrors.NewBadRequest("validation failed")
 	}
 
-	err := h.svc.UpdateGroup(ctx, req.ID, updateGroupEntityFromRequest(req))
+	group := updateGroupEntityFromRequest(req)
+
+	if logo, err := utils.GetFileFrom(c, entities.GroupFileTypeLogo); err == nil && logo != nil {
+		group.Logo = logo
+	}
+	if projectFile, err := utils.GetFileFrom(c, entities.GroupFileTypeProject); err == nil && projectFile != nil {
+		group.Project = projectFile
+	}
+
+	err := h.svc.UpdateGroup(ctx, req.ID, group)
 	if err != nil {
 		if errors.Is(err, ErrGroupNotFound) {
 			return httperrors.NewNotFound("group not found")
@@ -220,14 +235,31 @@ func (h *Handler) DeleteGroup(c echo.Context) error {
 }
 
 func makeGroupRequestFromContext(c echo.Context, userID string, log *zap.Logger) (entities.ExtensionGroup, error) {
+	form, err := c.MultipartForm()
+	var faculties []string
+	var types []string
+	if err == nil && form != nil {
+		faculties = form.Value["facultad"]
+		types = form.Value["tipo"]
+	}
+	if len(faculties) == 0 {
+		if f := c.FormValue("facultad"); f != "" {
+			faculties = append(faculties, f)
+		}
+	}
+	if len(types) == 0 {
+		if t := c.FormValue("tipo"); t != "" {
+			types = append(types, t)
+		}
+	}
+
 	req := CreateGroupRequest{
 		Name:                c.FormValue("nombre"),
 		Description:         c.FormValue("descripcion"),
-		LeaderName:          c.FormValue("nombre_lider"),
-		Type:                c.FormValue("tipo"),
+		Type:                types,
 		Foundation:          c.FormValue("fundacion"),
 		IsMultidisciplinary: c.FormValue("es_multidisciplinario") == "true",
-		Faculty:             c.FormValue("facultad"),
+		Faculty:             faculties,
 		Objective:           c.FormValue("objetivo"),
 		Location:            c.FormValue("ubicacion"),
 		Email:               c.FormValue("correo"),
@@ -252,7 +284,14 @@ func makeGroupRequestFromContext(c echo.Context, userID string, log *zap.Logger)
 		return entities.ExtensionGroup{}, errors.New("logo is required")
 	}
 
+	projectFile, err := utils.GetFileFrom(c, entities.GroupFileTypeProject)
+	if err != nil {
+		log.Error("error getting project file", zap.Error(err))
+		return entities.ExtensionGroup{}, errors.New("project file is required")
+	}
+
 	group := createGroupEntityFromRequest(req, userID, req.Faculty)
 	group.Logo = logo
+	group.Project = projectFile
 	return group, nil
 }
