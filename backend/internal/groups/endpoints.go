@@ -238,7 +238,7 @@ func makeGroupRequestFromContext(c echo.Context, userID string, log *zap.Logger)
 	form, err := c.MultipartForm()
 	var faculties []string
 	var types []string
-	if err == nil && form != nil {
+	if err != nil {
 		faculties = form.Value["facultad"]
 		types = form.Value["tipo"]
 	}
