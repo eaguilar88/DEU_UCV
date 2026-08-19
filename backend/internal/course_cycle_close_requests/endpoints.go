@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/eaguilar88/deu/internal/entities"
+	"github.com/eaguilar88/deu/internal/facultyscope"
 	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -16,7 +17,7 @@ type Service interface {
 	SubmitCloseRequest(ctx context.Context, cycleID int64, submittedByID string) (int64, error)
 	ApproveCloseRequest(ctx context.Context, id, reviewerID string) error
 	RejectCloseRequest(ctx context.Context, id, reviewerID, comments string) error
-	GetCloseRequests(ctx context.Context, pageScope entities.PageScope) ([]entities.CourseCycleCloseRequest, entities.PageScope, error)
+	GetCloseRequests(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.CourseCycleCloseRequest, entities.PageScope, error)
 	GetCloseRequestByID(ctx context.Context, id string) (entities.CourseCycleCloseRequest, error)
 }
 
@@ -120,13 +121,18 @@ func (h *Handler) RejectCloseRequest(c echo.Context) error {
 func (h *Handler) GetCloseRequests(c echo.Context) error {
 	ctx := c.Request().Context()
 
+	faculty, err := facultyscope.ResolveOptional(c, c.QueryParam("faculty"))
+	if err != nil {
+		return httperrors.NewBadRequest("invalid faculty")
+	}
+
 	var pageScope entities.PageScope
 	//nolint:errcheck
 	pageScope.GetPageFromVars(c.QueryParam("page"))
 	//nolint:errcheck
 	pageScope.GetPerPageFromVars(c.QueryParam("per_page"))
 
-	requests, resultScope, err := h.svc.GetCloseRequests(ctx, pageScope)
+	requests, resultScope, err := h.svc.GetCloseRequests(ctx, faculty, pageScope)
 	if err != nil {
 		return httperrors.NewInternal(err)
 	}

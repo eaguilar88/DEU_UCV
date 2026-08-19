@@ -31,11 +31,17 @@ func GetProviderRequestByID(id string) sq.SelectBuilder {
 		Where(sq.Eq{"pr.deleted_at": nil})
 }
 
-func GetProviderRequests(perPage, offset uint64) sq.SelectBuilder {
-	return psql.Select(providerRequestSelectCommon...).
+func GetProviderRequests(faculty string, perPage, offset uint64) sq.SelectBuilder {
+	q := psql.Select(providerRequestSelectCommon...).
 		From(fmt.Sprintf("%s AS pr", providerRequestsTableName)).
-		Where(sq.Eq{"pr.deleted_at": nil}).
-		OrderBy("pr.created_at DESC").
+		Join(fmt.Sprintf("%s AS p ON p.id = pr.provider_id", providersTableName)).
+		Where(sq.Eq{"pr.deleted_at": nil})
+
+	if faculty != "" {
+		q = q.Where(sq.Eq{"p.faculty": faculty})
+	}
+
+	return q.OrderBy("pr.created_at DESC").
 		Limit(perPage).
 		Offset(offset)
 }

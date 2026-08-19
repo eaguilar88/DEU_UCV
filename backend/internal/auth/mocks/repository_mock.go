@@ -38,6 +38,138 @@ func (_m *MockRepository) EXPECT() *MockRepository_Expecter {
 	return &MockRepository_Expecter{mock: &_m.Mock}
 }
 
+// GetGroupByUserID provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetGroupByUserID(ctx context.Context, userID string) (entities.ExtensionGroup, error) {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetGroupByUserID")
+	}
+
+	var r0 entities.ExtensionGroup
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (entities.ExtensionGroup, error)); ok {
+		return returnFunc(ctx, userID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) entities.ExtensionGroup); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		r0 = ret.Get(0).(entities.ExtensionGroup)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetGroupByUserID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetGroupByUserID'
+type MockRepository_GetGroupByUserID_Call struct {
+	*mock.Call
+}
+
+// GetGroupByUserID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID string
+func (_e *MockRepository_Expecter) GetGroupByUserID(ctx interface{}, userID interface{}) *MockRepository_GetGroupByUserID_Call {
+	return &MockRepository_GetGroupByUserID_Call{Call: _e.mock.On("GetGroupByUserID", ctx, userID)}
+}
+
+func (_c *MockRepository_GetGroupByUserID_Call) Run(run func(ctx context.Context, userID string)) *MockRepository_GetGroupByUserID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetGroupByUserID_Call) Return(extensionGroup entities.ExtensionGroup, err error) *MockRepository_GetGroupByUserID_Call {
+	_c.Call.Return(extensionGroup, err)
+	return _c
+}
+
+func (_c *MockRepository_GetGroupByUserID_Call) RunAndReturn(run func(ctx context.Context, userID string) (entities.ExtensionGroup, error)) *MockRepository_GetGroupByUserID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetProviderByUserID provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetProviderByUserID(ctx context.Context, userID string) (entities.Provider, error) {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetProviderByUserID")
+	}
+
+	var r0 entities.Provider
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (entities.Provider, error)); ok {
+		return returnFunc(ctx, userID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) entities.Provider); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		r0 = ret.Get(0).(entities.Provider)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetProviderByUserID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetProviderByUserID'
+type MockRepository_GetProviderByUserID_Call struct {
+	*mock.Call
+}
+
+// GetProviderByUserID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID string
+func (_e *MockRepository_Expecter) GetProviderByUserID(ctx interface{}, userID interface{}) *MockRepository_GetProviderByUserID_Call {
+	return &MockRepository_GetProviderByUserID_Call{Call: _e.mock.On("GetProviderByUserID", ctx, userID)}
+}
+
+func (_c *MockRepository_GetProviderByUserID_Call) Run(run func(ctx context.Context, userID string)) *MockRepository_GetProviderByUserID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetProviderByUserID_Call) Return(provider entities.Provider, err error) *MockRepository_GetProviderByUserID_Call {
+	_c.Call.Return(provider, err)
+	return _c
+}
+
+func (_c *MockRepository_GetProviderByUserID_Call) RunAndReturn(run func(ctx context.Context, userID string) (entities.Provider, error)) *MockRepository_GetProviderByUserID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetProviderCodeByUserID provides a mock function for the type MockRepository
 func (_mock *MockRepository) GetProviderCodeByUserID(ctx context.Context, userID string) (string, error) {
 	ret := _mock.Called(ctx, userID)

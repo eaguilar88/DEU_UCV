@@ -5,22 +5,26 @@ import (
 )
 
 type User struct {
-	ID                string
-	CI                string
-	Email             string
-	Roles             []string
-	FirstName         string
-	LastName          string
-	DateOfBirth       string
-	Age               int
-	Gender            string
-	EducationLevel    string
-	ProviderCode      string
-	Faculty           string
-	Address           string
-	Password          string
-	CreatedAt         string
-	ProfilePictureURL string
+	ID                 string
+	CI                 string
+	Email              string
+	Roles              []string
+	FirstName          string
+	LastName           string
+	DateOfBirth        string
+	Age                int
+	Gender             string
+	EducationLevel     string
+	ProviderCode       string
+	Faculty            string
+	Address            string
+	Password           string
+	CreatedAt          string
+	ProfilePictureURL  string
+	GroupID            string
+	GroupName          string
+	CourseProviderID   string
+	CourseProviderName string
 }
 
 type UserRole struct {

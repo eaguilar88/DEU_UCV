@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/eaguilar88/deu/internal/entities"
+	"github.com/eaguilar88/deu/internal/facultyscope"
 	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -16,7 +17,7 @@ type Service interface {
 	RejectGroupRequest(ctx context.Context, reqID string) error
 	GetGroupRequestsByFaculty(ctx context.Context, faculty entities.Faculty, status string, pageScope entities.PageScope) ([]entities.GroupRequest, entities.PageScope, int, error)
 	GetGroupRequestByID(ctx context.Context, reqID string) (entities.GroupRequest, error)
-	GetPendingGroupRequestsCounts(ctx context.Context) ([]entities.FacultyPendingCount, error)
+	GetPendingGroupRequestsCounts(ctx context.Context, faculty entities.Faculty) ([]entities.FacultyPendingCount, error)
 }
 
 type Handler struct {
@@ -76,7 +77,11 @@ func (h *Handler) RejectGroupRequest(c echo.Context) error {
 
 func (h *Handler) GetPendingGroupRequestsCounts(c echo.Context) error {
 	ctx := c.Request().Context()
-	counts, err := h.svc.GetPendingGroupRequestsCounts(ctx)
+	faculty, err := facultyscope.ResolveOptional(c, c.QueryParam("faculty"))
+	if err != nil {
+		return httperrors.NewBadRequest("invalid faculty")
+	}
+	counts, err := h.svc.GetPendingGroupRequestsCounts(ctx, faculty)
 	if err != nil {
 		return httperrors.NewInternal(err)
 	}
@@ -88,7 +93,7 @@ func (h *Handler) GetPendingGroupRequestsCounts(c echo.Context) error {
 
 func (h *Handler) GetGroupRequestsByFaculty(c echo.Context) error {
 	ctx := c.Request().Context()
-	faculty, err := entities.FromString(c.QueryParam("faculty"))
+	faculty, err := facultyscope.Resolve(c, c.QueryParam("faculty"))
 	if err != nil {
 		return httperrors.NewBadRequest("invalid faculty")
 	}

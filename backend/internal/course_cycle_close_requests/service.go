@@ -16,7 +16,7 @@ var (
 
 type Repository interface {
 	CreateCourseCycleCloseRequest(ctx context.Context, cycleID, submittedByID int64) (int64, error)
-	GetCourseCycleCloseRequests(ctx context.Context, pageScope entities.PageScope) ([]entities.CourseCycleCloseRequest, entities.PageScope, error)
+	GetCourseCycleCloseRequests(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.CourseCycleCloseRequest, entities.PageScope, error)
 	GetCourseCycleCloseRequestByID(ctx context.Context, id string) (entities.CourseCycleCloseRequest, error)
 	ApproveCourseCycleCloseRequest(ctx context.Context, id, reviewerID, cycleID string) error
 	RejectCourseCycleCloseRequest(ctx context.Context, id, reviewerID, comments string) error
@@ -75,8 +75,8 @@ func (s *service) RejectCloseRequest(ctx context.Context, id, reviewerID, commen
 	return s.repo.RejectCourseCycleCloseRequest(ctx, id, reviewerID, comments)
 }
 
-func (s *service) GetCloseRequests(ctx context.Context, pageScope entities.PageScope) ([]entities.CourseCycleCloseRequest, entities.PageScope, error) {
-	requests, ps, err := s.repo.GetCourseCycleCloseRequests(ctx, pageScope)
+func (s *service) GetCloseRequests(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.CourseCycleCloseRequest, entities.PageScope, error) {
+	requests, ps, err := s.repo.GetCourseCycleCloseRequests(ctx, faculty, pageScope)
 	if err != nil {
 		s.logger.Error("failed to get cycle close requests", zap.Error(err))
 		return nil, entities.PageScope{}, err

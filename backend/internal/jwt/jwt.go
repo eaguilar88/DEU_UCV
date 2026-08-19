@@ -20,7 +20,7 @@ type CustomClaims struct {
 // Signer defines the interface for an authorization service.
 type Signer interface {
 	ValidateToken(tokenString string) (map[string]any, error) // Takes token string
-	GenerateJWT(userID string, roles []entities.UserRole, providerCode string) (string, error)
+	GenerateJWT(userID string, roles []entities.UserRole, providerCode, groupID, groupName, courseProviderID, courseProviderName string) (string, error)
 }
 
 type JWTSigner struct {
@@ -58,7 +58,7 @@ func (s *JWTSigner) ValidateToken(tokenString string) (map[string]any, error) {
 	return claims, nil
 }
 
-func (s *JWTSigner) GenerateJWT(userID string, roles []entities.UserRole, providerCode string) (string, error) {
+func (s *JWTSigner) GenerateJWT(userID string, roles []entities.UserRole, providerCode, groupID, groupName, courseProviderID, courseProviderName string) (string, error) {
 	roleNames := make([]string, len(roles))
 	for i, r := range roles {
 		roleNames[i] = r.Name
@@ -89,6 +89,10 @@ func (s *JWTSigner) GenerateJWT(userID string, roles []entities.UserRole, provid
 			"domainType":   domainType,
 			"faculty":      faculty,
 			"providerCode": providerCode,
+			"groupID":      groupID,
+			"groupName":    groupName,
+			"providerID":   courseProviderID,
+			"providerName": courseProviderName,
 		},
 	}
 

@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/eaguilar88/deu/internal/entities"
+	"github.com/eaguilar88/deu/internal/facultyscope"
 	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -138,7 +139,7 @@ func (h *Handler) RedirectCourseRequest(c echo.Context) error {
 
 func (h *Handler) GetCourseRequestsByFaculty(c echo.Context) error {
 	ctx := c.Request().Context()
-	faculty, err := entities.FromString(c.QueryParam("faculty"))
+	faculty, err := facultyscope.Resolve(c, c.QueryParam("faculty"))
 	if err != nil {
 		return httperrors.NewBadRequest("invalid faculty")
 	}

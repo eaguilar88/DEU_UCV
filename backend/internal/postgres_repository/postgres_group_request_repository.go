@@ -89,8 +89,8 @@ func (r *PostgresRepository) GetGroupRequestsByFaculty(ctx context.Context, facu
 	return requests, scope, pendingCount, nil
 }
 
-func (r *PostgresRepository) GetPendingGroupRequestsCounts(ctx context.Context) ([]entities.FacultyPendingCount, error) {
-	query, args, err := queries.GetPendingGroupRequestsCountGroupedByFaculty().ToSql()
+func (r *PostgresRepository) GetPendingGroupRequestsCounts(ctx context.Context, faculty entities.Faculty) ([]entities.FacultyPendingCount, error) {
+	query, args, err := queries.GetPendingGroupRequestsCountGroupedByFaculty(faculty.String()).ToSql()
 	if err != nil {
 		return nil, err
 	}

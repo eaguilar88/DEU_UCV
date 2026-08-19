@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/eaguilar88/deu/internal/entities"
+	"github.com/eaguilar88/deu/internal/facultyscope"
 	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -14,7 +15,7 @@ import (
 type Service interface {
 	ApproveProviderRequest(ctx context.Context, id, reviewerID string) error
 	RejectProviderRequest(ctx context.Context, id, reviewerID, comments string) error
-	GetProviderRequests(ctx context.Context, pageScope entities.PageScope) ([]entities.ProviderRequest, entities.PageScope, error)
+	GetProviderRequests(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.ProviderRequest, entities.PageScope, error)
 	GetProviderRequestByID(ctx context.Context, id string) (entities.ProviderRequest, error)
 }
 
@@ -90,13 +91,18 @@ func (h *Handler) RejectProviderRequest(c echo.Context) error {
 func (h *Handler) GetProviderRequests(c echo.Context) error {
 	ctx := c.Request().Context()
 
+	faculty, err := facultyscope.ResolveOptional(c, c.QueryParam("faculty"))
+	if err != nil {
+		return httperrors.NewBadRequest("invalid faculty")
+	}
+
 	var pageScope entities.PageScope
 	//nolint:errcheck
 	pageScope.GetPageFromVars(c.QueryParam("page"))
 	//nolint:errcheck
 	pageScope.GetPerPageFromVars(c.QueryParam("per_page"))
 
-	requests, resultScope, err := h.svc.GetProviderRequests(ctx, pageScope)
+	requests, resultScope, err := h.svc.GetProviderRequests(ctx, faculty, pageScope)
 	if err != nil {
 		return httperrors.NewInternal(err)
 	}

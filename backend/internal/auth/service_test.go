@@ -6,7 +6,9 @@ import (
 
 	"github.com/eaguilar88/deu/internal/auth/mocks"
 	"github.com/eaguilar88/deu/internal/entities"
+	"github.com/eaguilar88/deu/internal/groups"
 	jwtMock "github.com/eaguilar88/deu/internal/jwt/mocks"
+	"github.com/eaguilar88/deu/internal/providers"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
@@ -36,7 +38,9 @@ func TestAuthService_Login(t *testing.T) {
 				tc.repo.On("GetUserByUsername", ctx, tc.username).Return(tc.user, nil)
 				tc.repo.On("GetUserRoles", ctx, tc.user.ID).Return(userRoles, nil)
 				tc.repo.On("GetProviderCodeByUserID", ctx, tc.user.ID).Return("", nil)
-				tc.signer.On("GenerateJWT", "1", userRoles, "").Return(tc.token, nil)
+				tc.repo.On("GetGroupByUserID", ctx, tc.user.ID).Return(entities.ExtensionGroup{}, groups.ErrGroupNotFound)
+				tc.repo.On("GetProviderByUserID", ctx, tc.user.ID).Return(entities.Provider{}, providers.ErrProviderNotFound)
+				tc.signer.On("GenerateJWT", "1", userRoles, "", "", "", "", "").Return(tc.token, nil)
 			},
 			token: "token",
 			user: &entities.User{
@@ -61,7 +65,9 @@ func TestAuthService_Login(t *testing.T) {
 				tc.repo.On("GetUserByUsername", ctx, tc.username).Return(tc.user, nil)
 				tc.repo.On("GetUserRoles", ctx, tc.user.ID).Return(userRoles, nil)
 				tc.repo.On("GetProviderCodeByUserID", ctx, tc.user.ID).Return("", nil)
-				tc.signer.On("GenerateJWT", "2", userRoles, "").Return(tc.token, nil)
+				tc.repo.On("GetGroupByUserID", ctx, tc.user.ID).Return(entities.ExtensionGroup{}, groups.ErrGroupNotFound)
+				tc.repo.On("GetProviderByUserID", ctx, tc.user.ID).Return(entities.Provider{}, providers.ErrProviderNotFound)
+				tc.signer.On("GenerateJWT", "2", userRoles, "", "", "", "", "").Return(tc.token, nil)
 			},
 			token: "token",
 			user: &entities.User{
@@ -73,6 +79,93 @@ func TestAuthService_Login(t *testing.T) {
 					"deu_admin",
 				},
 				Faculty: "DEU",
+			},
+			wantErr: nil,
+		},
+		{
+			name:     "user who owns a group gets group claims",
+			username: "group.owner@email.com",
+			password: "nolodire",
+			repo:     &mocks.MockRepository{},
+			signer:   &jwtMock.MockSigner{},
+			prepare: func(ctx context.Context, tc *testCase) {
+				userRoles := []entities.UserRole{{Name: "extension", DomainType: "group", Faculty: ""}}
+				tc.repo.On("GetUserByUsername", ctx, tc.username).Return(tc.user, nil)
+				tc.repo.On("GetUserRoles", ctx, tc.user.ID).Return(userRoles, nil)
+				tc.repo.On("GetProviderCodeByUserID", ctx, tc.user.ID).Return("", nil)
+				tc.repo.On("GetGroupByUserID", ctx, tc.user.ID).Return(entities.ExtensionGroup{ID: "group-1", Name: "Grupo Uno"}, nil)
+				tc.repo.On("GetProviderByUserID", ctx, tc.user.ID).Return(entities.Provider{}, providers.ErrProviderNotFound)
+				tc.signer.On("GenerateJWT", "3", userRoles, "", "group-1", "Grupo Uno", "", "").Return(tc.token, nil)
+			},
+			token: "token",
+			user: &entities.User{
+				ID:        "3",
+				FirstName: "Group",
+				LastName:  "Owner",
+				Password:  "$2a$10$rFfAKJJIvbGaQCay8zC9bulGQ/kOYDOwwVBGr0WyWA1sUTLZsuXpa",
+				Roles: []string{
+					"extension",
+				},
+				GroupID:   "group-1",
+				GroupName: "Grupo Uno",
+			},
+			wantErr: nil,
+		},
+		{
+			name:     "course provider gets provider claims",
+			username: "course.provider@email.com",
+			password: "nolodire",
+			repo:     &mocks.MockRepository{},
+			signer:   &jwtMock.MockSigner{},
+			prepare: func(ctx context.Context, tc *testCase) {
+				userRoles := []entities.UserRole{{Name: "coordinador", DomainType: "course", Faculty: ""}}
+				tc.repo.On("GetUserByUsername", ctx, tc.username).Return(tc.user, nil)
+				tc.repo.On("GetUserRoles", ctx, tc.user.ID).Return(userRoles, nil)
+				tc.repo.On("GetProviderCodeByUserID", ctx, tc.user.ID).Return("ECP-abc123", nil)
+				tc.repo.On("GetGroupByUserID", ctx, tc.user.ID).Return(entities.ExtensionGroup{}, groups.ErrGroupNotFound)
+				tc.repo.On("GetProviderByUserID", ctx, tc.user.ID).Return(entities.Provider{ID: "provider-1", Name: "Proveedor Uno", Code: "ECP-abc123"}, nil)
+				tc.signer.On("GenerateJWT", "4", userRoles, "ECP-abc123", "", "", "provider-1", "Proveedor Uno").Return(tc.token, nil)
+			},
+			token: "token",
+			user: &entities.User{
+				ID:        "4",
+				FirstName: "Course",
+				LastName:  "Provider",
+				Password:  "$2a$10$rFfAKJJIvbGaQCay8zC9bulGQ/kOYDOwwVBGr0WyWA1sUTLZsuXpa",
+				Roles: []string{
+					"coordinador",
+				},
+				ProviderCode:       "ECP-abc123",
+				CourseProviderID:   "provider-1",
+				CourseProviderName: "Proveedor Uno",
+			},
+			wantErr: nil,
+		},
+		{
+			name:     "group provider does not get course provider claims",
+			username: "group.provider@email.com",
+			password: "nolodire",
+			repo:     &mocks.MockRepository{},
+			signer:   &jwtMock.MockSigner{},
+			prepare: func(ctx context.Context, tc *testCase) {
+				userRoles := []entities.UserRole{{Name: "extension", DomainType: "group", Faculty: ""}}
+				tc.repo.On("GetUserByUsername", ctx, tc.username).Return(tc.user, nil)
+				tc.repo.On("GetUserRoles", ctx, tc.user.ID).Return(userRoles, nil)
+				tc.repo.On("GetProviderCodeByUserID", ctx, tc.user.ID).Return("GEX-xyz789", nil)
+				tc.repo.On("GetGroupByUserID", ctx, tc.user.ID).Return(entities.ExtensionGroup{}, groups.ErrGroupNotFound)
+				tc.repo.On("GetProviderByUserID", ctx, tc.user.ID).Return(entities.Provider{ID: "provider-2", Name: "Proveedor Grupo", Code: "GEX-xyz789"}, nil)
+				tc.signer.On("GenerateJWT", "5", userRoles, "GEX-xyz789", "", "", "", "").Return(tc.token, nil)
+			},
+			token: "token",
+			user: &entities.User{
+				ID:        "5",
+				FirstName: "Group",
+				LastName:  "Provider",
+				Password:  "$2a$10$rFfAKJJIvbGaQCay8zC9bulGQ/kOYDOwwVBGr0WyWA1sUTLZsuXpa",
+				Roles: []string{
+					"extension",
+				},
+				ProviderCode: "GEX-xyz789",
 			},
 			wantErr: nil,
 		},

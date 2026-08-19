@@ -407,8 +407,8 @@ func (_c *MockService_GetGroupResourceRequestsByGroupID_Call) RunAndReturn(run f
 }
 
 // GetPendingGroupResourceRequestsCountByFaculty provides a mock function for the type MockService
-func (_mock *MockService) GetPendingGroupResourceRequestsCountByFaculty(ctx context.Context) ([]group_resource_requests.FacultyPendingCount, error) {
-	ret := _mock.Called(ctx)
+func (_mock *MockService) GetPendingGroupResourceRequestsCountByFaculty(ctx context.Context, faculty entities.Faculty) ([]group_resource_requests.FacultyPendingCount, error) {
+	ret := _mock.Called(ctx, faculty)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetPendingGroupResourceRequestsCountByFaculty")
@@ -416,18 +416,18 @@ func (_mock *MockService) GetPendingGroupResourceRequestsCountByFaculty(ctx cont
 
 	var r0 []group_resource_requests.FacultyPendingCount
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]group_resource_requests.FacultyPendingCount, error)); ok {
-		return returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.Faculty) ([]group_resource_requests.FacultyPendingCount, error)); ok {
+		return returnFunc(ctx, faculty)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) []group_resource_requests.FacultyPendingCount); ok {
-		r0 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.Faculty) []group_resource_requests.FacultyPendingCount); ok {
+		r0 = returnFunc(ctx, faculty)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]group_resource_requests.FacultyPendingCount)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.Faculty) error); ok {
+		r1 = returnFunc(ctx, faculty)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -441,18 +441,24 @@ type MockService_GetPendingGroupResourceRequestsCountByFaculty_Call struct {
 
 // GetPendingGroupResourceRequestsCountByFaculty is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockService_Expecter) GetPendingGroupResourceRequestsCountByFaculty(ctx interface{}) *MockService_GetPendingGroupResourceRequestsCountByFaculty_Call {
-	return &MockService_GetPendingGroupResourceRequestsCountByFaculty_Call{Call: _e.mock.On("GetPendingGroupResourceRequestsCountByFaculty", ctx)}
+//   - faculty entities.Faculty
+func (_e *MockService_Expecter) GetPendingGroupResourceRequestsCountByFaculty(ctx interface{}, faculty interface{}) *MockService_GetPendingGroupResourceRequestsCountByFaculty_Call {
+	return &MockService_GetPendingGroupResourceRequestsCountByFaculty_Call{Call: _e.mock.On("GetPendingGroupResourceRequestsCountByFaculty", ctx, faculty)}
 }
 
-func (_c *MockService_GetPendingGroupResourceRequestsCountByFaculty_Call) Run(run func(ctx context.Context)) *MockService_GetPendingGroupResourceRequestsCountByFaculty_Call {
+func (_c *MockService_GetPendingGroupResourceRequestsCountByFaculty_Call) Run(run func(ctx context.Context, faculty entities.Faculty)) *MockService_GetPendingGroupResourceRequestsCountByFaculty_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
+		var arg1 entities.Faculty
+		if args[1] != nil {
+			arg1 = args[1].(entities.Faculty)
+		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -463,7 +469,7 @@ func (_c *MockService_GetPendingGroupResourceRequestsCountByFaculty_Call) Return
 	return _c
 }
 
-func (_c *MockService_GetPendingGroupResourceRequestsCountByFaculty_Call) RunAndReturn(run func(ctx context.Context) ([]group_resource_requests.FacultyPendingCount, error)) *MockService_GetPendingGroupResourceRequestsCountByFaculty_Call {
+func (_c *MockService_GetPendingGroupResourceRequestsCountByFaculty_Call) RunAndReturn(run func(ctx context.Context, faculty entities.Faculty) ([]group_resource_requests.FacultyPendingCount, error)) *MockService_GetPendingGroupResourceRequestsCountByFaculty_Call {
 	_c.Call.Return(run)
 	return _c
 }

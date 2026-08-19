@@ -40,8 +40,12 @@ func (h *Handler) LoginHandleHTTP(c echo.Context) error {
 			Name:  user.FirstName + " " + user.LastName,
 			Roles: user.Roles,
 		},
-		Faculty:      user.Faculty,
-		ProviderCode: user.ProviderCode,
+		Faculty:            user.Faculty,
+		ProviderCode:       user.ProviderCode,
+		GroupID:            user.GroupID,
+		GroupName:          user.GroupName,
+		CourseProviderID:   user.CourseProviderID,
+		CourseProviderName: user.CourseProviderName,
 	}
 	return c.JSON(http.StatusOK, response)
 }

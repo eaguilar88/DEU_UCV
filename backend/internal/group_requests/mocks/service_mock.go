@@ -254,8 +254,8 @@ func (_c *MockService_GetGroupRequestsByFaculty_Call) RunAndReturn(run func(ctx 
 }
 
 // GetPendingGroupRequestsCounts provides a mock function for the type MockService
-func (_mock *MockService) GetPendingGroupRequestsCounts(ctx context.Context) ([]entities.FacultyPendingCount, error) {
-	ret := _mock.Called(ctx)
+func (_mock *MockService) GetPendingGroupRequestsCounts(ctx context.Context, faculty entities.Faculty) ([]entities.FacultyPendingCount, error) {
+	ret := _mock.Called(ctx, faculty)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetPendingGroupRequestsCounts")
@@ -263,18 +263,18 @@ func (_mock *MockService) GetPendingGroupRequestsCounts(ctx context.Context) ([]
 
 	var r0 []entities.FacultyPendingCount
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]entities.FacultyPendingCount, error)); ok {
-		return returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.Faculty) ([]entities.FacultyPendingCount, error)); ok {
+		return returnFunc(ctx, faculty)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) []entities.FacultyPendingCount); ok {
-		r0 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.Faculty) []entities.FacultyPendingCount); ok {
+		r0 = returnFunc(ctx, faculty)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]entities.FacultyPendingCount)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.Faculty) error); ok {
+		r1 = returnFunc(ctx, faculty)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -288,18 +288,24 @@ type MockService_GetPendingGroupRequestsCounts_Call struct {
 
 // GetPendingGroupRequestsCounts is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockService_Expecter) GetPendingGroupRequestsCounts(ctx interface{}) *MockService_GetPendingGroupRequestsCounts_Call {
-	return &MockService_GetPendingGroupRequestsCounts_Call{Call: _e.mock.On("GetPendingGroupRequestsCounts", ctx)}
+//   - faculty entities.Faculty
+func (_e *MockService_Expecter) GetPendingGroupRequestsCounts(ctx interface{}, faculty interface{}) *MockService_GetPendingGroupRequestsCounts_Call {
+	return &MockService_GetPendingGroupRequestsCounts_Call{Call: _e.mock.On("GetPendingGroupRequestsCounts", ctx, faculty)}
 }
 
-func (_c *MockService_GetPendingGroupRequestsCounts_Call) Run(run func(ctx context.Context)) *MockService_GetPendingGroupRequestsCounts_Call {
+func (_c *MockService_GetPendingGroupRequestsCounts_Call) Run(run func(ctx context.Context, faculty entities.Faculty)) *MockService_GetPendingGroupRequestsCounts_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
+		var arg1 entities.Faculty
+		if args[1] != nil {
+			arg1 = args[1].(entities.Faculty)
+		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -310,7 +316,7 @@ func (_c *MockService_GetPendingGroupRequestsCounts_Call) Return(facultyPendingC
 	return _c
 }
 
-func (_c *MockService_GetPendingGroupRequestsCounts_Call) RunAndReturn(run func(ctx context.Context) ([]entities.FacultyPendingCount, error)) *MockService_GetPendingGroupRequestsCounts_Call {
+func (_c *MockService_GetPendingGroupRequestsCounts_Call) RunAndReturn(run func(ctx context.Context, faculty entities.Faculty) ([]entities.FacultyPendingCount, error)) *MockService_GetPendingGroupRequestsCounts_Call {
 	_c.Call.Return(run)
 	return _c
 }

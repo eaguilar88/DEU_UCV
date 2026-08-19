@@ -40,7 +40,7 @@ services:
       - web
   grupos:
     build:
-      context: "./grupos/gsu_ucv"
+      context: "./grupos"
       dockerfile: "Dockerfile"
     restart: unless-stopped
     depends_on:

@@ -32,11 +32,18 @@ func GetCourseCycleCloseRequestByID(id string) sq.SelectBuilder {
 		Where(sq.Eq{"ccr.deleted_at": nil})
 }
 
-func GetCourseCycleCloseRequests(perPage, offset uint64) sq.SelectBuilder {
-	return psql.Select(cycleCloseRequestSelectCommon...).
+func GetCourseCycleCloseRequests(faculty string, perPage, offset uint64) sq.SelectBuilder {
+	q := psql.Select(cycleCloseRequestSelectCommon...).
 		From(fmt.Sprintf("%s AS ccr", cycleCloseRequestsTableName)).
-		Where(sq.Eq{"ccr.deleted_at": nil}).
-		OrderBy("ccr.created_at DESC").
+		Where(sq.Eq{"ccr.deleted_at": nil})
+
+	if faculty != "" {
+		q = q.Join(fmt.Sprintf("%s AS pd ON pd.id = ccr.course_cycle_id", periodsTableName)).
+			Join(fmt.Sprintf("%s AS c ON c.id = pd.course_id", coursesTableName)).
+			Where(sq.Eq{"c.faculty": faculty})
+	}
+
+	return q.OrderBy("ccr.created_at DESC").
 		Limit(perPage).
 		Offset(offset)
 }
