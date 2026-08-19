@@ -205,12 +205,12 @@ CREATE TABLE
     name VARCHAR,
     description TEXT,
     is_multidisciplinary BOOLEAN DEFAULT FALSE, -- Grupo normal o multidisciplinario
-    faculty faculty_enum DEFAULT 'DEU', -- Facultad responsable del grupo
+    faculty faculty_enum[] DEFAULT ARRAY['DEU']::faculty_enum[], -- Facultad responsable del grupo
     foundation DATE, -- Fecha de Fundación del Grupo
     objective TEXT,
     code VARCHAR, -- Código asignado por la DEU
     group_director VARCHAR, -- Director del grupo de extensión
-    type VARCHAR, -- Tipo de grupo (por ejemplo, académico, cultural, deportivo)
+    type VARCHAR[] DEFAULT ARRAY[]::VARCHAR[], -- Tipo de grupo (por ejemplo, académico, cultural, deportivo)
     location VARCHAR,
     is_active BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT NOW (),
@@ -246,6 +246,7 @@ CREATE TABLE
     faculty faculty_enum DEFAULT 'DEU',
     school VARCHAR,
     document VARCHAR,
+    is_leader BOOLEAN DEFAULT FALSE,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT NOW (),
     updated_at TIMESTAMP DEFAULT NOW (),
@@ -275,7 +276,7 @@ CREATE TABLE
     date_start DATE,
     date_end DATE,
     location VARCHAR,
-    knowledge_area VARCHAR, -- Área de conocimiento relacionada con la actividad
+    knowledge_area VARCHAR[] DEFAULT ARRAY[]::VARCHAR[], -- Área de conocimiento relacionada con la actividad
     allies VARCHAR, -- Aliados o colaboradores de la actividad
     group_participants INTEGER, -- Miembros del grupo que participaron
     stimated_participants INTEGER, -- Participantes estimados

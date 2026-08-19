@@ -10,20 +10,21 @@ const (
 	MultidisciplinaryGroupType = "multidisciplinary"
 
 	// File types for groups
-	GroupFileTypeLogo = "logo"
+	GroupFileTypeLogo    = "logo"
+	GroupFileTypeProject = "proyecto_grupo"
 )
 
 // ValidGroupTypes contains all valid group type values
-var ValidGroupTypes = map[GroupType]bool{
-	CulturalGroupType:          true,
-	SportsGroupType:            true,
-	AcademicGroupType:          true,
-	MultidisciplinaryGroupType: true,
-}
+//var ValidGroupTypes = map[GroupType]bool{
+//	CulturalGroupType:          true,
+//	SportsGroupType:            true,
+//	AcademicGroupType:          true,
+//	MultidisciplinaryGroupType: true,
+//}
 
 // IsValid checks if the GroupType value is valid
 func (t GroupType) IsValid() bool {
-	return ValidGroupTypes[t]
+	return string(t) != ""
 }
 
 // GroupFilter carries the optional filters accepted by GetGroups.
@@ -45,9 +46,10 @@ type ExtensionGroup struct {
 	IsMultidisciplinary bool
 	Objective           string
 	Location            string
-	Type                GroupType
-	Faculty             Faculty
+	Type                []GroupType
+	Faculty             []Faculty
 	Logo                *File
+	Project             *File
 	Files               []*File
 	Members             []GroupMember
 	Active              bool
@@ -69,11 +71,12 @@ type GroupMember struct {
 	Faculty      Faculty
 	School       string
 	Document     string
+	IsLeader     bool
 	IsActive     bool
 }
 
 type GroupFiles struct {
-	Logo *File
+	Logo         *File
 	// FinancingPlan *File
-	// GroupProject  *File
+	GroupProject *File
 }

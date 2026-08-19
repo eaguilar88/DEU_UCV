@@ -127,11 +127,17 @@ func (r *PostgresRepository) GetRandomActiveGroups(ctx context.Context, limit in
 }
 
 func (r *PostgresRepository) CreateGroup(ctx context.Context, gr entities.ExtensionGroup) (int64, error) {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return -1, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
 	query, args, err := queries.InsertGroup(newGroupToModel(gr)).ToSql()
 	if err != nil {
 		return 0, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, query)
+	stmt, err := tx.PrepareContext(ctx, query)
 	if err != nil {
 		return 0, err
 	}
@@ -146,10 +152,15 @@ func (r *PostgresRepository) CreateGroup(ctx context.Context, gr entities.Extens
 		r.logger.Error("error inserting group", zap.Error(err))
 		return -1, httperrors.NewInternal(err)
 	}
-	if err := r.insertGroupMembers(ctx, lastInsertedID, gr.Members); err != nil {
+	if err := r.insertGroupMembers(ctx, tx, lastInsertedID, gr.Members); err != nil {
 		r.logger.Error("error inserting group members", zap.Error(err))
 		return -1, err
 	}
+
+	if err := tx.Commit(); err != nil {
+		return -1, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+	
 	return lastInsertedID, nil
 }
 
@@ -199,6 +210,11 @@ func (r *PostgresRepository) CreateGroupWithRequests(ctx context.Context, group 
 		}
 	}
 
+	if err := r.insertGroupMembers(ctx, tx, groupID, group.Members); err != nil {
+		r.logger.Error("failed to insert group members", zap.Error(err))
+		return -1, fmt.Errorf("failed to insert group members: %w", err)
+	}
+
 	// 3. Create each authorization request
 	for _, req := range requests {
 		reqSQL, reqArgs, err := queries.InsertGroupRequest(models.GroupRequest{
@@ -240,16 +256,22 @@ func (r *PostgresRepository) CreateGroupWithRequests(ctx context.Context, group 
 		return -1, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	r.logger.Info("group and requests created successfully", zap.Int64("group_id", groupID))
+	r.logger.Info("group, members, and requests created successfully", zap.Int64("group_id", groupID))
 	return groupID, nil
 }
 
 func (r *PostgresRepository) UpdateGroup(ctx context.Context, group entities.ExtensionGroup) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
 	query, args, err := queries.UpdateGroup(newGroupToModel(group)).ToSql()
 	if err != nil {
 		return err
 	}
-	stmt, err := r.db.PrepareContext(ctx, query)
+	stmt, err := tx.PrepareContext(ctx, query)
 	if err != nil {
 		return err
 	}
@@ -261,7 +283,35 @@ func (r *PostgresRepository) UpdateGroup(ctx context.Context, group entities.Ext
 	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
 		return fmt.Errorf("%w: %w", groups.ErrGroupNotFound, err)
 	}
-	return nil
+	
+	groupID, err := strconv.ParseInt(group.ID, 10, 64)
+	if err != nil {
+		return err
+	}
+
+	if group.Email != "" {
+		if err := r.upsertContactInformation(ctx, tx, group.Email, entities.ContactTypeEmail, groupID); err != nil {
+			return err
+		}
+	}
+	if group.Phone != "" {
+		if err := r.upsertContactInformation(ctx, tx, group.Phone, entities.ContactTypePhone, groupID); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
+func (r *PostgresRepository) upsertContactInformation(ctx context.Context, tx *sql.Tx, contactValue string, contactType entities.ContactType, groupID int64) error {
+	query := `
+		INSERT INTO deu.contacts (contact_type, contact_value, owner_type, owner_id)
+		VALUES ($1, $2, $3, $4)
+		ON CONFLICT (contact_type, contact_value, owner_type, owner_id) 
+		DO UPDATE SET contact_value = EXCLUDED.contact_value, updated_at = NOW();
+	`
+	_, err := tx.ExecContext(ctx, query, string(contactType), contactValue, entities.OwnerTypeExtensionGroup.String(), groupID)
+	return err
 }
 
 func (r *PostgresRepository) DeleteGroup(ctx context.Context, groupID string) error {
@@ -358,6 +408,16 @@ func scanGroup(row scannable) (models.ExtensionGroup, error) {
 }
 
 func newGroupToModel(group entities.ExtensionGroup) models.ExtensionGroup {
+	faculties := make(pq.StringArray, len(group.Faculty))
+	for i, f := range group.Faculty {
+		faculties[i] = string(f)
+	}
+
+	types := make(pq.StringArray, len(group.Type))
+	for i, t := range group.Type {
+		types[i] = string(t)
+	}
+
 	return models.ExtensionGroup{
 		ID:   group.ID,
 		Name: group.Name,
@@ -365,7 +425,7 @@ func newGroupToModel(group entities.ExtensionGroup) models.ExtensionGroup {
 			String: group.Description,
 			Valid:  true,
 		},
-		Faculty: group.Faculty.String(),
+		Faculty: faculties,
 		Foundation: sql.NullString{
 			String: group.Foundation,
 			Valid:  group.Foundation != "",
@@ -373,7 +433,7 @@ func newGroupToModel(group entities.ExtensionGroup) models.ExtensionGroup {
 		IsMultidisciplinary: group.IsMultidisciplinary,
 		UserID:              group.Owner.ID,
 		Objective:           group.Objective,
-		Type:                string(group.Type),
+		Type:                types,
 		Location: sql.NullString{
 			String: group.Location,
 			Valid:  true,
@@ -385,11 +445,10 @@ func newGroupToModel(group entities.ExtensionGroup) models.ExtensionGroup {
 }
 
 func newGroupFromModel(group models.ExtensionGroup) entities.ExtensionGroup {
-	var description, objective, location, foundation string
+	var description, location, foundation string
 	if group.Description.Valid {
 		description = group.Description.String
 	}
-
 	if group.Location.Valid {
 		location = group.Location.String
 	}
@@ -397,18 +456,28 @@ func newGroupFromModel(group models.ExtensionGroup) entities.ExtensionGroup {
 		foundation = group.Foundation.String
 	}
 
+	faculties := make([]entities.Faculty, len(group.Faculty))
+	for i, f := range group.Faculty {
+		faculties[i] = entities.Faculty(f)
+	}
+
+	types := make([]entities.GroupType, len(group.Type))
+	for i, t := range group.Type {
+		types[i] = entities.GroupType(t)
+	}
+
 	return entities.ExtensionGroup{
 		ID:                  group.ID,
 		Name:                group.Name,
 		Description:         description,
-		Faculty:             entities.Faculty(group.Faculty),
+		Faculty:             faculties,
 		Foundation:          foundation,
 		IsMultidisciplinary: group.IsMultidisciplinary,
-		Type:                entities.GroupType(group.Type),
+		Type:                types,
 		Owner: &entities.User{
 			ID: group.UserID,
 		},
-		Objective: objective,
+		Objective: group.Objective,
 		Location:  location,
 		Active:    group.IsActive,
 		CreatedAt: group.CreatedAt,
@@ -417,7 +486,7 @@ func newGroupFromModel(group models.ExtensionGroup) entities.ExtensionGroup {
 	}
 }
 
-func (r *PostgresRepository) insertGroupMembers(ctx context.Context, groupID int64, members []entities.GroupMember) error {
+func (r *PostgresRepository) insertGroupMembers(ctx context.Context, tx *sql.Tx, groupID int64, members []entities.GroupMember) error {
 	for _, m := range members {
 		model := models.GroupMember{
 			Name:         m.Name,
@@ -429,13 +498,14 @@ func (r *PostgresRepository) insertGroupMembers(ctx context.Context, groupID int
 			Faculty:      string(m.Faculty),
 			School:       sql.NullString{String: m.School, Valid: m.School != ""},
 			Document:     sql.NullString{String: m.Document, Valid: m.Document != ""},
+			IsLeader:     m.IsLeader,
 			IsActive:     m.IsActive,
 		}
 		query, args, err := queries.InsertGroupMember(groupID, model).ToSql()
 		if err != nil {
 			return err
 		}
-		stmt, err := r.db.PrepareContext(ctx, query)
+		stmt, err := tx.PrepareContext(ctx, query)
 		if err != nil {
 			return err
 		}
@@ -467,7 +537,7 @@ func (r *PostgresRepository) getGroupMembers(ctx context.Context, groupID string
 	var members []entities.GroupMember
 	for rows.Next() {
 		var m models.GroupMember
-		err := rows.Scan(&m.ID, &m.Name, &m.CI, &m.Phone, &m.Email, &m.Coordination, &m.Year, &m.Faculty, &m.School, &m.Document, &m.IsActive)
+		err := rows.Scan(&m.ID, &m.Name, &m.CI, &m.Phone, &m.Email, &m.Coordination, &m.Year, &m.Faculty, &m.School, &m.Document, &m.IsLeader, &m.IsActive)
 		if err != nil {
 			return nil, err
 		}
@@ -488,6 +558,7 @@ func groupMemberFromModel(m models.GroupMember) entities.GroupMember {
 		Faculty:      entities.Faculty(m.Faculty),
 		School:       m.School.String,
 		Document:     m.Document.String,
+		IsLeader:     m.IsLeader,
 		IsActive:     m.IsActive,
 	}
 }

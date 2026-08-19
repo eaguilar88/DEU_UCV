@@ -1,6 +1,9 @@
 package models
 
-import "database/sql"
+import (
+	"database/sql"
+	"github.com/lib/pq"
+)
 
 type Activity struct {
 	ID                    string
@@ -11,7 +14,7 @@ type Activity struct {
 	DateStart             sql.NullString
 	DateEnd               sql.NullString
 	Location              sql.NullString
-	KnowledgeArea         sql.NullString
+	KnowledgeArea         pq.StringArray
 	Allies                sql.NullString
 	GroupParticipants     sql.NullInt64
 	EstimatedParticipants sql.NullInt64

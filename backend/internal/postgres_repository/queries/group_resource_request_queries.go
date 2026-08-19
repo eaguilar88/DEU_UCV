@@ -17,6 +17,11 @@ var resourceRequestSelectCommon = []string{
 	"r.created_at",
 	"r.updated_at",
 }
+const effectiveFacultyExpr = `
+CASE 
+	WHEN g.is_multidisciplinary IS TRUE THEN 'DEU' 
+	ELSE g.faculty[1]::text 
+END`
 
 func GetGroupResourceRequestByID(reqID string) sq.SelectBuilder {
 	return psql.Select(resourceRequestSelectCommon...).
@@ -29,7 +34,8 @@ func GetGroupResourceRequestsByFaculty(faculty string, status string, limit, off
 	q := psql.Select(resourceRequestSelectCommon...).
 		From(fmt.Sprintf("%s AS r", groupResourceRequestsTableName)).
 		Join(fmt.Sprintf("%s AS g ON r.group_id = g.id", groupsTableName)).
-		Where(sq.Eq{"g.faculty": faculty, "r.deleted_at": nil})
+		Where(sq.Expr(fmt.Sprintf("(%s) = ?", effectiveFacultyExpr), faculty)).
+		Where(sq.Eq{"r.deleted_at": nil})
 
 	if status != "" {
 		q = q.Where(sq.Eq{"r.status": status})
@@ -41,10 +47,17 @@ func GetGroupResourceRequestsByFaculty(faculty string, status string, limit, off
 }
 
 func CountGroupResourceRequestsByFaculty(faculty string, status string) sq.SelectBuilder {
-	return psql.Select("COUNT(*)").
+	q := psql.Select("COUNT(*)").
 		From(fmt.Sprintf("%s AS r", groupResourceRequestsTableName)).
 		Join(fmt.Sprintf("%s AS g ON r.group_id = g.id", groupsTableName)).
-		Where(sq.Eq{"g.faculty": faculty, "r.deleted_at": nil})
+		Where(sq.Expr(fmt.Sprintf("(%s) = ?", effectiveFacultyExpr), faculty)).
+		Where(sq.Eq{"r.deleted_at": nil})
+
+	if status != "" {
+		q = q.Where(sq.Eq{"r.status": status})
+	}
+
+	return q
 }
 
 func GetGroupResourceRequestsByGroupID(groupID string, status string, limit, offset int) sq.SelectBuilder {

@@ -200,6 +200,15 @@ func (r *PostgresRepository) RejectGroupRequest(ctx context.Context, reqID strin
 	return nil
 }
 
+func (r *PostgresRepository) ActivateGroup(ctx context.Context, groupID string) error {
+	query, args, err := queries.ActivateGroup(groupID).ToSql()
+	if err != nil {
+		return err
+	}
+	_, err = r.db.ExecContext(ctx, query, args...)
+	return err
+}
+
 func newGroupRequestFromModel(m models.GroupRequest) entities.GroupRequest {
 	gar := entities.GroupRequest{
 		ID:        fmt.Sprintf("%d", m.ID),

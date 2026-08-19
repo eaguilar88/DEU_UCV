@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/lib/pq"
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/postgres_repository/models"
 )
@@ -64,6 +65,22 @@ func CountActivities(filter entities.ActivityFilter) sq.SelectBuilder {
 		From(activitiesTableName + " AS a")
 
 	return applyActivityFilters(q, filter)
+}
+
+func GetActivityMetrics(groupID string) sq.SelectBuilder {
+	q := psql.Select(
+		"COUNT(*)",
+		"COUNT(*) FILTER (WHERE CURRENT_DATE < a.date_start)",
+		"COUNT(*) FILTER (WHERE CURRENT_DATE BETWEEN a.date_start AND a.date_end)",
+		"COUNT(*) FILTER (WHERE CURRENT_DATE > a.date_end AND (a.actual_participants IS NULL OR a.actual_participants = 0))",
+	).From(activitiesTableName + " AS a").
+		Where(sq.Eq{"a.deleted_at": nil})
+
+	if groupID != "" {
+		q = q.Where(sq.Eq{"a.group_id": groupID})
+	}
+
+	return q
 }
 
 func applyActivityFilters(q sq.SelectBuilder, filter entities.ActivityFilter) sq.SelectBuilder {
@@ -174,7 +191,7 @@ func InsertActivity(a models.Activity) sq.InsertBuilder {
 			a.DateStart,
 			a.DateEnd,
 			a.Location,
-			a.KnowledgeArea,
+			pq.Array(a.KnowledgeArea), 
 			a.Allies,
 			a.GroupParticipants,
 			a.EstimatedParticipants,
@@ -196,7 +213,7 @@ func UpdateActivity(a models.Activity) sq.UpdateBuilder {
 		Set("date_start", a.DateStart).
 		Set("date_end", a.DateEnd).
 		Set("location", a.Location).
-		Set("knowledge_area", a.KnowledgeArea).
+		Set("knowledge_area", pq.Array(a.KnowledgeArea)).
 		Set("allies", a.Allies).
 		Set("group_participants", a.GroupParticipants).
 		Set("stimated_participants", a.EstimatedParticipants).
@@ -204,7 +221,6 @@ func UpdateActivity(a models.Activity) sq.UpdateBuilder {
 		Set("financing", a.Financing).
 		Set("comments", a.Comments).
 		Set("gallery_url", a.GalleryURL).
-		Set("is_featured", a.IsFeatured).
 		Set("updated_at", sq.Expr("NOW()")).
 		Where(sq.Eq{"id": a.ID, "deleted_at": nil})
 }

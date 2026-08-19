@@ -19,27 +19,27 @@ type GetGroupsRequest struct {
 type CreateGroupRequest struct {
 	Name                string           `validate:"required" form:"nombre"`
 	Description         string           `form:"descripcion"`
-	LeaderName          string           `validate:"required" form:"nombre_lider"`
-	Type                string           `validate:"required" form:"tipo"`
+	Type                []string         `validate:"required,min=1" form:"tipo"`
 	Foundation          string           `form:"fundacion"`
 	IsMultidisciplinary bool             `form:"es_multidisciplinario"`
-	Faculty             string           `validate:"required" form:"facultad"`
+	Faculty             []string         `validate:"required,min=1" form:"facultad"`
 	Objective           string           `validate:"required" form:"objetivo"`
-	Location            string           `validate:"required" form:"ubicacion"`
+	Location            string           `form:"ubicacion"`
 	Members             []GroupMemberDTO `form:"miembros" validate:"dive"`
 	Email               string           `form:"correo" validate:"required"`
 	Phone               string           `form:"telefono"`
 }
 
 type UpdateGroupRequest struct {
-	ID            string           `param:"id" validate:"required"`
-	OwnerID       string           `validate:"required"`
-	Name          string           `validate:"required" form:"nombre"`
-	Description   string           `form:"descripcion"`
-	EndorsementID string           `validate:"required" form:"aval_id"`
-	Objective     string           `validate:"required" form:"objetivo"`
-	Location      string           `validate:"required" form:"ubicacion"`
-	Members       []GroupMemberDTO `form:"miembros"`
+	ID          string           `param:"id" validate:"required"`
+	OwnerID     string           `validate:"required"`
+	Description string           `form:"descripcion"`
+	Objective   string           `validate:"required" form:"objetivo"`
+	Location    string           `form:"ubicacion"`
+	Type        []string         `form:"tipo"`
+	Email       string           `form:"correo"`
+	Phone       string           `form:"telefono"`
+	Members     []GroupMemberDTO `form:"miembros"`
 }
 type DeleteGroupRequest struct {
 	ID      string `param:"id" validate:"required"`
@@ -47,15 +47,16 @@ type DeleteGroupRequest struct {
 }
 
 type GroupMemberDTO struct {
-	Name         string `json:"nombre"       validate:"required"`
-	CI           int    `json:"cedula"       validate:"required"`
-	Phone        string `json:"telefono"     validate:"required"`
-	Email        string `json:"correo"       validate:"required,email"`
+	Name         string `json:"nombre" validate:"required"`
+	CI           int    `json:"cedula" validate:"required"`
+	Phone        string `json:"telefono" validate:"required"`
+	Email        string `json:"correo" validate:"required,email"`
 	Coordination string `json:"coordinacion" validate:"required"`
-	Year         string `json:"año"          validate:"required"`
-	Faculty      string `json:"facultad"     validate:"required"`
-	School       string `json:"escuela"      validate:"required"`
-	Document     string `json:"documento"    validate:"required"`
+	Year         string `json:"año" validate:"required"`
+	Faculty      string `json:"facultad" validate:"required"`
+	School       string `json:"escuela" validate:"required"`
+	Document     string `json:"documento" validate:"required"`
+	IsLeader     bool   `json:"es_lider"`
 	IsActive     bool   `json:"status"`
 }
 
@@ -71,6 +72,7 @@ func groupMemberEntityFromRequest(dto GroupMemberDTO) entities.GroupMember {
 		Faculty:      entities.Faculty(dto.Faculty),
 		School:       dto.School,
 		Document:     dto.Document,
+		IsLeader:     dto.IsLeader,
 		IsActive:     dto.IsActive,
 	}
 }
@@ -95,9 +97,16 @@ func ValidateFaculty(facultyStr string) (entities.Faculty, error) {
 
 // updateGroupEntityFromRequest converts UpdateGroupRequest to an ExtensionGroup entity.
 func updateGroupEntityFromRequest(req UpdateGroupRequest) entities.ExtensionGroup {
+	types := make([]entities.GroupType, 0, len(req.Type))
+	for _, t := range req.Type {
+		gt := entities.GroupType(t)
+		if gt.IsValid() {
+			types = append(types, gt)
+		}
+	}
+
 	return entities.ExtensionGroup{
 		ID:          req.ID,
-		Name:        req.Name,
 		Description: req.Description,
 		Owner: &entities.User{
 			ID: req.OwnerID,
@@ -105,15 +114,34 @@ func updateGroupEntityFromRequest(req UpdateGroupRequest) entities.ExtensionGrou
 		// CourseRequest: entities.CourseRequest{
 		// 	ID: req.EndorsementID,
 		// },
+		Type:      types,
 		Objective: req.Objective,
 		Location:  req.Location,
+		Email:     req.Email,
+		Phone:     req.Phone,
 		Members:   groupMembersEntityFromRequest(req.Members),
 	}
 }
 
 // createGroupEntityFromRequest converts CreateGroupRequest to an ExtensionGroup entity.
-func createGroupEntityFromRequest(req CreateGroupRequest, ownerID, faculty string) entities.ExtensionGroup {
-	eg := entities.ExtensionGroup{
+func createGroupEntityFromRequest(req CreateGroupRequest, ownerID string, faculties []string) entities.ExtensionGroup {
+	validFaculties := make([]entities.Faculty, 0, len(faculties))
+	for _, f := range faculties {
+		fac := entities.Faculty(f)
+		if fac.IsValid() {
+			validFaculties = append(validFaculties, fac)
+		}
+	}
+
+	types := make([]entities.GroupType, 0, len(req.Type))
+	for _, t := range req.Type {
+		gt := entities.GroupType(t)
+		if gt.IsValid() {
+			types = append(types, gt)
+		}
+	}
+
+	return entities.ExtensionGroup{
 		Name:                req.Name,
 		Description:         req.Description,
 		Foundation:          req.Foundation,
@@ -121,18 +149,13 @@ func createGroupEntityFromRequest(req CreateGroupRequest, ownerID, faculty strin
 		Owner: &entities.User{
 			ID: ownerID,
 		},
-		LeadName:  req.LeaderName,
-		Type:      entities.GroupType(req.Type),
+		Type:      types,
+		Faculty:   validFaculties,
 		Objective: req.Objective,
 		Location:  req.Location,
 		Members:   groupMembersEntityFromRequest(req.Members),
 		Email:     req.Email,
 		Phone:     req.Phone,
+        Active:    false,
 	}
-
-	if entities.Faculty(faculty).IsValid() {
-		eg.Faculty = entities.Faculty(faculty)
-	}
-
-	return eg
 }

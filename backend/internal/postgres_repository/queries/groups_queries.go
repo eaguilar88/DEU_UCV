@@ -54,10 +54,10 @@ func GetGroups(filter entities.GroupFilter, limit, offset int) sq.SelectBuilder 
 		OrderBy("g.name ASC")
 
 	if filter.Faculty != "" {
-		q = q.Where(sq.Eq{"g.faculty": filter.Faculty})
+		q = q.Where("? = ANY(g.faculty)", string(filter.Faculty))
 	}
 	if filter.Type != "" {
-		q = q.Where(sq.Eq{"g.type": filter.Type})
+		q = q.Where("? = ANY(g.type)", string(filter.Type))
 	}
 	if filter.Active != nil {
 		q = q.Where(sq.Eq{"g.is_active": *filter.Active})
@@ -118,13 +118,8 @@ func InsertGroup(group models.ExtensionGroup) sq.InsertBuilder {
 
 func UpdateGroup(group models.ExtensionGroup) sq.UpdateBuilder {
 	return psql.Update(groupsTableName).
-		Set("name", group.Name).
 		Set("description", group.Description).
-		Set("faculty", group.Faculty).
-		Set("foundation", group.Foundation).
 		Set("objective", group.Objective).
-		Set("code", group.Code).
-		Set("group_director", group.Director).
 		Set("type", group.Type).
 		Set("location", group.Location).
 		Set("is_active", group.IsActive).
@@ -141,13 +136,13 @@ var groupMembersTableName = fmt.Sprintf("%s.group_members", schema)
 
 func InsertGroupMember(groupID int64, m models.GroupMember) sq.InsertBuilder {
 	return psql.Insert(groupMembersTableName).
-		Columns("group_id", "name", "ci", "phone", "email", "coordination", "year", "faculty", "school", "document", "is_active").
-		Values(groupID, m.Name, m.CI, m.Phone, m.Email, m.Coordination, m.Year, m.Faculty, m.School, m.Document, m.IsActive).
+		Columns("group_id", "name", "ci", "phone", "email", "coordination", "year", "faculty", "school", "document", "is_leader", "is_active").
+		Values(groupID, m.Name, m.CI, m.Phone, m.Email, m.Coordination, m.Year, m.Faculty, m.School, m.Document, m.IsLeader, m.IsActive).
 		Suffix("RETURNING id")
 }
 
 func SelectGroupMembers(groupID string) sq.SelectBuilder {
-	return psql.Select("id", "name", "ci", "phone", "email", "coordination", "year", "faculty", "school", "document", "is_active").
+	return psql.Select("id", "name", "ci", "phone", "email", "coordination", "year", "faculty", "school", "document", "is_leader", "is_active").
 		From(groupMembersTableName).
 		Where(sq.Eq{"group_id": groupID, "deleted_at": nil})
 }
