@@ -110,3 +110,10 @@ func InsertGroupRequest(req models.GroupRequest) sq.InsertBuilder {
 			sq.Expr("NOW()"),
 		).Suffix("RETURNING id")
 }
+
+func ActivateGroup(groupID string) sq.UpdateBuilder {
+	return psql.Update("deu.extension_groups").
+		Set("is_active", true).
+		Set("updated_at", sq.Expr("NOW()")).
+		Where(sq.Eq{"id": groupID})
+}
