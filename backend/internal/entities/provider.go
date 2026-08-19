@@ -97,6 +97,12 @@ type ProviderAdminFilters struct {
 	CreatedAtTo   string
 }
 
+// IsCourseProvider reports whether the provider's code identifies it as a
+// course provider (ECP-prefixed), as opposed to a group provider (GEX-prefixed).
+func (p Provider) IsCourseProvider() bool {
+	return strings.HasPrefix(p.Code, string(CourseProvider)+"-")
+}
+
 func GenerateProviderCode(providerType ProviderType) (string, error) {
 	short := strings.ReplaceAll(uuid.New().String(), "-", "")[:6]
 	switch providerType {

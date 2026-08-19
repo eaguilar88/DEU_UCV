@@ -13,7 +13,7 @@ type Repository interface {
 	GetGroupRequestsByFaculty(ctx context.Context, faculty entities.Faculty, status string, pageScope entities.PageScope) ([]entities.GroupRequest, entities.PageScope, int, error)
 	GetGroupRequestByID(ctx context.Context, reqID string) (entities.GroupRequest, error)
 	GetGroupRequestsByGroupID(ctx context.Context, groupID string) ([]entities.GroupRequest, error)
-	GetPendingGroupRequestsCounts(ctx context.Context) ([]entities.FacultyPendingCount, error)
+	GetPendingGroupRequestsCounts(ctx context.Context, faculty entities.Faculty) ([]entities.FacultyPendingCount, error)
 }
 
 type service struct {
@@ -70,6 +70,6 @@ func (s *service) GetGroupRequestByID(ctx context.Context, reqID string) (entiti
 	return req, nil
 }
 
-func (s *service) GetPendingGroupRequestsCounts(ctx context.Context) ([]entities.FacultyPendingCount, error) {
-	return s.repo.GetPendingGroupRequestsCounts(ctx)
+func (s *service) GetPendingGroupRequestsCounts(ctx context.Context, faculty entities.Faculty) ([]entities.FacultyPendingCount, error) {
+	return s.repo.GetPendingGroupRequestsCounts(ctx, faculty)
 }

@@ -68,12 +68,32 @@ func JWTMiddleware(signer Signer, logger *zap.Logger) echo.MiddlewareFunc {
 			if p, ok := v1Claims["providerCode"].(string); ok {
 				providerCode = p
 			}
+			var groupID string
+			if g, ok := v1Claims["groupID"].(string); ok {
+				groupID = g
+			}
+			var groupName string
+			if g, ok := v1Claims["groupName"].(string); ok {
+				groupName = g
+			}
+			var providerID string
+			if p, ok := v1Claims["providerID"].(string); ok {
+				providerID = p
+			}
+			var providerName string
+			if p, ok := v1Claims["providerName"].(string); ok {
+				providerName = p
+			}
 
 			c.Set("userID", userID)
 			c.Set("roles", roles)
 			c.Set("domainType", domainType)
 			c.Set("faculty", faculty)
 			c.Set("providerCode", providerCode)
+			c.Set("groupID", groupID)
+			c.Set("groupName", groupName)
+			c.Set("providerID", providerID)
+			c.Set("providerName", providerName)
 
 			return next(c)
 		}

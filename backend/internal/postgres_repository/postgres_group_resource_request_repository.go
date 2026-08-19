@@ -154,8 +154,8 @@ func (r *PostgresRepository) GetGroupResourceRequestsByGroupID(ctx context.Conte
 	return reqs, scope, nil
 }
 
-func (r *PostgresRepository) GetPendingGroupResourceRequestsCountByFaculty(ctx context.Context) ([]group_resource_requests.FacultyPendingCount, error) {
-	query, args, err := queries.CountPendingGroupResourceRequestsByFaculty().ToSql()
+func (r *PostgresRepository) GetPendingGroupResourceRequestsCountByFaculty(ctx context.Context, faculty entities.Faculty) ([]group_resource_requests.FacultyPendingCount, error) {
+	query, args, err := queries.CountPendingGroupResourceRequestsByFaculty(faculty.String()).ToSql()
 	if err != nil {
 		return nil, err
 	}
