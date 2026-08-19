@@ -15,7 +15,7 @@ var (
 )
 
 type Repository interface {
-	GetProviderRequests(ctx context.Context, pageScope entities.PageScope) ([]entities.ProviderRequest, entities.PageScope, error)
+	GetProviderRequests(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.ProviderRequest, entities.PageScope, error)
 	GetProviderRequestByID(ctx context.Context, id string) (entities.ProviderRequest, error)
 	ApproveProviderRequest(ctx context.Context, id, reviewerID string, providerID int64) error
 	RejectProviderRequest(ctx context.Context, id, reviewerID, comments string) error
@@ -83,8 +83,8 @@ func (s *service) RejectProviderRequest(ctx context.Context, id, reviewerID, com
 	return s.repo.RejectProviderRequest(ctx, id, reviewerID, comments)
 }
 
-func (s *service) GetProviderRequests(ctx context.Context, pageScope entities.PageScope) ([]entities.ProviderRequest, entities.PageScope, error) {
-	requests, ps, err := s.repo.GetProviderRequests(ctx, pageScope)
+func (s *service) GetProviderRequests(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.ProviderRequest, entities.PageScope, error) {
+	requests, ps, err := s.repo.GetProviderRequests(ctx, faculty, pageScope)
 	if err != nil {
 		s.logger.Error("failed to get provider requests", zap.Error(err))
 		return nil, entities.PageScope{}, err

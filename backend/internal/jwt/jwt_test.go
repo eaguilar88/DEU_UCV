@@ -37,7 +37,7 @@ func TestJWTSigner_GenerateJWT_Faculty(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tokenString, err := signer.GenerateJWT("user-id", tc.roles, "")
+			tokenString, err := signer.GenerateJWT("user-id", tc.roles, "", "", "", "", "")
 			require.NoError(t, err)
 
 			claims, err := signer.ValidateToken(tokenString)
@@ -49,4 +49,40 @@ func TestJWTSigner_GenerateJWT_Faculty(t *testing.T) {
 			assert.Equal(t, tc.wantFaculty, v1Claims["faculty"])
 		})
 	}
+}
+
+func TestJWTSigner_GenerateJWT_GroupAndProviderClaims(t *testing.T) {
+	signer := NewJWTSigner("test-signing-key", 3600, zap.NewNop())
+
+	t.Run("all populated", func(t *testing.T) {
+		tokenString, err := signer.GenerateJWT("user-id", nil, "ECP-generic", "group-1", "Grupo Uno", "ECP-abc123", "Proveedor Uno")
+		require.NoError(t, err)
+
+		claims, err := signer.ValidateToken(tokenString)
+		require.NoError(t, err)
+
+		v1Claims, ok := claims["v1"].(map[string]any)
+		require.True(t, ok)
+
+		assert.Equal(t, "group-1", v1Claims["groupID"])
+		assert.Equal(t, "Grupo Uno", v1Claims["groupName"])
+		assert.Equal(t, "ECP-abc123", v1Claims["providerID"])
+		assert.Equal(t, "Proveedor Uno", v1Claims["providerName"])
+	})
+
+	t.Run("all empty", func(t *testing.T) {
+		tokenString, err := signer.GenerateJWT("user-id", nil, "", "", "", "", "")
+		require.NoError(t, err)
+
+		claims, err := signer.ValidateToken(tokenString)
+		require.NoError(t, err)
+
+		v1Claims, ok := claims["v1"].(map[string]any)
+		require.True(t, ok)
+
+		assert.Equal(t, "", v1Claims["groupID"])
+		assert.Equal(t, "", v1Claims["groupName"])
+		assert.Equal(t, "", v1Claims["providerID"])
+		assert.Equal(t, "", v1Claims["providerName"])
+	})
 }

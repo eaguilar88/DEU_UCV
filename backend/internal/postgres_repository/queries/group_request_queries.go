@@ -56,11 +56,16 @@ func CountPendingGroupRequestsByFaculty(faculty string) sq.SelectBuilder {
 		Where(sq.Eq{"gr.faculty": faculty, "gr.status": "under_review"})
 }
 
-func GetPendingGroupRequestsCountGroupedByFaculty() sq.SelectBuilder {
-	return psql.Select("faculty", "COUNT(*) as count").
+func GetPendingGroupRequestsCountGroupedByFaculty(faculty string) sq.SelectBuilder {
+	q := psql.Select("faculty", "COUNT(*) as count").
 		From(groupRequestsTableName).
-		Where(sq.Eq{"status": "under_review"}).
-		GroupBy("faculty")
+		Where(sq.Eq{"status": "under_review"})
+
+	if faculty != "" {
+		q = q.Where(sq.Eq{"faculty": faculty})
+	}
+
+	return q.GroupBy("faculty")
 }
 
 func GetGroupRequestsByGroupID(groupID string) sq.SelectBuilder {

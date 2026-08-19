@@ -42,6 +42,28 @@ func (r *PostgresRepository) GetGroupByID(ctx context.Context, groupID string) (
 	return eg, nil
 }
 
+func (r *PostgresRepository) GetGroupByUserID(ctx context.Context, userID string) (entities.ExtensionGroup, error) {
+	query, args, err := queries.GetGroupByUserID(userID).ToSql()
+	if err != nil {
+		return entities.ExtensionGroup{}, err
+	}
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		return entities.ExtensionGroup{}, err
+	}
+	defer stmt.Close()
+	var group models.ExtensionGroup
+	row := stmt.QueryRowContext(ctx, args...)
+	group, err = scanGroup(row)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return entities.ExtensionGroup{}, fmt.Errorf("%w: %w", groups.ErrGroupNotFound, err)
+		}
+		return entities.ExtensionGroup{}, err
+	}
+	return newGroupFromModel(group), nil
+}
+
 func (r *PostgresRepository) GetGroups(ctx context.Context, filter entities.GroupFilter, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error) {
 	query, args, err := queries.GetGroups(filter, pageScope.PerPage, pageScope.Offset()).ToSql()
 	if err != nil {

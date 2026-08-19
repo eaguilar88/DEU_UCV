@@ -36,6 +36,16 @@ func GetGroupByID(groupID string) sq.SelectBuilder {
 		Where(sq.Eq{"g.id": groupID})
 }
 
+func GetGroupByUserID(userID string) sq.SelectBuilder {
+	return psql.Select(groupQuerySelectCommon...).
+		From(fmt.Sprintf("%s AS g", groupsTableName)).
+		Join(fmt.Sprintf("%s AS owner ON g.user_id = owner.id", usersTableName)).
+		Where(sq.Eq{"g.user_id": userID}).
+		Where(sq.Eq{"g.deleted_at": nil}).
+		OrderBy("g.created_at ASC").
+		Limit(1)
+}
+
 func GetGroups(filter entities.GroupFilter, limit, offset int) sq.SelectBuilder {
 	q := psql.Select(groupQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS g", groupsTableName)).

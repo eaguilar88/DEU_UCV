@@ -54,8 +54,8 @@ func (r *PostgresRepository) GetCourseCycleCloseRequestByID(ctx context.Context,
 	return newCourseCycleCloseRequestFromModel(m), nil
 }
 
-func (r *PostgresRepository) GetCourseCycleCloseRequests(ctx context.Context, pageScope entities.PageScope) ([]entities.CourseCycleCloseRequest, entities.PageScope, error) {
-	query, args, err := queries.GetCourseCycleCloseRequests(uint64(pageScope.PerPage), uint64(pageScope.Offset())).ToSql()
+func (r *PostgresRepository) GetCourseCycleCloseRequests(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.CourseCycleCloseRequest, entities.PageScope, error) {
+	query, args, err := queries.GetCourseCycleCloseRequests(faculty.String(), uint64(pageScope.PerPage), uint64(pageScope.Offset())).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}

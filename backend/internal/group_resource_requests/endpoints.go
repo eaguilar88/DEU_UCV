@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/eaguilar88/deu/internal/entities"
+	"github.com/eaguilar88/deu/internal/facultyscope"
 	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -18,7 +19,7 @@ type Service interface {
 	RejectGroupResourceRequest(ctx context.Context, reqID string) error
 	GetGroupResourceRequestsByFaculty(ctx context.Context, faculty entities.Faculty, status string, pageScope entities.PageScope) ([]entities.GroupResourceRequest, int, entities.PageScope, error)
 	GetGroupResourceRequestsByGroupID(ctx context.Context, groupID string, status string, pageScope entities.PageScope) ([]entities.GroupResourceRequest, entities.PageScope, error)
-	GetPendingGroupResourceRequestsCountByFaculty(ctx context.Context) ([]FacultyPendingCount, error)
+	GetPendingGroupResourceRequestsCountByFaculty(ctx context.Context, faculty entities.Faculty) ([]FacultyPendingCount, error)
 	GetGroupResourceRequestByID(ctx context.Context, reqID string) (entities.GroupResourceRequest, error)
 }
 
@@ -109,7 +110,7 @@ func (h *Handler) RejectGroupResourceRequest(c echo.Context) error {
 
 func (h *Handler) GetGroupResourceRequestsByFaculty(c echo.Context) error {
 	ctx := c.Request().Context()
-	faculty, err := entities.FromString(c.QueryParam("faculty"))
+	faculty, err := facultyscope.Resolve(c, c.QueryParam("faculty"))
 	if err != nil {
 		return httperrors.NewBadRequest("invalid faculty")
 	}
@@ -170,7 +171,11 @@ func (h *Handler) GetGroupResourceRequestsByGroupID(c echo.Context) error {
 
 func (h *Handler) GetPendingGroupResourceRequestsCountByFaculty(c echo.Context) error {
 	ctx := c.Request().Context()
-	counts, err := h.svc.GetPendingGroupResourceRequestsCountByFaculty(ctx)
+	faculty, err := facultyscope.ResolveOptional(c, c.QueryParam("faculty"))
+	if err != nil {
+		return httperrors.NewBadRequest("invalid faculty")
+	}
+	counts, err := h.svc.GetPendingGroupResourceRequestsCountByFaculty(ctx, faculty)
 	if err != nil {
 		return httperrors.NewInternal(err)
 	}

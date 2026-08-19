@@ -54,8 +54,8 @@ func (r *PostgresRepository) GetProviderRequestByID(ctx context.Context, id stri
 	return newProviderRequestFromModel(m), nil
 }
 
-func (r *PostgresRepository) GetProviderRequests(ctx context.Context, pageScope entities.PageScope) ([]entities.ProviderRequest, entities.PageScope, error) {
-	query, args, err := queries.GetProviderRequests(uint64(pageScope.PerPage), uint64(pageScope.Offset())).ToSql()
+func (r *PostgresRepository) GetProviderRequests(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.ProviderRequest, entities.PageScope, error) {
+	query, args, err := queries.GetProviderRequests(faculty.String(), uint64(pageScope.PerPage), uint64(pageScope.Offset())).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
