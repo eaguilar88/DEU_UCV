@@ -87,7 +87,6 @@ func CountGroupResourceRequestsByGroupID(groupID string, status string) sq.Selec
 	return q
 }
 
-<<<<<<< HEAD
 func CountPendingGroupResourceRequestsByFaculty(faculty string) sq.SelectBuilder {
 	q := psql.Select("g.faculty", "COUNT(r.id) AS pending_count").
 		From(fmt.Sprintf("%s AS r", groupResourceRequestsTableName)).
@@ -99,17 +98,6 @@ func CountPendingGroupResourceRequestsByFaculty(faculty string) sq.SelectBuilder
 	}
 
 	return q.GroupBy("g.faculty")
-=======
-func CountPendingGroupResourceRequestsByFaculty() sq.SelectBuilder {
-	return psql.Select(
-		fmt.Sprintf("%s AS faculty", effectiveFacultyExpr), 
-		"COUNT(r.id) AS pending_count",
-	).
-		From(fmt.Sprintf("%s AS r", groupResourceRequestsTableName)).
-		Join(fmt.Sprintf("%s AS g ON r.group_id = g.id", groupsTableName)).
-		Where(sq.Eq{"r.status": "under_review", "r.deleted_at": nil}).
-		GroupBy(effectiveFacultyExpr)
->>>>>>> df538f5 (Cambios actividades, grupos y requests en base a multidisciplinario)
 }
 
 func InsertGroupResourceRequest(m models.GroupResourceRequest) sq.InsertBuilder {
