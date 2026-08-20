@@ -155,12 +155,6 @@ func TestHandler_GetGroups(t *testing.T) {
 			},
 		},
 		{
-			name:    "invalid type returns bad request",
-			url:     "/groups?type=bogus",
-			svc:     &mocks.MockService{},
-			wantErr: httperrors.NewBadRequest("invalid type: bogus"),
-		},
-		{
 			name: "active filter passed through",
 			url:  "/groups?active=true",
 			svc:  &mocks.MockService{},

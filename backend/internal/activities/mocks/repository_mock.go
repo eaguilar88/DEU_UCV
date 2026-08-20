@@ -373,6 +373,72 @@ func (_c *MockRepository_GetActivityByID_Call) RunAndReturn(run func(ctx context
 	return _c
 }
 
+// GetActivityMetrics provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetActivityMetrics(ctx context.Context, groupID string) (entities.ActivityMetrics, error) {
+	ret := _mock.Called(ctx, groupID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetActivityMetrics")
+	}
+
+	var r0 entities.ActivityMetrics
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (entities.ActivityMetrics, error)); ok {
+		return returnFunc(ctx, groupID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) entities.ActivityMetrics); ok {
+		r0 = returnFunc(ctx, groupID)
+	} else {
+		r0 = ret.Get(0).(entities.ActivityMetrics)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, groupID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetActivityMetrics_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetActivityMetrics'
+type MockRepository_GetActivityMetrics_Call struct {
+	*mock.Call
+}
+
+// GetActivityMetrics is a helper method to define mock.On call
+//   - ctx context.Context
+//   - groupID string
+func (_e *MockRepository_Expecter) GetActivityMetrics(ctx interface{}, groupID interface{}) *MockRepository_GetActivityMetrics_Call {
+	return &MockRepository_GetActivityMetrics_Call{Call: _e.mock.On("GetActivityMetrics", ctx, groupID)}
+}
+
+func (_c *MockRepository_GetActivityMetrics_Call) Run(run func(ctx context.Context, groupID string)) *MockRepository_GetActivityMetrics_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetActivityMetrics_Call) Return(activityMetrics entities.ActivityMetrics, err error) *MockRepository_GetActivityMetrics_Call {
+	_c.Call.Return(activityMetrics, err)
+	return _c
+}
+
+func (_c *MockRepository_GetActivityMetrics_Call) RunAndReturn(run func(ctx context.Context, groupID string) (entities.ActivityMetrics, error)) *MockRepository_GetActivityMetrics_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetFilesByOwner provides a mock function for the type MockRepository
 func (_mock *MockRepository) GetFilesByOwner(ctx context.Context, ownerID string, ownerType entities.OwnerType) (entities.GroupedFiles, error) {
 	ret := _mock.Called(ctx, ownerID, ownerType)

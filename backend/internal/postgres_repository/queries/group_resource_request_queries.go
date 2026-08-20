@@ -17,6 +17,7 @@ var resourceRequestSelectCommon = []string{
 	"r.created_at",
 	"r.updated_at",
 }
+
 const effectiveFacultyExpr = `
 CASE 
 	WHEN g.is_multidisciplinary IS TRUE THEN 'DEU' 

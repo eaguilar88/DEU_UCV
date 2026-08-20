@@ -46,13 +46,27 @@ func (h *Handler) GetGroup(c echo.Context) error {
 	req := GetGroupRequest{ID: c.Param("id")}
 	group, err := h.svc.GetGroup(ctx, req.ID)
 	if err != nil {
-		if errors.Is(err, ErrGroupNotFound) {
-			return httperrors.NewNotFound("group not found")
-		}
-		return httperrors.NewInternal(err)
+		return mapGroupError(err)
 	}
 
 	return c.JSON(http.StatusOK, groupToResponse(group))
+}
+
+// userIDFromContext extracts the authenticated user ID set by the auth middleware.
+func userIDFromContext(c echo.Context) (string, error) {
+	userID, ok := c.Get("userID").(string)
+	if !ok {
+		return "", httperrors.NewUnauthorized("authentication required")
+	}
+	return userID, nil
+}
+
+// mapGroupError translates a service-layer error into the appropriate HTTP error.
+func mapGroupError(err error) error {
+	if errors.Is(err, ErrGroupNotFound) {
+		return httperrors.NewNotFound("group not found")
+	}
+	return httperrors.NewInternal(err)
 }
 
 func (h *Handler) GetGroups(c echo.Context) error {
@@ -146,9 +160,9 @@ func (h *Handler) buildFilters(c echo.Context) (entities.GroupFilter, error) {
 
 func (h *Handler) CreateGroup(c echo.Context) error {
 	ctx := c.Request().Context()
-	userID, ok := c.Get("userID").(string)
-	if !ok {
-		return httperrors.NewUnauthorized("authentication required")
+	userID, err := userIDFromContext(c)
+	if err != nil {
+		return err
 	}
 
 	req, err := makeGroupRequestFromContext(c, userID, h.log)
@@ -173,9 +187,9 @@ func (h *Handler) UpdateGroup(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return httperrors.NewBadRequest("invalid request body")
 	}
-	userID, ok := c.Get("userID").(string)
-	if !ok {
-		return httperrors.NewUnauthorized("authentication required")
+	userID, err := userIDFromContext(c)
+	if err != nil {
+		return err
 	}
 	req.OwnerID = userID
 
@@ -197,12 +211,8 @@ func (h *Handler) UpdateGroup(c echo.Context) error {
 		group.Project = projectFile
 	}
 
-	err := h.svc.UpdateGroup(ctx, req.ID, group)
-	if err != nil {
-		if errors.Is(err, ErrGroupNotFound) {
-			return httperrors.NewNotFound("group not found")
-		}
-		return httperrors.NewInternal(err)
+	if err = h.svc.UpdateGroup(ctx, req.ID, group); err != nil {
+		return mapGroupError(err)
 	}
 
 	return c.JSON(http.StatusAccepted, nil)
@@ -214,21 +224,17 @@ func (h *Handler) DeleteGroup(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return httperrors.NewBadRequest("invalid request body")
 	}
-	userID, ok := c.Get("userID").(string)
-	if !ok {
-		return httperrors.NewUnauthorized("authentication required")
+	userID, err := userIDFromContext(c)
+	if err != nil {
+		return err
 	}
 	req.OwnerID = userID
 	if err := c.Validate(req); err != nil {
 		return httperrors.NewBadRequest("validation failed")
 	}
 
-	err := h.svc.DeleteGroup(ctx, req.ID, req.OwnerID)
-	if err != nil {
-		if errors.Is(err, ErrGroupNotFound) {
-			return httperrors.NewNotFound("group not found")
-		}
-		return httperrors.NewInternal(err)
+	if err = h.svc.DeleteGroup(ctx, req.ID, req.OwnerID); err != nil {
+		return mapGroupError(err)
 	}
 
 	return c.JSON(http.StatusNoContent, nil)
@@ -238,7 +244,7 @@ func makeGroupRequestFromContext(c echo.Context, userID string, log *zap.Logger)
 	form, err := c.MultipartForm()
 	var faculties []string
 	var types []string
-	if err != nil {
+	if err == nil {
 		faculties = form.Value["facultad"]
 		types = form.Value["tipo"]
 	}

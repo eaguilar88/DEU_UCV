@@ -76,7 +76,7 @@ type GroupMember struct {
 }
 
 type GroupFiles struct {
-	Logo         *File
+	Logo *File
 	// FinancingPlan *File
 	GroupProject *File
 }

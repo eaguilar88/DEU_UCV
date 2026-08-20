@@ -156,6 +156,6 @@ func createGroupEntityFromRequest(req CreateGroupRequest, ownerID string, facult
 		Members:   groupMembersEntityFromRequest(req.Members),
 		Email:     req.Email,
 		Phone:     req.Phone,
-        Active:    false,
+		Active:    false,
 	}
 }

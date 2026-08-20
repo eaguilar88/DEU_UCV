@@ -86,14 +86,14 @@ func TestService_GetGroups(t *testing.T) {
 			prepare: func(repoMock *mocks.MockRepository, filter entities.GroupFilter, pageScope entities.PageScope) {
 				repoMock.EXPECT().GetGroups(mock.Anything, filter, pageScope).RunAndReturn(
 					func(ctx context.Context, filter entities.GroupFilter, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error) {
-						return []entities.ExtensionGroup{{ID: "1", Faculty: filter.Faculty}}, pageScope, nil
+						return []entities.ExtensionGroup{{ID: "1", Faculty: []entities.Faculty{entities.FacultyIngenieria}}}, pageScope, nil
 					})
 				repoMock.EXPECT().GetFilesByOwner(mock.Anything, mock.Anything, entities.OwnerTypeExtensionGroup).
 					Return(entities.GroupedFiles{}, nil)
 				repoMock.EXPECT().GetContactsByOwner(mock.Anything, mock.Anything, entities.OwnerTypeExtensionGroup).
 					Return(nil, nil)
 			},
-			want: []entities.ExtensionGroup{{ID: "1", Faculty: entities.FacultyIngenieria}},
+			want: []entities.ExtensionGroup{{ID: "1", Faculty: []entities.Faculty{entities.FacultyIngenieria}}},
 		},
 		{
 			name:   "repository error",

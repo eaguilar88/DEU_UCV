@@ -38,7 +38,7 @@ func (s *service) ApproveGroupRequest(ctx context.Context, reqID string) error {
 	if err := s.repo.ApproveGroupRequest(ctx, reqID); err != nil {
 		return err
 	}
-	
+
 	allRequests, err := s.repo.GetGroupRequestsByGroupID(ctx, req.GroupID)
 	if err != nil {
 		s.logger.Error("failed to fetch group requests for activation check", zap.Error(err), zap.String("group_id", req.GroupID))
