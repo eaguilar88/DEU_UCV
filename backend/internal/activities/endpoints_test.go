@@ -63,10 +63,10 @@ func TestHandler_GetActivities(t *testing.T) {
 			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
 				tc.svc.On("GetActivities", ctx.Request().Context(), entities.ActivityFilter{GroupID: "1"}, mock.AnythingOfType("entities.PageScope")).
-					Return([]entities.Activity{{ID: "1"}}, entities.PageScope{Page: 1, PerPage: 10}, nil)
+					Return([]entities.Activity{{ID: "1"}}, entities.PageScope{Page: 1, PerPage: 10}, entities.ActivityMetrics{}, nil)
 			},
 			resp: GetActivitiesResponse{
-				Activities: []GetActivityResponse{{ID: "1"}},
+				Activities: []GetActivityResponse{{ID: "1", KnowledgeArea: make([]string, 0)}},
 				PageScope:  entities.PageScope{Page: 1, PerPage: 10},
 			},
 		},
@@ -76,10 +76,10 @@ func TestHandler_GetActivities(t *testing.T) {
 			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
 				tc.svc.On("GetActivities", ctx.Request().Context(), entities.ActivityFilter{GroupID: "1", StartDate: "2026-01-01", EndDate: "2026-01-31"}, mock.AnythingOfType("entities.PageScope")).
-					Return([]entities.Activity{{ID: "1"}}, entities.PageScope{}, nil)
+					Return([]entities.Activity{{ID: "1"}}, entities.PageScope{}, entities.ActivityMetrics{}, nil)
 			},
 			resp: GetActivitiesResponse{
-				Activities: []GetActivityResponse{{ID: "1"}},
+				Activities: []GetActivityResponse{{ID: "1", KnowledgeArea: make([]string, 0)}},
 			},
 		},
 		{

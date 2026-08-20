@@ -162,7 +162,7 @@ func (_c *MockService_DeleteActivity_Call) RunAndReturn(run func(ctx context.Con
 }
 
 // GetActivities provides a mock function for the type MockService
-func (_mock *MockService) GetActivities(ctx context.Context, filter entities.ActivityFilter, pageScope entities.PageScope) ([]entities.Activity, entities.PageScope, error) {
+func (_mock *MockService) GetActivities(ctx context.Context, filter entities.ActivityFilter, pageScope entities.PageScope) ([]entities.Activity, entities.PageScope, entities.ActivityMetrics, error) {
 	ret := _mock.Called(ctx, filter, pageScope)
 
 	if len(ret) == 0 {
@@ -171,8 +171,9 @@ func (_mock *MockService) GetActivities(ctx context.Context, filter entities.Act
 
 	var r0 []entities.Activity
 	var r1 entities.PageScope
-	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.ActivityFilter, entities.PageScope) ([]entities.Activity, entities.PageScope, error)); ok {
+	var r2 entities.ActivityMetrics
+	var r3 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.ActivityFilter, entities.PageScope) ([]entities.Activity, entities.PageScope, entities.ActivityMetrics, error)); ok {
 		return returnFunc(ctx, filter, pageScope)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.ActivityFilter, entities.PageScope) []entities.Activity); ok {
@@ -187,12 +188,17 @@ func (_mock *MockService) GetActivities(ctx context.Context, filter entities.Act
 	} else {
 		r1 = ret.Get(1).(entities.PageScope)
 	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, entities.ActivityFilter, entities.PageScope) error); ok {
+	if returnFunc, ok := ret.Get(2).(func(context.Context, entities.ActivityFilter, entities.PageScope) entities.ActivityMetrics); ok {
 		r2 = returnFunc(ctx, filter, pageScope)
 	} else {
-		r2 = ret.Error(2)
+		r2 = ret.Get(2).(entities.ActivityMetrics)
 	}
-	return r0, r1, r2
+	if returnFunc, ok := ret.Get(3).(func(context.Context, entities.ActivityFilter, entities.PageScope) error); ok {
+		r3 = returnFunc(ctx, filter, pageScope)
+	} else {
+		r3 = ret.Error(3)
+	}
+	return r0, r1, r2, r3
 }
 
 // MockService_GetActivities_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetActivities'
@@ -231,12 +237,12 @@ func (_c *MockService_GetActivities_Call) Run(run func(ctx context.Context, filt
 	return _c
 }
 
-func (_c *MockService_GetActivities_Call) Return(activitys []entities.Activity, pageScope1 entities.PageScope, err error) *MockService_GetActivities_Call {
-	_c.Call.Return(activitys, pageScope1, err)
+func (_c *MockService_GetActivities_Call) Return(activitys []entities.Activity, pageScope1 entities.PageScope, activityMetrics entities.ActivityMetrics, err error) *MockService_GetActivities_Call {
+	_c.Call.Return(activitys, pageScope1, activityMetrics, err)
 	return _c
 }
 
-func (_c *MockService_GetActivities_Call) RunAndReturn(run func(ctx context.Context, filter entities.ActivityFilter, pageScope entities.PageScope) ([]entities.Activity, entities.PageScope, error)) *MockService_GetActivities_Call {
+func (_c *MockService_GetActivities_Call) RunAndReturn(run func(ctx context.Context, filter entities.ActivityFilter, pageScope entities.PageScope) ([]entities.Activity, entities.PageScope, entities.ActivityMetrics, error)) *MockService_GetActivities_Call {
 	_c.Call.Return(run)
 	return _c
 }

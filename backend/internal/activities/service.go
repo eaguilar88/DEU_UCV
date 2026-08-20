@@ -29,6 +29,8 @@ type StorageClient interface {
 	GetFileURL(ctx context.Context, objectKey string) (string, error)
 }
 
+const maxFeaturedActivities = 4
+
 type service struct {
 	repo    Repository
 	storage StorageClient
@@ -37,6 +39,23 @@ type service struct {
 
 func NewService(repo Repository, storage StorageClient, logger *zap.Logger) Service {
 	return &service{repo: repo, storage: storage, logger: logger}
+}
+
+// buildActivityFile fills in the ownership/storage metadata for a file about to be
+// uploaded for an activity. It mutates and returns file, or returns nil if file is nil,
+// so call sites can conditionally append without a separate nil check.
+func buildActivityFile(file *entities.File, ownerID, purpose, keyPrefix, uploadedBy, createdAt string, public bool) *entities.File {
+	if file == nil {
+		return nil
+	}
+	file.OwnerID = ownerID
+	file.OwnerType = entities.OwnerTypeActivity
+	file.Purpose = purpose
+	file.Key = keyPrefix + file.Name
+	file.Public = public
+	file.UploadedBy = uploadedBy
+	file.CreatedAt = createdAt
+	return file
 }
 
 func (s *service) GetActivity(ctx context.Context, id string) (entities.Activity, error) {
@@ -113,30 +132,21 @@ func (s *service) CreateActivity(ctx context.Context, activity entities.Activity
 		return -1, err
 	}
 
-	if activity.CoverImage == nil {
-		return activityID, nil
+	activityIDStr := fmt.Sprintf("%d", activityID)
+	now := time.Now().Format(time.RFC3339)
+
+	var filesToUpload []*entities.File
+	if f := buildActivityFile(activity.CoverImage, activityIDStr, entities.ActivityFileTypeCoverImage,
+		fmt.Sprintf("files/activities/%s/", activityIDStr), activity.CreatedBy, now, true); f != nil {
+		filesToUpload = append(filesToUpload, f)
+	}
+	if f := buildActivityFile(activity.ParticipantList, activityIDStr, entities.ActivityFileTypeListParticipants,
+		fmt.Sprintf("files/activities/%s/participants_", activityIDStr), activity.CreatedBy, now, false); f != nil {
+		filesToUpload = append(filesToUpload, f)
 	}
 
-	activityIDStr := fmt.Sprintf("%d", activityID)
-	var filesToUpload []*entities.File
-	activity.CoverImage.OwnerID = activityIDStr
-	activity.CoverImage.OwnerType = entities.OwnerTypeActivity
-	activity.CoverImage.Purpose = entities.ActivityFileTypeCoverImage
-	activity.CoverImage.Key = fmt.Sprintf("files/activities/%d/%s", activityID, activity.CoverImage.Name)
-	activity.CoverImage.Public = true
-	activity.CoverImage.UploadedBy = activity.CreatedBy
-	activity.CoverImage.CreatedAt = time.Now().Format(time.RFC3339)
-	filesToUpload = append(filesToUpload, activity.CoverImage)
-
-	if activity.ParticipantList != nil {
-		activity.ParticipantList.OwnerID = activityIDStr
-		activity.ParticipantList.OwnerType = entities.OwnerTypeActivity
-		activity.ParticipantList.Purpose = entities.ActivityFileTypeListParticipants
-		activity.ParticipantList.Key = fmt.Sprintf("files/activities/%d/participants_%s", activityID, activity.ParticipantList.Name)
-		activity.ParticipantList.Public = false
-		activity.ParticipantList.UploadedBy = activity.CreatedBy
-		activity.ParticipantList.CreatedAt = time.Now().Format(time.RFC3339)
-		filesToUpload = append(filesToUpload, activity.ParticipantList)
+	if len(filesToUpload) == 0 {
+		return activityID, nil
 	}
 
 	if err := s.storage.UploadFile(ctx, filesToUpload); err != nil {
@@ -158,28 +168,16 @@ func (s *service) UpdateActivity(ctx context.Context, id string, activity entiti
 		return err
 	}
 
+	now := time.Now().Format(time.RFC3339)
+
 	var filesToUpload []*entities.File
-
-	if activity.CoverImage != nil {
-		activity.CoverImage.OwnerID = id
-		activity.CoverImage.OwnerType = entities.OwnerTypeActivity
-		activity.CoverImage.Purpose = entities.ActivityFileTypeCoverImage
-		activity.CoverImage.Key = fmt.Sprintf("files/activities/%s/%s", id, activity.CoverImage.Name)
-		activity.CoverImage.Public = true
-		activity.CoverImage.UploadedBy = activity.CreatedBy
-		activity.CoverImage.CreatedAt = time.Now().Format(time.RFC3339)
-		filesToUpload = append(filesToUpload, activity.CoverImage)
+	if f := buildActivityFile(activity.CoverImage, id, entities.ActivityFileTypeCoverImage,
+		fmt.Sprintf("files/activities/%s/", id), activity.CreatedBy, now, true); f != nil {
+		filesToUpload = append(filesToUpload, f)
 	}
-
-	if activity.ParticipantList != nil {
-		activity.ParticipantList.OwnerID = id
-		activity.ParticipantList.OwnerType = entities.OwnerTypeActivity
-		activity.ParticipantList.Purpose = entities.ActivityFileTypeListParticipants
-		activity.ParticipantList.Key = fmt.Sprintf("files/activities/%s/participants_%s", id, activity.ParticipantList.Name)
-		activity.ParticipantList.Public = false
-		activity.ParticipantList.UploadedBy = activity.CreatedBy
-		activity.ParticipantList.CreatedAt = time.Now().Format(time.RFC3339)
-		filesToUpload = append(filesToUpload, activity.ParticipantList)
+	if f := buildActivityFile(activity.ParticipantList, id, entities.ActivityFileTypeListParticipants,
+		fmt.Sprintf("files/activities/%s/participants_", id), activity.CreatedBy, now, false); f != nil {
+		filesToUpload = append(filesToUpload, f)
 	}
 
 	if len(filesToUpload) > 0 {
@@ -220,7 +218,7 @@ func (s *service) ToggleFeature(ctx context.Context, id string, featured bool) e
 			return err
 		}
 
-		if count >= 4 {
+		if count >= maxFeaturedActivities {
 			return ErrMaxFeaturedLimitReached
 		}
 	}

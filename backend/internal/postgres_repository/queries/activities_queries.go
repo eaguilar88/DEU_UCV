@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/lib/pq"
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/postgres_repository/models"
+	"github.com/lib/pq"
 )
 
 var activitySelectCols = []string{
@@ -191,7 +191,7 @@ func InsertActivity(a models.Activity) sq.InsertBuilder {
 			a.DateStart,
 			a.DateEnd,
 			a.Location,
-			pq.Array(a.KnowledgeArea), 
+			pq.Array(a.KnowledgeArea),
 			a.Allies,
 			a.GroupParticipants,
 			a.EstimatedParticipants,

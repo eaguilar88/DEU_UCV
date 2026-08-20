@@ -160,7 +160,7 @@ func (r *PostgresRepository) CreateGroup(ctx context.Context, gr entities.Extens
 	if err := tx.Commit(); err != nil {
 		return -1, fmt.Errorf("failed to commit transaction: %w", err)
 	}
-	
+
 	return lastInsertedID, nil
 }
 
@@ -283,7 +283,7 @@ func (r *PostgresRepository) UpdateGroup(ctx context.Context, group entities.Ext
 	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
 		return fmt.Errorf("%w: %w", groups.ErrGroupNotFound, err)
 	}
-	
+
 	groupID, err := strconv.ParseInt(group.ID, 10, 64)
 	if err != nil {
 		return err

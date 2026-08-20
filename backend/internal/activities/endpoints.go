@@ -171,12 +171,12 @@ func (h *Handler) CreateActivity(c echo.Context) error {
 	}
 
 	coverImage, err := utils.GetFileFrom(c, entities.ActivityFileTypeCoverImage)
-	if err != nil || coverImage == nil {
+	if err != nil {
 		return httperrors.NewBadRequest("cover image is required")
 	}
 
 	activity := createActivityEntityFromRequest(req)
-	
+
 	// Si req.UploadedBy viene vacío del frontend, usa el userID del token
 	if activity.CreatedBy == "" {
 		activity.CreatedBy = userID

@@ -172,6 +172,8 @@ func TestService_GetActivities(t *testing.T) {
 					})
 				repo.EXPECT().GetFilesByOwner(mock.Anything, mock.Anything, entities.OwnerTypeActivity).
 					Return(entities.GroupedFiles{}, nil)
+				repo.EXPECT().GetActivityMetrics(mock.Anything, "1").
+					Return(entities.ActivityMetrics{}, nil)
 			},
 			wantLen: 2,
 			wantErr: false,
@@ -185,6 +187,8 @@ func TestService_GetActivities(t *testing.T) {
 					RunAndReturn(func(_ context.Context, _ entities.ActivityFilter, ps entities.PageScope) ([]entities.Activity, entities.PageScope, error) {
 						return nil, ps, nil
 					})
+				repo.EXPECT().GetActivityMetrics(mock.Anything, "42").
+					Return(entities.ActivityMetrics{}, nil)
 			},
 			wantLen: 0,
 			wantErr: false,
@@ -209,7 +213,7 @@ func TestService_GetActivities(t *testing.T) {
 			if tt.prepare != nil {
 				tt.prepare(repo)
 			}
-			got, _, err := svc.GetActivities(context.Background(), tt.filter, tt.pageScope)
+			got, _, _, err := svc.GetActivities(context.Background(), tt.filter, tt.pageScope)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -350,7 +354,7 @@ func TestService_UpdateActivity(t *testing.T) {
 		name      string
 		id        string
 		activity  entities.Activity
-		prepare   func(repo *mocks.MockRepository)
+		prepare   func(repo *mocks.MockRepository, storage *mocks.MockStorageClient)
 		wantErr   bool
 		errTarget error
 	}
@@ -360,7 +364,7 @@ func TestService_UpdateActivity(t *testing.T) {
 			name:     "success",
 			id:       "1",
 			activity: entities.Activity{Name: "Updated Workshop"},
-			prepare: func(repo *mocks.MockRepository) {
+			prepare: func(repo *mocks.MockRepository, _ *mocks.MockStorageClient) {
 				repo.EXPECT().UpdateActivity(mock.Anything, entities.Activity{ID: "1", Name: "Updated Workshop"}).
 					RunAndReturn(func(_ context.Context, _ entities.Activity) error {
 						return nil
@@ -372,7 +376,7 @@ func TestService_UpdateActivity(t *testing.T) {
 			name:     "not found",
 			id:       "99",
 			activity: entities.Activity{Name: "Updated"},
-			prepare: func(repo *mocks.MockRepository) {
+			prepare: func(repo *mocks.MockRepository, _ *mocks.MockStorageClient) {
 				repo.EXPECT().UpdateActivity(mock.Anything, mock.Anything).
 					RunAndReturn(func(_ context.Context, _ entities.Activity) error {
 						return ErrActivityNotFound
@@ -385,7 +389,7 @@ func TestService_UpdateActivity(t *testing.T) {
 			name:     "db error",
 			id:       "1",
 			activity: entities.Activity{},
-			prepare: func(repo *mocks.MockRepository) {
+			prepare: func(repo *mocks.MockRepository, _ *mocks.MockStorageClient) {
 				repo.EXPECT().UpdateActivity(mock.Anything, mock.Anything).
 					RunAndReturn(func(_ context.Context, _ entities.Activity) error {
 						return errors.New("db error")
@@ -393,13 +397,86 @@ func TestService_UpdateActivity(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "updates cover image only",
+			id:   "1",
+			activity: entities.Activity{
+				Name:       "Updated Workshop",
+				CreatedBy:  "user1",
+				CoverImage: &entities.File{Name: "cubierta.jpg"},
+			},
+			prepare: func(repo *mocks.MockRepository, storage *mocks.MockStorageClient) {
+				repo.EXPECT().UpdateActivity(mock.Anything, mock.Anything).Return(nil)
+				storage.EXPECT().UploadFile(mock.Anything, mock.Anything).
+					RunAndReturn(func(_ context.Context, files []*entities.File) error {
+						require.Len(t, files, 1)
+						assert.Equal(t, "files/activities/1/cubierta.jpg", files[0].Key)
+						assert.Equal(t, entities.ActivityFileTypeCoverImage, files[0].Purpose)
+						assert.True(t, files[0].Public)
+						return nil
+					})
+				repo.EXPECT().SaveFilesToDB(mock.Anything, mock.Anything).Return(nil)
+			},
+			wantErr: false,
+		},
+		{
+			name: "updates cover image and participant list",
+			id:   "2",
+			activity: entities.Activity{
+				Name:            "Updated Workshop",
+				CreatedBy:       "user1",
+				CoverImage:      &entities.File{Name: "cubierta.jpg"},
+				ParticipantList: &entities.File{Name: "lista.pdf"},
+			},
+			prepare: func(repo *mocks.MockRepository, storage *mocks.MockStorageClient) {
+				repo.EXPECT().UpdateActivity(mock.Anything, mock.Anything).Return(nil)
+				storage.EXPECT().UploadFile(mock.Anything, mock.Anything).
+					RunAndReturn(func(_ context.Context, files []*entities.File) error {
+						require.Len(t, files, 2)
+						assert.Equal(t, "files/activities/2/cubierta.jpg", files[0].Key)
+						assert.True(t, files[0].Public)
+						assert.Equal(t, "files/activities/2/participants_lista.pdf", files[1].Key)
+						assert.False(t, files[1].Public)
+						return nil
+					})
+				repo.EXPECT().SaveFilesToDB(mock.Anything, mock.Anything).Return(nil)
+			},
+			wantErr: false,
+		},
+		{
+			name: "storage upload error on update",
+			id:   "1",
+			activity: entities.Activity{
+				CoverImage: &entities.File{Name: "cubierta.jpg"},
+			},
+			prepare: func(repo *mocks.MockRepository, storage *mocks.MockStorageClient) {
+				repo.EXPECT().UpdateActivity(mock.Anything, mock.Anything).Return(nil)
+				storage.EXPECT().UploadFile(mock.Anything, mock.Anything).
+					Return(errors.New("storage error"))
+			},
+			wantErr: true,
+		},
+		{
+			name: "save to DB error on update",
+			id:   "1",
+			activity: entities.Activity{
+				CoverImage: &entities.File{Name: "cubierta.jpg"},
+			},
+			prepare: func(repo *mocks.MockRepository, storage *mocks.MockStorageClient) {
+				repo.EXPECT().UpdateActivity(mock.Anything, mock.Anything).Return(nil)
+				storage.EXPECT().UploadFile(mock.Anything, mock.Anything).Return(nil)
+				repo.EXPECT().SaveFilesToDB(mock.Anything, mock.Anything).
+					Return(errors.New("db error"))
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc, repo, _ := newTestService(t)
+			svc, repo, storage := newTestService(t)
 			if tt.prepare != nil {
-				tt.prepare(repo)
+				tt.prepare(repo, storage)
 			}
 			err := svc.UpdateActivity(context.Background(), tt.id, tt.activity)
 			if tt.wantErr {
