@@ -15,6 +15,7 @@ var periodQuerySelectCommon = []string{
 	"cp.end_date",
 	"cp.is_active",
 	"cp.inscription_date",
+	"cp.capacity",
 	"cp.closed_at",
 	"cp.created_at",
 	"cp.updated_at",
@@ -37,6 +38,16 @@ func GetCoursePeriods(courseID string, page entities.PageScope) sq.SelectBuilder
 		Offset(uint64(page.Offset()))
 }
 
+func GetActiveCoursePeriodByCourseID(courseID string) sq.SelectBuilder {
+	return psql.Select(periodQuerySelectCommon...).
+		From(fmt.Sprintf("%s AS cp", periodsTableName)).
+		Where(sq.Eq{"cp.course_id": courseID}).
+		Where(sq.Eq{"cp.is_active": true}).
+		Where(sq.Eq{"cp.closed_at": nil}).
+		Where(sq.Eq{"cp.deleted_at": nil}).
+		Limit(1)
+}
+
 func GetLatestCoursePeriod(courseID string) sq.SelectBuilder {
 	return psql.Select("cp.id", "cp.start_date", "cp.end_date", "cp.inscription_date").
 		From(fmt.Sprintf("%s AS cp", periodsTableName)).
@@ -53,12 +64,14 @@ func InsertCoursePeriod(coursePeriod models.CoursePeriod) sq.InsertBuilder {
 			"start_date",
 			"end_date",
 			"inscription_date",
+			"capacity",
 		).
 		Values(
 			coursePeriod.CourseID,
 			coursePeriod.StartDate,
 			coursePeriod.EndDate,
 			coursePeriod.InscriptionDate,
+			coursePeriod.Capacity,
 		).Suffix("RETURNING id")
 }
 
@@ -68,6 +81,7 @@ func UpdateCoursePeriod(periodID string, coursePeriod models.CoursePeriod) sq.Up
 		Set("start_date", coursePeriod.StartDate).
 		Set("end_date", coursePeriod.EndDate).
 		Set("inscription_date", coursePeriod.InscriptionDate).
+		Set("capacity", coursePeriod.Capacity).
 		Where(sq.Eq{"id": periodID})
 }
 

@@ -25,6 +25,14 @@ func InsertCourseCycleCloseRequest(cycleID, submittedBy int64) sq.InsertBuilder 
 		Suffix("RETURNING id")
 }
 
+func CountPendingCloseRequestsForCycle(cycleID int64) sq.SelectBuilder {
+	return psql.Select("COUNT(*)").
+		From(cycleCloseRequestsTableName).
+		Where(sq.Eq{"course_cycle_id": cycleID}).
+		Where(sq.Eq{"status": "under_review"}).
+		Where(sq.Eq{"deleted_at": nil})
+}
+
 func GetCourseCycleCloseRequestByID(id string) sq.SelectBuilder {
 	return psql.Select(cycleCloseRequestSelectCommon...).
 		From(fmt.Sprintf("%s AS ccr", cycleCloseRequestsTableName)).

@@ -64,6 +64,29 @@ func (r *PostgresRepository) GetCoursePeriods(ctx context.Context, courseID stri
 	return coursePeriods, pageScope, nil
 }
 
+func (r *PostgresRepository) GetActiveCoursePeriodByCourseID(ctx context.Context, courseID string) (entities.CoursePeriod, error) {
+	query, args, err := queries.GetActiveCoursePeriodByCourseID(courseID).ToSql()
+	if err != nil {
+		return entities.CoursePeriod{}, err
+	}
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		return entities.CoursePeriod{}, err
+	}
+	//nolint:errcheck
+	defer stmt.Close()
+	var coursePeriod models.CoursePeriod
+	row := stmt.QueryRowContext(ctx, args...)
+	coursePeriod, err = scanCoursePeriod(row)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return entities.CoursePeriod{}, fmt.Errorf("%w: %w", course_periods.ErrCoursePeriodNotFound, err)
+		}
+		return entities.CoursePeriod{}, err
+	}
+	return newCoursePeriodFromModel(coursePeriod), nil
+}
+
 func (r *PostgresRepository) GetLatestCoursePeriod(ctx context.Context, courseID string) (entities.CoursePeriod, error) {
 	query, args, err := queries.GetLatestCoursePeriod(courseID).ToSql()
 	if err != nil {
@@ -96,6 +119,7 @@ func (r *PostgresRepository) CreateCoursePeriod(ctx context.Context, coursePerio
 		StartDate:       coursePeriod.StartDate,
 		EndDate:         coursePeriod.EndDate,
 		InscriptionDate: coursePeriod.InscriptionDate,
+		Capacity:        coursePeriod.Capacity,
 	}
 
 	query, args, err := queries.InsertCoursePeriod(cpModel).ToSql()
@@ -315,6 +339,7 @@ func scanCoursePeriod(row scannable) (models.CoursePeriod, error) {
 		&coursePeriod.EndDate,
 		&coursePeriod.IsActive,
 		&coursePeriod.InscriptionDate,
+		&coursePeriod.Capacity,
 		&coursePeriod.ClosedAt,
 		&coursePeriod.CreatedAt,
 		&coursePeriod.UpdatedAt,
@@ -342,6 +367,7 @@ func newCoursePeriodFromModel(coursePeriod models.CoursePeriod) entities.CourseP
 		StartDate:       coursePeriod.StartDate,
 		EndDate:         coursePeriod.EndDate,
 		InscriptionDate: coursePeriod.InscriptionDate,
+		Capacity:        coursePeriod.Capacity,
 		IsActive:        coursePeriod.IsActive,
 		ClosedAt:        closedAt,
 		CreatedAt:       coursePeriod.CreatedAt,
@@ -358,5 +384,6 @@ func newCoursePeriodModelFromEntities(cp entities.CoursePeriod) models.CoursePer
 		EndDate:         cp.EndDate,
 		IsActive:        cp.IsActive,
 		InscriptionDate: cp.InscriptionDate,
+		Capacity:        cp.Capacity,
 	}
 }

@@ -20,6 +20,7 @@ type CreateCoursePeriodRequest struct {
 	StartDate       string `json:"fecha_inicio"`
 	EndDate         string `json:"fecha_fin"`
 	InscriptionDate string `json:"fecha_inscripcion"`
+	Capacity        int    `json:"capacidad" validate:"required,gt=0"`
 }
 
 // toPeriodEntity converts CreateCoursePeriodRequest to a CoursePeriod entity.
@@ -34,6 +35,7 @@ func toPeriodEntity(req CreateCoursePeriodRequest, userID string) entities.Cours
 		StartDate:       req.StartDate,
 		EndDate:         req.EndDate,
 		InscriptionDate: req.InscriptionDate,
+		Capacity:        req.Capacity,
 	}
 }
 
@@ -43,6 +45,7 @@ type UpdateCoursePeriodRequest struct {
 	StartDate       string `json:"fecha_inicio"`
 	EndDate         string `json:"fecha_fin"`
 	InscriptionDate string `json:"fecha_inscripcion"`
+	Capacity        int    `json:"capacidad" validate:"required,gt=0"`
 }
 
 // toPeriodUpdateEntity converts UpdateCoursePeriodRequest to a CoursePeriod entity.
@@ -58,6 +61,7 @@ func toPeriodUpdateEntity(req UpdateCoursePeriodRequest, userID string) entities
 		StartDate:       req.StartDate,
 		EndDate:         req.EndDate,
 		InscriptionDate: req.InscriptionDate,
+		Capacity:        req.Capacity,
 	}
 }
 
