@@ -82,7 +82,6 @@ services:
     restart: unless-stopped
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./postgresql:/docker-entrypoint-initdb.d
     env_file:
       - .env
     networks:
@@ -92,6 +91,17 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+  migrate:
+    image: migrate/migrate:v4.18.2
+    profiles: ["tools"]
+    volumes:
+      - ./postgresql/migrations:/migrations
+    networks:
+      - web
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
 volumes:
   postgres_data:
   letsencrypt:
