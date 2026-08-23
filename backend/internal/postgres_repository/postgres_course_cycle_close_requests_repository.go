@@ -13,6 +13,23 @@ import (
 	"go.uber.org/zap"
 )
 
+func (r *PostgresRepository) HasPendingCloseRequestForCycle(ctx context.Context, cycleID int64) (bool, error) {
+	query, args, err := queries.CountPendingCloseRequestsForCycle(cycleID).ToSql()
+	if err != nil {
+		return false, err
+	}
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		return false, err
+	}
+	defer stmt.Close()
+	var count int
+	if err := stmt.QueryRowContext(ctx, args...).Scan(&count); err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
 func (r *PostgresRepository) CreateCourseCycleCloseRequest(ctx context.Context, cycleID, submittedByID int64) (int64, error) {
 	query, args, err := queries.InsertCourseCycleCloseRequest(cycleID, submittedByID).ToSql()
 	if err != nil {

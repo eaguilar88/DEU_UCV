@@ -5,12 +5,13 @@ import "io"
 type OwnerType string
 
 const (
-	OwnerTypeProvider       OwnerType = "provider"
-	OwnerTypeExtensionGroup OwnerType = "group"
-	OwnerTypeCourse         OwnerType = "course"
-	OwnerTypeActivity       OwnerType = "group_activity"
-	OwnerTypeCourseCycle    OwnerType = "course_cycle"
-	OwnerTypeUser           OwnerType = "user"
+	OwnerTypeProvider                OwnerType = "provider"
+	OwnerTypeExtensionGroup          OwnerType = "group"
+	OwnerTypeCourse                  OwnerType = "course"
+	OwnerTypeActivity                OwnerType = "group_activity"
+	OwnerTypeCourseCycle             OwnerType = "course_cycle"
+	OwnerTypeUser                    OwnerType = "user"
+	OwnerTypeCourseCycleCloseRequest OwnerType = "course_cycle_close_request"
 )
 
 func (ot OwnerType) String() string {

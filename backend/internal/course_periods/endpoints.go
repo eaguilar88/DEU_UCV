@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/eaguilar88/deu/internal/courses"
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/labstack/echo/v4"
@@ -84,6 +85,9 @@ func (h *Handler) CreateCoursePeriod(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return httperrors.NewBadRequest("invalid request body")
 	}
+	if err := c.Validate(&req); err != nil {
+		return httperrors.NewBadRequest("validation failed")
+	}
 	userID, ok := c.Get("userID").(string)
 	if !ok {
 		return httperrors.NewUnauthorized("authentication required")
@@ -91,6 +95,15 @@ func (h *Handler) CreateCoursePeriod(c echo.Context) error {
 
 	periodID, err := h.svc.CreateCoursePeriod(ctx, toPeriodEntity(req, userID))
 	if err != nil {
+		if errors.Is(err, courses.ErrCourseNotFound) {
+			return httperrors.NewNotFound("course not found")
+		}
+		if errors.Is(err, ErrCoursePeriodAlreadyOpen) {
+			return httperrors.NewConflict(ErrCoursePeriodAlreadyOpen.Error())
+		}
+		if errors.Is(err, ErrInvalidCapacity) {
+			return httperrors.NewBadRequest(ErrInvalidCapacity.Error())
+		}
 		return httperrors.NewInternal(err)
 	}
 
@@ -104,6 +117,9 @@ func (h *Handler) UpdateCoursePeriod(c echo.Context) error {
 	var req UpdateCoursePeriodRequest
 	if err := c.Bind(&req); err != nil {
 		return httperrors.NewBadRequest("invalid request body")
+	}
+	if err := c.Validate(&req); err != nil {
+		return httperrors.NewBadRequest("validation failed")
 	}
 
 	userID, ok := c.Get("userID").(string)

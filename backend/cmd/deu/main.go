@@ -115,7 +115,7 @@ func main() {
 	providerRequestService := provider_requests.NewService(repository, mailClient, logger)
 	providerRequestEndpoints := provider_requests.NewHandler(providerRequestService, logger)
 
-	cycleCloseService := course_cycle_close_requests.NewService(repository, logger)
+	cycleCloseService := course_cycle_close_requests.NewService(repository, bbClient, logger)
 	cycleCloseEndpoints := course_cycle_close_requests.NewHandler(cycleCloseService, logger)
 
 	e := echo.New()

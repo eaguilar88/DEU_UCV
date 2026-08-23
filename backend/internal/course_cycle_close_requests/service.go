@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/eaguilar88/deu/internal/entities"
 	"go.uber.org/zap"
@@ -16,35 +17,77 @@ var (
 
 type Repository interface {
 	CreateCourseCycleCloseRequest(ctx context.Context, cycleID, submittedByID int64) (int64, error)
+	HasPendingCloseRequestForCycle(ctx context.Context, cycleID int64) (bool, error)
 	GetCourseCycleCloseRequests(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.CourseCycleCloseRequest, entities.PageScope, error)
 	GetCourseCycleCloseRequestByID(ctx context.Context, id string) (entities.CourseCycleCloseRequest, error)
 	ApproveCourseCycleCloseRequest(ctx context.Context, id, reviewerID, cycleID string) error
 	RejectCourseCycleCloseRequest(ctx context.Context, id, reviewerID, comments string) error
+
+	// Files
+	SaveFilesToDB(ctx context.Context, files []*entities.File) error
+}
+
+// StorageClient defines the file storage operations required by the course_cycle_close_requests service.
+type StorageClient interface {
+	UploadFile(ctx context.Context, files []*entities.File) error
 }
 
 type service struct {
-	repo   Repository
-	logger *zap.Logger
+	repo    Repository
+	storage StorageClient
+	logger  *zap.Logger
 }
 
-func NewService(repo Repository, logger *zap.Logger) Service {
+func NewService(repo Repository, storage StorageClient, logger *zap.Logger) Service {
 	return &service{
-		repo:   repo,
-		logger: logger,
+		repo:    repo,
+		storage: storage,
+		logger:  logger,
 	}
 }
 
-func (s *service) SubmitCloseRequest(ctx context.Context, cycleID int64, submittedByID string) (int64, error) {
+func (s *service) SubmitCloseRequest(ctx context.Context, request entities.CourseCycleCloseRequest, submittedByID string) (int64, error) {
 	submitterID, err := strconv.ParseInt(submittedByID, 10, 64)
 	if err != nil {
 		return -1, fmt.Errorf("invalid submitter ID: %w", err)
 	}
 
-	id, err := s.repo.CreateCourseCycleCloseRequest(ctx, cycleID, submitterID)
+	pending, err := s.repo.HasPendingCloseRequestForCycle(ctx, request.CourseCycleID)
+	if err != nil {
+		s.logger.Error("failed to check for pending close requests", zap.Error(err))
+		return -1, err
+	}
+	if pending {
+		return -1, ErrCloseRequestAlreadyPending
+	}
+
+	id, err := s.repo.CreateCourseCycleCloseRequest(ctx, request.CourseCycleID, submitterID)
 	if err != nil {
 		s.logger.Error("failed to create cycle close request", zap.Error(err))
 		return -1, err
 	}
+
+	files := []*entities.File{request.ParticipantsFile, request.VouchersFile, request.SurveyFile}
+	idStr := strconv.FormatInt(id, 10)
+	for _, f := range files {
+		f.OwnerID = idStr
+		f.OwnerType = entities.OwnerTypeCourseCycleCloseRequest
+		f.Key = fmt.Sprintf("files/course-cycle-close-requests/%s/%s", idStr, f.Name)
+		f.Public = false
+		f.UploadedBy = submittedByID
+		f.CreatedAt = time.Now().Format(time.RFC3339)
+	}
+
+	if err := s.storage.UploadFile(ctx, files); err != nil {
+		s.logger.Error("failed to upload close request evidence files", zap.Error(err), zap.String("close_request_id", idStr))
+		return -1, err
+	}
+
+	if err := s.repo.SaveFilesToDB(ctx, files); err != nil {
+		s.logger.Error("failed to save close request evidence file metadata", zap.Error(err), zap.String("close_request_id", idStr))
+		return -1, err
+	}
+
 	return id, nil
 }
 
