@@ -161,6 +161,78 @@ func (_c *MockRepository_CreateProvider_Call) RunAndReturn(run func(ctx context.
 	return _c
 }
 
+// CreateProviderContract provides a mock function for the type MockRepository
+func (_mock *MockRepository) CreateProviderContract(ctx context.Context, contract entities.ProviderContract, coveredCourseIDs []string) (entities.ProviderContract, error) {
+	ret := _mock.Called(ctx, contract, coveredCourseIDs)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateProviderContract")
+	}
+
+	var r0 entities.ProviderContract
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.ProviderContract, []string) (entities.ProviderContract, error)); ok {
+		return returnFunc(ctx, contract, coveredCourseIDs)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.ProviderContract, []string) entities.ProviderContract); ok {
+		r0 = returnFunc(ctx, contract, coveredCourseIDs)
+	} else {
+		r0 = ret.Get(0).(entities.ProviderContract)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.ProviderContract, []string) error); ok {
+		r1 = returnFunc(ctx, contract, coveredCourseIDs)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_CreateProviderContract_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateProviderContract'
+type MockRepository_CreateProviderContract_Call struct {
+	*mock.Call
+}
+
+// CreateProviderContract is a helper method to define mock.On call
+//   - ctx context.Context
+//   - contract entities.ProviderContract
+//   - coveredCourseIDs []string
+func (_e *MockRepository_Expecter) CreateProviderContract(ctx interface{}, contract interface{}, coveredCourseIDs interface{}) *MockRepository_CreateProviderContract_Call {
+	return &MockRepository_CreateProviderContract_Call{Call: _e.mock.On("CreateProviderContract", ctx, contract, coveredCourseIDs)}
+}
+
+func (_c *MockRepository_CreateProviderContract_Call) Run(run func(ctx context.Context, contract entities.ProviderContract, coveredCourseIDs []string)) *MockRepository_CreateProviderContract_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 entities.ProviderContract
+		if args[1] != nil {
+			arg1 = args[1].(entities.ProviderContract)
+		}
+		var arg2 []string
+		if args[2] != nil {
+			arg2 = args[2].([]string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_CreateProviderContract_Call) Return(providerContract entities.ProviderContract, err error) *MockRepository_CreateProviderContract_Call {
+	_c.Call.Return(providerContract, err)
+	return _c
+}
+
+func (_c *MockRepository_CreateProviderContract_Call) RunAndReturn(run func(ctx context.Context, contract entities.ProviderContract, coveredCourseIDs []string) (entities.ProviderContract, error)) *MockRepository_CreateProviderContract_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // CreateProviderRequest provides a mock function for the type MockRepository
 func (_mock *MockRepository) CreateProviderRequest(ctx context.Context, providerID int64) error {
 	ret := _mock.Called(ctx, providerID)
@@ -693,6 +765,74 @@ func (_c *MockRepository_GetProviderContactInfo_Call) RunAndReturn(run func(ctx 
 	return _c
 }
 
+// GetProviderContracts provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetProviderContracts(ctx context.Context, providerID string) ([]entities.ProviderContract, error) {
+	ret := _mock.Called(ctx, providerID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetProviderContracts")
+	}
+
+	var r0 []entities.ProviderContract
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]entities.ProviderContract, error)); ok {
+		return returnFunc(ctx, providerID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []entities.ProviderContract); ok {
+		r0 = returnFunc(ctx, providerID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]entities.ProviderContract)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, providerID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetProviderContracts_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetProviderContracts'
+type MockRepository_GetProviderContracts_Call struct {
+	*mock.Call
+}
+
+// GetProviderContracts is a helper method to define mock.On call
+//   - ctx context.Context
+//   - providerID string
+func (_e *MockRepository_Expecter) GetProviderContracts(ctx interface{}, providerID interface{}) *MockRepository_GetProviderContracts_Call {
+	return &MockRepository_GetProviderContracts_Call{Call: _e.mock.On("GetProviderContracts", ctx, providerID)}
+}
+
+func (_c *MockRepository_GetProviderContracts_Call) Run(run func(ctx context.Context, providerID string)) *MockRepository_GetProviderContracts_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetProviderContracts_Call) Return(providerContracts []entities.ProviderContract, err error) *MockRepository_GetProviderContracts_Call {
+	_c.Call.Return(providerContracts, err)
+	return _c
+}
+
+func (_c *MockRepository_GetProviderContracts_Call) RunAndReturn(run func(ctx context.Context, providerID string) ([]entities.ProviderContract, error)) *MockRepository_GetProviderContracts_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetProviders provides a mock function for the type MockRepository
 func (_mock *MockRepository) GetProviders(ctx context.Context, pageScope entities.PageScope, filters entities.ProviderFilters) ([]entities.Provider, entities.PageScope, error) {
 	ret := _mock.Called(ctx, pageScope, filters)
@@ -773,38 +913,47 @@ func (_c *MockRepository_GetProviders_Call) RunAndReturn(run func(ctx context.Co
 	return _c
 }
 
-// MarkCoursesWithDocumentation provides a mock function for the type MockRepository
-func (_mock *MockRepository) MarkCoursesWithDocumentation(ctx context.Context, providerID string, from string, to string) error {
-	ret := _mock.Called(ctx, providerID, from, to)
+// GetUncoveredCourseIDs provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetUncoveredCourseIDs(ctx context.Context, providerID string) ([]string, error) {
+	ret := _mock.Called(ctx, providerID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for MarkCoursesWithDocumentation")
+		panic("no return value specified for GetUncoveredCourseIDs")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) error); ok {
-		r0 = returnFunc(ctx, providerID, from, to)
-	} else {
-		r0 = ret.Error(0)
+	var r0 []string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]string, error)); ok {
+		return returnFunc(ctx, providerID)
 	}
-	return r0
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []string); ok {
+		r0 = returnFunc(ctx, providerID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, providerID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
-// MockRepository_MarkCoursesWithDocumentation_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MarkCoursesWithDocumentation'
-type MockRepository_MarkCoursesWithDocumentation_Call struct {
+// MockRepository_GetUncoveredCourseIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUncoveredCourseIDs'
+type MockRepository_GetUncoveredCourseIDs_Call struct {
 	*mock.Call
 }
 
-// MarkCoursesWithDocumentation is a helper method to define mock.On call
+// GetUncoveredCourseIDs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - providerID string
-//   - from string
-//   - to string
-func (_e *MockRepository_Expecter) MarkCoursesWithDocumentation(ctx interface{}, providerID interface{}, from interface{}, to interface{}) *MockRepository_MarkCoursesWithDocumentation_Call {
-	return &MockRepository_MarkCoursesWithDocumentation_Call{Call: _e.mock.On("MarkCoursesWithDocumentation", ctx, providerID, from, to)}
+func (_e *MockRepository_Expecter) GetUncoveredCourseIDs(ctx interface{}, providerID interface{}) *MockRepository_GetUncoveredCourseIDs_Call {
+	return &MockRepository_GetUncoveredCourseIDs_Call{Call: _e.mock.On("GetUncoveredCourseIDs", ctx, providerID)}
 }
 
-func (_c *MockRepository_MarkCoursesWithDocumentation_Call) Run(run func(ctx context.Context, providerID string, from string, to string)) *MockRepository_MarkCoursesWithDocumentation_Call {
+func (_c *MockRepository_GetUncoveredCourseIDs_Call) Run(run func(ctx context.Context, providerID string)) *MockRepository_GetUncoveredCourseIDs_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -814,30 +963,86 @@ func (_c *MockRepository_MarkCoursesWithDocumentation_Call) Run(run func(ctx con
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 string
-		if args[3] != nil {
-			arg3 = args[3].(string)
-		}
 		run(
 			arg0,
 			arg1,
-			arg2,
-			arg3,
 		)
 	})
 	return _c
 }
 
-func (_c *MockRepository_MarkCoursesWithDocumentation_Call) Return(err error) *MockRepository_MarkCoursesWithDocumentation_Call {
-	_c.Call.Return(err)
+func (_c *MockRepository_GetUncoveredCourseIDs_Call) Return(strings []string, err error) *MockRepository_GetUncoveredCourseIDs_Call {
+	_c.Call.Return(strings, err)
 	return _c
 }
 
-func (_c *MockRepository_MarkCoursesWithDocumentation_Call) RunAndReturn(run func(ctx context.Context, providerID string, from string, to string) error) *MockRepository_MarkCoursesWithDocumentation_Call {
+func (_c *MockRepository_GetUncoveredCourseIDs_Call) RunAndReturn(run func(ctx context.Context, providerID string) ([]string, error)) *MockRepository_GetUncoveredCourseIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// HasInitialContract provides a mock function for the type MockRepository
+func (_mock *MockRepository) HasInitialContract(ctx context.Context, providerID string) (bool, error) {
+	ret := _mock.Called(ctx, providerID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for HasInitialContract")
+	}
+
+	var r0 bool
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (bool, error)); ok {
+		return returnFunc(ctx, providerID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) bool); ok {
+		r0 = returnFunc(ctx, providerID)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, providerID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_HasInitialContract_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HasInitialContract'
+type MockRepository_HasInitialContract_Call struct {
+	*mock.Call
+}
+
+// HasInitialContract is a helper method to define mock.On call
+//   - ctx context.Context
+//   - providerID string
+func (_e *MockRepository_Expecter) HasInitialContract(ctx interface{}, providerID interface{}) *MockRepository_HasInitialContract_Call {
+	return &MockRepository_HasInitialContract_Call{Call: _e.mock.On("HasInitialContract", ctx, providerID)}
+}
+
+func (_c *MockRepository_HasInitialContract_Call) Run(run func(ctx context.Context, providerID string)) *MockRepository_HasInitialContract_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_HasInitialContract_Call) Return(b bool, err error) *MockRepository_HasInitialContract_Call {
+	_c.Call.Return(b, err)
+	return _c
+}
+
+func (_c *MockRepository_HasInitialContract_Call) RunAndReturn(run func(ctx context.Context, providerID string) (bool, error)) *MockRepository_HasInitialContract_Call {
 	_c.Call.Return(run)
 	return _c
 }

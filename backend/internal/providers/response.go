@@ -3,21 +3,55 @@ package providers
 import "github.com/eaguilar88/deu/internal/entities"
 
 type GetProviderResponse struct {
-	ID         string        `json:"id"`
-	UserID     string        `json:"usuario_id"`
-	Name       string        `json:"nombre_proveedor"`
-	Bio        string        `json:"biografia,omitempty"`
-	Internal   bool          `json:"interno"`
-	Code       string        `json:"codigo_proveedor"`
-	Files      ProviderFiles `json:"archivos"`
-	Logo       string        `json:"provider_avatar_url,omitempty"`
-	Type       string        `json:"tipo,omitempty"`
-	ProfitType string        `json:"tipo_lucro,omitempty"`
-	Faculty    string        `json:"facultad,omitempty"`
-	Contact    []string      `json:"emails_contacto,omitempty"`
-	Phones     []string      `json:"telefonos_contacto,omitempty"`
-	Webpage    string        `json:"sitio_web,omitempty"`
-	Status     string        `json:"estado"`
+	ID             string                     `json:"id"`
+	UserID         string                     `json:"usuario_id"`
+	Name           string                     `json:"nombre_proveedor"`
+	Bio            string                     `json:"biografia,omitempty"`
+	Internal       bool                       `json:"interno"`
+	Code           string                     `json:"codigo_proveedor"`
+	Files          ProviderFiles              `json:"archivos"`
+	Logo           string                     `json:"provider_avatar_url,omitempty"`
+	Type           string                     `json:"tipo,omitempty"`
+	ProfitType     string                     `json:"tipo_lucro,omitempty"`
+	Faculty        string                     `json:"facultad,omitempty"`
+	Contact        []string                   `json:"emails_contacto,omitempty"`
+	Phones         []string                   `json:"telefonos_contacto,omitempty"`
+	Webpage        string                     `json:"sitio_web,omitempty"`
+	Status         string                     `json:"estado"`
+	LegalContracts []ProviderContractResponse `json:"contratos_legales,omitempty"`
+}
+
+type ProviderContractResponse struct {
+	ID             string   `json:"id"`
+	Type           string   `json:"tipo"`
+	CreatedAt      string   `json:"creado_en"`
+	CoveredCourses []string `json:"cursos_amparados"`
+	Files          []string `json:"archivos,omitempty"`
+}
+
+// providerContractToResponse converts a ProviderContract entity to ProviderContractResponse.
+func providerContractToResponse(contract entities.ProviderContract) ProviderContractResponse {
+	response := ProviderContractResponse{
+		ID:             contract.ID,
+		Type:           string(contract.Type),
+		CreatedAt:      contract.CreatedAt,
+		CoveredCourses: contract.CoveredCourses,
+	}
+	for _, f := range contract.Files {
+		if f != nil {
+			response.Files = append(response.Files, f.URL)
+		}
+	}
+	return response
+}
+
+// providerContractsToResponse converts a slice of ProviderContract entities.
+func providerContractsToResponse(contracts []entities.ProviderContract) []ProviderContractResponse {
+	responses := make([]ProviderContractResponse, 0, len(contracts))
+	for _, c := range contracts {
+		responses = append(responses, providerContractToResponse(c))
+	}
+	return responses
 }
 
 type ProviderFiles struct {
@@ -68,6 +102,7 @@ func providerToResponse(entity entities.Provider) GetProviderResponse {
 		}
 	}
 	response.Files = files
+	response.LegalContracts = providerContractsToResponse(entity.Contracts)
 	return response
 }
 

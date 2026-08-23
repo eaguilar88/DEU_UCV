@@ -65,6 +65,10 @@ func TestService_GetProvider(t *testing.T) {
 					RunAndReturn(func(_ context.Context, _ string, _ entities.OwnerType) (entities.GroupedFiles, error) {
 						return entities.GroupedFiles{}, nil
 					})
+				repoMock.EXPECT().GetProviderContracts(mock.Anything, "1").
+					RunAndReturn(func(_ context.Context, _ string) ([]entities.ProviderContract, error) {
+						return nil, nil
+					})
 			},
 			want:    entities.Provider{ID: "1"},
 			wantErr: false,
@@ -85,6 +89,10 @@ func TestService_GetProvider(t *testing.T) {
 				storageMock.EXPECT().GetFileURL(mock.Anything, "ci-key").
 					RunAndReturn(func(_ context.Context, _ string) (string, error) {
 						return "http://url/ci.pdf", nil
+					})
+				repoMock.EXPECT().GetProviderContracts(mock.Anything, "1").
+					RunAndReturn(func(_ context.Context, _ string) ([]entities.ProviderContract, error) {
+						return nil, nil
 					})
 			},
 			want: entities.Provider{
@@ -144,6 +152,25 @@ func TestService_GetProvider(t *testing.T) {
 			},
 			wantErr:   true,
 			errTarget: context.Canceled,
+		},
+		{
+			name:       "get contracts error",
+			providerID: "1",
+			prepare: func(repoMock *mocks.MockRepository, _ *mocks.MockStorageClient) {
+				repoMock.EXPECT().GetProvider(mock.Anything, "1").
+					RunAndReturn(func(_ context.Context, _ string) (entities.Provider, error) {
+						return entities.Provider{ID: "1"}, nil
+					})
+				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1", entities.OwnerTypeProvider).
+					RunAndReturn(func(_ context.Context, _ string, _ entities.OwnerType) (entities.GroupedFiles, error) {
+						return entities.GroupedFiles{}, nil
+					})
+				repoMock.EXPECT().GetProviderContracts(mock.Anything, "1").
+					RunAndReturn(func(_ context.Context, _ string) ([]entities.ProviderContract, error) {
+						return nil, errors.New("db error")
+					})
+			},
+			wantErr: true,
 		},
 	}
 
@@ -853,6 +880,179 @@ func Test_prepareFilesSlice(t *testing.T) {
 				assert.Equal(t, "user-1", f.UploadedBy)
 				assert.NotEmpty(t, f.CreatedAt)
 			}
+		})
+	}
+}
+
+func TestService_SubmitProviderContract(t *testing.T) {
+	type testCase struct {
+		name                                        string
+		providerID                                  string
+		intentionLetter, commitmentLetter, addendum *entities.File
+		prepare                                     func(repoMock *mocks.MockRepository, storageMock *mocks.MockStorageClient)
+		wantErr                                     error
+		wantType                                    entities.ContractType
+		wantCovered                                 []string
+	}
+
+	tests := []testCase{
+		{
+			name:             "initial contract, covers uncovered courses",
+			providerID:       "1",
+			intentionLetter:  &entities.File{Name: "carta_intencion.pdf"},
+			commitmentLetter: &entities.File{Name: "carta_compromiso.pdf"},
+			prepare: func(repoMock *mocks.MockRepository, storageMock *mocks.MockStorageClient) {
+				repoMock.EXPECT().GetProvider(mock.Anything, "1").
+					RunAndReturn(func(_ context.Context, _ string) (entities.Provider, error) {
+						return entities.Provider{ID: "1", User: entities.User{ID: "user-1"}}, nil
+					})
+				repoMock.EXPECT().HasInitialContract(mock.Anything, "1").
+					RunAndReturn(func(_ context.Context, _ string) (bool, error) { return false, nil })
+				repoMock.EXPECT().GetUncoveredCourseIDs(mock.Anything, "1").
+					RunAndReturn(func(_ context.Context, _ string) ([]string, error) { return []string{"10", "11"}, nil })
+				repoMock.EXPECT().CreateProviderContract(mock.Anything, mock.AnythingOfType("entities.ProviderContract"), []string{"10", "11"}).
+					RunAndReturn(func(_ context.Context, c entities.ProviderContract, ids []string) (entities.ProviderContract, error) {
+						c.ID = "100"
+						c.CoveredCourses = ids
+						return c, nil
+					})
+				storageMock.EXPECT().UploadFile(mock.Anything, mock.Anything).
+					RunAndReturn(func(_ context.Context, _ []*entities.File) error { return nil })
+				repoMock.EXPECT().SaveFilesToDB(mock.Anything, mock.Anything).
+					RunAndReturn(func(_ context.Context, _ []*entities.File) error { return nil })
+			},
+			wantType:    entities.ContractTypeInitial,
+			wantCovered: []string{"10", "11"},
+		},
+		{
+			name:             "initial contract, zero uncovered courses is allowed",
+			providerID:       "1",
+			intentionLetter:  &entities.File{Name: "carta_intencion.pdf"},
+			commitmentLetter: &entities.File{Name: "carta_compromiso.pdf"},
+			prepare: func(repoMock *mocks.MockRepository, storageMock *mocks.MockStorageClient) {
+				repoMock.EXPECT().GetProvider(mock.Anything, "1").
+					RunAndReturn(func(_ context.Context, _ string) (entities.Provider, error) {
+						return entities.Provider{ID: "1", User: entities.User{ID: "user-1"}}, nil
+					})
+				repoMock.EXPECT().HasInitialContract(mock.Anything, "1").
+					RunAndReturn(func(_ context.Context, _ string) (bool, error) { return false, nil })
+				repoMock.EXPECT().GetUncoveredCourseIDs(mock.Anything, "1").
+					RunAndReturn(func(_ context.Context, _ string) ([]string, error) { return nil, nil })
+				repoMock.EXPECT().CreateProviderContract(mock.Anything, mock.AnythingOfType("entities.ProviderContract"), []string(nil)).
+					RunAndReturn(func(_ context.Context, c entities.ProviderContract, ids []string) (entities.ProviderContract, error) {
+						c.ID = "100"
+						return c, nil
+					})
+				storageMock.EXPECT().UploadFile(mock.Anything, mock.Anything).
+					RunAndReturn(func(_ context.Context, _ []*entities.File) error { return nil })
+				repoMock.EXPECT().SaveFilesToDB(mock.Anything, mock.Anything).
+					RunAndReturn(func(_ context.Context, _ []*entities.File) error { return nil })
+			},
+			wantType: entities.ContractTypeInitial,
+		},
+		{
+			name:            "initial contract missing commitment letter",
+			providerID:      "1",
+			intentionLetter: &entities.File{Name: "carta_intencion.pdf"},
+			prepare: func(repoMock *mocks.MockRepository, _ *mocks.MockStorageClient) {
+				repoMock.EXPECT().GetProvider(mock.Anything, "1").
+					RunAndReturn(func(_ context.Context, _ string) (entities.Provider, error) {
+						return entities.Provider{ID: "1"}, nil
+					})
+				repoMock.EXPECT().HasInitialContract(mock.Anything, "1").
+					RunAndReturn(func(_ context.Context, _ string) (bool, error) { return false, nil })
+			},
+			wantErr: ErrMissingInitialContract,
+		},
+		{
+			name:       "addendum, covers uncovered courses",
+			providerID: "1",
+			addendum:   &entities.File{Name: "adenda.pdf"},
+			prepare: func(repoMock *mocks.MockRepository, storageMock *mocks.MockStorageClient) {
+				repoMock.EXPECT().GetProvider(mock.Anything, "1").
+					RunAndReturn(func(_ context.Context, _ string) (entities.Provider, error) {
+						return entities.Provider{ID: "1", User: entities.User{ID: "user-1"}}, nil
+					})
+				repoMock.EXPECT().HasInitialContract(mock.Anything, "1").
+					RunAndReturn(func(_ context.Context, _ string) (bool, error) { return true, nil })
+				repoMock.EXPECT().GetUncoveredCourseIDs(mock.Anything, "1").
+					RunAndReturn(func(_ context.Context, _ string) ([]string, error) { return []string{"12"}, nil })
+				repoMock.EXPECT().CreateProviderContract(mock.Anything, mock.AnythingOfType("entities.ProviderContract"), []string{"12"}).
+					RunAndReturn(func(_ context.Context, c entities.ProviderContract, ids []string) (entities.ProviderContract, error) {
+						c.ID = "101"
+						c.CoveredCourses = ids
+						return c, nil
+					})
+				storageMock.EXPECT().UploadFile(mock.Anything, mock.Anything).
+					RunAndReturn(func(_ context.Context, _ []*entities.File) error { return nil })
+				repoMock.EXPECT().SaveFilesToDB(mock.Anything, mock.Anything).
+					RunAndReturn(func(_ context.Context, _ []*entities.File) error { return nil })
+			},
+			wantType:    entities.ContractTypeAddendum,
+			wantCovered: []string{"12"},
+		},
+		{
+			name:       "addendum with nothing to cover is rejected",
+			providerID: "1",
+			addendum:   &entities.File{Name: "adenda.pdf"},
+			prepare: func(repoMock *mocks.MockRepository, _ *mocks.MockStorageClient) {
+				repoMock.EXPECT().GetProvider(mock.Anything, "1").
+					RunAndReturn(func(_ context.Context, _ string) (entities.Provider, error) {
+						return entities.Provider{ID: "1"}, nil
+					})
+				repoMock.EXPECT().HasInitialContract(mock.Anything, "1").
+					RunAndReturn(func(_ context.Context, _ string) (bool, error) { return true, nil })
+				repoMock.EXPECT().GetUncoveredCourseIDs(mock.Anything, "1").
+					RunAndReturn(func(_ context.Context, _ string) ([]string, error) { return nil, nil })
+			},
+			wantErr: ErrNoCoursesToCoverage,
+		},
+		{
+			name:       "addendum missing file",
+			providerID: "1",
+			prepare: func(repoMock *mocks.MockRepository, _ *mocks.MockStorageClient) {
+				repoMock.EXPECT().GetProvider(mock.Anything, "1").
+					RunAndReturn(func(_ context.Context, _ string) (entities.Provider, error) {
+						return entities.Provider{ID: "1"}, nil
+					})
+				repoMock.EXPECT().HasInitialContract(mock.Anything, "1").
+					RunAndReturn(func(_ context.Context, _ string) (bool, error) { return true, nil })
+			},
+			wantErr: ErrMissingAddendum,
+		},
+		{
+			name:       "provider not found",
+			providerID: "1",
+			prepare: func(repoMock *mocks.MockRepository, _ *mocks.MockStorageClient) {
+				repoMock.EXPECT().GetProvider(mock.Anything, "1").
+					RunAndReturn(func(_ context.Context, _ string) (entities.Provider, error) {
+						return entities.Provider{}, ErrProviderNotFound
+					})
+			},
+			wantErr: ErrProviderNotFound,
+		},
+	}
+
+	loggerMock := zap.NewNop()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repoMock := mocks.NewMockRepository(t)
+			storageMock := mocks.NewMockStorageClient(t)
+			mailMock := mocks.NewMockMailClient(t)
+			if tt.prepare != nil {
+				tt.prepare(repoMock, storageMock)
+			}
+			s := NewService(repoMock, storageMock, mailMock, loggerMock)
+			got, err := s.SubmitProviderContract(context.Background(), tt.providerID, tt.intentionLetter, tt.commitmentLetter, tt.addendum)
+			if tt.wantErr != nil {
+				assert.ErrorIs(t, err, tt.wantErr)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantType, got.Type)
+				assert.Equal(t, tt.wantCovered, got.CoveredCourses)
+			}
+			repoMock.AssertExpectations(t)
+			storageMock.AssertExpectations(t)
 		})
 	}
 }

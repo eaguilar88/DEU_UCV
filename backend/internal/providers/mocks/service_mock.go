@@ -493,6 +493,90 @@ func (_c *MockService_RejectProvider_Call) RunAndReturn(run func(ctx context.Con
 	return _c
 }
 
+// SubmitProviderContract provides a mock function for the type MockService
+func (_mock *MockService) SubmitProviderContract(ctx context.Context, providerID string, intentionLetter *entities.File, commitmentLetter *entities.File, addendum *entities.File) (entities.ProviderContract, error) {
+	ret := _mock.Called(ctx, providerID, intentionLetter, commitmentLetter, addendum)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SubmitProviderContract")
+	}
+
+	var r0 entities.ProviderContract
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *entities.File, *entities.File, *entities.File) (entities.ProviderContract, error)); ok {
+		return returnFunc(ctx, providerID, intentionLetter, commitmentLetter, addendum)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *entities.File, *entities.File, *entities.File) entities.ProviderContract); ok {
+		r0 = returnFunc(ctx, providerID, intentionLetter, commitmentLetter, addendum)
+	} else {
+		r0 = ret.Get(0).(entities.ProviderContract)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, *entities.File, *entities.File, *entities.File) error); ok {
+		r1 = returnFunc(ctx, providerID, intentionLetter, commitmentLetter, addendum)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockService_SubmitProviderContract_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SubmitProviderContract'
+type MockService_SubmitProviderContract_Call struct {
+	*mock.Call
+}
+
+// SubmitProviderContract is a helper method to define mock.On call
+//   - ctx context.Context
+//   - providerID string
+//   - intentionLetter *entities.File
+//   - commitmentLetter *entities.File
+//   - addendum *entities.File
+func (_e *MockService_Expecter) SubmitProviderContract(ctx interface{}, providerID interface{}, intentionLetter interface{}, commitmentLetter interface{}, addendum interface{}) *MockService_SubmitProviderContract_Call {
+	return &MockService_SubmitProviderContract_Call{Call: _e.mock.On("SubmitProviderContract", ctx, providerID, intentionLetter, commitmentLetter, addendum)}
+}
+
+func (_c *MockService_SubmitProviderContract_Call) Run(run func(ctx context.Context, providerID string, intentionLetter *entities.File, commitmentLetter *entities.File, addendum *entities.File)) *MockService_SubmitProviderContract_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 *entities.File
+		if args[2] != nil {
+			arg2 = args[2].(*entities.File)
+		}
+		var arg3 *entities.File
+		if args[3] != nil {
+			arg3 = args[3].(*entities.File)
+		}
+		var arg4 *entities.File
+		if args[4] != nil {
+			arg4 = args[4].(*entities.File)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
+	})
+	return _c
+}
+
+func (_c *MockService_SubmitProviderContract_Call) Return(providerContract entities.ProviderContract, err error) *MockService_SubmitProviderContract_Call {
+	_c.Call.Return(providerContract, err)
+	return _c
+}
+
+func (_c *MockService_SubmitProviderContract_Call) RunAndReturn(run func(ctx context.Context, providerID string, intentionLetter *entities.File, commitmentLetter *entities.File, addendum *entities.File) (entities.ProviderContract, error)) *MockService_SubmitProviderContract_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateProvider provides a mock function for the type MockService
 func (_mock *MockService) UpdateProvider(ctx context.Context, providerID string, provider *entities.Provider) error {
 	ret := _mock.Called(ctx, providerID, provider)
@@ -552,75 +636,6 @@ func (_c *MockService_UpdateProvider_Call) Return(err error) *MockService_Update
 }
 
 func (_c *MockService_UpdateProvider_Call) RunAndReturn(run func(ctx context.Context, providerID string, provider *entities.Provider) error) *MockService_UpdateProvider_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// UploadProviderDocuments provides a mock function for the type MockService
-func (_mock *MockService) UploadProviderDocuments(ctx context.Context, userID string, intentionLetter *entities.File, commitmentLetter *entities.File) error {
-	ret := _mock.Called(ctx, userID, intentionLetter, commitmentLetter)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UploadProviderDocuments")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *entities.File, *entities.File) error); ok {
-		r0 = returnFunc(ctx, userID, intentionLetter, commitmentLetter)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// MockService_UploadProviderDocuments_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UploadProviderDocuments'
-type MockService_UploadProviderDocuments_Call struct {
-	*mock.Call
-}
-
-// UploadProviderDocuments is a helper method to define mock.On call
-//   - ctx context.Context
-//   - userID string
-//   - intentionLetter *entities.File
-//   - commitmentLetter *entities.File
-func (_e *MockService_Expecter) UploadProviderDocuments(ctx interface{}, userID interface{}, intentionLetter interface{}, commitmentLetter interface{}) *MockService_UploadProviderDocuments_Call {
-	return &MockService_UploadProviderDocuments_Call{Call: _e.mock.On("UploadProviderDocuments", ctx, userID, intentionLetter, commitmentLetter)}
-}
-
-func (_c *MockService_UploadProviderDocuments_Call) Run(run func(ctx context.Context, userID string, intentionLetter *entities.File, commitmentLetter *entities.File)) *MockService_UploadProviderDocuments_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 *entities.File
-		if args[2] != nil {
-			arg2 = args[2].(*entities.File)
-		}
-		var arg3 *entities.File
-		if args[3] != nil {
-			arg3 = args[3].(*entities.File)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-			arg3,
-		)
-	})
-	return _c
-}
-
-func (_c *MockService_UploadProviderDocuments_Call) Return(err error) *MockService_UploadProviderDocuments_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *MockService_UploadProviderDocuments_Call) RunAndReturn(run func(ctx context.Context, userID string, intentionLetter *entities.File, commitmentLetter *entities.File) error) *MockService_UploadProviderDocuments_Call {
 	_c.Call.Return(run)
 	return _c
 }

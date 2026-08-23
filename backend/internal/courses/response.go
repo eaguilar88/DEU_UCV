@@ -34,6 +34,7 @@ type GetCourseResponse struct {
 	CreatedAt         string                  `json:"creado_en,omitempty"`
 	UpdatedAt         string                  `json:"actualizado_en,omitempty"`
 	LatestPeriod      *LatestCoursePeriodInfo `json:"ultimo_periodo,omitempty"`
+	HasDocumentation  bool                    `json:"tiene_documentacion_legal"`
 }
 
 type GetCoursesResponse struct {

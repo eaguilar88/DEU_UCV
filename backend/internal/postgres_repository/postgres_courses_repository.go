@@ -372,17 +372,3 @@ func newCourseModelFromEntities(course entities.Course) models.Course {
 		UpdatedAt:        course.UpdatedAt,
 	}
 }
-
-func (r *PostgresRepository) MarkCoursesWithDocumentation(ctx context.Context, providerID, from, to string) error {
-	query, args, err := queries.MarkCoursesWithDocumentation(providerID, from, to).ToSql()
-	if err != nil {
-		return err
-	}
-	stmt, err := r.db.PrepareContext(ctx, query)
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
-	_, err = stmt.ExecContext(ctx, args...)
-	return err
-}

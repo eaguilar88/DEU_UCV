@@ -8,7 +8,9 @@ CREATE TABLE
         'group_activity',
         'course_cycle',
         'provider',
-        'user'
+        'user',
+        'course_cycle_close_request',
+        'provider_contract'
       )
     ),
     owner_id INTEGER NOT NULL,

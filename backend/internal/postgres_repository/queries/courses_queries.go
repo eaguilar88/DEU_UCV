@@ -113,15 +113,3 @@ func DeleteCourse(courseID string) sq.DeleteBuilder {
 	return psql.Delete(coursesTableName).
 		Where(sq.Eq{"id": courseID})
 }
-
-func MarkCoursesWithDocumentation(providerID, from, to string) sq.UpdateBuilder {
-	q := psql.Update(coursesTableName).
-		Set("has_documentation", true).
-		Where(sq.Eq{"provider_id": providerID}).
-		Where(sq.Eq{"deleted_at": nil}).
-		Where(sq.Lt{"created_at": to})
-	if from != "" {
-		q = q.Where(sq.GtOrEq{"created_at": from})
-	}
-	return q
-}
