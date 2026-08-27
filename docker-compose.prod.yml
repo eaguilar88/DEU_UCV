@@ -28,14 +28,17 @@ services:
       context: "./diplomados"
       dockerfile: "Dockerfile"
     restart: unless-stopped
-    depends_on:
-      - backend
-      - db
     labels:
-      - "traefik.enable=true" # Enable Traefik for this service
-      - "traefik.http.routers.formacion.rule=Host(`formacion.extension.ucv.ve`)" # Route based on hostname
-      - "traefik.http.routers.formacion.entrypoints=web" # Use the web entrypoint
-      - "traefik.http.services.formacion.loadbalancer.server.port=80" # Target container's port
+      - "traefik.enable=true"
+      - "traefik.http.routers.formacion.rule=Host(`formacion.extension.ucv.ve`)"
+      - "traefik.http.routers.formacion.entrypoints=web"
+      - "traefik.http.routers.formacion.middlewares=formacion-https-redirect"
+      - "traefik.http.middlewares.formacion-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.formacion-https-redirect.redirectscheme.permanent=true"
+      - "traefik.http.routers.formacion-secure.rule=Host(`formacion.extension.ucv.ve`)"
+      - "traefik.http.routers.formacion-secure.entrypoints=websecure"
+      - "traefik.http.routers.formacion-secure.tls.certresolver=letsencrypt"
+      - "traefik.http.services.formacion.loadbalancer.server.port=3000"
     networks:
       - web
   grupos:
