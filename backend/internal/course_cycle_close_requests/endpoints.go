@@ -14,7 +14,7 @@ import (
 )
 
 type Service interface {
-	SubmitCloseRequest(ctx context.Context, cycleID int64, submittedByID string) (int64, error)
+	SubmitCloseRequest(ctx context.Context, request entities.CourseCycleCloseRequest, submittedByID string) (int64, error)
 	ApproveCloseRequest(ctx context.Context, id, reviewerID string) error
 	RejectCloseRequest(ctx context.Context, id, reviewerID, comments string) error
 	GetCloseRequests(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.CourseCycleCloseRequest, entities.PageScope, error)
@@ -53,16 +53,16 @@ func (h *Handler) SubmitCloseRequest(c echo.Context) error {
 		return httperrors.NewUnauthorized("authentication required")
 	}
 
-	var req SubmitCloseRequestRequest
-	if err := c.Bind(&req); err != nil {
-		return httperrors.NewBadRequest("invalid request body")
-	}
-	if err := c.Validate(req); err != nil {
-		return httperrors.NewBadRequest("validation failed")
+	request, err := toCloseRequestEntity(c)
+	if err != nil {
+		return httperrors.NewBadRequest(err.Error())
 	}
 
-	id, err := h.svc.SubmitCloseRequest(ctx, req.CourseCycleID, userID)
+	id, err := h.svc.SubmitCloseRequest(ctx, request, userID)
 	if err != nil {
+		if errors.Is(err, ErrCloseRequestAlreadyPending) {
+			return httperrors.NewConflict(ErrCloseRequestAlreadyPending.Error())
+		}
 		return httperrors.NewInternal(err)
 	}
 

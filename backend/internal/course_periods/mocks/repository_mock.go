@@ -290,6 +290,72 @@ func (_c *MockRepository_DeleteCoursePeriod_Call) RunAndReturn(run func(ctx cont
 	return _c
 }
 
+// GetActiveCoursePeriodByCourseID provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetActiveCoursePeriodByCourseID(ctx context.Context, courseID string) (entities.CoursePeriod, error) {
+	ret := _mock.Called(ctx, courseID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetActiveCoursePeriodByCourseID")
+	}
+
+	var r0 entities.CoursePeriod
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (entities.CoursePeriod, error)); ok {
+		return returnFunc(ctx, courseID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) entities.CoursePeriod); ok {
+		r0 = returnFunc(ctx, courseID)
+	} else {
+		r0 = ret.Get(0).(entities.CoursePeriod)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, courseID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetActiveCoursePeriodByCourseID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetActiveCoursePeriodByCourseID'
+type MockRepository_GetActiveCoursePeriodByCourseID_Call struct {
+	*mock.Call
+}
+
+// GetActiveCoursePeriodByCourseID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - courseID string
+func (_e *MockRepository_Expecter) GetActiveCoursePeriodByCourseID(ctx interface{}, courseID interface{}) *MockRepository_GetActiveCoursePeriodByCourseID_Call {
+	return &MockRepository_GetActiveCoursePeriodByCourseID_Call{Call: _e.mock.On("GetActiveCoursePeriodByCourseID", ctx, courseID)}
+}
+
+func (_c *MockRepository_GetActiveCoursePeriodByCourseID_Call) Run(run func(ctx context.Context, courseID string)) *MockRepository_GetActiveCoursePeriodByCourseID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetActiveCoursePeriodByCourseID_Call) Return(coursePeriod entities.CoursePeriod, err error) *MockRepository_GetActiveCoursePeriodByCourseID_Call {
+	_c.Call.Return(coursePeriod, err)
+	return _c
+}
+
+func (_c *MockRepository_GetActiveCoursePeriodByCourseID_Call) RunAndReturn(run func(ctx context.Context, courseID string) (entities.CoursePeriod, error)) *MockRepository_GetActiveCoursePeriodByCourseID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetAnnouncementByID provides a mock function for the type MockRepository
 func (_mock *MockRepository) GetAnnouncementByID(ctx context.Context, announcementID string) (entities.Announcement, error) {
 	ret := _mock.Called(ctx, announcementID)
@@ -420,6 +486,72 @@ func (_c *MockRepository_GetAnnouncementsByCoursePeriodID_Call) Return(announcem
 }
 
 func (_c *MockRepository_GetAnnouncementsByCoursePeriodID_Call) RunAndReturn(run func(ctx context.Context, periodID string) ([]entities.Announcement, error)) *MockRepository_GetAnnouncementsByCoursePeriodID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetCourse provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetCourse(ctx context.Context, courseID string) (entities.Course, error) {
+	ret := _mock.Called(ctx, courseID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCourse")
+	}
+
+	var r0 entities.Course
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (entities.Course, error)); ok {
+		return returnFunc(ctx, courseID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) entities.Course); ok {
+		r0 = returnFunc(ctx, courseID)
+	} else {
+		r0 = ret.Get(0).(entities.Course)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, courseID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetCourse_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCourse'
+type MockRepository_GetCourse_Call struct {
+	*mock.Call
+}
+
+// GetCourse is a helper method to define mock.On call
+//   - ctx context.Context
+//   - courseID string
+func (_e *MockRepository_Expecter) GetCourse(ctx interface{}, courseID interface{}) *MockRepository_GetCourse_Call {
+	return &MockRepository_GetCourse_Call{Call: _e.mock.On("GetCourse", ctx, courseID)}
+}
+
+func (_c *MockRepository_GetCourse_Call) Run(run func(ctx context.Context, courseID string)) *MockRepository_GetCourse_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetCourse_Call) Return(course entities.Course, err error) *MockRepository_GetCourse_Call {
+	_c.Call.Return(course, err)
+	return _c
+}
+
+func (_c *MockRepository_GetCourse_Call) RunAndReturn(run func(ctx context.Context, courseID string) (entities.Course, error)) *MockRepository_GetCourse_Call {
 	_c.Call.Return(run)
 	return _c
 }

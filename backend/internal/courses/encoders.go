@@ -41,5 +41,7 @@ func courseToResponse(course entities.Course) GetCourseResponse {
 		Type:              course.Type.String(),
 		CreatedAt:         course.CreatedAt,
 		UpdatedAt:         course.UpdatedAt,
+		HasDocumentation:  course.HasDocumentation,
+		ManagementStatus:  string(course.ManagementStatus),
 	}
 }

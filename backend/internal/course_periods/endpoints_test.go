@@ -6,17 +6,28 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/eaguilar88/deu/internal/course_periods/mocks"
+	"github.com/eaguilar88/deu/internal/courses"
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/httperrors"
+	"github.com/eaguilar88/deu/internal/security"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
+
+var e *echo.Echo
+
+func TestMain(m *testing.M) {
+	e = echo.New()
+	e.Validator = security.NewCustomValidator()
+	os.Exit(m.Run())
+}
 
 func TestNewHandler(t *testing.T) {
 	type testCase struct {
@@ -93,7 +104,7 @@ func TestHandler_GetCoursePeriod(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, path, bytes.NewBuffer(jsonBytes))
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			rec := httptest.NewRecorder()
-			ctx := echo.New().NewContext(req, rec)
+			ctx := e.NewContext(req, rec)
 			if tt.prepare != nil {
 				tt.prepare(ctx, &tt)
 			}
@@ -159,7 +170,7 @@ func TestHandler_GetCoursePeriods(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, path, bytes.NewBuffer(jsonBytes))
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			rec := httptest.NewRecorder()
-			ctx := echo.New().NewContext(req, rec)
+			ctx := e.NewContext(req, rec)
 			if tt.prepare != nil {
 				tt.prepare(ctx, &tt)
 			}
@@ -198,7 +209,7 @@ func TestHandler_CreateCoursePeriod(t *testing.T) {
 					Return(int64(1), nil)
 			},
 			userID: &userID,
-			req:    CreateCoursePeriodRequest{},
+			req:    CreateCoursePeriodRequest{Capacity: 30},
 			resp: CreateCoursePeriodResponse{
 				ID: "1",
 			},
@@ -211,14 +222,58 @@ func TestHandler_CreateCoursePeriod(t *testing.T) {
 					Return(int64(-1), errors.New("internal error"))
 			},
 			userID:  &userID,
-			req:     CreateCoursePeriodRequest{},
+			req:     CreateCoursePeriodRequest{Capacity: 30},
 			wantErr: httperrors.NewInternal(errors.New("internal error")),
+		},
+		{
+			name: "error course not found or not approved",
+			svc:  &mocks.MockService{},
+			prepare: func(ctx echo.Context, tc *testCase) {
+				tc.svc.On("CreateCoursePeriod", ctx.Request().Context(), mock.AnythingOfType("entities.CoursePeriod")).
+					Return(int64(-1), courses.ErrCourseNotFound)
+			},
+			userID:  &userID,
+			req:     CreateCoursePeriodRequest{Capacity: 30},
+			wantErr: httperrors.NewNotFound("course not found"),
+		},
+		{
+			name: "error a course period is already open",
+			svc:  &mocks.MockService{},
+			prepare: func(ctx echo.Context, tc *testCase) {
+				tc.svc.On("CreateCoursePeriod", ctx.Request().Context(), mock.AnythingOfType("entities.CoursePeriod")).
+					Return(int64(-1), ErrCoursePeriodAlreadyOpen)
+			},
+			userID:  &userID,
+			req:     CreateCoursePeriodRequest{Capacity: 30},
+			wantErr: httperrors.NewConflict(ErrCoursePeriodAlreadyOpen.Error()),
+		},
+		{
+			name: "error course has a pending closure request",
+			svc:  &mocks.MockService{},
+			prepare: func(ctx echo.Context, tc *testCase) {
+				tc.svc.On("CreateCoursePeriod", ctx.Request().Context(), mock.AnythingOfType("entities.CoursePeriod")).
+					Return(int64(-1), courses.ErrCourseClosureRequestPending)
+			},
+			userID:  &userID,
+			req:     CreateCoursePeriodRequest{Capacity: 30},
+			wantErr: httperrors.NewConflict(courses.ErrCourseClosureRequestPending.Error()),
 		},
 		{
 			name:    "error cannot find userID in context",
 			svc:     &mocks.MockService{},
-			req:     CreateCoursePeriodRequest{},
+			req:     CreateCoursePeriodRequest{Capacity: 30},
 			wantErr: httperrors.NewUnauthorized("authentication required"),
+		},
+		{
+			name: "error invalid capacity",
+			svc:  &mocks.MockService{},
+			prepare: func(ctx echo.Context, tc *testCase) {
+				tc.svc.On("CreateCoursePeriod", ctx.Request().Context(), mock.AnythingOfType("entities.CoursePeriod")).
+					Return(int64(-1), ErrInvalidCapacity)
+			},
+			userID:  &userID,
+			req:     CreateCoursePeriodRequest{},
+			wantErr: httperrors.NewBadRequest(ErrInvalidCapacity.Error()),
 		},
 		{
 			name:    "error cannot bind",
@@ -237,7 +292,7 @@ func TestHandler_CreateCoursePeriod(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, path, bytes.NewBuffer(jsonBytes))
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			rec := httptest.NewRecorder()
-			ctx := echo.New().NewContext(req, rec)
+			ctx := e.NewContext(req, rec)
 			if tt.userID != nil {
 				ctx.Set("userID", *tt.userID)
 			}
@@ -279,7 +334,7 @@ func TestHandler_UpdateCoursePeriod(t *testing.T) {
 					Return(nil)
 			},
 			userID: &userID,
-			req:    UpdateCoursePeriodRequest{},
+			req:    UpdateCoursePeriodRequest{Capacity: 30},
 			resp:   UpdateCoursePeriodResponse{},
 		},
 		{
@@ -290,13 +345,13 @@ func TestHandler_UpdateCoursePeriod(t *testing.T) {
 					Return(errors.New("cannot update course period"))
 			},
 			userID:  &userID,
-			req:     UpdateCoursePeriodRequest{},
+			req:     UpdateCoursePeriodRequest{Capacity: 30},
 			wantErr: httperrors.NewInternal(errors.New("cannot update course period")),
 		},
 		{
 			name:    "error cannot find userID in context",
 			svc:     &mocks.MockService{},
-			req:     UpdateCoursePeriodRequest{},
+			req:     UpdateCoursePeriodRequest{Capacity: 30},
 			wantErr: httperrors.NewUnauthorized("authentication required"),
 		},
 		{
@@ -316,7 +371,7 @@ func TestHandler_UpdateCoursePeriod(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, path, bytes.NewBuffer(jsonBytes))
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			rec := httptest.NewRecorder()
-			ctx := echo.New().NewContext(req, rec)
+			ctx := e.NewContext(req, rec)
 			if tt.userID != nil {
 				ctx.Set("userID", *tt.userID)
 			}
@@ -395,7 +450,7 @@ func TestHandler_DeleteCoursePeriod(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, path, bytes.NewBuffer(jsonBytes))
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			rec := httptest.NewRecorder()
-			ctx := echo.New().NewContext(req, rec)
+			ctx := e.NewContext(req, rec)
 			if tt.userID != nil {
 				ctx.Set("userID", *tt.userID)
 			}

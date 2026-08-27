@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/eaguilar88/deu/internal/entities"
+	"github.com/eaguilar88/deu/internal/providers"
 	"go.uber.org/zap"
 )
 
@@ -18,6 +19,8 @@ type Repository interface {
 	RedirectCourseRequest(ctx context.Context, reqID, reviewerID string, faculty entities.Faculty, reason string) error
 	GetCourseRequestsByFaculty(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.CourseRequest, entities.PageScope, error)
 	GetCourseRequestByID(ctx context.Context, reqID string) (entities.CourseRequest, error)
+	GetProviderByUserID(ctx context.Context, userID string) (entities.Provider, error)
+	GetCourseRequestsByProvider(ctx context.Context, providerID string, pageScope entities.PageScope) ([]entities.CourseRequest, entities.PageScope, error)
 }
 
 type service struct {
@@ -74,4 +77,17 @@ func (s *service) GetCourseRequestsByFaculty(ctx context.Context, faculty entiti
 
 func (s *service) GetCourseRequestByID(ctx context.Context, reqID string) (entities.CourseRequest, error) {
 	return s.repo.GetCourseRequestByID(ctx, reqID)
+}
+
+func (s *service) GetMyCourseRequests(ctx context.Context, userID string, pageScope entities.PageScope) ([]entities.CourseRequest, entities.PageScope, error) {
+	provider, err := s.repo.GetProviderByUserID(ctx, userID)
+	if err != nil {
+		if errors.Is(err, providers.ErrProviderNotFound) {
+			return nil, pageScope, nil
+		}
+		s.logger.Error("failed to get provider by user ID", zap.Error(err), zap.String("user_id", userID))
+		return nil, entities.PageScope{}, err
+	}
+
+	return s.repo.GetCourseRequestsByProvider(ctx, provider.ID, pageScope)
 }

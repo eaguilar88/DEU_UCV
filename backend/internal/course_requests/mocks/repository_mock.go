@@ -259,6 +259,152 @@ func (_c *MockRepository_GetCourseRequestsByFaculty_Call) RunAndReturn(run func(
 	return _c
 }
 
+// GetCourseRequestsByProvider provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetCourseRequestsByProvider(ctx context.Context, providerID string, pageScope entities.PageScope) ([]entities.CourseRequest, entities.PageScope, error) {
+	ret := _mock.Called(ctx, providerID, pageScope)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCourseRequestsByProvider")
+	}
+
+	var r0 []entities.CourseRequest
+	var r1 entities.PageScope
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, entities.PageScope) ([]entities.CourseRequest, entities.PageScope, error)); ok {
+		return returnFunc(ctx, providerID, pageScope)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, entities.PageScope) []entities.CourseRequest); ok {
+		r0 = returnFunc(ctx, providerID, pageScope)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]entities.CourseRequest)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, entities.PageScope) entities.PageScope); ok {
+		r1 = returnFunc(ctx, providerID, pageScope)
+	} else {
+		r1 = ret.Get(1).(entities.PageScope)
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, string, entities.PageScope) error); ok {
+		r2 = returnFunc(ctx, providerID, pageScope)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// MockRepository_GetCourseRequestsByProvider_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCourseRequestsByProvider'
+type MockRepository_GetCourseRequestsByProvider_Call struct {
+	*mock.Call
+}
+
+// GetCourseRequestsByProvider is a helper method to define mock.On call
+//   - ctx context.Context
+//   - providerID string
+//   - pageScope entities.PageScope
+func (_e *MockRepository_Expecter) GetCourseRequestsByProvider(ctx interface{}, providerID interface{}, pageScope interface{}) *MockRepository_GetCourseRequestsByProvider_Call {
+	return &MockRepository_GetCourseRequestsByProvider_Call{Call: _e.mock.On("GetCourseRequestsByProvider", ctx, providerID, pageScope)}
+}
+
+func (_c *MockRepository_GetCourseRequestsByProvider_Call) Run(run func(ctx context.Context, providerID string, pageScope entities.PageScope)) *MockRepository_GetCourseRequestsByProvider_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 entities.PageScope
+		if args[2] != nil {
+			arg2 = args[2].(entities.PageScope)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetCourseRequestsByProvider_Call) Return(courseRequests []entities.CourseRequest, pageScope1 entities.PageScope, err error) *MockRepository_GetCourseRequestsByProvider_Call {
+	_c.Call.Return(courseRequests, pageScope1, err)
+	return _c
+}
+
+func (_c *MockRepository_GetCourseRequestsByProvider_Call) RunAndReturn(run func(ctx context.Context, providerID string, pageScope entities.PageScope) ([]entities.CourseRequest, entities.PageScope, error)) *MockRepository_GetCourseRequestsByProvider_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetProviderByUserID provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetProviderByUserID(ctx context.Context, userID string) (entities.Provider, error) {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetProviderByUserID")
+	}
+
+	var r0 entities.Provider
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (entities.Provider, error)); ok {
+		return returnFunc(ctx, userID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) entities.Provider); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		r0 = ret.Get(0).(entities.Provider)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetProviderByUserID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetProviderByUserID'
+type MockRepository_GetProviderByUserID_Call struct {
+	*mock.Call
+}
+
+// GetProviderByUserID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID string
+func (_e *MockRepository_Expecter) GetProviderByUserID(ctx interface{}, userID interface{}) *MockRepository_GetProviderByUserID_Call {
+	return &MockRepository_GetProviderByUserID_Call{Call: _e.mock.On("GetProviderByUserID", ctx, userID)}
+}
+
+func (_c *MockRepository_GetProviderByUserID_Call) Run(run func(ctx context.Context, userID string)) *MockRepository_GetProviderByUserID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetProviderByUserID_Call) Return(provider entities.Provider, err error) *MockRepository_GetProviderByUserID_Call {
+	_c.Call.Return(provider, err)
+	return _c
+}
+
+func (_c *MockRepository_GetProviderByUserID_Call) RunAndReturn(run func(ctx context.Context, userID string) (entities.Provider, error)) *MockRepository_GetProviderByUserID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // RedirectCourseRequest provides a mock function for the type MockRepository
 func (_mock *MockRepository) RedirectCourseRequest(ctx context.Context, reqID string, reviewerID string, faculty entities.Faculty, reason string) error {
 	ret := _mock.Called(ctx, reqID, reviewerID, faculty, reason)

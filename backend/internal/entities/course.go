@@ -14,6 +14,16 @@ const (
 	CourseFileTypeCover = "portada"
 )
 
+// CourseManagementStatus reflects course-level lifecycle state that isn't captured by CourseType.
+// The empty value means no special status (approved but never yet opened).
+type CourseManagementStatus string
+
+const (
+	CourseManagementStatusClosureRequested CourseManagementStatus = "solicitud-cierre"
+	CourseManagementStatusOpen             CourseManagementStatus = "abierto"
+	CourseManagementStatusClosed           CourseManagementStatus = "cerrado"
+)
+
 var (
 	ErrInvalidCourseType = errors.New("invalid course type")
 )
@@ -40,6 +50,7 @@ type Course struct {
 	Periods           []CoursePeriod
 	Type              CourseType
 	HasDocumentation  bool
+	ManagementStatus  CourseManagementStatus
 	CreatedAt         string
 	UpdatedAt         string
 }

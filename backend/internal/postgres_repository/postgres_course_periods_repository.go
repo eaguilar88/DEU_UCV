@@ -64,6 +64,29 @@ func (r *PostgresRepository) GetCoursePeriods(ctx context.Context, courseID stri
 	return coursePeriods, pageScope, nil
 }
 
+func (r *PostgresRepository) GetActiveCoursePeriodByCourseID(ctx context.Context, courseID string) (entities.CoursePeriod, error) {
+	query, args, err := queries.GetActiveCoursePeriodByCourseID(courseID).ToSql()
+	if err != nil {
+		return entities.CoursePeriod{}, err
+	}
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		return entities.CoursePeriod{}, err
+	}
+	//nolint:errcheck
+	defer stmt.Close()
+	var coursePeriod models.CoursePeriod
+	row := stmt.QueryRowContext(ctx, args...)
+	coursePeriod, err = scanCoursePeriod(row)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return entities.CoursePeriod{}, fmt.Errorf("%w: %w", course_periods.ErrCoursePeriodNotFound, err)
+		}
+		return entities.CoursePeriod{}, err
+	}
+	return newCoursePeriodFromModel(coursePeriod), nil
+}
+
 func (r *PostgresRepository) GetLatestCoursePeriod(ctx context.Context, courseID string) (entities.CoursePeriod, error) {
 	query, args, err := queries.GetLatestCoursePeriod(courseID).ToSql()
 	if err != nil {
@@ -96,25 +119,44 @@ func (r *PostgresRepository) CreateCoursePeriod(ctx context.Context, coursePerio
 		StartDate:       coursePeriod.StartDate,
 		EndDate:         coursePeriod.EndDate,
 		InscriptionDate: coursePeriod.InscriptionDate,
+		Capacity:        coursePeriod.Capacity,
 	}
 
-	query, args, err := queries.InsertCoursePeriod(cpModel).ToSql()
+	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return -1, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, query)
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	insertQuery, insertArgs, err := queries.InsertCoursePeriod(cpModel).ToSql()
 	if err != nil {
 		return -1, err
 	}
-	defer stmt.Close()
 	var lastInsertedID int64
-	err = stmt.QueryRowContext(ctx, args...).Scan(&lastInsertedID)
-	if err != nil {
+	if err = tx.QueryRowContext(ctx, insertQuery, insertArgs...).Scan(&lastInsertedID); err != nil {
 		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == pgErrorCodeUniqueViolation {
 			r.logger.Error("duplicated course period", zap.Error(err))
 			return -1, httperrors.NewDuplicateEntryError(err)
 		}
 		r.logger.Error("error inserting course period", zap.Error(err))
+		return -1, err
+	}
+
+	open := string(entities.CourseManagementStatusOpen)
+	statusQuery, statusArgs, err := queries.SetCourseManagementStatus(coursePeriod.Course.ID, &open).ToSql()
+	if err != nil {
+		return -1, err
+	}
+	if _, err = tx.ExecContext(ctx, statusQuery, statusArgs...); err != nil {
+		r.logger.Error("error setting course management status", zap.Error(err))
+		return -1, err
+	}
+
+	if err = tx.Commit(); err != nil {
 		return -1, err
 	}
 	return lastInsertedID, nil
@@ -315,6 +357,7 @@ func scanCoursePeriod(row scannable) (models.CoursePeriod, error) {
 		&coursePeriod.EndDate,
 		&coursePeriod.IsActive,
 		&coursePeriod.InscriptionDate,
+		&coursePeriod.Capacity,
 		&coursePeriod.ClosedAt,
 		&coursePeriod.CreatedAt,
 		&coursePeriod.UpdatedAt,
@@ -342,6 +385,7 @@ func newCoursePeriodFromModel(coursePeriod models.CoursePeriod) entities.CourseP
 		StartDate:       coursePeriod.StartDate,
 		EndDate:         coursePeriod.EndDate,
 		InscriptionDate: coursePeriod.InscriptionDate,
+		Capacity:        coursePeriod.Capacity,
 		IsActive:        coursePeriod.IsActive,
 		ClosedAt:        closedAt,
 		CreatedAt:       coursePeriod.CreatedAt,
@@ -358,5 +402,6 @@ func newCoursePeriodModelFromEntities(cp entities.CoursePeriod) models.CoursePer
 		EndDate:         cp.EndDate,
 		IsActive:        cp.IsActive,
 		InscriptionDate: cp.InscriptionDate,
+		Capacity:        cp.Capacity,
 	}
 }

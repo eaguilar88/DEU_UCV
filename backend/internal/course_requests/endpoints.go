@@ -18,6 +18,7 @@ type Service interface {
 	RedirectCourseRequest(ctx context.Context, reqID, reviewerID string, faculty entities.Faculty, reason string) error
 	GetCourseRequestsByFaculty(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.CourseRequest, entities.PageScope, error)
 	GetCourseRequestByID(ctx context.Context, reqID string) (entities.CourseRequest, error)
+	GetMyCourseRequests(ctx context.Context, userID string, pageScope entities.PageScope) ([]entities.CourseRequest, entities.PageScope, error)
 }
 
 type Handler struct {
@@ -39,6 +40,10 @@ func (h *Handler) RegisterCourseRequestAdminEndpoints(g *echo.Group) {
 	cr.POST("/:id/approve", h.ApproveCourseRequest)
 	cr.POST("/:id/reject", h.RejectCourseRequest)
 	cr.POST("/:id/redirect", h.RedirectCourseRequest)
+}
+
+func (h *Handler) RegisterCourseRequestEndpoints(g *echo.Group) {
+	g.GET("/course-requests", h.GetMyCourseRequests)
 }
 
 func (h *Handler) ApproveCourseRequest(c echo.Context) error {
@@ -158,9 +163,40 @@ func (h *Handler) GetCourseRequestsByFaculty(c echo.Context) error {
 		return httperrors.NewInternal(err)
 	}
 
+	return c.JSON(http.StatusOK, courseRequestsToResponse(requests, resultScope))
+}
+
+func (h *Handler) GetMyCourseRequests(c echo.Context) error {
+	ctx := c.Request().Context()
+	userID, ok := c.Get("userID").(string)
+	if !ok {
+		return httperrors.NewUnauthorized("authentication required")
+	}
+
+	var pageScope entities.PageScope
+	if err := pageScope.GetPageFromVars(c.QueryParam("page")); err != nil {
+		return httperrors.NewBadRequest("invalid page number")
+	}
+
+	if err := pageScope.GetPerPageFromVars(c.QueryParam("pageSize")); err != nil {
+		return httperrors.NewBadRequest("invalid page size")
+	}
+
+	requests, resultScope, err := h.svc.GetMyCourseRequests(ctx, userID, pageScope)
+	if err != nil {
+		return httperrors.NewInternal(err)
+	}
+
+	return c.JSON(http.StatusOK, courseRequestsToResponse(requests, resultScope))
+}
+
+// courseRequestsToResponse converts a slice of CourseRequest entities to the shared
+// list-response shape, used by both the admin (faculty-scoped) and the plain
+// (submitter-scoped) course-requests listing endpoints so their formats stay identical.
+func courseRequestsToResponse(requests []entities.CourseRequest, pageScope entities.PageScope) GetCourseRequestsResponse {
 	response := GetCourseRequestsResponse{
 		CourseRequests: make([]GetCourseRequestResponse, 0, len(requests)),
-		Pages:          resultScope,
+		Pages:          pageScope,
 	}
 
 	for _, req := range requests {
@@ -174,7 +210,7 @@ func (h *Handler) GetCourseRequestsByFaculty(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, response)
+	return response
 }
 
 func (h *Handler) GetCourseRequestByID(c echo.Context) error {

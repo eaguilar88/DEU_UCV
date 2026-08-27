@@ -75,6 +75,7 @@ type Provider struct {
 	Status     ProviderStatus
 	Faculty    Faculty
 	Files      ProviderFiles
+	Contracts  []ProviderContract
 	CreatedAt  string
 	UpdatedAt  string
 	DeletedAt  string

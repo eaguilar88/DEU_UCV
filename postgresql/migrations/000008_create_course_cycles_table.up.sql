@@ -6,6 +6,7 @@ CREATE TABLE
     start_date DATE,
     end_date DATE,
     inscription_date DATE,
+    capacity INTEGER NOT NULL DEFAULT 0,
     is_active BOOLEAN DEFAULT TRUE,
     closed_at TIMESTAMP DEFAULT NULL,
     created_at TIMESTAMP DEFAULT NOW (),

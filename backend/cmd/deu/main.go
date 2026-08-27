@@ -115,7 +115,7 @@ func main() {
 	providerRequestService := provider_requests.NewService(repository, mailClient, logger)
 	providerRequestEndpoints := provider_requests.NewHandler(providerRequestService, logger)
 
-	cycleCloseService := course_cycle_close_requests.NewService(repository, logger)
+	cycleCloseService := course_cycle_close_requests.NewService(repository, bbClient, logger)
 	cycleCloseEndpoints := course_cycle_close_requests.NewHandler(cycleCloseService, logger)
 
 	e := echo.New()
@@ -137,6 +137,7 @@ func main() {
 	addUserRoutes(e, userEndpoints, middlewares...)
 	addProviderRoutes(e, providerEndpoints, middlewares...)
 	addCourseRoutes(e, courseEndpoints, middlewares...)
+	addCourseRequestRoutes(e, courseRequestEndpoints, middlewares...)
 	addCoursePeriodRoutes(e, cpEndpoints, middlewares...)
 	addGroupsRoutes(e, groupEndpoints, middlewares...)
 	addActivityRoutes(e, activityEndpoints, middlewares...)
@@ -214,8 +215,14 @@ func addUserRoutes(e *echo.Echo, endpoints *users.Handler, middlewares ...echo.M
 	protected.DELETE("/:id", endpoints.DeleteUser)
 }
 
+func addCourseRequestRoutes(e *echo.Echo, endpoints *course_requests.Handler, middlewares ...echo.MiddlewareFunc) {
+	protectedGroup := e.Group("", middlewares...)
+	endpoints.RegisterCourseRequestEndpoints(protectedGroup)
+}
+
 func addCourseRoutes(e *echo.Echo, endpoints *courses.Handler, middlewares ...echo.MiddlewareFunc) {
 	publicGroup := e.Group("/courses")
+	publicGroup.GET("/public", endpoints.GetPublicCourses)
 	publicGroup.GET("/:id", endpoints.GetCourse)
 	publicGroup.GET("", endpoints.GetCourses)
 	protectedGroup := e.Group("/courses", middlewares...)
@@ -279,7 +286,6 @@ func addProviderRoutes(e *echo.Echo, endpoints *providers.Handler, middlewares .
 	group.GET("/:id", endpoints.GetProvider)
 	group.GET("", endpoints.GetProviders)
 	group.POST("", endpoints.CreateProvider)
-	group.POST("/documents", endpoints.UploadProviderDocuments)
 	group.PUT("/:id", endpoints.UpdateProvider)
 	group.DELETE("/:id", endpoints.DeleteProvider)
 }

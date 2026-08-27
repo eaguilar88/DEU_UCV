@@ -27,6 +27,7 @@ var courseQuerySelectCommon = []string{
 	"c.location",
 	"c.is_active",
 	"c.has_documentation",
+	"c.estado_gestion",
 	"c.created_at",
 	"c.updated_at",
 	"c.deleted_at",
@@ -45,6 +46,19 @@ func GetCourses(limit, offset int) sq.SelectBuilder {
 		From(fmt.Sprintf("%s AS c", coursesTableName)).
 		Where(sq.Eq{"c.deleted_at": nil}).
 		Where(sq.Eq{"c.is_active": true}).
+		Limit(uint64(limit)).
+		Offset(uint64(offset))
+}
+
+// GetPublicCourses selects courses ready to be shown publicly: legally documented
+// (has_documentation) and with at least one period ever created (i.e. opened at some point).
+func GetPublicCourses(limit, offset int) sq.SelectBuilder {
+	return psql.Select(courseQuerySelectCommon...).
+		From(fmt.Sprintf("%s AS c", coursesTableName)).
+		Where(sq.Eq{"c.deleted_at": nil}).
+		Where(sq.Eq{"c.is_active": true}).
+		Where(sq.Eq{"c.has_documentation": true}).
+		Where(fmt.Sprintf("EXISTS (SELECT 1 FROM %s cc WHERE cc.course_id = c.id AND cc.deleted_at IS NULL)", periodsTableName)).
 		Limit(uint64(limit)).
 		Offset(uint64(offset))
 }
@@ -114,14 +128,10 @@ func DeleteCourse(courseID string) sq.DeleteBuilder {
 		Where(sq.Eq{"id": courseID})
 }
 
-func MarkCoursesWithDocumentation(providerID, from, to string) sq.UpdateBuilder {
-	q := psql.Update(coursesTableName).
-		Set("has_documentation", true).
-		Where(sq.Eq{"provider_id": providerID}).
-		Where(sq.Eq{"deleted_at": nil}).
-		Where(sq.Lt{"created_at": to})
-	if from != "" {
-		q = q.Where(sq.GtOrEq{"created_at": from})
-	}
-	return q
+// SetCourseManagementStatus sets (or, with status == nil, clears) a course's estado_gestion by its own ID.
+func SetCourseManagementStatus(courseID string, status *string) sq.UpdateBuilder {
+	return psql.Update(coursesTableName).
+		Set("estado_gestion", status).
+		Set("updated_at", sq.Expr("NOW()")).
+		Where(sq.Eq{"id": courseID})
 }
