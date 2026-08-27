@@ -137,6 +137,7 @@ func main() {
 	addUserRoutes(e, userEndpoints, middlewares...)
 	addProviderRoutes(e, providerEndpoints, middlewares...)
 	addCourseRoutes(e, courseEndpoints, middlewares...)
+	addCourseRequestRoutes(e, courseRequestEndpoints, middlewares...)
 	addCoursePeriodRoutes(e, cpEndpoints, middlewares...)
 	addGroupsRoutes(e, groupEndpoints, middlewares...)
 	addActivityRoutes(e, activityEndpoints, middlewares...)
@@ -214,8 +215,14 @@ func addUserRoutes(e *echo.Echo, endpoints *users.Handler, middlewares ...echo.M
 	protected.DELETE("/:id", endpoints.DeleteUser)
 }
 
+func addCourseRequestRoutes(e *echo.Echo, endpoints *course_requests.Handler, middlewares ...echo.MiddlewareFunc) {
+	protectedGroup := e.Group("", middlewares...)
+	endpoints.RegisterCourseRequestEndpoints(protectedGroup)
+}
+
 func addCourseRoutes(e *echo.Echo, endpoints *courses.Handler, middlewares ...echo.MiddlewareFunc) {
 	publicGroup := e.Group("/courses")
+	publicGroup.GET("/public", endpoints.GetPublicCourses)
 	publicGroup.GET("/:id", endpoints.GetCourse)
 	publicGroup.GET("", endpoints.GetCourses)
 	protectedGroup := e.Group("/courses", middlewares...)

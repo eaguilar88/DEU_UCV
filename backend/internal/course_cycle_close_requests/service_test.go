@@ -209,8 +209,8 @@ func TestCourseCycleCloseRequestService_RejectCloseRequest(t *testing.T) {
 			name: "success",
 			prepare: func(repoMock *mocks.MockRepository) {
 				repoMock.EXPECT().GetCourseCycleCloseRequestByID(mock.Anything, "1").
-					Return(entities.CourseCycleCloseRequest{ID: 1, Status: entities.RequestStatus_UNDER_REVIEW}, nil)
-				repoMock.EXPECT().RejectCourseCycleCloseRequest(mock.Anything, "1", "reviewer-1", "no cumple").Return(nil)
+					Return(entities.CourseCycleCloseRequest{ID: 1, CourseCycleID: 2, Status: entities.RequestStatus_UNDER_REVIEW}, nil)
+				repoMock.EXPECT().RejectCourseCycleCloseRequest(mock.Anything, "1", "reviewer-1", "no cumple", "2").Return(nil)
 			},
 			wantErr: nil,
 		},

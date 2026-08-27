@@ -392,16 +392,16 @@ func (_c *MockRepository_HasPendingCloseRequestForCycle_Call) RunAndReturn(run f
 }
 
 // RejectCourseCycleCloseRequest provides a mock function for the type MockRepository
-func (_mock *MockRepository) RejectCourseCycleCloseRequest(ctx context.Context, id string, reviewerID string, comments string) error {
-	ret := _mock.Called(ctx, id, reviewerID, comments)
+func (_mock *MockRepository) RejectCourseCycleCloseRequest(ctx context.Context, id string, reviewerID string, comments string, cycleID string) error {
+	ret := _mock.Called(ctx, id, reviewerID, comments, cycleID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RejectCourseCycleCloseRequest")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) error); ok {
-		r0 = returnFunc(ctx, id, reviewerID, comments)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) error); ok {
+		r0 = returnFunc(ctx, id, reviewerID, comments, cycleID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -418,11 +418,12 @@ type MockRepository_RejectCourseCycleCloseRequest_Call struct {
 //   - id string
 //   - reviewerID string
 //   - comments string
-func (_e *MockRepository_Expecter) RejectCourseCycleCloseRequest(ctx interface{}, id interface{}, reviewerID interface{}, comments interface{}) *MockRepository_RejectCourseCycleCloseRequest_Call {
-	return &MockRepository_RejectCourseCycleCloseRequest_Call{Call: _e.mock.On("RejectCourseCycleCloseRequest", ctx, id, reviewerID, comments)}
+//   - cycleID string
+func (_e *MockRepository_Expecter) RejectCourseCycleCloseRequest(ctx interface{}, id interface{}, reviewerID interface{}, comments interface{}, cycleID interface{}) *MockRepository_RejectCourseCycleCloseRequest_Call {
+	return &MockRepository_RejectCourseCycleCloseRequest_Call{Call: _e.mock.On("RejectCourseCycleCloseRequest", ctx, id, reviewerID, comments, cycleID)}
 }
 
-func (_c *MockRepository_RejectCourseCycleCloseRequest_Call) Run(run func(ctx context.Context, id string, reviewerID string, comments string)) *MockRepository_RejectCourseCycleCloseRequest_Call {
+func (_c *MockRepository_RejectCourseCycleCloseRequest_Call) Run(run func(ctx context.Context, id string, reviewerID string, comments string, cycleID string)) *MockRepository_RejectCourseCycleCloseRequest_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -440,11 +441,16 @@ func (_c *MockRepository_RejectCourseCycleCloseRequest_Call) Run(run func(ctx co
 		if args[3] != nil {
 			arg3 = args[3].(string)
 		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
 		run(
 			arg0,
 			arg1,
 			arg2,
 			arg3,
+			arg4,
 		)
 	})
 	return _c
@@ -455,7 +461,7 @@ func (_c *MockRepository_RejectCourseCycleCloseRequest_Call) Return(err error) *
 	return _c
 }
 
-func (_c *MockRepository_RejectCourseCycleCloseRequest_Call) RunAndReturn(run func(ctx context.Context, id string, reviewerID string, comments string) error) *MockRepository_RejectCourseCycleCloseRequest_Call {
+func (_c *MockRepository_RejectCourseCycleCloseRequest_Call) RunAndReturn(run func(ctx context.Context, id string, reviewerID string, comments string, cycleID string) error) *MockRepository_RejectCourseCycleCloseRequest_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 
 	"github.com/eaguilar88/deu/internal/course_cycle_close_requests"
 	"github.com/eaguilar88/deu/internal/entities"
@@ -31,20 +32,38 @@ func (r *PostgresRepository) HasPendingCloseRequestForCycle(ctx context.Context,
 }
 
 func (r *PostgresRepository) CreateCourseCycleCloseRequest(ctx context.Context, cycleID, submittedByID int64) (int64, error) {
-	query, args, err := queries.InsertCourseCycleCloseRequest(cycleID, submittedByID).ToSql()
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return -1, err
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	insertQuery, insertArgs, err := queries.InsertCourseCycleCloseRequest(cycleID, submittedByID).ToSql()
 	if err != nil {
 		r.logger.Error("error creating cycle close request query", zap.Error(err))
 		return -1, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, query)
-	if err != nil {
-		r.logger.Error("error preparing cycle close request query", zap.Error(err))
+	var id int64
+	if err = tx.QueryRowContext(ctx, insertQuery, insertArgs...).Scan(&id); err != nil {
+		r.logger.Error("error inserting cycle close request", zap.Error(err))
 		return -1, err
 	}
-	defer stmt.Close()
-	var id int64
-	if err = stmt.QueryRowContext(ctx, args...).Scan(&id); err != nil {
-		r.logger.Error("error inserting cycle close request", zap.Error(err))
+
+	closureRequested := string(entities.CourseManagementStatusClosureRequested)
+	statusQuery, statusArgs, err := queries.SetCourseManagementStatusByCycleID(strconv.FormatInt(cycleID, 10), &closureRequested).ToSql()
+	if err != nil {
+		return -1, httperrors.NewBadQueryError(err)
+	}
+	if _, err = tx.ExecContext(ctx, statusQuery, statusArgs...); err != nil {
+		r.logger.Error("error setting course management status", zap.Error(err))
+		return -1, err
+	}
+
+	if err = tx.Commit(); err != nil {
 		return -1, err
 	}
 	return id, nil
@@ -127,27 +146,52 @@ func (r *PostgresRepository) ApproveCourseCycleCloseRequest(ctx context.Context,
 		return err
 	}
 
+	statusQuery, statusArgs, err := queries.SetCourseManagementStatusByCycleID(cycleID, nil).ToSql()
+	if err != nil {
+		return httperrors.NewBadQueryError(err)
+	}
+	if _, err = tx.ExecContext(ctx, statusQuery, statusArgs...); err != nil {
+		r.logger.Error("error clearing course management status", zap.Error(err))
+		return err
+	}
+
 	return tx.Commit()
 }
 
-func (r *PostgresRepository) RejectCourseCycleCloseRequest(ctx context.Context, id, reviewerID, comments string) error {
-	query, args, err := queries.RejectCourseCycleCloseRequest(id, reviewerID, comments).ToSql()
-	if err != nil {
-		return httperrors.NewBadQueryError(err)
-	}
-	stmt, err := r.db.PrepareContext(ctx, query)
-	if err != nil {
-		return httperrors.NewBadQueryError(err)
-	}
-	defer stmt.Close()
-	result, err := stmt.ExecContext(ctx, args...)
+func (r *PostgresRepository) RejectCourseCycleCloseRequest(ctx context.Context, id, reviewerID, comments, cycleID string) error {
+	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
-	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
-		return fmt.Errorf("%w: %w", course_cycle_close_requests.ErrCycleCloseRequestNotFound, err)
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	rejectQuery, rejectArgs, err := queries.RejectCourseCycleCloseRequest(id, reviewerID, comments).ToSql()
+	if err != nil {
+		return httperrors.NewBadQueryError(err)
 	}
-	return nil
+	result, err := tx.ExecContext(ctx, rejectQuery, rejectArgs...)
+	if err != nil {
+		return err
+	}
+	if affected, rerr := result.RowsAffected(); rerr != nil || affected == 0 {
+		err = fmt.Errorf("%w: %w", course_cycle_close_requests.ErrCycleCloseRequestNotFound, rerr)
+		return err
+	}
+
+	statusQuery, statusArgs, err := queries.SetCourseManagementStatusByCycleID(cycleID, nil).ToSql()
+	if err != nil {
+		return httperrors.NewBadQueryError(err)
+	}
+	if _, err = tx.ExecContext(ctx, statusQuery, statusArgs...); err != nil {
+		r.logger.Error("error clearing course management status", zap.Error(err))
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func scanCourseCycleCloseRequest(row scannable) (models.CourseCycleCloseRequest, error) {

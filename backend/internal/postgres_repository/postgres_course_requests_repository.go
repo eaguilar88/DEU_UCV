@@ -79,6 +79,41 @@ func (r *PostgresRepository) GetCourseRequestsByFaculty(ctx context.Context, fac
 	return requests, scope, nil
 }
 
+func (r *PostgresRepository) GetCourseRequestsByProvider(ctx context.Context, providerID string, scope entities.PageScope) ([]entities.CourseRequest, entities.PageScope, error) {
+	query, args, err := queries.GetCourseRequestsByProvider(providerID, scope.PerPage, scope.Offset()).ToSql()
+	if err != nil {
+		return nil, entities.PageScope{}, err
+	}
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		return nil, entities.PageScope{}, err
+	}
+	defer stmt.Close()
+	rows, err := stmt.QueryContext(ctx, args...)
+	if err != nil {
+		return nil, entities.PageScope{}, err
+	}
+	defer rows.Close()
+	var requests []entities.CourseRequest
+	for rows.Next() {
+		model, err := scanCourseRequest(rows)
+		if err != nil {
+			return nil, entities.PageScope{}, err
+		}
+		requests = append(requests, newCourseRequestFromModel(model))
+	}
+	var total int
+	query, args, err = queries.CountCourseRequestsByProvider(providerID).ToSql()
+	if err != nil {
+		return nil, entities.PageScope{}, err
+	}
+	if err = r.db.QueryRowContext(ctx, query, args...).Scan(&total); err != nil {
+		return nil, entities.PageScope{}, err
+	}
+	scope.Count = total
+	return requests, scope, nil
+}
+
 func (r *PostgresRepository) ApproveCourseRequest(ctx context.Context, reqID, reviewerID, courseType, comments string) error {
 	// Start transaction
 	tx, err := r.db.BeginTx(ctx, nil)

@@ -248,6 +248,17 @@ func TestHandler_CreateCoursePeriod(t *testing.T) {
 			wantErr: httperrors.NewConflict(ErrCoursePeriodAlreadyOpen.Error()),
 		},
 		{
+			name: "error course has a pending closure request",
+			svc:  &mocks.MockService{},
+			prepare: func(ctx echo.Context, tc *testCase) {
+				tc.svc.On("CreateCoursePeriod", ctx.Request().Context(), mock.AnythingOfType("entities.CoursePeriod")).
+					Return(int64(-1), courses.ErrCourseClosureRequestPending)
+			},
+			userID:  &userID,
+			req:     CreateCoursePeriodRequest{Capacity: 30},
+			wantErr: httperrors.NewConflict(courses.ErrCourseClosureRequestPending.Error()),
+		},
+		{
 			name:    "error cannot find userID in context",
 			svc:     &mocks.MockService{},
 			req:     CreateCoursePeriodRequest{Capacity: 30},

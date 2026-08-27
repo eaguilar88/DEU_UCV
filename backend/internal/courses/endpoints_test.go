@@ -202,6 +202,72 @@ func TestHandler_GetCourses(t *testing.T) {
 	}
 }
 
+func TestHandler_GetPublicCourses(t *testing.T) {
+	type testCase struct {
+		name    string
+		svc     *mocks.MockService
+		prepare func(ctx echo.Context, tc *testCase)
+		resp    any
+		wantErr error
+	}
+
+	tests := []testCase{
+		{
+			name: "success empty list",
+			svc:  &mocks.MockService{},
+			prepare: func(ctx echo.Context, tc *testCase) {
+				tc.svc.On("GetPublicCourses", ctx.Request().Context(), mock.AnythingOfType("entities.PageScope")).
+					Return([]entities.Course{}, entities.PageScope{}, nil)
+			},
+			resp: GetCoursesResponse{},
+		},
+		{
+			name: "success with courses",
+			svc:  &mocks.MockService{},
+			prepare: func(ctx echo.Context, tc *testCase) {
+				tc.svc.On("GetPublicCourses", ctx.Request().Context(), mock.AnythingOfType("entities.PageScope")).
+					Return([]entities.Course{{ID: "1", Name: "Course A"}}, entities.PageScope{Page: 1, PerPage: 10}, nil)
+			},
+			resp: GetCoursesResponse{
+				Courses: []GetCourseResponse{{ID: "1", Name: "Course A"}},
+				Pages:   entities.PageScope{Page: 1, PerPage: 10},
+			},
+		},
+		{
+			name: "error getting public courses",
+			svc:  &mocks.MockService{},
+			prepare: func(ctx echo.Context, tc *testCase) {
+				tc.svc.On("GetPublicCourses", ctx.Request().Context(), mock.AnythingOfType("entities.PageScope")).
+					Return(nil, entities.PageScope{}, errors.New("db error"))
+			},
+			wantErr: httperrors.NewInternal(errors.New("db error")),
+		},
+	}
+
+	logger := zap.NewNop()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/courses/public", nil)
+			rec := httptest.NewRecorder()
+			ctx := echo.New().NewContext(req, rec)
+
+			if tt.prepare != nil {
+				tt.prepare(ctx, &tt)
+			}
+
+			h := NewHandler(tt.svc, logger)
+			err := h.GetPublicCourses(ctx)
+			assertCustomError(t, tt.wantErr, err)
+			if tt.wantErr == nil {
+				var respBody GetCoursesResponse
+				require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &respBody))
+				assert.Equal(t, tt.resp, respBody)
+			}
+			tt.svc.AssertExpectations(t)
+		})
+	}
+}
+
 func TestHandler_CreateCourse(t *testing.T) {
 	userID := "user-1"
 

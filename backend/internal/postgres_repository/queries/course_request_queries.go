@@ -73,6 +73,25 @@ func CountCourseRequestsByFaculty(faculty string) sq.SelectBuilder {
 		Where(sq.Eq{"r.deleted_at": nil})
 }
 
+func GetCourseRequestsByProvider(providerID string, limit, offset int) sq.SelectBuilder {
+	return psql.Select(courseRequestQuerySelectCommon...).
+		From(fmt.Sprintf("%s AS r", courseRequestsTableName)).
+		Join(fmt.Sprintf("%s AS c ON c.id = r.course_id", coursesTableName)).
+		Where(sq.Eq{"c.provider_id": providerID}).
+		Where(sq.Eq{"r.deleted_at": nil}).
+		OrderBy("r.created_at DESC").
+		Limit(uint64(limit)).
+		Offset(uint64(offset))
+}
+
+func CountCourseRequestsByProvider(providerID string) sq.SelectBuilder {
+	return psql.Select("COUNT(*)").
+		From(fmt.Sprintf("%s AS r", courseRequestsTableName)).
+		Join(fmt.Sprintf("%s AS c ON c.id = r.course_id", coursesTableName)).
+		Where(sq.Eq{"c.provider_id": providerID}).
+		Where(sq.Eq{"r.deleted_at": nil})
+}
+
 func ApproveCourseRequest(requestID, reviewerID, comments string) sq.UpdateBuilder {
 	return psql.Update(courseRequestsTableName).
 		Set("status", "approved").

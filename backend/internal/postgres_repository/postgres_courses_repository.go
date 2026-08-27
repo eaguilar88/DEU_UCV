@@ -63,6 +63,32 @@ func (r *PostgresRepository) GetCourses(ctx context.Context, pageScope entities.
 	return courses, pageScope, nil
 }
 
+func (r *PostgresRepository) GetPublicCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error) {
+	query, args, err := queries.GetPublicCourses(pageScope.PerPage, pageScope.Offset()).ToSql()
+	if err != nil {
+		return nil, entities.PageScope{}, err
+	}
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		return nil, entities.PageScope{}, err
+	}
+	defer stmt.Close()
+	rows, err := stmt.QueryContext(ctx, args...)
+	if err != nil {
+		return nil, entities.PageScope{}, err
+	}
+	defer rows.Close()
+	var courses []entities.Course
+	for rows.Next() {
+		course, err := scanCourse(rows)
+		if err != nil {
+			return nil, entities.PageScope{}, err
+		}
+		courses = append(courses, newCourseFromModel(course))
+	}
+	return courses, pageScope, nil
+}
+
 func (r *PostgresRepository) CreateCourse(ctx context.Context, course entities.Course) (int64, error) {
 	query, args, err := queries.InsertCourse(newCourseModelFromEntities(course)).ToSql()
 	if err != nil {
@@ -226,6 +252,7 @@ func scanCourse(row scannable) (models.Course, error) {
 		&course.Location,
 		&course.IsActive,
 		&course.HasDocumentation,
+		&course.ManagementStatus,
 		&course.CreatedAt,
 		&course.UpdatedAt,
 		&course.DeletedAt,
@@ -302,6 +329,10 @@ func newCourseFromModel(course models.Course) entities.Course {
 		c.Location = course.Location.String
 	}
 
+	if course.ManagementStatus.Valid {
+		c.ManagementStatus = entities.CourseManagementStatus(course.ManagementStatus.String)
+	}
+
 	return c
 }
 
@@ -368,7 +399,11 @@ func newCourseModelFromEntities(course entities.Course) models.Course {
 		},
 		IsActive:         false,
 		HasDocumentation: course.HasDocumentation,
-		CreatedAt:        course.CreatedAt,
-		UpdatedAt:        course.UpdatedAt,
+		ManagementStatus: sql.NullString{
+			String: string(course.ManagementStatus),
+			Valid:  course.ManagementStatus != "",
+		},
+		CreatedAt: course.CreatedAt,
+		UpdatedAt: course.UpdatedAt,
 	}
 }

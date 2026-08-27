@@ -13,6 +13,7 @@ import (
 type Repository interface {
 	GetCourse(ctx context.Context, courseID string) (entities.Course, error)
 	GetCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error)
+	GetPublicCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error)
 	GetProviderByUserID(ctx context.Context, userID string) (entities.Provider, error)
 	GetLatestCoursePeriod(ctx context.Context, courseID string) (entities.CoursePeriod, error)
 
@@ -93,6 +94,24 @@ func (s *service) GetCourses(ctx context.Context, pageScope entities.PageScope) 
 		return nil, entities.PageScope{}, err
 	}
 
+	s.attachCoverURLs(ctx, courses)
+
+	return courses, page, nil
+}
+
+func (s *service) GetPublicCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error) {
+	courses, page, err := s.repo.GetPublicCourses(ctx, pageScope)
+	if err != nil {
+		return nil, entities.PageScope{}, err
+	}
+
+	s.attachCoverURLs(ctx, courses)
+
+	return courses, page, nil
+}
+
+// attachCoverURLs enriches each course in place with its cover image URL, when one exists.
+func (s *service) attachCoverURLs(ctx context.Context, courses []entities.Course) {
 	for i := range courses {
 		files, err := s.repo.GetFilesByOwner(ctx, courses[i].ID, entities.OwnerTypeCourse)
 		if err != nil {
@@ -109,8 +128,6 @@ func (s *service) GetCourses(ctx context.Context, pageScope entities.PageScope) 
 			courses[i].Cover = cover
 		}
 	}
-
-	return courses, page, nil
 }
 
 func (s *service) CreateCourse(ctx context.Context, userID string, course entities.Course) (int64, error) {

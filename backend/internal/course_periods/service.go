@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/eaguilar88/deu/internal/courses"
 	"github.com/eaguilar88/deu/internal/entities"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
@@ -86,8 +87,13 @@ func (s *service) CreateCoursePeriod(ctx context.Context, period entities.Course
 		return -1, ErrInvalidCapacity
 	}
 
-	if _, err := s.repo.GetCourse(ctx, period.Course.ID); err != nil {
+	course, err := s.repo.GetCourse(ctx, period.Course.ID)
+	if err != nil {
 		return -1, err
+	}
+
+	if course.ManagementStatus == entities.CourseManagementStatusClosureRequested {
+		return -1, courses.ErrCourseClosureRequestPending
 	}
 
 	if _, err := s.repo.GetActiveCoursePeriodByCourseID(ctx, period.Course.ID); err != nil {

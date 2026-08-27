@@ -27,6 +27,7 @@ var courseQuerySelectCommon = []string{
 	"c.location",
 	"c.is_active",
 	"c.has_documentation",
+	"c.estado_gestion",
 	"c.created_at",
 	"c.updated_at",
 	"c.deleted_at",
@@ -45,6 +46,19 @@ func GetCourses(limit, offset int) sq.SelectBuilder {
 		From(fmt.Sprintf("%s AS c", coursesTableName)).
 		Where(sq.Eq{"c.deleted_at": nil}).
 		Where(sq.Eq{"c.is_active": true}).
+		Limit(uint64(limit)).
+		Offset(uint64(offset))
+}
+
+// GetPublicCourses selects courses ready to be shown publicly: legally documented
+// (has_documentation) and with at least one period ever created (i.e. opened at some point).
+func GetPublicCourses(limit, offset int) sq.SelectBuilder {
+	return psql.Select(courseQuerySelectCommon...).
+		From(fmt.Sprintf("%s AS c", coursesTableName)).
+		Where(sq.Eq{"c.deleted_at": nil}).
+		Where(sq.Eq{"c.is_active": true}).
+		Where(sq.Eq{"c.has_documentation": true}).
+		Where(fmt.Sprintf("EXISTS (SELECT 1 FROM %s cc WHERE cc.course_id = c.id AND cc.deleted_at IS NULL)", periodsTableName)).
 		Limit(uint64(limit)).
 		Offset(uint64(offset))
 }
