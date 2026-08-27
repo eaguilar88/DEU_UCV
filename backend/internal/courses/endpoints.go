@@ -15,6 +15,7 @@ import (
 type Service interface {
 	GetCourse(ctx context.Context, courseID string) (entities.Course, error)
 	GetCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error)
+	GetPublicCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error)
 	GetLatestCoursePeriod(ctx context.Context, courseID string) (entities.CoursePeriod, error)
 	CreateCourse(ctx context.Context, userID string, course entities.Course) (int64, error)
 	UpdateCourse(ctx context.Context, courseID string, user entities.Course) error
@@ -74,6 +75,28 @@ func (h *Handler) GetCourses(c echo.Context) error {
 		PageScope: scope,
 	}
 	courses, pages, err := h.svc.GetCourses(ctx, req.PageScope)
+	if err != nil {
+		return httperrors.NewInternal(err)
+	}
+
+	return c.JSON(http.StatusOK, GetCoursesResponse{
+		Courses: coursesToResponse(courses),
+		Pages:   pages,
+	})
+}
+
+func (h *Handler) GetPublicCourses(c echo.Context) error {
+	ctx := c.Request().Context()
+	scope := entities.PageScope{}
+
+	//nolint:errcheck
+	scope.GetPageFromVars(c.QueryParam("page"))
+	//nolint:errcheck
+	scope.GetPerPageFromVars(c.QueryParam("per_page"))
+	req := GetCoursesRequest{
+		PageScope: scope,
+	}
+	courses, pages, err := h.svc.GetPublicCourses(ctx, req.PageScope)
 	if err != nil {
 		return httperrors.NewInternal(err)
 	}

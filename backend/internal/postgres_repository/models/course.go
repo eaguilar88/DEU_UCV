@@ -22,6 +22,7 @@ type Course struct {
 	Location          sql.NullString
 	IsActive          bool
 	HasDocumentation  bool
+	ManagementStatus  sql.NullString
 	CreatedAt         string
 	UpdatedAt         string
 	DeletedAt         sql.NullString

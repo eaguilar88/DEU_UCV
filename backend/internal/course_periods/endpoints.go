@@ -101,6 +101,9 @@ func (h *Handler) CreateCoursePeriod(c echo.Context) error {
 		if errors.Is(err, ErrCoursePeriodAlreadyOpen) {
 			return httperrors.NewConflict(ErrCoursePeriodAlreadyOpen.Error())
 		}
+		if errors.Is(err, courses.ErrCourseClosureRequestPending) {
+			return httperrors.NewConflict(courses.ErrCourseClosureRequestPending.Error())
+		}
 		if errors.Is(err, ErrInvalidCapacity) {
 			return httperrors.NewBadRequest(ErrInvalidCapacity.Error())
 		}

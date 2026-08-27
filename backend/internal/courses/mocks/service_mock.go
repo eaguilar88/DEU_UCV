@@ -373,6 +373,80 @@ func (_c *MockService_GetLatestCoursePeriod_Call) RunAndReturn(run func(ctx cont
 	return _c
 }
 
+// GetPublicCourses provides a mock function for the type MockService
+func (_mock *MockService) GetPublicCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error) {
+	ret := _mock.Called(ctx, pageScope)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPublicCourses")
+	}
+
+	var r0 []entities.Course
+	var r1 entities.PageScope
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.PageScope) ([]entities.Course, entities.PageScope, error)); ok {
+		return returnFunc(ctx, pageScope)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.PageScope) []entities.Course); ok {
+		r0 = returnFunc(ctx, pageScope)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]entities.Course)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.PageScope) entities.PageScope); ok {
+		r1 = returnFunc(ctx, pageScope)
+	} else {
+		r1 = ret.Get(1).(entities.PageScope)
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, entities.PageScope) error); ok {
+		r2 = returnFunc(ctx, pageScope)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// MockService_GetPublicCourses_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPublicCourses'
+type MockService_GetPublicCourses_Call struct {
+	*mock.Call
+}
+
+// GetPublicCourses is a helper method to define mock.On call
+//   - ctx context.Context
+//   - pageScope entities.PageScope
+func (_e *MockService_Expecter) GetPublicCourses(ctx interface{}, pageScope interface{}) *MockService_GetPublicCourses_Call {
+	return &MockService_GetPublicCourses_Call{Call: _e.mock.On("GetPublicCourses", ctx, pageScope)}
+}
+
+func (_c *MockService_GetPublicCourses_Call) Run(run func(ctx context.Context, pageScope entities.PageScope)) *MockService_GetPublicCourses_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 entities.PageScope
+		if args[1] != nil {
+			arg1 = args[1].(entities.PageScope)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockService_GetPublicCourses_Call) Return(courses []entities.Course, pageScope1 entities.PageScope, err error) *MockService_GetPublicCourses_Call {
+	_c.Call.Return(courses, pageScope1, err)
+	return _c
+}
+
+func (_c *MockService_GetPublicCourses_Call) RunAndReturn(run func(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error)) *MockService_GetPublicCourses_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateCourse provides a mock function for the type MockService
 func (_mock *MockService) UpdateCourse(ctx context.Context, courseID string, user entities.Course) error {
 	ret := _mock.Called(ctx, courseID, user)

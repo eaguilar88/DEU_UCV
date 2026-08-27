@@ -88,3 +88,12 @@ func SetCourseCycleClosed(cycleID string) sq.UpdateBuilder {
 		Set("updated_at", sq.Expr("NOW()")).
 		Where(sq.Eq{"id": cycleID})
 }
+
+// SetCourseManagementStatusByCycleID sets (or, with status == nil, clears) the estado_gestion
+// of the course that owns the period referenced by cycleID.
+func SetCourseManagementStatusByCycleID(cycleID string, status *string) sq.UpdateBuilder {
+	return psql.Update(coursesTableName).
+		Set("estado_gestion", status).
+		Set("updated_at", sq.Expr("NOW()")).
+		Where(sq.Expr(fmt.Sprintf("id = (SELECT course_id FROM %s WHERE id = ?)", periodsTableName), cycleID))
+}

@@ -21,7 +21,7 @@ type Repository interface {
 	GetCourseCycleCloseRequests(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.CourseCycleCloseRequest, entities.PageScope, error)
 	GetCourseCycleCloseRequestByID(ctx context.Context, id string) (entities.CourseCycleCloseRequest, error)
 	ApproveCourseCycleCloseRequest(ctx context.Context, id, reviewerID, cycleID string) error
-	RejectCourseCycleCloseRequest(ctx context.Context, id, reviewerID, comments string) error
+	RejectCourseCycleCloseRequest(ctx context.Context, id, reviewerID, comments, cycleID string) error
 
 	// Files
 	SaveFilesToDB(ctx context.Context, files []*entities.File) error
@@ -115,7 +115,8 @@ func (s *service) RejectCloseRequest(ctx context.Context, id, reviewerID, commen
 		return ErrRequestIsProcessed
 	}
 
-	return s.repo.RejectCourseCycleCloseRequest(ctx, id, reviewerID, comments)
+	cycleID := strconv.FormatInt(existing.CourseCycleID, 10)
+	return s.repo.RejectCourseCycleCloseRequest(ctx, id, reviewerID, comments, cycleID)
 }
 
 func (s *service) GetCloseRequests(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.CourseCycleCloseRequest, entities.PageScope, error) {

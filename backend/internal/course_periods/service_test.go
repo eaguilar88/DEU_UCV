@@ -227,6 +227,16 @@ func TestCoursePeriodService_CreateCoursePeriod(t *testing.T) {
 			wantErr: ErrCoursePeriodAlreadyOpen,
 		},
 		{
+			name:   "error course has a pending closure request",
+			period: entities.CoursePeriod{Capacity: 30},
+			prepare: func(ctx context.Context, repoMock *mocks.MockRepository) {
+				repoMock.EXPECT().GetCourse(ctx, mock.AnythingOfType("string")).
+					Return(entities.Course{ID: "course-id", ManagementStatus: entities.CourseManagementStatusClosureRequested}, nil)
+			},
+			want:    int64(-1),
+			wantErr: courses.ErrCourseClosureRequestPending,
+		},
+		{
 			name:    "error invalid capacity",
 			period:  entities.CoursePeriod{Capacity: 0},
 			want:    int64(-1),
