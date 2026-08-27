@@ -146,12 +146,13 @@ func (r *PostgresRepository) ApproveCourseCycleCloseRequest(ctx context.Context,
 		return err
 	}
 
-	statusQuery, statusArgs, err := queries.SetCourseManagementStatusByCycleID(cycleID, nil).ToSql()
+	closed := string(entities.CourseManagementStatusClosed)
+	statusQuery, statusArgs, err := queries.SetCourseManagementStatusByCycleID(cycleID, &closed).ToSql()
 	if err != nil {
 		return httperrors.NewBadQueryError(err)
 	}
 	if _, err = tx.ExecContext(ctx, statusQuery, statusArgs...); err != nil {
-		r.logger.Error("error clearing course management status", zap.Error(err))
+		r.logger.Error("error setting course management status", zap.Error(err))
 		return err
 	}
 
@@ -182,12 +183,13 @@ func (r *PostgresRepository) RejectCourseCycleCloseRequest(ctx context.Context, 
 		return err
 	}
 
-	statusQuery, statusArgs, err := queries.SetCourseManagementStatusByCycleID(cycleID, nil).ToSql()
+	open := string(entities.CourseManagementStatusOpen)
+	statusQuery, statusArgs, err := queries.SetCourseManagementStatusByCycleID(cycleID, &open).ToSql()
 	if err != nil {
 		return httperrors.NewBadQueryError(err)
 	}
 	if _, err = tx.ExecContext(ctx, statusQuery, statusArgs...); err != nil {
-		r.logger.Error("error clearing course management status", zap.Error(err))
+		r.logger.Error("error setting course management status", zap.Error(err))
 		return err
 	}
 

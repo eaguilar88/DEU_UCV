@@ -81,12 +81,17 @@ func RejectCourseCycleCloseRequest(id, reviewerID, comments string) sq.UpdateBui
 		Where(sq.Eq{"id": id})
 }
 
+// SetCourseCycleClosed closes every currently-active cycle belonging to the same course as
+// cycleID (not just cycleID itself) — this is the cascade Node performs on close-request
+// approval. Today at most one row is ever active per course (see the §2.1 guard in
+// course_periods), but this makes that cascade explicit and correct-by-construction.
 func SetCourseCycleClosed(cycleID string) sq.UpdateBuilder {
 	return psql.Update(periodsTableName).
 		Set("closed_at", sq.Expr("NOW()")).
 		Set("is_active", false).
 		Set("updated_at", sq.Expr("NOW()")).
-		Where(sq.Eq{"id": cycleID})
+		Where(sq.Expr(fmt.Sprintf("course_id = (SELECT course_id FROM %s WHERE id = ?)", periodsTableName), cycleID)).
+		Where(sq.Eq{"is_active": true})
 }
 
 // SetCourseManagementStatusByCycleID sets (or, with status == nil, clears) the estado_gestion

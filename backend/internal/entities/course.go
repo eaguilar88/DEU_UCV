@@ -15,11 +15,13 @@ const (
 )
 
 // CourseManagementStatus reflects course-level lifecycle state that isn't captured by CourseType.
-// Only CourseManagementStatusClosureRequested is modeled today; the empty value means no special status.
+// The empty value means no special status (approved but never yet opened).
 type CourseManagementStatus string
 
 const (
 	CourseManagementStatusClosureRequested CourseManagementStatus = "solicitud-cierre"
+	CourseManagementStatusOpen             CourseManagementStatus = "abierto"
+	CourseManagementStatusClosed           CourseManagementStatus = "cerrado"
 )
 
 var (

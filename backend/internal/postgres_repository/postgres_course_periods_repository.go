@@ -122,23 +122,41 @@ func (r *PostgresRepository) CreateCoursePeriod(ctx context.Context, coursePerio
 		Capacity:        coursePeriod.Capacity,
 	}
 
-	query, args, err := queries.InsertCoursePeriod(cpModel).ToSql()
+	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return -1, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, query)
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	insertQuery, insertArgs, err := queries.InsertCoursePeriod(cpModel).ToSql()
 	if err != nil {
 		return -1, err
 	}
-	defer stmt.Close()
 	var lastInsertedID int64
-	err = stmt.QueryRowContext(ctx, args...).Scan(&lastInsertedID)
-	if err != nil {
+	if err = tx.QueryRowContext(ctx, insertQuery, insertArgs...).Scan(&lastInsertedID); err != nil {
 		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == pgErrorCodeUniqueViolation {
 			r.logger.Error("duplicated course period", zap.Error(err))
 			return -1, httperrors.NewDuplicateEntryError(err)
 		}
 		r.logger.Error("error inserting course period", zap.Error(err))
+		return -1, err
+	}
+
+	open := string(entities.CourseManagementStatusOpen)
+	statusQuery, statusArgs, err := queries.SetCourseManagementStatus(coursePeriod.Course.ID, &open).ToSql()
+	if err != nil {
+		return -1, err
+	}
+	if _, err = tx.ExecContext(ctx, statusQuery, statusArgs...); err != nil {
+		r.logger.Error("error setting course management status", zap.Error(err))
+		return -1, err
+	}
+
+	if err = tx.Commit(); err != nil {
 		return -1, err
 	}
 	return lastInsertedID, nil

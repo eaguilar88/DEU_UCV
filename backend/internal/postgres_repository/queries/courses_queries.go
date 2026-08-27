@@ -127,3 +127,11 @@ func DeleteCourse(courseID string) sq.DeleteBuilder {
 	return psql.Delete(coursesTableName).
 		Where(sq.Eq{"id": courseID})
 }
+
+// SetCourseManagementStatus sets (or, with status == nil, clears) a course's estado_gestion by its own ID.
+func SetCourseManagementStatus(courseID string, status *string) sq.UpdateBuilder {
+	return psql.Update(coursesTableName).
+		Set("estado_gestion", status).
+		Set("updated_at", sq.Expr("NOW()")).
+		Where(sq.Eq{"id": courseID})
+}
