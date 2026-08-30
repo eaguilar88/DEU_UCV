@@ -32,7 +32,7 @@ Sistema para la Dirección de Extensión Universitaria de la UCV
 - [Squirrel](https://github.com/Masterminds/squirrel): Librería usada para escribir SQL de manera sencilla.
 - [Zap](https://github.com/uber-go/zap): Librería para crear e imprimir logs estructurados.
 - [Amazon Golang SDK](https://github.com/aws/aws-sdk-go-v2): Librería para acceder a servicios de almacenamiento en la nube. Necesaria para [conectarse a Blackblaze B2](https://www.backblaze.com/docs/cloud-storage-use-the-aws-sdk-for-go-with-backblaze-b2).
-- [golang-migrate](https://github.com/golang-migrate/migrate): Herramienta para gestionar las migraciones del esquema de PostgreSQL, ejecutada como servicio Docker (ver [postgresql/README.md](postgresql/README.md)).
+- [golang-migrate](https://github.com/golang-migrate/migrate): Herramienta para gestionar las migraciones del esquema de PostgreSQL, ejecutada como servicio Docker (ver [Base de datos PostgreSQL](postgresql/README.md)).
 
 ## Herramientas para la documentación
 - [DBML(Database Markup Language)](https://docs.dbdiagram.io/): Lenguaje utilizado para definir programáticamente el modelo de la base de datos.
@@ -62,7 +62,7 @@ Luego, aplique las migraciones de la base de datos (crea el esquema `deu` y los 
 make migrate-up
 ```
 
-Para más detalles sobre el manejo de migraciones (crear nuevas, revertir, cargar datos de prueba opcionales), vea [postgresql/README.md](postgresql/README.md).
+Para más detalles sobre el manejo de migraciones (crear nuevas, revertir, cargar datos de prueba opcionales), ver [Base de datos PostgreSQL](postgresql/README.md).
 
 ### Desarrollo Frontend
 Para iniciar el desarrollo del frontend, ejecute el siguiente comando:
@@ -81,7 +81,7 @@ En un primer despliegue, aplique también las migraciones de la base de datos:
 make migrate-up-prod
 ```
 
-Vea [postgresql/README.md](postgresql/README.md) para más detalles.
+Ver [Base de datos PostgreSQL](postgresql/README.md) para más detalles.
 
 Si desea desplegar solo la nueva landing Rails y sus dependencias directas (sin levantar `diplomados` y `grupos`), use:
 
