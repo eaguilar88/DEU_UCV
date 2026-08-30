@@ -40,8 +40,6 @@ docker compose -f docker-compose.yml run --rm migrate \
   -path=/migrations -database="postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@db:$POSTGRES_PORT/$POSTGRES_DB?sslmode=disable" <comando>
 ```
 
-> Nota: si usa un `docker-compose.dev.yml` local (no versionado en el repositorio) para depurar el backend fuera de Docker, no mezcle ese flujo con `make migrate-up`/`make migrate-down`/etc. — ambos comparten el mismo `container_name` (`pg16`) por defecto, así que ejecutar `docker compose run` desde un archivo distinto al que levantó el contenedor puede recrearlo con otra configuración (por ejemplo, sin el puerto publicado al host).
-
 ## Crear una nueva migración
 
 1. Ejecute `make migrate-create name=add_algo_table` — esto crea `NNNNNN_add_algo_table.up.sql` y `.down.sql` vacíos en `migrations/`, con el siguiente número secuencial.
