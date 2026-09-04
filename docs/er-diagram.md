@@ -1,6 +1,39 @@
+# DEU UCV — Diagrama Entidad-Relación
+
+Generado a partir de las migraciones en `postgresql/migrations/`. Esquema: `deu`.
+
+> Nota: `contacts` y `files` usan relaciones polimórficas (`owner_type` + `owner_id`), no FKs reales — se muestran como comentario, no como líneas de relación.
+>
+> Nota: si vas a visualizar este diagrama, evita mermaid.live — su motor de layout tiende a fallar en diagramas grandes como este y su función de auto-reparación puede sobrescribir el archivo con una versión mutilada. Usa la extensión "Mermaid" de VS Code, `mmdc` (mermaid-cli) local, o el archivo `docs/schema.dbml` en dbdiagram.io.
+
+```mermaid
 erDiagram
-    users ||--o{ activities : "group_id"
-    %% s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 s12 s13 s14 s15 s16 s17 s18 s19 s20 s21 s22
+    users ||--o{ providers : "user_id"
+    users ||--o{ user_roles : "user_id"
+    roles ||--o{ user_roles : "role_id"
+    users ||--o{ course_auth_requests : "reviewer_id"
+    users ||--o{ group_auth_requests : "reviewer_id"
+    users ||--o{ provider_requests : "reviewer_id"
+    users ||--o{ course_cycle_close_requests : "submitted_by"
+    users ||--o{ course_cycle_close_requests : "reviewer_id"
+    users ||--o{ visitantes : "user_id"
+    users ||--o{ extension_groups : "user_id"
+    users ||--o{ files : "uploaded_by"
+
+    providers ||--o{ courses : "provider_id"
+    providers ||--o{ provider_requests : "provider_id"
+
+    courses ||--o{ course_auth_requests : "course_id"
+    courses ||--o{ course_cycles : "course_id"
+
+    course_cycles ||--o{ course_cycle_announcements : "course_cycle_id"
+    course_cycles ||--o{ visitantes : "course_cycle_id"
+    course_cycles ||--o{ course_cycle_close_requests : "course_cycle_id"
+
+    extension_groups ||--o{ group_auth_requests : "group_id"
+    extension_groups ||--o{ group_members : "group_id"
+    extension_groups ||--o{ group_resource_requests : "group_id"
+    extension_groups |o--o{ activities : "group_id"
 
     users {
         int id PK
@@ -257,3 +290,12 @@ erDiagram
         timestamp created_at
         timestamp deleted_at
     }
+```
+
+## Notas
+
+- **Relaciones polimórficas**: `contacts.owner_id`/`owner_type` y `files.owner_id`/`owner_type` no tienen FK real en la base de datos; pueden apuntar a `users`, `providers`, `extension_groups`, `courses`, `course_cycles`, o actividades de grupo según el tipo.
+- **Soft deletes**: la mayoría de las tablas tienen `deleted_at` para borrado lógico.
+- **Enums definidos**: `education_level_enum`, `faculty_enum`, `provider_status_enum`, `course_location_enum`, `course_type_enum`, `request_status_enum`, `visitante_status_enum`, `contact_type_enum`, `owner_type_enum`.
+- `activities.group_id` permite `NULL` (ON DELETE SET NULL), por eso la relación con `extension_groups` es opcional (`|o--o{`).
+- Este mismo esquema también está disponible como `docs/schema.dbml` para dbdiagram.io, que maneja mejor diagramas grandes que mermaid.live.
