@@ -1,0 +1,388 @@
+// DEU UCV — database schema (dbdiagram.io / DBML)
+// Generated from postgresql/migrations/*.up.sql. Schema: deu.
+// Polymorphic relations (contacts.owner_id/owner_type, files.owner_id/owner_type)
+// have no real FK in the database and are omitted from Ref: statements below.
+
+Project deu_ucv {
+  database_type: 'PostgreSQL'
+}
+
+Enum education_level_enum {
+  bachiller
+  universitaria_incompleta
+  universitaria_completa
+  posgrado
+}
+
+Enum faculty_enum {
+  "Agronomía"
+  "Arquitectura y Urbanismo"
+  "Ciencias"
+  "Ciencias Económicas y Sociales"
+  "Ciencias Jurídicas y Políticas"
+  "Ciencias Veterinarias"
+  "Farmacia"
+  "Humanidades y Educación"
+  "Ingeniería"
+  "Medicina"
+  "Odontología"
+  DEU
+  NA
+}
+
+Enum provider_status_enum {
+  under_review
+  rejected
+  active
+  inactive
+}
+
+Enum course_location_enum {
+  online
+  in_site
+  mixed
+}
+
+Enum course_type_enum {
+  unassigned
+  skill_development
+  life_skills
+  technical_training
+}
+
+Enum request_status_enum {
+  under_review
+  rejected
+  approved
+}
+
+Enum visitante_status_enum {
+  approved
+  abandoned
+  failed
+  ongoing
+}
+
+Enum contact_type_enum {
+  email
+  phone
+}
+
+Enum owner_type_enum {
+  user
+  provider
+  group
+}
+
+Table users {
+  id integer [pk, increment]
+  ci integer [unique]
+  email varchar [unique, not null]
+  first_name varchar [not null]
+  last_name varchar [not null]
+  date_of_birth date
+  gender varchar
+  education education_level_enum [not null, default: 'bachiller']
+  address varchar
+  password char(60) [not null]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp
+}
+
+Table providers {
+  id integer [pk, increment]
+  user_id integer [not null]
+  name varchar
+  party_type varchar
+  profit_type varchar [not null]
+  is_internal boolean
+  bio text
+  code varchar
+  status provider_status_enum [not null, default: 'under_review']
+  faculty faculty_enum
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp
+}
+
+Table roles {
+  id integer [pk, increment]
+  name varchar [unique, not null]
+  description text
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp
+
+  Note: 'root, admin, coordinador, facilitador, estudiante, extension'
+}
+
+Table user_roles {
+  id integer [pk, increment]
+  user_id integer [not null]
+  role_id integer [not null]
+  domain_type varchar [not null, note: 'course | group | all']
+  faculty faculty_enum
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp
+
+  indexes {
+    (user_id, role_id) [unique]
+  }
+}
+
+Table courses {
+  id integer [pk, increment]
+  name varchar
+  description text
+  provider_id integer [not null]
+  objectives text
+  rationale text
+  duration varchar
+  cost varchar
+  instructor_profile text
+  profiles text
+  requirements text
+  content text
+  evaluation text
+  schedule text
+  type course_type_enum [default: 'unassigned']
+  faculty faculty_enum [default: 'DEU']
+  location course_location_enum
+  is_active boolean [default: false]
+  has_documentation boolean [default: false]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp
+}
+
+Table course_auth_requests {
+  id integer [pk, increment]
+  course_id integer [not null]
+  status request_status_enum [not null, default: 'under_review']
+  reviewer_id integer
+  comments text
+  reviewed_at timestamp
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp
+}
+
+Table course_cycles {
+  id integer [pk, increment]
+  course_id integer [not null]
+  start_date date
+  end_date date
+  inscription_date date
+  is_active boolean [default: true]
+  closed_at timestamp
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp
+}
+
+Table course_cycle_announcements {
+  id integer [pk, increment]
+  course_cycle_id integer [not null]
+  title varchar
+  content text
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp
+}
+
+Table visitantes {
+  id integer [pk, increment]
+  user_id integer [not null]
+  course_cycle_id integer [not null]
+  participant_status visitante_status_enum
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp
+
+  indexes {
+    (user_id, course_cycle_id) [unique]
+  }
+}
+
+Table extension_groups {
+  id integer [pk, increment]
+  user_id integer [not null, note: 'creator of the group']
+  name varchar
+  description text
+  is_multidisciplinary boolean [default: false]
+  faculty "faculty_enum[]" [default: `ARRAY['DEU']`]
+  foundation date
+  objective text
+  code varchar
+  group_director varchar
+  type "varchar[]" [default: `ARRAY[]`]
+  location varchar
+  is_active boolean [default: false]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp
+}
+
+Table group_auth_requests {
+  id integer [pk, increment]
+  group_id integer [not null]
+  status request_status_enum [not null, default: 'under_review']
+  faculty faculty_enum [not null, default: 'DEU']
+  reviewer_id integer
+  reviewed_at timestamp
+  comments text
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+Table group_members {
+  id integer [pk, increment]
+  group_id integer [not null]
+  name varchar [not null]
+  ci integer
+  phone varchar
+  email varchar
+  coordination varchar
+  year varchar
+  faculty faculty_enum [default: 'DEU']
+  school varchar
+  document varchar
+  is_leader boolean [default: false]
+  is_active boolean [default: true]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp
+}
+
+Table group_resource_requests {
+  id integer [pk, increment]
+  group_id integer [not null]
+  type varchar [not null]
+  content text
+  status request_status_enum [not null]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp
+}
+
+Table activities {
+  id integer [pk, increment]
+  name varchar
+  group_id integer [note: 'nullable, ON DELETE SET NULL']
+  description text
+  date_start date
+  date_end date
+  location varchar
+  knowledge_area "varchar[]" [default: `ARRAY[]`]
+  allies varchar
+  group_participants integer
+  stimated_participants integer
+  actual_participants integer
+  financing varchar
+  comments text
+  gallery_url varchar
+  report_checked boolean [default: false]
+  is_featured boolean [default: false]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp
+}
+
+Table provider_requests {
+  id integer [pk, increment]
+  provider_id integer [not null]
+  status request_status_enum [not null, default: 'under_review']
+  reviewer_id integer
+  comments text
+  reviewed_at timestamp
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp
+}
+
+Table course_cycle_close_requests {
+  id integer [pk, increment]
+  course_cycle_id integer [not null]
+  submitted_by integer [not null]
+  status request_status_enum [not null, default: 'under_review']
+  comments text
+  reviewer_id integer
+  reviewed_at timestamp
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp
+}
+
+Table contacts {
+  id integer [pk, increment]
+  contact_type contact_type_enum [not null, default: 'email']
+  contact_value text [not null]
+  owner_type owner_type_enum [not null, note: 'polymorphic: user | provider | group']
+  owner_id bigint [not null, note: 'polymorphic FK, no DB constraint']
+  created_at timestamptz [default: `now()`]
+  updated_at timestamptz [default: `now()`]
+  deleted_at timestamp
+
+  indexes {
+    (contact_type, contact_value, owner_type, owner_id) [unique]
+  }
+}
+
+Table files {
+  id integer [pk, increment]
+  owner_type varchar [not null, note: 'polymorphic: course | group | group_activity | course_cycle | provider | user']
+  owner_id integer [not null, note: 'polymorphic FK, no DB constraint']
+  file_key text [not null]
+  purpose text [not null]
+  version integer [default: 1]
+  public boolean [default: false]
+  metadata json
+  uploaded_by integer
+  created_at timestamp [default: `now()`]
+  deleted_at timestamp
+
+  indexes {
+    (owner_type, owner_id)
+  }
+}
+
+// --- Foreign key relationships ---
+
+Ref: providers.user_id > users.id [delete: cascade]
+
+Ref: user_roles.user_id > users.id [delete: cascade]
+Ref: user_roles.role_id > roles.id [delete: cascade]
+
+Ref: courses.provider_id > providers.id [delete: cascade]
+
+Ref: course_auth_requests.course_id > courses.id [delete: cascade]
+Ref: course_auth_requests.reviewer_id > users.id [delete: cascade]
+
+Ref: course_cycles.course_id > courses.id
+
+Ref: course_cycle_announcements.course_cycle_id > course_cycles.id [delete: cascade]
+
+Ref: visitantes.user_id > users.id [delete: cascade]
+Ref: visitantes.course_cycle_id > course_cycles.id
+
+Ref: extension_groups.user_id > users.id [delete: cascade]
+
+Ref: group_auth_requests.group_id > extension_groups.id [delete: cascade]
+Ref: group_auth_requests.reviewer_id > users.id [delete: cascade]
+
+Ref: group_members.group_id > extension_groups.id [delete: cascade]
+
+Ref: group_resource_requests.group_id > extension_groups.id [delete: cascade]
+
+Ref: activities.group_id > extension_groups.id [delete: set null]
+
+Ref: provider_requests.provider_id > providers.id [delete: cascade]
+Ref: provider_requests.reviewer_id > users.id [delete: set null]
+
+Ref: course_cycle_close_requests.course_cycle_id > course_cycles.id [delete: cascade]
+Ref: course_cycle_close_requests.submitted_by > users.id [delete: cascade]
+Ref: course_cycle_close_requests.reviewer_id > users.id [delete: set null]
+
+Ref: files.uploaded_by > users.id
