@@ -11,6 +11,7 @@ const (
 	OwnerTypeActivity       OwnerType = "group_activity"
 	OwnerTypeCourseCycle    OwnerType = "course_cycle"
 	OwnerTypeUser           OwnerType = "user"
+	OwnerTypeGroupMember    OwnerType = "group_member"
 )
 
 func (ot OwnerType) String() string {

@@ -47,6 +47,7 @@ type DeleteGroupRequest struct {
 }
 
 type GroupMemberDTO struct {
+	ID           string `json:"id,omitempty"`
 	Name         string `json:"nombre" validate:"required"`
 	CI           int    `json:"cedula" validate:"required"`
 	Phone        string `json:"telefono" validate:"required"`
@@ -55,7 +56,7 @@ type GroupMemberDTO struct {
 	Year         string `json:"año" validate:"required"`
 	Faculty      string `json:"facultad" validate:"required"`
 	School       string `json:"escuela" validate:"required"`
-	Document     string `json:"documento" validate:"required"`
+	//Document     string `json:"documento" validate:"required"`
 	IsLeader     bool   `json:"es_lider"`
 	IsActive     bool   `json:"status"`
 }
@@ -63,6 +64,7 @@ type GroupMemberDTO struct {
 // groupMemberEntityFromRequest converts a GroupMemberDTO to a GroupMember entity.
 func groupMemberEntityFromRequest(dto GroupMemberDTO) entities.GroupMember {
 	return entities.GroupMember{
+		ID:           dto.ID,
 		Name:         dto.Name,
 		CI:           dto.CI,
 		Phone:        dto.Phone,
@@ -71,7 +73,7 @@ func groupMemberEntityFromRequest(dto GroupMemberDTO) entities.GroupMember {
 		Year:         dto.Year,
 		Faculty:      entities.Faculty(dto.Faculty),
 		School:       dto.School,
-		Document:     dto.Document,
+		//Document:     dto.Document,
 		IsLeader:     dto.IsLeader,
 		IsActive:     dto.IsActive,
 	}

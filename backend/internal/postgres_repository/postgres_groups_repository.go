@@ -126,6 +126,36 @@ func (r *PostgresRepository) GetRandomActiveGroups(ctx context.Context, limit in
 	return groups, nil
 }
 
+func (r *PostgresRepository) GetGroupsSimple(ctx context.Context) ([]entities.ExtensionGroup, error) {
+	query, args, err := queries.GetGroupsSimple().ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.QueryContext(ctx, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var groups []entities.ExtensionGroup
+	for rows.Next() {
+		var g entities.ExtensionGroup
+		if err := rows.Scan(&g.ID, &g.Name); err != nil {
+			return nil, err
+		}
+		groups = append(groups, g)
+	}
+
+	return groups, rows.Err()
+}
+
 func (r *PostgresRepository) CreateGroup(ctx context.Context, gr entities.ExtensionGroup) (int64, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -152,7 +182,7 @@ func (r *PostgresRepository) CreateGroup(ctx context.Context, gr entities.Extens
 		r.logger.Error("error inserting group", zap.Error(err))
 		return -1, httperrors.NewInternal(err)
 	}
-	if err := r.insertGroupMembers(ctx, tx, lastInsertedID, gr.Members); err != nil {
+	if _, err := r.upsertGroupMembers(ctx, tx, lastInsertedID, gr.Members); err != nil {
 		r.logger.Error("error inserting group members", zap.Error(err))
 		return -1, err
 	}
@@ -165,11 +195,11 @@ func (r *PostgresRepository) CreateGroup(ctx context.Context, gr entities.Extens
 }
 
 // CreateGroupWithRequests creates a group and its authorization requests in a single transaction
-func (r *PostgresRepository) CreateGroupWithRequests(ctx context.Context, group entities.ExtensionGroup, requests []entities.GroupRequest) (groupID int64, err error) {
+func (r *PostgresRepository) CreateGroupWithRequests(ctx context.Context, group entities.ExtensionGroup, requests []entities.GroupRequest) (groupID int64, members []entities.GroupMember, err error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		r.logger.Error("failed to begin transaction", zap.Error(err))
-		return -1, fmt.Errorf("failed to begin transaction: %w", err)
+		return -1, nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback()
 
@@ -177,13 +207,13 @@ func (r *PostgresRepository) CreateGroupWithRequests(ctx context.Context, group 
 	groupSQL, groupArgs, err := queries.InsertGroup(newGroupToModel(group)).ToSql()
 	if err != nil {
 		r.logger.Error("failed to build group query", zap.Error(err))
-		return -1, fmt.Errorf("failed to build group query: %w", err)
+		return -1, nil, fmt.Errorf("failed to build group query: %w", err)
 	}
 
 	stmt, err := tx.PrepareContext(ctx, groupSQL)
 	if err != nil {
 		r.logger.Error("failed to prepare group statement", zap.Error(err))
-		return -1, fmt.Errorf("failed to prepare group statement: %w", err)
+		return -1, nil, fmt.Errorf("failed to prepare group statement: %w", err)
 	}
 	defer stmt.Close()
 
@@ -191,28 +221,29 @@ func (r *PostgresRepository) CreateGroupWithRequests(ctx context.Context, group 
 	if err != nil {
 		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == pgErrorCodeUniqueViolation {
 			r.logger.Error("duplicate group entry", zap.Error(err))
-			return -1, fmt.Errorf("duplicate group entry: %w ", err)
+			return -1, nil, fmt.Errorf("duplicate group entry: %w ", err)
 		}
 		r.logger.Error("failed to insert group", zap.Error(err))
-		return -1, fmt.Errorf("failed to insert group: %w", err)
+		return -1, nil, fmt.Errorf("failed to insert group: %w", err)
 	}
 
 	// 2. Create contacts for the group
 	if group.Email != "" {
 		if err := r.insertContactInformation(ctx, tx, group.Email, entities.ContactTypeEmail, groupID); err != nil {
-			return -1, fmt.Errorf("error saving group contact: %w", err)
+			return -1, nil, fmt.Errorf("error saving group contact: %w", err)
 		}
 	}
 
 	if group.Phone != "" {
 		if err := r.insertContactInformation(ctx, tx, group.Phone, entities.ContactTypePhone, groupID); err != nil {
-			return -1, fmt.Errorf("error saving group contact: %w", err)
+			return -1, nil, fmt.Errorf("error saving group contact: %w", err)
 		}
 	}
 
-	if err := r.insertGroupMembers(ctx, tx, groupID, group.Members); err != nil {
+	insertedMembers, err := r.upsertGroupMembers(ctx, tx, groupID, group.Members)
+	if err != nil {
 		r.logger.Error("failed to insert group members", zap.Error(err))
-		return -1, fmt.Errorf("failed to insert group members: %w", err)
+		return -1, nil, fmt.Errorf("failed to insert group members: %w", err)
 	}
 
 	// 3. Create each authorization request
@@ -228,13 +259,13 @@ func (r *PostgresRepository) CreateGroupWithRequests(ctx context.Context, group 
 		}).ToSql()
 		if err != nil {
 			r.logger.Error("failed to build request query", zap.Error(err))
-			return -1, fmt.Errorf("failed to build request query: %w", err)
+			return -1, nil, fmt.Errorf("failed to build request query: %w", err)
 		}
 
 		reqStmt, err := tx.PrepareContext(ctx, reqSQL)
 		if err != nil {
 			r.logger.Error("failed to prepare request statement", zap.Error(err))
-			return -1, fmt.Errorf("failed to prepare request statement: %w", err)
+			return -1, nil, fmt.Errorf("failed to prepare request statement: %w", err)
 		}
 
 		var reqID int64
@@ -243,64 +274,72 @@ func (r *PostgresRepository) CreateGroupWithRequests(ctx context.Context, group 
 		if err != nil {
 			if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == pgErrorCodeUniqueViolation {
 				r.logger.Error("duplicate group request entry", zap.Error(err))
-				return -1, httperrors.NewDuplicateEntryError(err)
+				return -1, nil, httperrors.NewDuplicateEntryError(err)
 			}
 			r.logger.Error("failed to insert group request", zap.Error(err))
-			return -1, fmt.Errorf("failed to insert group request: %w", err)
+			return -1, nil, fmt.Errorf("failed to insert group request: %w", err)
 		}
 	}
 
 	// 4. Commit
 	if err := tx.Commit(); err != nil {
 		r.logger.Error("failed to commit transaction", zap.Error(err))
-		return -1, fmt.Errorf("failed to commit transaction: %w", err)
+		return -1, nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	r.logger.Info("group, members, and requests created successfully", zap.Int64("group_id", groupID))
-	return groupID, nil
+	return groupID, insertedMembers, nil
 }
 
-func (r *PostgresRepository) UpdateGroup(ctx context.Context, group entities.ExtensionGroup) error {
+func (r *PostgresRepository) UpdateGroup(ctx context.Context, group entities.ExtensionGroup) ([]entities.GroupMember, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer tx.Rollback()
 
 	query, args, err := queries.UpdateGroup(newGroupToModel(group)).ToSql()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	stmt, err := tx.PrepareContext(ctx, query)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer stmt.Close()
 	result, err := stmt.ExecContext(ctx, args...)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
-		return fmt.Errorf("%w: %w", groups.ErrGroupNotFound, err)
+		return nil, fmt.Errorf("%w: %w", groups.ErrGroupNotFound, err)
 	}
 
 	groupID, err := strconv.ParseInt(group.ID, 10, 64)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if group.Email != "" {
 		if err := r.upsertContactInformation(ctx, tx, group.Email, entities.ContactTypeEmail, groupID); err != nil {
-			return err
+			return nil, err
 		}
 	}
 	if group.Phone != "" {
 		if err := r.upsertContactInformation(ctx, tx, group.Phone, entities.ContactTypePhone, groupID); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	return tx.Commit()
+	updatedMembers, err := r.upsertGroupMembers(ctx, tx, groupID, group.Members)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+	return updatedMembers, nil
 }
 
 func (r *PostgresRepository) upsertContactInformation(ctx context.Context, tx *sql.Tx, contactValue string, contactType entities.ContactType, groupID int64) error {
@@ -486,9 +525,11 @@ func newGroupFromModel(group models.ExtensionGroup) entities.ExtensionGroup {
 	}
 }
 
-func (r *PostgresRepository) insertGroupMembers(ctx context.Context, tx *sql.Tx, groupID int64, members []entities.GroupMember) error {
-	for _, m := range members {
+func (r *PostgresRepository) upsertGroupMembers(ctx context.Context, tx *sql.Tx, groupID int64, members []entities.GroupMember) ([]entities.GroupMember, error) {
+	result := make([]entities.GroupMember, len(members))
+	for i, m := range members {
 		model := models.GroupMember{
+			ID:           m.ID,
 			Name:         m.Name,
 			CI:           m.CI,
 			Phone:        sql.NullString{String: m.Phone, Valid: m.Phone != ""},
@@ -497,26 +538,44 @@ func (r *PostgresRepository) insertGroupMembers(ctx context.Context, tx *sql.Tx,
 			Year:         sql.NullString{String: m.Year, Valid: m.Year != ""},
 			Faculty:      string(m.Faculty),
 			School:       sql.NullString{String: m.School, Valid: m.School != ""},
-			Document:     sql.NullString{String: m.Document, Valid: m.Document != ""},
 			IsLeader:     m.IsLeader,
 			IsActive:     m.IsActive,
 		}
-		query, args, err := queries.InsertGroupMember(groupID, model).ToSql()
-		if err != nil {
-			return err
+
+		if m.ID == "" {
+			query, args, err := queries.InsertGroupMember(groupID, model).ToSql()
+			if err != nil {
+				return nil, err
+			}
+			stmt, err := tx.PrepareContext(ctx, query)
+			if err != nil {
+				return nil, err
+			}
+			var newID int64
+			err = stmt.QueryRowContext(ctx, args...).Scan(&newID)
+			stmt.Close()
+			if err != nil {
+				return nil, err
+			}
+			m.ID = strconv.FormatInt(newID, 10)
+		} else {
+			query, args, err := queries.UpdateGroupMember(groupID, model).ToSql()
+			if err != nil {
+				return nil, err
+			}
+			stmt, err := tx.PrepareContext(ctx, query)
+			if err != nil {
+				return nil, err
+			}
+			_, err = stmt.ExecContext(ctx, args...)
+			stmt.Close()
+			if err != nil {
+				return nil, err
+			}
 		}
-		stmt, err := tx.PrepareContext(ctx, query)
-		if err != nil {
-			return err
-		}
-		var id int64
-		err = stmt.QueryRowContext(ctx, args...).Scan(&id)
-		stmt.Close()
-		if err != nil {
-			return err
-		}
+		result[i] = m
 	}
-	return nil
+	return result, nil
 }
 
 func (r *PostgresRepository) getGroupMembers(ctx context.Context, groupID string) ([]entities.GroupMember, error) {
@@ -537,7 +596,7 @@ func (r *PostgresRepository) getGroupMembers(ctx context.Context, groupID string
 	var members []entities.GroupMember
 	for rows.Next() {
 		var m models.GroupMember
-		err := rows.Scan(&m.ID, &m.Name, &m.CI, &m.Phone, &m.Email, &m.Coordination, &m.Year, &m.Faculty, &m.School, &m.Document, &m.IsLeader, &m.IsActive)
+		err := rows.Scan(&m.ID, &m.Name, &m.CI, &m.Phone, &m.Email, &m.Coordination, &m.Year, &m.Faculty, &m.School, &m.IsLeader, &m.IsActive)
 		if err != nil {
 			return nil, err
 		}
@@ -557,7 +616,6 @@ func groupMemberFromModel(m models.GroupMember) entities.GroupMember {
 		Year:         m.Year.String,
 		Faculty:      entities.Faculty(m.Faculty),
 		School:       m.School.String,
-		Document:     m.Document.String,
 		IsLeader:     m.IsLeader,
 		IsActive:     m.IsActive,
 	}

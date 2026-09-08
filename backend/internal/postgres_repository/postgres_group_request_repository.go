@@ -253,3 +253,12 @@ func scanGroupRequest(row scannable) (models.GroupRequest, error) {
 	}
 	return result, nil
 }
+
+func (r *PostgresRepository) UpdateGroupUserID(ctx context.Context, groupID string, userID string) error {
+	query, args, err := queries.UpdateGroupUserID(groupID, userID).ToSql()
+	if err != nil {
+		return err
+	}
+	_, err = r.db.ExecContext(ctx, query, args...)
+	return err
+}

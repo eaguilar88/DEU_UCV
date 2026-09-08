@@ -12,6 +12,7 @@ const (
 	// File types for groups
 	GroupFileTypeLogo    = "logo"
 	GroupFileTypeProject = "proyecto_grupo"
+	GroupMemberFileTypeDocument = "documento_miembro"
 )
 
 // ValidGroupTypes contains all valid group type values
@@ -70,9 +71,9 @@ type GroupMember struct {
 	Year         string
 	Faculty      Faculty
 	School       string
-	Document     string
 	IsLeader     bool
 	IsActive     bool
+	Document     *File
 }
 
 type GroupFiles struct {
