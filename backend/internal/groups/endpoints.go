@@ -24,6 +24,7 @@ type Service interface {
 	GetGroup(ctx context.Context, groupID string) (entities.ExtensionGroup, error)
 	GetGroups(ctx context.Context, filter entities.GroupFilter, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error)
 	GetRandomActiveGroups(ctx context.Context, limit int) ([]entities.ExtensionGroup, error)
+	GetGroupsSimple(ctx context.Context) ([]entities.ExtensionGroup, error)
 	CreateGroup(ctx context.Context, group entities.ExtensionGroup) (int64, string, error)
 	UpdateGroup(ctx context.Context, groupID string, group entities.ExtensionGroup) error
 	DeleteGroup(ctx context.Context, groupID, userID string) error
@@ -71,6 +72,31 @@ func mapGroupError(err error) error {
 
 func (h *Handler) GetGroups(c echo.Context) error {
 	ctx := c.Request().Context()
+
+	// Si se solicita la lista simplificada para selectores
+	if c.QueryParam("simplelist") == "true" {
+		groups, err := h.svc.GetGroupsSimple(ctx)
+		if err != nil {
+			return httperrors.NewInternal(err)
+		}
+
+		type SimpleGroupResponse struct {
+			ID     string `json:"id"`
+			Nombre string `json:"nombre"`
+		}
+
+		simpleGroups := make([]SimpleGroupResponse, 0, len(groups))
+		for _, g := range groups {
+			simpleGroups = append(simpleGroups, SimpleGroupResponse{
+				ID:     g.ID,
+				Nombre: g.Name,
+			})
+		}
+
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"grupos": simpleGroups,
+		})
+	}
 
 	if c.QueryParam("random") == "true" {
 		limit := defaultRandomGroupsLimit
@@ -211,6 +237,12 @@ func (h *Handler) UpdateGroup(c echo.Context) error {
 		group.Project = projectFile
 	}
 
+	for i := range group.Members {
+		if doc, err := utils.GetFileFrom(c, fmt.Sprintf("documento_miembro_%d", i)); err == nil && doc != nil {
+			group.Members[i].Document = doc
+		}
+	}
+
 	if err = h.svc.UpdateGroup(ctx, req.ID, group); err != nil {
 		return mapGroupError(err)
 	}
@@ -299,5 +331,15 @@ func makeGroupRequestFromContext(c echo.Context, userID string, log *zap.Logger)
 	group := createGroupEntityFromRequest(req, userID, req.Faculty)
 	group.Logo = logo
 	group.Project = projectFile
+
+	for i := range group.Members {
+		doc, err := utils.GetFileFrom(c, fmt.Sprintf("documento_miembro_%d", i))
+		if err != nil {
+			log.Error("error getting member document", zap.Int("member_index", i), zap.Error(err))
+			return entities.ExtensionGroup{}, fmt.Errorf("documento del miembro #%d es requerido", i+1)
+		}
+		group.Members[i].Document = doc
+	}
+
 	return group, nil
 }

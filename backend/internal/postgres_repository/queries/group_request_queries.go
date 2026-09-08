@@ -117,3 +117,10 @@ func ActivateGroup(groupID string) sq.UpdateBuilder {
 		Set("updated_at", sq.Expr("NOW()")).
 		Where(sq.Eq{"id": groupID})
 }
+
+func UpdateGroupUserID(groupID string, userID string) sq.UpdateBuilder {
+	return psql.Update("deu.extension_groups").
+		Set("user_id", userID).
+		Set("updated_at", sq.Expr("NOW()")).
+		Where(sq.Eq{"id": groupID})
+}
