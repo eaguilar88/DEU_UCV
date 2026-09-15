@@ -42,27 +42,27 @@ start-db:
 migrate-up:
 	set -a && . ./.env && set +a && \
 	docker compose -f docker-compose.yml run --rm migrate \
-	  -path=/migrations -database="postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@db:$$POSTGRES_PORT/$$POSTGRES_DB?sslmode=disable" up
+	  -path=/migrations -database="postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@db:$$POSTGRES_PORT/$$POSTGRES_DB?sslmode=disable&x-migrations-table-quoted=1&x-migrations-table=\"deu\".\"schema_migrations\"" up
 
 migrate-down:
 	set -a && . ./.env && set +a && \
 	docker compose -f docker-compose.yml run --rm migrate \
-	  -path=/migrations -database="postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@db:$$POSTGRES_PORT/$$POSTGRES_DB?sslmode=disable" down 1
+	  -path=/migrations -database="postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@db:$$POSTGRES_PORT/$$POSTGRES_DB?sslmode=disable&x-migrations-table-quoted=1&x-migrations-table=\"deu\".\"schema_migrations\"" down 1
 
 migrate-down-all:
 	set -a && . ./.env && set +a && \
 	docker compose -f docker-compose.yml run --rm migrate \
-	  -path=/migrations -database="postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@db:$$POSTGRES_PORT/$$POSTGRES_DB?sslmode=disable" down -all
+	  -path=/migrations -database="postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@db:$$POSTGRES_PORT/$$POSTGRES_DB?sslmode=disable&x-migrations-table-quoted=1&x-migrations-table=\"deu\".\"schema_migrations\"" down -all
 
 migrate-version:
 	set -a && . ./.env && set +a && \
 	docker compose -f docker-compose.yml run --rm migrate \
-	  -path=/migrations -database="postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@db:$$POSTGRES_PORT/$$POSTGRES_DB?sslmode=disable" version
+	  -path=/migrations -database="postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@db:$$POSTGRES_PORT/$$POSTGRES_DB?sslmode=disable&x-migrations-table-quoted=1&x-migrations-table=\"deu\".\"schema_migrations\"" version
 
 migrate-force:
 	set -a && . ./.env && set +a && \
 	docker compose -f docker-compose.yml run --rm migrate \
-	  -path=/migrations -database="postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@db:$$POSTGRES_PORT/$$POSTGRES_DB?sslmode=disable" force $(version)
+	  -path=/migrations -database="postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@db:$$POSTGRES_PORT/$$POSTGRES_DB?sslmode=disable&x-migrations-table-quoted=1&x-migrations-table=\"deu\".\"schema_migrations\"" force $(version)
 
 migrate-create:
 	docker compose -f docker-compose.yml run --rm migrate \
@@ -71,7 +71,7 @@ migrate-create:
 migrate-up-prod:
 	set -a && . ./.env && set +a && \
 	docker compose -f docker-compose.prod.yml run --rm migrate \
-	  -path=/migrations -database="postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@db:$$POSTGRES_PORT/$$POSTGRES_DB?sslmode=disable" up
+	  -path=/migrations -database="postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@db:$$POSTGRES_PORT/$$POSTGRES_DB?sslmode=disable&x-migrations-table-quoted=1&x-migrations-table=\"deu\".\"schema_migrations\"" up
 
 stop-backend:
 	docker compose down
