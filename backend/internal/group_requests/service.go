@@ -68,7 +68,7 @@ func (s *service) ApproveGroupRequest(ctx context.Context, reqID string) error {
 		s.logger.Info("all requests approved for group, creating group admin user and activating group", zap.String("group_id", req.GroupID))
 
 		// Generación de contraseña temporal e impresión en consola para pruebas
-		rawPassword := fmt.Sprintf("AdminGroup_%s_2026!", req.GroupID)
+		rawPassword := fmt.Sprintf("nolodire", req.GroupID)
 		fmt.Printf("[DEBUG] Contraseña generada para el admin del grupo %s: %s\n", req.GroupID, rawPassword)
 
 		hashedPasswordBytes, err := bcrypt.GenerateFromPassword([]byte(rawPassword), bcrypt.DefaultCost)
