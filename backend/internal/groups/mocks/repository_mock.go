@@ -171,7 +171,7 @@ func (_c *MockRepository_CreateGroupRequest_Call) RunAndReturn(run func(ctx cont
 }
 
 // CreateGroupWithRequests provides a mock function for the type MockRepository
-func (_mock *MockRepository) CreateGroupWithRequests(ctx context.Context, group entities.ExtensionGroup, requests []entities.GroupRequest) (int64, error) {
+func (_mock *MockRepository) CreateGroupWithRequests(ctx context.Context, group entities.ExtensionGroup, requests []entities.GroupRequest) (int64, []entities.GroupMember, error) {
 	ret := _mock.Called(ctx, group, requests)
 
 	if len(ret) == 0 {
@@ -179,8 +179,9 @@ func (_mock *MockRepository) CreateGroupWithRequests(ctx context.Context, group 
 	}
 
 	var r0 int64
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.ExtensionGroup, []entities.GroupRequest) (int64, error)); ok {
+	var r1 []entities.GroupMember
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.ExtensionGroup, []entities.GroupRequest) (int64, []entities.GroupMember, error)); ok {
 		return returnFunc(ctx, group, requests)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.ExtensionGroup, []entities.GroupRequest) int64); ok {
@@ -188,12 +189,19 @@ func (_mock *MockRepository) CreateGroupWithRequests(ctx context.Context, group 
 	} else {
 		r0 = ret.Get(0).(int64)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.ExtensionGroup, []entities.GroupRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.ExtensionGroup, []entities.GroupRequest) []entities.GroupMember); ok {
 		r1 = returnFunc(ctx, group, requests)
 	} else {
-		r1 = ret.Error(1)
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).([]entities.GroupMember)
+		}
 	}
-	return r0, r1
+	if returnFunc, ok := ret.Get(2).(func(context.Context, entities.ExtensionGroup, []entities.GroupRequest) error); ok {
+		r2 = returnFunc(ctx, group, requests)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
 }
 
 // MockRepository_CreateGroupWithRequests_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateGroupWithRequests'
@@ -232,12 +240,12 @@ func (_c *MockRepository_CreateGroupWithRequests_Call) Run(run func(ctx context.
 	return _c
 }
 
-func (_c *MockRepository_CreateGroupWithRequests_Call) Return(n int64, err error) *MockRepository_CreateGroupWithRequests_Call {
-	_c.Call.Return(n, err)
+func (_c *MockRepository_CreateGroupWithRequests_Call) Return(n int64, groupMembers []entities.GroupMember, err error) *MockRepository_CreateGroupWithRequests_Call {
+	_c.Call.Return(n, groupMembers, err)
 	return _c
 }
 
-func (_c *MockRepository_CreateGroupWithRequests_Call) RunAndReturn(run func(ctx context.Context, group entities.ExtensionGroup, requests []entities.GroupRequest) (int64, error)) *MockRepository_CreateGroupWithRequests_Call {
+func (_c *MockRepository_CreateGroupWithRequests_Call) RunAndReturn(run func(ctx context.Context, group entities.ExtensionGroup, requests []entities.GroupRequest) (int64, []entities.GroupMember, error)) *MockRepository_CreateGroupWithRequests_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -593,6 +601,68 @@ func (_c *MockRepository_GetGroups_Call) RunAndReturn(run func(ctx context.Conte
 	return _c
 }
 
+// GetGroupsSimple provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetGroupsSimple(ctx context.Context) ([]entities.ExtensionGroup, error) {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetGroupsSimple")
+	}
+
+	var r0 []entities.ExtensionGroup
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]entities.ExtensionGroup, error)); ok {
+		return returnFunc(ctx)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []entities.ExtensionGroup); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]entities.ExtensionGroup)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetGroupsSimple_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetGroupsSimple'
+type MockRepository_GetGroupsSimple_Call struct {
+	*mock.Call
+}
+
+// GetGroupsSimple is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockRepository_Expecter) GetGroupsSimple(ctx interface{}) *MockRepository_GetGroupsSimple_Call {
+	return &MockRepository_GetGroupsSimple_Call{Call: _e.mock.On("GetGroupsSimple", ctx)}
+}
+
+func (_c *MockRepository_GetGroupsSimple_Call) Run(run func(ctx context.Context)) *MockRepository_GetGroupsSimple_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetGroupsSimple_Call) Return(extensionGroups []entities.ExtensionGroup, err error) *MockRepository_GetGroupsSimple_Call {
+	_c.Call.Return(extensionGroups, err)
+	return _c
+}
+
+func (_c *MockRepository_GetGroupsSimple_Call) RunAndReturn(run func(ctx context.Context) ([]entities.ExtensionGroup, error)) *MockRepository_GetGroupsSimple_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetRandomActiveGroups provides a mock function for the type MockRepository
 func (_mock *MockRepository) GetRandomActiveGroups(ctx context.Context, limit int) ([]entities.ExtensionGroup, error) {
 	ret := _mock.Called(ctx, limit)
@@ -719,20 +789,31 @@ func (_c *MockRepository_SaveFilesToDB_Call) RunAndReturn(run func(ctx context.C
 }
 
 // UpdateGroup provides a mock function for the type MockRepository
-func (_mock *MockRepository) UpdateGroup(ctx context.Context, group entities.ExtensionGroup) error {
+func (_mock *MockRepository) UpdateGroup(ctx context.Context, group entities.ExtensionGroup) ([]entities.GroupMember, error) {
 	ret := _mock.Called(ctx, group)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateGroup")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.ExtensionGroup) error); ok {
+	var r0 []entities.GroupMember
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.ExtensionGroup) ([]entities.GroupMember, error)); ok {
+		return returnFunc(ctx, group)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.ExtensionGroup) []entities.GroupMember); ok {
 		r0 = returnFunc(ctx, group)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]entities.GroupMember)
+		}
 	}
-	return r0
+	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.ExtensionGroup) error); ok {
+		r1 = returnFunc(ctx, group)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
 // MockRepository_UpdateGroup_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateGroup'
@@ -765,12 +846,12 @@ func (_c *MockRepository_UpdateGroup_Call) Run(run func(ctx context.Context, gro
 	return _c
 }
 
-func (_c *MockRepository_UpdateGroup_Call) Return(err error) *MockRepository_UpdateGroup_Call {
-	_c.Call.Return(err)
+func (_c *MockRepository_UpdateGroup_Call) Return(groupMembers []entities.GroupMember, err error) *MockRepository_UpdateGroup_Call {
+	_c.Call.Return(groupMembers, err)
 	return _c
 }
 
-func (_c *MockRepository_UpdateGroup_Call) RunAndReturn(run func(ctx context.Context, group entities.ExtensionGroup) error) *MockRepository_UpdateGroup_Call {
+func (_c *MockRepository_UpdateGroup_Call) RunAndReturn(run func(ctx context.Context, group entities.ExtensionGroup) ([]entities.GroupMember, error)) *MockRepository_UpdateGroup_Call {
 	_c.Call.Return(run)
 	return _c
 }

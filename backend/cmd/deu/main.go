@@ -105,7 +105,7 @@ func main() {
 	groupService := groups.NewService(repository, bbClient, logger)
 	groupEndpoints := groups.NewHandler(groupService, logger)
 
-	groupRequestService := group_requests.NewService(repository, logger)
+	groupRequestService := group_requests.NewService(repository, mailClient, logger)
 	groupRequestEndpoints := group_requests.NewHandler(groupRequestService, logger)
 
 	groupResourceRequestService := group_resource_requests.NewService(repository, logger)

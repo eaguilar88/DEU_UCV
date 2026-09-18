@@ -2,8 +2,9 @@ package group_requests
 
 import (
 	"context"
-	"database/sql"
+	"crypto/rand"
 	"fmt"
+	"math/big"
 	"strconv"
 	"strings"
 
@@ -11,6 +12,8 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
+
+const passwordCharset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 
 type Repository interface {
 	ApproveGroupRequest(ctx context.Context, reqID string) error
@@ -21,19 +24,27 @@ type Repository interface {
 	GetPendingGroupRequestsCounts(ctx context.Context, faculty entities.Faculty) ([]entities.FacultyPendingCount, error)
 	ActivateGroup(ctx context.Context, groupID string) error
 	CreateUser(ctx context.Context, user entities.User) (int64, error)
-	AddRoleToUser(ctx context.Context, tx *sql.Tx, userID string, role int) error
 	UpdateGroupUserID(ctx context.Context, groupID string, userID string) error
+	GetGroupByID(ctx context.Context, groupID string) (entities.ExtensionGroup, error)
+	GetUser(ctx context.Context, userID string) (*entities.User, error)
+}
+
+// MailClient defines the email sending operations required by the group_requests service.
+type MailClient interface {
+	Send(ctx context.Context, to string, subject string, body string) error
 }
 
 type service struct {
-	repo   Repository
-	logger *zap.Logger
+	repo        Repository
+	emailClient MailClient
+	logger      *zap.Logger
 }
 
-func NewService(repo Repository, logger *zap.Logger) Service {
+func NewService(repo Repository, emailClient MailClient, logger *zap.Logger) Service {
 	return &service{
-		repo:   repo,
-		logger: logger,
+		repo:        repo,
+		emailClient: emailClient,
+		logger:      logger,
 	}
 }
 
@@ -65,11 +76,31 @@ func (s *service) ApproveGroupRequest(ctx context.Context, reqID string) error {
 	}
 
 	if allApproved {
-		s.logger.Info("all requests approved for group, creating group admin user and activating group", zap.String("group_id", req.GroupID))
+		group, err := s.repo.GetGroupByID(ctx, req.GroupID)
+		if err != nil {
+			s.logger.Error("failed to fetch group before activation", zap.Error(err), zap.String("group_id", req.GroupID))
+			return err
+		}
 
-		// Generación de contraseña temporal e impresión en consola para pruebas
-		rawPassword := fmt.Sprintf("nolodire", req.GroupID)
-		fmt.Printf("[DEBUG] Contraseña generada para el admin del grupo %s: %s\n", req.GroupID, rawPassword)
+		// The original requester, captured before UpdateGroupUserID below reassigns
+		// extension_groups.user_id to the new dedicated group-admin login.
+		owner, err := s.repo.GetUser(ctx, group.Owner.ID)
+		if err != nil {
+			s.logger.Error("failed to fetch original group requester", zap.Error(err), zap.String("group_id", req.GroupID))
+			return err
+		}
+
+		s.logger.Info("all requests approved for group, creating group admin user and activating group",
+			zap.String("group_id", req.GroupID),
+			zap.String("original_owner_id", owner.ID),
+			zap.String("original_owner_email", owner.Email),
+		)
+
+		rawPassword, err := generateRandomPassword(12)
+		if err != nil {
+			s.logger.Error("failed to generate password for new group admin", zap.Error(err))
+			return err
+		}
 
 		hashedPasswordBytes, err := bcrypt.GenerateFromPassword([]byte(rawPassword), bcrypt.DefaultCost)
 		if err != nil {
@@ -88,7 +119,7 @@ func (s *service) ApproveGroupRequest(ctx context.Context, reqID string) error {
 			LastName:       req.GroupName,
 			Password:       hashedPassword,
 			DateOfBirth:    "2000-01-01",
-    		EducationLevel: "bachiller",
+			EducationLevel: "bachiller",
 			Roles: []string{
 				entities.RoleNameFromID(entities.RoleExtension),
 			},
@@ -102,14 +133,6 @@ func (s *service) ApproveGroupRequest(ctx context.Context, reqID string) error {
 
 		userIDStr := fmt.Sprintf("%d", newUserID)
 
-		// Se asigna el rol de group_admin usando AddRoleToUser
-		/*err = s.repo.AddRoleToUser(ctx, nil, userIDStr, entities.RoleAdminGrupo)
-		if err != nil {
-			s.logger.Error("failed to assign extension role to user", zap.Error(err))
-			return err
-		}*/
-
-		// Actualizar el user_id asignado en deu.extension_groups
 		if err := s.repo.UpdateGroupUserID(ctx, req.GroupID, userIDStr); err != nil {
 			s.logger.Error("failed to update group user_id", zap.Error(err), zap.String("group_id", req.GroupID))
 			return err
@@ -119,9 +142,34 @@ func (s *service) ApproveGroupRequest(ctx context.Context, reqID string) error {
 			s.logger.Error("failed to activate group", zap.Error(err), zap.String("group_id", req.GroupID))
 			return err
 		}
+
+		subject := "Datos de acceso del grupo de extensión"
+		body := fmt.Sprintf(
+			"El grupo %s ha sido aprobado y activado.\n\nUsuario: %s\nContraseña: %s\n\nPor favor inicie sesión y cambie su contraseña.",
+			req.GroupName, adminUser.Email, rawPassword,
+		)
+		if err := s.emailClient.Send(ctx, owner.Email, subject, body); err != nil {
+			s.logger.Error("failed to send group admin credentials email", zap.Error(err), zap.String("group_id", req.GroupID))
+			return fmt.Errorf("error sending credentials email: %w", err)
+		}
 	}
 
 	return nil
+}
+
+// generateRandomPassword returns a cryptographically random alphanumeric
+// password of the given length.
+func generateRandomPassword(length int) (string, error) {
+	password := make([]byte, length)
+	for i := range password {
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(passwordCharset))))
+		if err != nil {
+			return "", fmt.Errorf("failed to generate random password: %w", err)
+		}
+		password[i] = passwordCharset[n.Int64()]
+	}
+
+	return string(password), nil
 }
 
 func (s *service) RejectGroupRequest(ctx context.Context, reqID string) error {
