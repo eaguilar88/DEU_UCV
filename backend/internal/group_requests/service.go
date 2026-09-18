@@ -22,9 +22,7 @@ type Repository interface {
 	GetGroupRequestByID(ctx context.Context, reqID string) (entities.GroupRequest, error)
 	GetGroupRequestsByGroupID(ctx context.Context, groupID string) ([]entities.GroupRequest, error)
 	GetPendingGroupRequestsCounts(ctx context.Context, faculty entities.Faculty) ([]entities.FacultyPendingCount, error)
-	ActivateGroup(ctx context.Context, groupID string) error
-	CreateUser(ctx context.Context, user entities.User) (int64, error)
-	UpdateGroupUserID(ctx context.Context, groupID string, userID string) error
+	CreateGroupAdminAndActivate(ctx context.Context, groupID string, adminUser entities.User) (int64, error)
 	GetGroupByID(ctx context.Context, groupID string) (entities.ExtensionGroup, error)
 	GetUser(ctx context.Context, userID string) (*entities.User, error)
 }
@@ -82,8 +80,8 @@ func (s *service) ApproveGroupRequest(ctx context.Context, reqID string) error {
 			return err
 		}
 
-		// The original requester, captured before UpdateGroupUserID below reassigns
-		// extension_groups.user_id to the new dedicated group-admin login.
+		// The original requester, captured before CreateGroupAdminAndActivate below
+		// reassigns extension_groups.user_id to the new dedicated group-admin login.
 		owner, err := s.repo.GetUser(ctx, group.Owner.ID)
 		if err != nil {
 			s.logger.Error("failed to fetch original group requester", zap.Error(err), zap.String("group_id", req.GroupID))
@@ -109,7 +107,10 @@ func (s *service) ApproveGroupRequest(ctx context.Context, reqID string) error {
 		}
 		hashedPassword := string(hashedPasswordBytes)
 
-		groupIDInt, _ := strconv.Atoi(req.GroupID)
+		groupIDInt, err := strconv.Atoi(req.GroupID)
+		if err != nil {
+			return err
+		}
 		cleanGroupName := strings.ToLower(strings.ReplaceAll(req.GroupName, " ", "_"))
 
 		adminUser := entities.User{
@@ -121,25 +122,12 @@ func (s *service) ApproveGroupRequest(ctx context.Context, reqID string) error {
 			DateOfBirth:    "2000-01-01",
 			EducationLevel: "bachiller",
 			Roles: []string{
-				entities.RoleNameFromID(entities.RoleExtension),
+				entities.RoleNameFromID(entities.RoleGroupAdmin),
 			},
 		}
 
-		newUserID, err := s.repo.CreateUser(ctx, adminUser)
-		if err != nil {
-			s.logger.Error("failed to create user for group admin", zap.Error(err))
-			return err
-		}
-
-		userIDStr := fmt.Sprintf("%d", newUserID)
-
-		if err := s.repo.UpdateGroupUserID(ctx, req.GroupID, userIDStr); err != nil {
-			s.logger.Error("failed to update group user_id", zap.Error(err), zap.String("group_id", req.GroupID))
-			return err
-		}
-
-		if err := s.repo.ActivateGroup(ctx, req.GroupID); err != nil {
-			s.logger.Error("failed to activate group", zap.Error(err), zap.String("group_id", req.GroupID))
+		if _, err := s.repo.CreateGroupAdminAndActivate(ctx, req.GroupID, adminUser); err != nil {
+			s.logger.Error("failed to create group admin user and activate group", zap.Error(err), zap.String("group_id", req.GroupID))
 			return err
 		}
 

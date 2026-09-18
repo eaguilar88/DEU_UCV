@@ -19,11 +19,7 @@ func NewHandler(service Service, logger *zap.Logger) *Handler {
 	}
 }
 
-func (h *Handler) RegisterAnalyticsProtectedEndpoints(g *echo.Group) {
-	g.POST("/analytics", h.GetAnalytics)
-}
-
-func (h *Handler) RegisterAnalyticsAdminEndpoints(g *echo.Group) {
+func (h *Handler) RegisterAnalyticsEndpoints(g *echo.Group) {
 	g.POST("/analytics", h.GetAnalytics)
 }
 

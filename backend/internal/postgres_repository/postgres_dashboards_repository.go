@@ -5,6 +5,7 @@ import (
 
 	"github.com/eaguilar88/deu/internal/group_dashboards"
 	"github.com/eaguilar88/deu/internal/postgres_repository/queries"
+	"github.com/lib/pq"
 )
 
 func (r *PostgresRepository) GetGroupDashboardMetrics(ctx context.Context, groupID string) (int, int, error) {
@@ -53,7 +54,7 @@ func (r *PostgresRepository) GetFacultyDashboardMetrics(ctx context.Context, fac
 	return pendingRequests, totalGroups, nil
 }
 
-func (r *PostgresRepository) GetDeuDashboardMetrics(ctx context.Context) (int, []group_dashboards.ResourceRequestsByFaculty, int, int, error) {
+func (r *PostgresRepository) GetDeuDashboardMetrics(ctx context.Context) (int, []group_dashboards.RawResourceRequest, int, int, error) {
 	sqlPendingDeu, argsPendingDeu, err := queries.GetDeuPendingRequestsCount().ToSql()
 	if err != nil {
 		return 0, nil, 0, 0, err
@@ -74,13 +75,17 @@ func (r *PostgresRepository) GetDeuDashboardMetrics(ctx context.Context) (int, [
 	}
 	defer rows.Close()
 
-	var resourceReqs []group_dashboards.ResourceRequestsByFaculty
+	var resourceReqs []group_dashboards.RawResourceRequest
 	for rows.Next() {
-		var item group_dashboards.ResourceRequestsByFaculty
-		if err := rows.Scan(&item.Faculty, &item.Count); err != nil {
+		var faculties pq.StringArray
+		var count int
+		if err := rows.Scan(&faculties, &count); err != nil {
 			return 0, nil, 0, 0, err
 		}
-		resourceReqs = append(resourceReqs, item)
+		resourceReqs = append(resourceReqs, group_dashboards.RawResourceRequest{
+			Faculties: []string(faculties),
+			Count:     count,
+		})
 	}
 
 	if err := rows.Err(); err != nil {

@@ -150,7 +150,12 @@ func main() {
 	addActivityRoutes(e, activityEndpoints, middlewares...)
 	addGroupResourceRequestRoutes(e, groupResourceRequestEndpoints, middlewares...)
 	addGroupDashboardRoutes(e, dashboardEndpoints, middlewares...)
-	addGroupAnalyticsRoutes(e, analyticsEndpoints, middlewares...)
+
+	// group_admin is the role granted to group-extension admins (see group_requests).
+	analyticsMiddlewares := append(append([]echo.MiddlewareFunc{}, middlewares...),
+		jwt.RequireRoles("root", "deu_admin", "faculty_admin", "group_admin"),
+	)
+	addGroupAnalyticsRoutes(e, analyticsEndpoints, analyticsMiddlewares...)
 
 	adminMiddlewares := append(append([]echo.MiddlewareFunc{}, middlewares...),
 		jwt.RequireRoles("root", "deu_admin", "faculty_admin"),
@@ -165,7 +170,6 @@ func main() {
 		cycleCloseEndpoints.RegisterAdminEndpoints,
 		activityEndpoints.RegisterActivityAdminEndpoints,
 		dashboardEndpoints.RegisterDashboardAdminEndpoints,
-    	analyticsEndpoints.RegisterAnalyticsAdminEndpoints,
 	)
 
 	addCourseCycleCloseRequestRoutes(e, cycleCloseEndpoints, middlewares...)
@@ -288,7 +292,7 @@ func addGroupDashboardRoutes(e *echo.Echo, endpoints *group_dashboards.Handler, 
 
 func addGroupAnalyticsRoutes(e *echo.Echo, endpoints *group_analytics.Handler, middlewares ...echo.MiddlewareFunc) {
 	protected := e.Group("", middlewares...)
-	endpoints.RegisterAnalyticsProtectedEndpoints(protected)
+	endpoints.RegisterAnalyticsEndpoints(protected)
 }
 
 func addCourseCycleCloseRequestRoutes(e *echo.Echo, endpoints *course_cycle_close_requests.Handler, middlewares ...echo.MiddlewareFunc) {

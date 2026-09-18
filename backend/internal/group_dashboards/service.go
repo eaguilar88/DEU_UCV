@@ -8,16 +8,19 @@ import (
 	"go.uber.org/zap"
 )
 
+// RawResourceRequest is a pending-resource-request count for one distinct faculty
+// combination (a group's `faculty` column is a Postgres array, since a group can
+// belong to more than one faculty), with array decoding already done at the
+// repository boundary — the service only deals in decoded []string here.
 type RawResourceRequest struct {
-	Faculty              string
-	IsMultidisciplinary bool
-	Count                int
+	Faculties []string
+	Count     int
 }
 
 type Repository interface {
 	GetGroupDashboardMetrics(ctx context.Context, groupID string) (upcoming int, pendingReports int, err error)
 	GetFacultyDashboardMetrics(ctx context.Context, faculty string) (pendingRequests int, totalGroups int, err error)
-	GetDeuDashboardMetrics(ctx context.Context) (pendingDeu int, rawResourceReqs []ResourceRequestsByFaculty, activeGroups int, inactiveGroups int, err error)
+	GetDeuDashboardMetrics(ctx context.Context) (pendingDeu int, rawResourceReqs []RawResourceRequest, activeGroups int, inactiveGroups int, err error)
 }
 
 type Service interface {
@@ -75,7 +78,7 @@ func (s *service) GetDeuDashboard(ctx context.Context) (*DeuDashboardResponse, e
 
 	facultyMap := make(map[string]int)
 	for _, item := range rawReqs {
-		targetFaculty := resolveFaculty(item.Faculty)
+		targetFaculty := resolveFaculty(item.Faculties)
 		facultyMap[targetFaculty] += item.Count
 	}
 
@@ -99,25 +102,21 @@ func (s *service) GetDeuDashboard(ctx context.Context) (*DeuDashboardResponse, e
 	}, nil
 }
 
-func resolveFaculty(raw string) string {
-	clean := strings.NewReplacer("{", "", "}", "", "\"", "").Replace(raw)
-	parts := strings.Split(clean, ",")
-
-	var faculties []string
-	for _, p := range parts {
-		trimmed := strings.TrimSpace(p)
+// resolveFaculty buckets a group's faculty list into a single display faculty:
+// groups with exactly one faculty are attributed to it, and groups with zero or
+// multiple faculties (multidisciplinary) are bucketed under "DEU".
+func resolveFaculty(faculties []string) string {
+	var cleaned []string
+	for _, f := range faculties {
+		trimmed := strings.TrimSpace(f)
 		if trimmed != "" {
-			faculties = append(faculties, trimmed)
+			cleaned = append(cleaned, trimmed)
 		}
 	}
 
-	if len(faculties) == 0 {
+	if len(cleaned) != 1 {
 		return "DEU"
 	}
 
-	if len(faculties) > 1 {
-		return "DEU"
-	}
-
-	return faculties[0]
+	return cleaned[0]
 }

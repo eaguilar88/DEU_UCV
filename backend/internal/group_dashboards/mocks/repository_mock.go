@@ -39,7 +39,7 @@ func (_m *MockRepository) EXPECT() *MockRepository_Expecter {
 }
 
 // GetDeuDashboardMetrics provides a mock function for the type MockRepository
-func (_mock *MockRepository) GetDeuDashboardMetrics(ctx context.Context) (int, []group_dashboards.ResourceRequestsByFaculty, int, int, error) {
+func (_mock *MockRepository) GetDeuDashboardMetrics(ctx context.Context) (int, []group_dashboards.RawResourceRequest, int, int, error) {
 	ret := _mock.Called(ctx)
 
 	if len(ret) == 0 {
@@ -47,11 +47,11 @@ func (_mock *MockRepository) GetDeuDashboardMetrics(ctx context.Context) (int, [
 	}
 
 	var r0 int
-	var r1 []group_dashboards.ResourceRequestsByFaculty
+	var r1 []group_dashboards.RawResourceRequest
 	var r2 int
 	var r3 int
 	var r4 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) (int, []group_dashboards.ResourceRequestsByFaculty, int, int, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context) (int, []group_dashboards.RawResourceRequest, int, int, error)); ok {
 		return returnFunc(ctx)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context) int); ok {
@@ -59,11 +59,11 @@ func (_mock *MockRepository) GetDeuDashboardMetrics(ctx context.Context) (int, [
 	} else {
 		r0 = ret.Get(0).(int)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context) []group_dashboards.ResourceRequestsByFaculty); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context) []group_dashboards.RawResourceRequest); ok {
 		r1 = returnFunc(ctx)
 	} else {
 		if ret.Get(1) != nil {
-			r1 = ret.Get(1).([]group_dashboards.ResourceRequestsByFaculty)
+			r1 = ret.Get(1).([]group_dashboards.RawResourceRequest)
 		}
 	}
 	if returnFunc, ok := ret.Get(2).(func(context.Context) int); ok {
@@ -108,12 +108,12 @@ func (_c *MockRepository_GetDeuDashboardMetrics_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *MockRepository_GetDeuDashboardMetrics_Call) Return(pendingDeu int, rawResourceReqs []group_dashboards.ResourceRequestsByFaculty, activeGroups int, inactiveGroups int, err error) *MockRepository_GetDeuDashboardMetrics_Call {
+func (_c *MockRepository_GetDeuDashboardMetrics_Call) Return(pendingDeu int, rawResourceReqs []group_dashboards.RawResourceRequest, activeGroups int, inactiveGroups int, err error) *MockRepository_GetDeuDashboardMetrics_Call {
 	_c.Call.Return(pendingDeu, rawResourceReqs, activeGroups, inactiveGroups, err)
 	return _c
 }
 
-func (_c *MockRepository_GetDeuDashboardMetrics_Call) RunAndReturn(run func(ctx context.Context) (int, []group_dashboards.ResourceRequestsByFaculty, int, int, error)) *MockRepository_GetDeuDashboardMetrics_Call {
+func (_c *MockRepository_GetDeuDashboardMetrics_Call) RunAndReturn(run func(ctx context.Context) (int, []group_dashboards.RawResourceRequest, int, int, error)) *MockRepository_GetDeuDashboardMetrics_Call {
 	_c.Call.Return(run)
 	return _c
 }

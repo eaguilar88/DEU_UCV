@@ -9,6 +9,8 @@ import (
 	"github.com/eaguilar88/deu/internal/group_requests"
 	"github.com/eaguilar88/deu/internal/postgres_repository/models"
 	"github.com/eaguilar88/deu/internal/postgres_repository/queries"
+	"github.com/eaguilar88/deu/internal/users"
+	"github.com/lib/pq"
 	"go.uber.org/zap"
 )
 
@@ -200,13 +202,73 @@ func (r *PostgresRepository) RejectGroupRequest(ctx context.Context, reqID strin
 	return nil
 }
 
-func (r *PostgresRepository) ActivateGroup(ctx context.Context, groupID string) error {
-	query, args, err := queries.ActivateGroup(groupID).ToSql()
+// CreateGroupAdminAndActivate creates the login user for a group's admin, assigns it a role,
+// links it to the group, and activates the group — all inside a single transaction, so a
+// failure partway through never leaves an orphaned, unlinked user behind.
+func (r *PostgresRepository) CreateGroupAdminAndActivate(ctx context.Context, groupID string, adminUser entities.User) (int64, error) {
+	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		return err
+		r.logger.Error("failed to begin transaction", zap.Error(err))
+		return -1, fmt.Errorf("failed to begin transaction: %w", err)
 	}
-	_, err = r.db.ExecContext(ctx, query, args...)
-	return err
+	defer tx.Rollback()
+
+	userModel := newUserFromEntity(adminUser, false)
+
+	userSQL, userArgs, err := queries.InsertUser(userModel).ToSql()
+	if err != nil {
+		r.logger.Error("error formatting insert user query", zap.Error(err))
+		return -1, fmt.Errorf("database error: %w", err)
+	}
+
+	userStmt, err := tx.PrepareContext(ctx, userSQL)
+	if err != nil {
+		return -1, fmt.Errorf("database error: %w", err)
+	}
+	defer userStmt.Close()
+
+	var newUserID int64
+	err = userStmt.QueryRowContext(ctx, userArgs...).Scan(&newUserID)
+	if err != nil {
+		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == pgErrorCodeUniqueViolation {
+			r.logger.Error("duplicate group admin user entry", zap.Error(err))
+			return -1, fmt.Errorf("%w: %w", users.ErrUserAlreadyExists, err)
+		}
+		r.logger.Error("failed to insert group admin user", zap.Error(err))
+		return -1, fmt.Errorf("database error: %w", err)
+	}
+
+	userIDStr := fmt.Sprintf("%d", newUserID)
+
+	if err := r.AddRoleToUser(ctx, tx, userIDStr, entities.RoleIDFromName(adminUser.Roles[0])); err != nil {
+		r.logger.Error("failed to assign role to group admin user", zap.Error(err))
+		return -1, fmt.Errorf("database error: %w", err)
+	}
+
+	updateGroupSQL, updateGroupArgs, err := queries.UpdateGroupUserID(groupID, userIDStr).ToSql()
+	if err != nil {
+		r.logger.Error("failed to build update group user_id query", zap.Error(err))
+		return -1, fmt.Errorf("database error: %w", err)
+	}
+	if err := prepareAndExecute(ctx, tx, updateGroupSQL, updateGroupArgs, r.logger); err != nil {
+		return -1, fmt.Errorf("failed to update group user_id: %w", err)
+	}
+
+	activateSQL, activateArgs, err := queries.ActivateGroup(groupID).ToSql()
+	if err != nil {
+		r.logger.Error("failed to build activate group query", zap.Error(err))
+		return -1, fmt.Errorf("database error: %w", err)
+	}
+	if err := prepareAndExecute(ctx, tx, activateSQL, activateArgs, r.logger); err != nil {
+		return -1, fmt.Errorf("failed to activate group: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		r.logger.Error("failed to commit transaction", zap.Error(err))
+		return -1, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return newUserID, nil
 }
 
 func newGroupRequestFromModel(m models.GroupRequest) entities.GroupRequest {
@@ -252,13 +314,4 @@ func scanGroupRequest(row scannable) (models.GroupRequest, error) {
 		return models.GroupRequest{}, err
 	}
 	return result, nil
-}
-
-func (r *PostgresRepository) UpdateGroupUserID(ctx context.Context, groupID string, userID string) error {
-	query, args, err := queries.UpdateGroupUserID(groupID, userID).ToSql()
-	if err != nil {
-		return err
-	}
-	_, err = r.db.ExecContext(ctx, query, args...)
-	return err
 }

@@ -32,13 +32,11 @@ func TestService_ApproveGroupRequest(t *testing.T) {
 				repoMock.EXPECT().GetGroupRequestsByGroupID(mock.Anything, "1").Return([]entities.GroupRequest{baseReq, otherApproved}, nil)
 				repoMock.EXPECT().GetGroupByID(mock.Anything, "1").Return(entities.ExtensionGroup{ID: "1", Owner: &entities.User{ID: "owner-1"}}, nil)
 				repoMock.EXPECT().GetUser(mock.Anything, "owner-1").Return(&entities.User{ID: "owner-1", Email: "owner@test.com"}, nil)
-				repoMock.EXPECT().CreateUser(mock.Anything, mock.AnythingOfType("entities.User")).
-					RunAndReturn(func(_ context.Context, u entities.User) (int64, error) {
+				repoMock.EXPECT().CreateGroupAdminAndActivate(mock.Anything, "1", mock.AnythingOfType("entities.User")).
+					RunAndReturn(func(_ context.Context, _ string, u entities.User) (int64, error) {
 						assert.NotEqual(t, "nolodire", u.Password)
 						return 42, nil
 					})
-				repoMock.EXPECT().UpdateGroupUserID(mock.Anything, "1", "42").Return(nil)
-				repoMock.EXPECT().ActivateGroup(mock.Anything, "1").Return(nil)
 				mailMock.EXPECT().Send(mock.Anything, "owner@test.com", mock.AnythingOfType("string"), mock.AnythingOfType("string")).
 					Return(nil)
 			},
@@ -79,16 +77,14 @@ func TestService_ApproveGroupRequest(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "activate group error prevents email from being sent",
+			name: "repo transaction error prevents email from being sent",
 			prepare: func(repoMock *mocks.MockRepository, _ *mocks.MockMailClient) {
 				repoMock.EXPECT().GetGroupRequestByID(mock.Anything, "req-1").Return(baseReq, nil)
 				repoMock.EXPECT().ApproveGroupRequest(mock.Anything, "req-1").Return(nil)
 				repoMock.EXPECT().GetGroupRequestsByGroupID(mock.Anything, "1").Return([]entities.GroupRequest{baseReq, otherApproved}, nil)
 				repoMock.EXPECT().GetGroupByID(mock.Anything, "1").Return(entities.ExtensionGroup{ID: "1", Owner: &entities.User{ID: "owner-1"}}, nil)
 				repoMock.EXPECT().GetUser(mock.Anything, "owner-1").Return(&entities.User{ID: "owner-1", Email: "owner@test.com"}, nil)
-				repoMock.EXPECT().CreateUser(mock.Anything, mock.AnythingOfType("entities.User")).Return(int64(42), nil)
-				repoMock.EXPECT().UpdateGroupUserID(mock.Anything, "1", "42").Return(nil)
-				repoMock.EXPECT().ActivateGroup(mock.Anything, "1").Return(errors.New("db error"))
+				repoMock.EXPECT().CreateGroupAdminAndActivate(mock.Anything, "1", mock.AnythingOfType("entities.User")).Return(int64(0), errors.New("db error"))
 			},
 			wantErr: true,
 		},
@@ -100,9 +96,7 @@ func TestService_ApproveGroupRequest(t *testing.T) {
 				repoMock.EXPECT().GetGroupRequestsByGroupID(mock.Anything, "1").Return([]entities.GroupRequest{baseReq, otherApproved}, nil)
 				repoMock.EXPECT().GetGroupByID(mock.Anything, "1").Return(entities.ExtensionGroup{ID: "1", Owner: &entities.User{ID: "owner-1"}}, nil)
 				repoMock.EXPECT().GetUser(mock.Anything, "owner-1").Return(&entities.User{ID: "owner-1", Email: "owner@test.com"}, nil)
-				repoMock.EXPECT().CreateUser(mock.Anything, mock.AnythingOfType("entities.User")).Return(int64(42), nil)
-				repoMock.EXPECT().UpdateGroupUserID(mock.Anything, "1", "42").Return(nil)
-				repoMock.EXPECT().ActivateGroup(mock.Anything, "1").Return(nil)
+				repoMock.EXPECT().CreateGroupAdminAndActivate(mock.Anything, "1", mock.AnythingOfType("entities.User")).Return(int64(42), nil)
 				mailMock.EXPECT().Send(mock.Anything, "owner@test.com", mock.AnythingOfType("string"), mock.AnythingOfType("string")).
 					Return(errors.New("smtp error"))
 			},
