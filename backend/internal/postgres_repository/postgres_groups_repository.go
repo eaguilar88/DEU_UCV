@@ -335,53 +335,6 @@ func (r *PostgresRepository) DeleteGroup(ctx context.Context, groupID string) er
 	return nil
 }
 
-func (r *PostgresRepository) CreateGroupRequest(ctx context.Context, req entities.GroupRequest) (int64, error) {
-	tx, err := r.db.BeginTx(ctx, nil)
-	if err != nil {
-		return -1, err
-	}
-	defer tx.Rollback()
-
-	groupID, err := strconv.Atoi(req.GroupID)
-	if err != nil {
-		r.logger.Warn("Non numeric group_id", zap.String("group_id", req.GroupID), zap.Error(err))
-		return -1, err
-	}
-
-	query, args, err := queries.InsertGroupRequest(models.GroupRequest{
-		GroupID: int64(groupID),
-		Status:  string(req.Status),
-		Faculty: string(req.Faculty),
-		Comments: sql.NullString{
-			String: req.Comments,
-			Valid:  req.Comments != "",
-		},
-	}).ToSql()
-	if err != nil {
-		return -1, err
-	}
-	stmt, err := r.db.PrepareContext(ctx, query)
-	if err != nil {
-		return -1, err
-	}
-	defer stmt.Close()
-	var lastInsertedID int64
-	err = stmt.QueryRowContext(ctx, args...).Scan(&lastInsertedID)
-	if err != nil {
-		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == pgErrorCodeUniqueViolation {
-			r.logger.Error("error inserting group request", zap.Error(err), zap.String("group_id", req.GroupID))
-			return -1, httperrors.NewDuplicateEntryError(err)
-		}
-		r.logger.Error("error inserting group request", zap.Error(err), zap.String("group_id", req.GroupID))
-		return -1, httperrors.NewInternal(err)
-	}
-
-	if err := tx.Commit(); err != nil {
-		return -1, err
-	}
-	return lastInsertedID, nil
-}
-
 func scanGroup(row scannable) (models.ExtensionGroup, error) {
 	var group models.ExtensionGroup
 	err := row.Scan(

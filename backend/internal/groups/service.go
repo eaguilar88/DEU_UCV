@@ -23,9 +23,6 @@ type Repository interface {
 	UpdateGroup(ctx context.Context, group entities.ExtensionGroup) ([]entities.GroupMember, error)
 	DeleteGroup(ctx context.Context, groupID string) error
 
-	// Requests
-	CreateGroupRequest(ctx context.Context, req entities.GroupRequest) (int64, error)
-
 	// Files
 	GetFilesByOwner(ctx context.Context, ownerID string, ownerType entities.OwnerType) (entities.GroupedFiles, error)
 	GetContactsByOwner(ctx context.Context, ownerID string, ownerType entities.OwnerType) ([]entities.Contact, error)
