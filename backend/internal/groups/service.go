@@ -3,6 +3,7 @@ package groups
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strconv"
 
 	"github.com/eaguilar88/deu/internal/entities"
@@ -19,7 +20,6 @@ type Repository interface {
 	CreateGroupWithRequests(ctx context.Context, group entities.ExtensionGroup, requests []entities.GroupRequest) (int64, []entities.GroupMember, error)
 
 	// Individual operations (for flexibility)
-	CreateGroup(ctx context.Context, group entities.ExtensionGroup) (int64, error)
 	UpdateGroup(ctx context.Context, group entities.ExtensionGroup) ([]entities.GroupMember, error)
 	DeleteGroup(ctx context.Context, groupID string) error
 
@@ -143,15 +143,6 @@ func (s *service) enrichMemberFiles(ctx context.Context, members []entities.Grou
 	}
 }
 
-func hasType(types []entities.GroupType, target entities.GroupType) bool {
-	for _, t := range types {
-		if t == target {
-			return true
-		}
-	}
-	return false
-}
-
 func (s *service) CreateGroup(ctx context.Context, group entities.ExtensionGroup) (int64, string, error) {
 	userID := group.Owner.ID
 	providerCode, err := entities.GenerateProviderCode(entities.GroupProviderType)
@@ -169,7 +160,7 @@ func (s *service) CreateGroup(ctx context.Context, group entities.ExtensionGroup
 		Comments: "New group creation request",
 	}
 	var requests []entities.GroupRequest
-	if group.IsMultidisciplinary || hasType(group.Type, entities.MultidisciplinaryGroupType) {
+	if group.IsMultidisciplinary || slices.Contains(group.Type, entities.MultidisciplinaryGroupType) {
 		deuReq := base
 		deuReq.Faculty = entities.FacultyDEU
 		requests = []entities.GroupRequest{deuReq}
