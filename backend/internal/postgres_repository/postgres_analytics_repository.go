@@ -125,7 +125,7 @@ func (r *PostgresRepository) GetYearlyActivitiesMetrics(ctx context.Context, sta
 	return result, rows.Err()
 }
 
-func (r *PostgresRepository) GetKnowledgeAreasByYearMetrics(ctx context.Context, startYear, endYear int, masterAreas []string, groupID string) ([]map[string]interface{}, error) {
+func (r *PostgresRepository) GetKnowledgeAreasByYearMetrics(ctx context.Context, startYear, endYear int, masterAreas []string, groupID string) ([]group_analytics.KnowledgeAreaYear, error) {
 	sqlQuery, args, err := queries.GetRawKnowledgeAreasByYearQuery(startYear, endYear, groupID).ToSql()
 	if err != nil {
 		return nil, err
@@ -183,15 +183,13 @@ func (r *PostgresRepository) GetKnowledgeAreasByYearMetrics(ctx context.Context,
 		return nil, err
 	}
 
-	var response []map[string]interface{}
+	var response []group_analytics.KnowledgeAreaYear
 	for y := startYear; y <= endYear; y++ {
 		yearStr := fmt.Sprintf("%d", y)
-		item := make(map[string]interface{})
-		item["lugar"] = yearStr
-		for k, v := range yearMap[yearStr] {
-			item[k] = v
-		}
-		response = append(response, item)
+		response = append(response, group_analytics.KnowledgeAreaYear{
+			Lugar: yearStr,
+			Areas: yearMap[yearStr],
+		})
 	}
 
 	return response, nil

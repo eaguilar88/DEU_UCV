@@ -12,7 +12,7 @@ type Repository interface {
 	GetGroupParticipantsMetrics(ctx context.Context, year int, groupID string) ([]GroupParticipantsMetric, error)
 	GetActivitiesByCityMetrics(ctx context.Context, year int, groupID string) ([]ActivitiesByCityMetric, error)
 	GetYearlyActivitiesMetrics(ctx context.Context, startYear, endYear int, groupID string) ([]YearlyActivitiesMetric, error)
-	GetKnowledgeAreasByYearMetrics(ctx context.Context, startYear, endYear int, masterAreas []string, groupID string) ([]map[string]interface{}, error)
+	GetKnowledgeAreasByYearMetrics(ctx context.Context, startYear, endYear int, masterAreas []string, groupID string) ([]KnowledgeAreaYear, error)
 }
 
 type Service interface {

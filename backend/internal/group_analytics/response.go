@@ -1,5 +1,7 @@
 package group_analytics
 
+import "encoding/json"
+
 // 1. Participantes Reales vs. Estimados por Actividad
 type ActivityParticipantsMetric struct {
 	Lugar            string `json:"lugar"`            // Nombre de la actividad
@@ -35,6 +37,24 @@ type YearlyActivitiesMetric struct {
 	CantidadReal int    `json:"CantidadReal"` // Total actividades ejecutadas
 }
 
+// KnowledgeAreaYear represents one year's activity counts broken down by knowledge area.
+// JSON wire format is intentionally flattened (not nested under "areas") because the grupos
+// frontend's Recharts <Bar dataKey={areaName}> reads area counts as top-level properties on
+// each datum.
+type KnowledgeAreaYear struct {
+	Lugar string
+	Areas map[string]int
+}
+
+func (k KnowledgeAreaYear) MarshalJSON() ([]byte, error) {
+	flat := make(map[string]interface{}, len(k.Areas)+1)
+	flat["lugar"] = k.Lugar
+	for area, count := range k.Areas {
+		flat[area] = count
+	}
+	return json.Marshal(flat)
+}
+
 // GroupAnalyticsResponse concentra la respuesta general de métricas
 type GroupAnalyticsResponse struct {
 	ActivityParticipants []ActivityParticipantsMetric `json:"participantes_por_actividad"`
@@ -42,5 +62,5 @@ type GroupAnalyticsResponse struct {
 	GroupParticipants    []GroupParticipantsMetric    `json:"participantes_por_grupo"`
 	ActivitiesByCity     []ActivitiesByCityMetric     `json:"actividades_por_ciudad"`
 	YearlyActivities     []YearlyActivitiesMetric     `json:"historico_por_anio"`
-	KnowledgeAreasByYear []map[string]interface{}     `json:"areas_conocimiento_por_anio"`
+	KnowledgeAreasByYear []KnowledgeAreaYear          `json:"areas_conocimiento_por_anio"`
 }

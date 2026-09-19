@@ -20,7 +20,7 @@ func NewHandler(service Service, logger *zap.Logger) *Handler {
 }
 
 func (h *Handler) RegisterAnalyticsEndpoints(g *echo.Group) {
-	g.POST("/analytics", h.GetAnalytics)
+	g.GET("/analytics", h.GetAnalytics)
 }
 
 func (h *Handler) GetAnalytics(c echo.Context) error {

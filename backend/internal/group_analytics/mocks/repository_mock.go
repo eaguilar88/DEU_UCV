@@ -335,23 +335,23 @@ func (_c *MockRepository_GetGroupParticipantsMetrics_Call) RunAndReturn(run func
 }
 
 // GetKnowledgeAreasByYearMetrics provides a mock function for the type MockRepository
-func (_mock *MockRepository) GetKnowledgeAreasByYearMetrics(ctx context.Context, startYear int, endYear int, masterAreas []string, groupID string) ([]map[string]interface{}, error) {
+func (_mock *MockRepository) GetKnowledgeAreasByYearMetrics(ctx context.Context, startYear int, endYear int, masterAreas []string, groupID string) ([]group_analytics.KnowledgeAreaYear, error) {
 	ret := _mock.Called(ctx, startYear, endYear, masterAreas, groupID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetKnowledgeAreasByYearMetrics")
 	}
 
-	var r0 []map[string]interface{}
+	var r0 []group_analytics.KnowledgeAreaYear
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int, int, []string, string) ([]map[string]interface{}, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int, int, []string, string) ([]group_analytics.KnowledgeAreaYear, error)); ok {
 		return returnFunc(ctx, startYear, endYear, masterAreas, groupID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int, int, []string, string) []map[string]interface{}); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int, int, []string, string) []group_analytics.KnowledgeAreaYear); ok {
 		r0 = returnFunc(ctx, startYear, endYear, masterAreas, groupID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]map[string]interface{})
+			r0 = ret.Get(0).([]group_analytics.KnowledgeAreaYear)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, int, int, []string, string) error); ok {
@@ -410,12 +410,12 @@ func (_c *MockRepository_GetKnowledgeAreasByYearMetrics_Call) Run(run func(ctx c
 	return _c
 }
 
-func (_c *MockRepository_GetKnowledgeAreasByYearMetrics_Call) Return(stringToIfaceVals []map[string]interface{}, err error) *MockRepository_GetKnowledgeAreasByYearMetrics_Call {
-	_c.Call.Return(stringToIfaceVals, err)
+func (_c *MockRepository_GetKnowledgeAreasByYearMetrics_Call) Return(knowledgeAreaYears []group_analytics.KnowledgeAreaYear, err error) *MockRepository_GetKnowledgeAreasByYearMetrics_Call {
+	_c.Call.Return(knowledgeAreaYears, err)
 	return _c
 }
 
-func (_c *MockRepository_GetKnowledgeAreasByYearMetrics_Call) RunAndReturn(run func(ctx context.Context, startYear int, endYear int, masterAreas []string, groupID string) ([]map[string]interface{}, error)) *MockRepository_GetKnowledgeAreasByYearMetrics_Call {
+func (_c *MockRepository_GetKnowledgeAreasByYearMetrics_Call) RunAndReturn(run func(ctx context.Context, startYear int, endYear int, masterAreas []string, groupID string) ([]group_analytics.KnowledgeAreaYear, error)) *MockRepository_GetKnowledgeAreasByYearMetrics_Call {
 	_c.Call.Return(run)
 	return _c
 }
