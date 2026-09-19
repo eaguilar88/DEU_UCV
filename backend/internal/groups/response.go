@@ -22,34 +22,42 @@ type GroupMemberResponse struct {
 	Year         string `json:"año,omitempty"`
 	Faculty      string `json:"facultad,omitempty"`
 	School       string `json:"escuela,omitempty"`
-	Document     string `json:"documento,omitempty"`
+	DocumentURL  string `json:"documento_url,omitempty"`
 	IsLeader     bool   `json:"es_lider"`
 	IsActive     bool   `json:"status"`
 }
 
 type GetGroupResponse struct {
-	ID          string                `json:"id,omitempty"`
-	Name        string                `json:"nombre,omitempty"`
-	Description string                `json:"descripcion,omitempty"`
-	Faculty     []string              `json:"facultad,omitempty"`
-	Foundation  string                `json:"fundacion,omitempty"`
-	Type        []string              `json:"tipo,omitempty"`
-	LogoURL     string                `json:"imagen_url,omitempty"`
-	ProjectURL  string                `json:"proyecto_url,omitempty"`
-	Email       string                `json:"email,omitempty"`
-	Phone       string                `json:"telefono,omitempty"`
-	Owner       *OwnerInfo            `json:"propietario,omitempty"`
-	Objective   string                `json:"objetivo,omitempty"`
-	Location    string                `json:"ubicacion,omitempty"`
-	Active      bool                  `json:"activo,omitempty"`
-	Members     []GroupMemberResponse `json:"miembros,omitempty"`
-	CreatedAt   string                `json:"creado_en,omitempty"`
-	UpdatedAt   string                `json:"actualizado_en,omitempty"`
-	DeletedAt   string                `json:"eliminado_en,omitempty"`
+	ID                  string                `json:"id,omitempty"`
+	Name                string                `json:"nombre,omitempty"`
+	Description         string                `json:"descripcion,omitempty"`
+	Faculty             []string              `json:"facultad,omitempty"`
+	Foundation          string                `json:"fundacion,omitempty"`
+	IsMultidisciplinary bool                  `json:"es_multidisciplinario"`
+	Type                []string              `json:"tipo,omitempty"`
+	LogoURL             string                `json:"imagen_url,omitempty"`
+	ProjectURL          string                `json:"proyecto_url,omitempty"`
+	Email               string                `json:"email,omitempty"`
+	Phone               string                `json:"telefono,omitempty"`
+	Owner               *OwnerInfo            `json:"propietario,omitempty"`
+	Objective           string                `json:"objetivo,omitempty"`
+	Location            string                `json:"ubicacion,omitempty"`
+	Active              bool                  `json:"activo,omitempty"`
+	Members             []GroupMemberResponse `json:"miembros,omitempty"`
+	CreatedAt           string                `json:"creado_en,omitempty"`
+	UpdatedAt           string                `json:"actualizado_en,omitempty"`
+	DeletedAt           string                `json:"eliminado_en,omitempty"`
 }
 type GetGroupsResponse struct {
 	Groups    []GetGroupResponse `json:"grupos"`
 	PageScope entities.PageScope `json:"pagina"`
+}
+type SimpleGroupResponse struct {
+	ID     string `json:"id"`
+	Nombre string `json:"nombre"`
+}
+type GetGroupsSimpleResponse struct {
+	Groups []SimpleGroupResponse `json:"grupos"`
 }
 type CreateGroupResponse struct {
 	ID   string `json:"id"`
@@ -68,7 +76,20 @@ func groupsToResponse(groups []entities.ExtensionGroup) []GetGroupResponse {
 	return res
 }
 
+// groupsToSimpleResponse converts groups to the minimal {id, nombre} shape used by frontend selectors.
+func groupsToSimpleResponse(groups []entities.ExtensionGroup) []SimpleGroupResponse {
+	res := make([]SimpleGroupResponse, 0, len(groups))
+	for _, g := range groups {
+		res = append(res, SimpleGroupResponse{ID: g.ID, Nombre: g.Name})
+	}
+	return res
+}
+
 func memberToResponse(m entities.GroupMember) GroupMemberResponse {
+	var documentURL string
+	if m.Document != nil {
+		documentURL = m.Document.URL
+	}
 	return GroupMemberResponse{
 		ID:           m.ID,
 		Name:         m.Name,
@@ -79,7 +100,7 @@ func memberToResponse(m entities.GroupMember) GroupMemberResponse {
 		Year:         m.Year,
 		Faculty:      string(m.Faculty),
 		School:       m.School,
-		Document:     m.Document,
+		DocumentURL:  documentURL,
 		IsLeader:     m.IsLeader,
 		IsActive:     m.IsActive,
 	}
@@ -125,22 +146,23 @@ func groupToResponse(group entities.ExtensionGroup) GetGroupResponse {
 	}
 
 	return GetGroupResponse{
-		ID:          group.ID,
-		Name:        group.Name,
-		Description: group.Description,
-		Faculty:     faculties,
-		Foundation:  group.Foundation,
-		Type:        types,
-		LogoURL:     logoURL,
-		ProjectURL:  projectURL,
-		Email:       group.Email,
-		Phone:       group.Phone,
-		Owner:       owner,
-		Objective:   group.Objective,
-		Location:    group.Location,
-		Active:      group.Active,
-		Members:     membersToResponse(group.Members),
-		CreatedAt:   group.CreatedAt,
-		UpdatedAt:   group.UpdatedAt,
+		ID:                  group.ID,
+		Name:                group.Name,
+		Description:         group.Description,
+		Faculty:             faculties,
+		Foundation:          group.Foundation,
+		IsMultidisciplinary: group.IsMultidisciplinary,
+		Type:                types,
+		LogoURL:             logoURL,
+		ProjectURL:          projectURL,
+		Email:               group.Email,
+		Phone:               group.Phone,
+		Owner:               owner,
+		Objective:           group.Objective,
+		Location:            group.Location,
+		Active:              group.Active,
+		Members:             membersToResponse(group.Members),
+		CreatedAt:           group.CreatedAt,
+		UpdatedAt:           group.UpdatedAt,
 	}
 }

@@ -47,42 +47,40 @@ func (u *User) SetAge() {
 	u.Age = age
 }
 
-type Role struct {
-	ID   int
-	Name string
-}
-
+// Role IDs and names mirror the rows seeded into deu.roles
+// (postgresql/migrations/000020_seed_roles.up.sql) — that table is the source of truth, so
+// these must stay in sync with it rather than the other way around.
 const (
 	RoleRoot = iota + 1
-	RoleAdmin
+	RoleDeuAdmin
 	RoleFacultyAdmin
-	RoleCoordinador
-	RoleFacilitador
-	RoleParticipante
-	RoleExtension
+	RoleCourseAdmin
+	RoleCourseManager
+	RoleGroupHelper
+	RoleGroupAdmin
 	RoleVisitante
 )
 
 var roleNames = map[int]string{
-	RoleRoot:         "root",
-	RoleAdmin:        "admin",
-	RoleFacultyAdmin: "administrador_facultad",
-	RoleCoordinador:  "coordinador",
-	RoleFacilitador:  "facilitador",
-	RoleParticipante: "participante",
-	RoleExtension:    "extension",
-	RoleVisitante:    "visitante",
+	RoleRoot:          "root",
+	RoleDeuAdmin:      "deu_admin",
+	RoleFacultyAdmin:  "faculty_admin",
+	RoleCourseAdmin:   "course_admin",
+	RoleCourseManager: "course_manager",
+	RoleGroupHelper:   "group_helper",
+	RoleGroupAdmin:    "group_admin",
+	RoleVisitante:     "visitante",
 }
 
 var roleIDs = map[string]int{
-	"root":                   RoleRoot,
-	"admin":                  RoleAdmin,
-	"administrador_facultad": RoleFacultyAdmin,
-	"coordinador":            RoleCoordinador,
-	"facilitador":            RoleFacilitador,
-	"participante":           RoleParticipante,
-	"extension":              RoleExtension,
-	"visitante":              RoleVisitante,
+	"root":           RoleRoot,
+	"deu_admin":      RoleDeuAdmin,
+	"faculty_admin":  RoleFacultyAdmin,
+	"course_admin":   RoleCourseAdmin,
+	"course_manager": RoleCourseManager,
+	"group_helper":   RoleGroupHelper,
+	"group_admin":    RoleGroupAdmin,
+	"visitante":      RoleVisitante,
 }
 
 // RoleNameFromID returns the role name for a given ID.

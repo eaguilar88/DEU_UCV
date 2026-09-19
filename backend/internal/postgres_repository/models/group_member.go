@@ -13,7 +13,6 @@ type GroupMember struct {
 	Year         sql.NullString
 	Faculty      string
 	School       sql.NullString
-	Document     sql.NullString
 	IsLeader     bool
 	IsActive     bool
 }
