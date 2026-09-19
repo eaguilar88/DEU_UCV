@@ -80,22 +80,7 @@ func (h *Handler) GetGroups(c echo.Context) error {
 			return httperrors.NewInternal(err)
 		}
 
-		type SimpleGroupResponse struct {
-			ID     string `json:"id"`
-			Nombre string `json:"nombre"`
-		}
-
-		simpleGroups := make([]SimpleGroupResponse, 0, len(groups))
-		for _, g := range groups {
-			simpleGroups = append(simpleGroups, SimpleGroupResponse{
-				ID:     g.ID,
-				Nombre: g.Name,
-			})
-		}
-
-		return c.JSON(http.StatusOK, map[string]interface{}{
-			"grupos": simpleGroups,
-		})
+		return c.JSON(http.StatusOK, GetGroupsSimpleResponse{Groups: groupsToSimpleResponse(groups)})
 	}
 
 	if c.QueryParam("random") == "true" {

@@ -52,6 +52,13 @@ type GetGroupsResponse struct {
 	Groups    []GetGroupResponse `json:"grupos"`
 	PageScope entities.PageScope `json:"pagina"`
 }
+type SimpleGroupResponse struct {
+	ID     string `json:"id"`
+	Nombre string `json:"nombre"`
+}
+type GetGroupsSimpleResponse struct {
+	Groups []SimpleGroupResponse `json:"grupos"`
+}
 type CreateGroupResponse struct {
 	ID   string `json:"id"`
 	Code string `json:"codigo_proveedor"`
@@ -65,6 +72,15 @@ func groupsToResponse(groups []entities.ExtensionGroup) []GetGroupResponse {
 	var res []GetGroupResponse
 	for _, group := range groups {
 		res = append(res, groupToResponse(group))
+	}
+	return res
+}
+
+// groupsToSimpleResponse converts groups to the minimal {id, nombre} shape used by frontend selectors.
+func groupsToSimpleResponse(groups []entities.ExtensionGroup) []SimpleGroupResponse {
+	res := make([]SimpleGroupResponse, 0, len(groups))
+	for _, g := range groups {
+		res = append(res, SimpleGroupResponse{ID: g.ID, Nombre: g.Name})
 	}
 	return res
 }

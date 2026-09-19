@@ -64,7 +64,7 @@ func (r *PostgresRepository) GetDeuDashboardMetrics(ctx context.Context) (int, [
 		return 0, nil, 0, 0, err
 	}
 
-	sqlReqs, argsReqs, err := queries.CountPendingGroupResourceRequestsByFaculty("").ToSql()
+	sqlReqs, argsReqs, err := queries.CountPendingGroupResourceRequestsByFaculty(queries.AllFaculties).ToSql()
 	if err != nil {
 		return 0, nil, 0, 0, err
 	}

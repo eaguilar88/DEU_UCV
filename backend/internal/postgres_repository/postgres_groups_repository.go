@@ -305,13 +305,11 @@ func (r *PostgresRepository) UpdateGroup(ctx context.Context, group entities.Ext
 }
 
 func (r *PostgresRepository) upsertContactInformation(ctx context.Context, tx *sql.Tx, contactValue string, contactType entities.ContactType, groupID int64) error {
-	query := `
-		INSERT INTO deu.contacts (contact_type, contact_value, owner_type, owner_id)
-		VALUES ($1, $2, $3, $4)
-		ON CONFLICT (contact_type, contact_value, owner_type, owner_id) 
-		DO UPDATE SET contact_value = EXCLUDED.contact_value, updated_at = NOW();
-	`
-	_, err := tx.ExecContext(ctx, query, string(contactType), contactValue, entities.OwnerTypeExtensionGroup.String(), groupID)
+	query, args, err := queries.UpsertContact(string(contactType), contactValue, entities.OwnerTypeExtensionGroup.String(), groupID).ToSql()
+	if err != nil {
+		return err
+	}
+	_, err = tx.ExecContext(ctx, query, args...)
 	return err
 }
 
@@ -565,12 +563,11 @@ func (r *PostgresRepository) insertContactInformation(ctx context.Context, tx *s
 }
 
 func (r *PostgresRepository) GetContactsByOwner(ctx context.Context, ownerID string, ownerType entities.OwnerType) ([]entities.Contact, error) {
-	query := `
-		SELECT id, contact_type, contact_value, owner_type, owner_id
-		FROM deu.contacts
-		WHERE owner_id = $1 AND owner_type = $2 AND deleted_at IS NULL
-	`
-	rows, err := r.db.QueryContext(ctx, query, ownerID, string(ownerType))
+	query, args, err := queries.SelectContactsByOwner(ownerID, string(ownerType)).ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build contacts query: %w", err)
+	}
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query contacts: %w", err)
 	}

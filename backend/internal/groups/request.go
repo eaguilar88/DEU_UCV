@@ -72,9 +72,8 @@ func groupMemberEntityFromRequest(dto GroupMemberDTO) entities.GroupMember {
 		Year:         dto.Year,
 		Faculty:      entities.Faculty(dto.Faculty),
 		School:       dto.School,
-		//Document:     dto.Document,
-		IsLeader: dto.IsLeader,
-		IsActive: dto.IsActive,
+		IsLeader:     dto.IsLeader,
+		IsActive:     dto.IsActive,
 	}
 }
 
