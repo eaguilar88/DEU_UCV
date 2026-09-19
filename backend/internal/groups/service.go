@@ -8,7 +8,10 @@ import (
 
 	"github.com/eaguilar88/deu/internal/entities"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 )
+
+const maxEnrichmentConcurrency = 10
 
 type Repository interface {
 	GetGroupByID(ctx context.Context, groupID string) (entities.ExtensionGroup, error)
@@ -55,9 +58,23 @@ func (s *service) GetGroup(ctx context.Context, groupID string) (entities.Extens
 	if err != nil {
 		return entities.ExtensionGroup{}, err
 	}
-	s.enrichGroupFiles(ctx, &group)
-	s.enrichGroupContacts(ctx, &group)
-	s.enrichMemberFiles(ctx, group.Members)
+
+	g, gctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		s.enrichGroupFiles(gctx, &group)
+		return nil
+	})
+	g.Go(func() error {
+		s.enrichGroupContacts(gctx, &group)
+		return nil
+	})
+	g.Go(func() error {
+		s.enrichMemberFiles(gctx, group.Members)
+		return nil
+	})
+	if err := g.Wait(); err != nil {
+		s.log.Error("failed to enrich group", zap.Error(err), zap.String("group_id", groupID))
+	}
 
 	return group, nil
 }
@@ -68,9 +85,17 @@ func (s *service) GetGroups(ctx context.Context, filter entities.GroupFilter, pa
 		return nil, entities.PageScope{}, err
 	}
 
+	g, gctx := errgroup.WithContext(ctx)
+	g.SetLimit(maxEnrichmentConcurrency)
 	for i := range groups {
-		s.enrichGroupFiles(ctx, &groups[i])
-		s.enrichGroupContacts(ctx, &groups[i])
+		g.Go(func() error {
+			s.enrichGroupFiles(gctx, &groups[i])
+			s.enrichGroupContacts(gctx, &groups[i])
+			return nil
+		})
+	}
+	if err := g.Wait(); err != nil {
+		s.log.Error("failed to enrich groups", zap.Error(err))
 	}
 
 	return groups, page, nil
@@ -82,8 +107,16 @@ func (s *service) GetRandomActiveGroups(ctx context.Context, limit int) ([]entit
 		return nil, err
 	}
 
+	g, gctx := errgroup.WithContext(ctx)
+	g.SetLimit(maxRandomGroupsLimit)
 	for i := range groups {
-		s.enrichGroupFiles(ctx, &groups[i])
+		g.Go(func() error {
+			s.enrichGroupFiles(gctx, &groups[i])
+			return nil
+		})
+	}
+	if err := g.Wait(); err != nil {
+		s.log.Error("failed to enrich random active groups", zap.Error(err))
 	}
 
 	return groups, nil
@@ -94,49 +127,66 @@ func (s *service) GetGroupsSimple(ctx context.Context) ([]entities.ExtensionGrou
 }
 
 func (s *service) enrichGroupFiles(ctx context.Context, group *entities.ExtensionGroup) {
-	if filesMap, err := s.repo.GetFilesByOwner(ctx, group.ID, entities.OwnerTypeExtensionGroup); err == nil {
-		if logoList, ok := filesMap[entities.GroupFileTypeLogo]; ok && len(logoList) > 0 {
-			logo := logoList[0]
-			if url, err := s.storage.GetFileURL(ctx, logo.Key); err == nil {
-				logo.URL = url
-			}
-			group.Logo = logo
-		}
+	filesMap, err := s.repo.GetFilesByOwner(ctx, group.ID, entities.OwnerTypeExtensionGroup)
+	if err != nil {
+		s.log.Error("failed to get group files", zap.Error(err), zap.String("group_id", group.ID))
+		return
+	}
 
-		if projectList, ok := filesMap[entities.GroupFileTypeProject]; ok && len(projectList) > 0 {
-			project := projectList[0]
-			if url, err := s.storage.GetFileURL(ctx, project.Key); err == nil {
-				project.URL = url
-			}
-			group.Project = project
+	if logo := filesMap.GetSingleFile(entities.GroupFileTypeLogo); logo != nil {
+		if url, err := s.storage.GetFileURL(ctx, logo.Key); err == nil {
+			logo.URL = url
 		}
+		group.Logo = logo
+	}
+
+	if project := filesMap.GetSingleFile(entities.GroupFileTypeProject); project != nil {
+		if url, err := s.storage.GetFileURL(ctx, project.Key); err == nil {
+			project.URL = url
+		}
+		group.Project = project
 	}
 }
 
 func (s *service) enrichGroupContacts(ctx context.Context, group *entities.ExtensionGroup) {
-	if contacts, err := s.repo.GetContactsByOwner(ctx, group.ID, entities.OwnerTypeExtensionGroup); err == nil {
-		for _, c := range contacts {
-			switch c.Type {
-			case entities.ContactTypeEmail:
-				group.Email = c.Value
-			case entities.ContactTypePhone:
-				group.Phone = c.Value
-			}
+	contacts, err := s.repo.GetContactsByOwner(ctx, group.ID, entities.OwnerTypeExtensionGroup)
+	if err != nil {
+		s.log.Error("failed to get group contacts", zap.Error(err), zap.String("group_id", group.ID))
+		return
+	}
+
+	for _, c := range contacts {
+		switch c.Type {
+		case entities.ContactTypeEmail:
+			group.Email = c.Value
+		case entities.ContactTypePhone:
+			group.Phone = c.Value
 		}
 	}
 }
 
 func (s *service) enrichMemberFiles(ctx context.Context, members []entities.GroupMember) {
+	g, gctx := errgroup.WithContext(ctx)
+	g.SetLimit(maxEnrichmentConcurrency)
 	for i := range members {
-		if filesMap, err := s.repo.GetFilesByOwner(ctx, members[i].ID, entities.OwnerTypeGroupMember); err == nil {
-			if docList, ok := filesMap[entities.GroupMemberFileTypeDocument]; ok && len(docList) > 0 {
-				doc := docList[0]
-				if url, err := s.storage.GetFileURL(ctx, doc.Key); err == nil {
+		g.Go(func() error {
+			filesMap, err := s.repo.GetFilesByOwner(gctx, members[i].ID, entities.OwnerTypeGroupMember)
+			if err != nil {
+				s.log.Error("failed to get member files", zap.Error(err), zap.String("member_id", members[i].ID))
+				return nil
+			}
+
+			if doc := filesMap.GetSingleFile(entities.GroupMemberFileTypeDocument); doc != nil {
+				if url, err := s.storage.GetFileURL(gctx, doc.Key); err == nil {
 					doc.URL = url
 				}
 				members[i].Document = doc
 			}
-		}
+			return nil
+		})
+	}
+	if err := g.Wait(); err != nil {
+		s.log.Error("failed to enrich member files", zap.Error(err))
 	}
 }
 

@@ -12,7 +12,7 @@ func GetActivityParticipantsMetricsQuery(year int, groupID string) sq.SelectBuil
 		"COALESCE(a.actual_participants, 0) AS cantidad_real",
 		"COALESCE(a.group_participants, 0) AS integrantes",
 	).
-		From(activitiesTableName + " AS a").
+		From(activitiesTableName+" AS a").
 		Where(sq.Eq{"a.deleted_at": nil}).
 		Where("EXTRACT(YEAR FROM a.date_start) = ?", year).
 		Where("(COALESCE(a.stimated_participants, 0) > 0 OR COALESCE(a.actual_participants, 0) > 0)")
@@ -29,7 +29,7 @@ func GetActivitiesByStateMetricsQuery(year int, groupID string) sq.SelectBuilder
 		"TRIM(SPLIT_PART(a.location, ',', 2)) AS lugar",
 		"COUNT(*) AS cantidad_real",
 	).
-		From(activitiesTableName + " AS a").
+		From(activitiesTableName+" AS a").
 		Where(sq.Eq{"a.deleted_at": nil}).
 		Where("EXTRACT(YEAR FROM a.date_start) = ?", year).
 		Where("TRIM(SPLIT_PART(a.location, ',', 2)) <> ''")
@@ -49,8 +49,8 @@ func GetGroupParticipantsMetricsQuery(year int, groupID string) sq.SelectBuilder
 		"SUM(COALESCE(a.group_participants, 0)) AS integrantes",
 		"COUNT(a.id) AS cantidad_de_veces",
 	).
-		From(activitiesTableName + " AS a").
-		Join(groupsTableName + " AS g ON a.group_id = g.id").
+		From(activitiesTableName+" AS a").
+		Join(groupsTableName+" AS g ON a.group_id = g.id").
 		Where(sq.Eq{"a.deleted_at": nil}).
 		Where("EXTRACT(YEAR FROM a.date_start) = ?", year).
 		Where("(COALESCE(a.stimated_participants, 0) > 0 OR COALESCE(a.actual_participants, 0) > 0)")
@@ -67,7 +67,7 @@ func GetActivitiesByCityMetricsQuery(year int, groupID string) sq.SelectBuilder 
 		"TRIM(SPLIT_PART(a.location, ',', 3)) AS lugar",
 		"COUNT(*) AS cantidad_real",
 	).
-		From(activitiesTableName + " AS a").
+		From(activitiesTableName+" AS a").
 		Where(sq.Eq{"a.deleted_at": nil}).
 		Where("EXTRACT(YEAR FROM a.date_start) = ?", year).
 		Where("TRIM(SPLIT_PART(a.location, ',', 3)) <> ''")
@@ -84,7 +84,7 @@ func GetYearlyActivitiesMetricsQuery(startYear, endYear int, groupID string) sq.
 		"CAST(EXTRACT(YEAR FROM a.date_end) AS TEXT) AS lugar",
 		"COUNT(*) AS cantidad_real",
 	).
-		From(activitiesTableName + " AS a").
+		From(activitiesTableName+" AS a").
 		Where(sq.Eq{"a.deleted_at": nil}).
 		Where("EXTRACT(YEAR FROM a.date_end) BETWEEN ? AND ?", startYear, endYear)
 
@@ -100,7 +100,7 @@ func GetRawKnowledgeAreasByYearQuery(startYear, endYear int, groupID string) sq.
 		"CAST(EXTRACT(YEAR FROM a.date_start) AS TEXT) AS anio",
 		"a.knowledge_area",
 	).
-		From(activitiesTableName + " AS a").
+		From(activitiesTableName+" AS a").
 		Where(sq.Eq{"a.deleted_at": nil}).
 		Where("EXTRACT(YEAR FROM a.date_start) BETWEEN ? AND ?", startYear, endYear)
 

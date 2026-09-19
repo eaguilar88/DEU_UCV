@@ -44,37 +44,37 @@ func (s *service) GetAnalytics(ctx context.Context, req AnalyticsFilterRequest) 
 
 	actPart, err := s.repo.GetActivityParticipantsMetrics(ctx, req.CurrentYear, req.GroupID)
 	if err != nil {
-		s.logger.Error("error al obtener participantes por actividad", zap.Error(err))
+		s.logger.Error("error retrieving activity participants", zap.Error(err))
 		return nil, err
 	}
 
 	actState, err := s.repo.GetActivitiesByStateMetrics(ctx, req.CurrentYear, req.GroupID)
 	if err != nil {
-		s.logger.Error("error al obtener actividades por estado", zap.Error(err))
+		s.logger.Error("error retrieving activities by state", zap.Error(err))
 		return nil, err
 	}
 
 	grpPart, err := s.repo.GetGroupParticipantsMetrics(ctx, req.CurrentYear, req.GroupID)
 	if err != nil {
-		s.logger.Error("error al obtener participantes por grupo", zap.Error(err))
+		s.logger.Error("error retrieving group participants", zap.Error(err))
 		return nil, err
 	}
 
 	actCity, err := s.repo.GetActivitiesByCityMetrics(ctx, req.CurrentYear, req.GroupID)
 	if err != nil {
-		s.logger.Error("error al obtener actividades por ciudad", zap.Error(err))
+		s.logger.Error("error retrieving activities by city", zap.Error(err))
 		return nil, err
 	}
 
 	yearlyAct, err := s.repo.GetYearlyActivitiesMetrics(ctx, startYear, endYear, req.GroupID)
 	if err != nil {
-		s.logger.Error("error al obtener histórico anual", zap.Error(err))
+		s.logger.Error("error retrieving yearly history", zap.Error(err))
 		return nil, err
 	}
 
 	areasByYear, err := s.repo.GetKnowledgeAreasByYearMetrics(ctx, startYear, endYear, req.MasterAreas, req.GroupID)
 	if err != nil {
-		s.logger.Error("error al obtener áreas por año", zap.Error(err))
+		s.logger.Error("error retrieving knowledge areas by year", zap.Error(err))
 		return nil, err
 	}
 

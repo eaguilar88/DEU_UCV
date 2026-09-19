@@ -24,7 +24,7 @@ func GetDeuPendingRequestsCount() sq.SelectBuilder {
 
 func CountGroupsByFaculty(faculty string) sq.SelectBuilder {
 	return psql.Select("COUNT(*)").
-		From(groupsTableName + " AS g").
+		From(groupsTableName+" AS g").
 		Where("? = ANY(g.faculty)", faculty).
 		Where(sq.Eq{"g.deleted_at": nil})
 }

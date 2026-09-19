@@ -24,6 +24,7 @@ func (h *Handler) RegisterAnalyticsEndpoints(g *echo.Group) {
 }
 
 func (h *Handler) GetAnalytics(c echo.Context) error {
+	ctx := c.Request().Context()
 	var req AnalyticsFilterRequest
 	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "datos de consulta inválidos")
@@ -33,7 +34,7 @@ func (h *Handler) GetAnalytics(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	res, err := h.service.GetAnalytics(c.Request().Context(), req)
+	res, err := h.service.GetAnalytics(ctx, req)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "error al generar analíticas de grupos")
 	}

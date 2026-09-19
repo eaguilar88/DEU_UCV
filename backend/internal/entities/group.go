@@ -10,8 +10,8 @@ const (
 	MultidisciplinaryGroupType = "multidisciplinary"
 
 	// File types for groups
-	GroupFileTypeLogo    = "logo"
-	GroupFileTypeProject = "proyecto_grupo"
+	GroupFileTypeLogo           = "logo"
+	GroupFileTypeProject        = "proyecto_grupo"
 	GroupMemberFileTypeDocument = "documento_miembro"
 )
 

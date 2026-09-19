@@ -2,10 +2,10 @@ package group_analytics
 
 // 1. Participantes Reales vs. Estimados por Actividad
 type ActivityParticipantsMetric struct {
-	Lugar             string `json:"lugar"`             // Nombre de la actividad
-	CantidadEsperada  int    `json:"cantidadEsperada"`  // Participantes estimados
-	CantidadReal      int    `json:"CantidadReal"`      // Participantes reales
-	Integrantes       int    `json:"integrantes"`       // Integrantes organizadores
+	Lugar            string `json:"lugar"`            // Nombre de la actividad
+	CantidadEsperada int    `json:"cantidadEsperada"` // Participantes estimados
+	CantidadReal     int    `json:"CantidadReal"`     // Participantes reales
+	Integrantes      int    `json:"integrantes"`      // Integrantes organizadores
 }
 
 // 2. Volumen de Actividades por Estado
@@ -37,10 +37,10 @@ type YearlyActivitiesMetric struct {
 
 // GroupAnalyticsResponse concentra la respuesta general de métricas
 type GroupAnalyticsResponse struct {
-	ActivityParticipants []ActivityParticipantsMetric   `json:"participantes_por_actividad"`
-	ActivitiesByState    []ActivitiesByStateMetric      `json:"actividades_por_estado"`
-	GroupParticipants    []GroupParticipantsMetric      `json:"participantes_por_grupo"`
-	ActivitiesByCity     []ActivitiesByCityMetric       `json:"actividades_por_ciudad"`
-	YearlyActivities     []YearlyActivitiesMetric       `json:"historico_por_anio"`
-	KnowledgeAreasByYear []map[string]interface{}        `json:"areas_conocimiento_por_anio"`
+	ActivityParticipants []ActivityParticipantsMetric `json:"participantes_por_actividad"`
+	ActivitiesByState    []ActivitiesByStateMetric    `json:"actividades_por_estado"`
+	GroupParticipants    []GroupParticipantsMetric    `json:"participantes_por_grupo"`
+	ActivitiesByCity     []ActivitiesByCityMetric     `json:"actividades_por_ciudad"`
+	YearlyActivities     []YearlyActivitiesMetric     `json:"historico_por_anio"`
+	KnowledgeAreasByYear []map[string]interface{}     `json:"areas_conocimiento_por_anio"`
 }

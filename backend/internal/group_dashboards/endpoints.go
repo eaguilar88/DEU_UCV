@@ -33,10 +33,10 @@ func (h *Handler) GetGroupDashboard(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "identificador de grupo inválido")
 	}
-	
-    if err := c.Validate(&req); err != nil {
-        return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-    }
+
+	if err := c.Validate(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
 
 	res, err := h.service.GetGroupDashboard(c.Request().Context(), req.GroupID)
 	if err != nil {

@@ -122,7 +122,7 @@ func main() {
 
 	dashboardSvc := group_dashboards.NewService(repository, logger)
 	dashboardEndpoints := group_dashboards.NewHandler(dashboardSvc, logger)
-	
+
 	analyticsSvc := group_analytics.NewService(repository, logger)
 	analyticsEndpoints := group_analytics.NewHandler(analyticsSvc, logger)
 
@@ -286,8 +286,8 @@ func addGroupsRoutes(e *echo.Echo, endpoints *groups.Handler, middlewares ...ech
 }
 
 func addGroupDashboardRoutes(e *echo.Echo, endpoints *group_dashboards.Handler, middlewares ...echo.MiddlewareFunc) {
-    protected := e.Group("", middlewares...)
-    endpoints.RegisterDashboardProtectedEndpoints(protected)
+	protected := e.Group("", middlewares...)
+	endpoints.RegisterDashboardProtectedEndpoints(protected)
 }
 
 func addGroupAnalyticsRoutes(e *echo.Echo, endpoints *group_analytics.Handler, middlewares ...echo.MiddlewareFunc) {

@@ -95,6 +95,7 @@ quality:
 	cd backend && \
 	go vet ./... && \
 	go fmt ./... && \
+	goimports ./... && \
 	golangci-lint run && \
 	go mod tidy && \
 	go test -count=1 -race -short -cover ./...

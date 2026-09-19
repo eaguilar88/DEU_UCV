@@ -56,7 +56,6 @@ type GroupMemberDTO struct {
 	Year         string `json:"año" validate:"required"`
 	Faculty      string `json:"facultad" validate:"required"`
 	School       string `json:"escuela" validate:"required"`
-	//Document     string `json:"documento" validate:"required"`
 	IsLeader     bool   `json:"es_lider"`
 	IsActive     bool   `json:"status"`
 }
@@ -74,8 +73,8 @@ func groupMemberEntityFromRequest(dto GroupMemberDTO) entities.GroupMember {
 		Faculty:      entities.Faculty(dto.Faculty),
 		School:       dto.School,
 		//Document:     dto.Document,
-		IsLeader:     dto.IsLeader,
-		IsActive:     dto.IsActive,
+		IsLeader: dto.IsLeader,
+		IsActive: dto.IsActive,
 	}
 }
 
