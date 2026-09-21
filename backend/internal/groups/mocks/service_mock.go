@@ -319,6 +319,68 @@ func (_c *MockService_GetGroups_Call) RunAndReturn(run func(ctx context.Context,
 	return _c
 }
 
+// GetGroupsSimple provides a mock function for the type MockService
+func (_mock *MockService) GetGroupsSimple(ctx context.Context) ([]entities.ExtensionGroup, error) {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetGroupsSimple")
+	}
+
+	var r0 []entities.ExtensionGroup
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]entities.ExtensionGroup, error)); ok {
+		return returnFunc(ctx)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []entities.ExtensionGroup); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]entities.ExtensionGroup)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockService_GetGroupsSimple_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetGroupsSimple'
+type MockService_GetGroupsSimple_Call struct {
+	*mock.Call
+}
+
+// GetGroupsSimple is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockService_Expecter) GetGroupsSimple(ctx interface{}) *MockService_GetGroupsSimple_Call {
+	return &MockService_GetGroupsSimple_Call{Call: _e.mock.On("GetGroupsSimple", ctx)}
+}
+
+func (_c *MockService_GetGroupsSimple_Call) Run(run func(ctx context.Context)) *MockService_GetGroupsSimple_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *MockService_GetGroupsSimple_Call) Return(extensionGroups []entities.ExtensionGroup, err error) *MockService_GetGroupsSimple_Call {
+	_c.Call.Return(extensionGroups, err)
+	return _c
+}
+
+func (_c *MockService_GetGroupsSimple_Call) RunAndReturn(run func(ctx context.Context) ([]entities.ExtensionGroup, error)) *MockService_GetGroupsSimple_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetRandomActiveGroups provides a mock function for the type MockService
 func (_mock *MockService) GetRandomActiveGroups(ctx context.Context, limit int) ([]entities.ExtensionGroup, error) {
 	ret := _mock.Called(ctx, limit)

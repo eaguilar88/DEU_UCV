@@ -80,6 +80,14 @@ func GetRandomActiveGroups(limit int) sq.SelectBuilder {
 		Limit(uint64(limit))
 }
 
+func GetGroupsSimple() sq.SelectBuilder {
+	return psql.Select("g.id", "g.name").
+		From(fmt.Sprintf("%s AS g", groupsTableName)).
+		Where(sq.Eq{"g.is_active": true}).
+		Where(sq.Eq{"g.deleted_at": nil}).
+		OrderBy("g.name ASC")
+}
+
 func InsertGroup(group models.ExtensionGroup) sq.InsertBuilder {
 	return psql.Insert(groupsTableName).
 		Columns(
@@ -136,13 +144,28 @@ var groupMembersTableName = fmt.Sprintf("%s.group_members", schema)
 
 func InsertGroupMember(groupID int64, m models.GroupMember) sq.InsertBuilder {
 	return psql.Insert(groupMembersTableName).
-		Columns("group_id", "name", "ci", "phone", "email", "coordination", "year", "faculty", "school", "document", "is_leader", "is_active").
-		Values(groupID, m.Name, m.CI, m.Phone, m.Email, m.Coordination, m.Year, m.Faculty, m.School, m.Document, m.IsLeader, m.IsActive).
+		Columns("group_id", "name", "ci", "phone", "email", "coordination", "year", "faculty", "school", "is_leader", "is_active").
+		Values(groupID, m.Name, m.CI, m.Phone, m.Email, m.Coordination, m.Year, m.Faculty, m.School, m.IsLeader, m.IsActive).
 		Suffix("RETURNING id")
 }
 
+func UpdateGroupMember(groupID int64, m models.GroupMember) sq.UpdateBuilder {
+	return psql.Update(groupMembersTableName).
+		Set("name", m.Name).
+		Set("phone", m.Phone).
+		Set("email", m.Email).
+		Set("coordination", m.Coordination).
+		Set("year", m.Year).
+		Set("faculty", m.Faculty).
+		Set("school", m.School).
+		Set("is_leader", m.IsLeader).
+		Set("is_active", m.IsActive).
+		Set("updated_at", sq.Expr("NOW()")).
+		Where(sq.Eq{"id": m.ID, "group_id": groupID}) // group_id como cinturón de seguridad
+}
+
 func SelectGroupMembers(groupID string) sq.SelectBuilder {
-	return psql.Select("id", "name", "ci", "phone", "email", "coordination", "year", "faculty", "school", "document", "is_leader", "is_active").
+	return psql.Select("id", "name", "ci", "phone", "email", "coordination", "year", "faculty", "school", "is_leader", "is_active").
 		From(groupMembersTableName).
 		Where(sq.Eq{"group_id": groupID, "deleted_at": nil})
 }

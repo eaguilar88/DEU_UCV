@@ -365,13 +365,13 @@ func (s *service) DeleteProvider(ctx context.Context, providerID string) error {
 	return nil
 }
 
-// ApproveProvider sets the provider status to approved and promotes the user role from visitante to coordinador.
+// ApproveProvider sets the provider status to approved and promotes the user role from visitante to course_admin.
 func (s *service) ApproveProvider(ctx context.Context, providerID, userID string) error {
 	if err := s.repo.ApproveProvider(ctx, providerID); err != nil {
 		s.logger.Error("error approving provider", zap.Error(err))
 		return err
 	}
-	if err := s.repo.UpdateUserRole(ctx, userID, entities.RoleNameFromID(entities.RoleVisitante), entities.RoleNameFromID(entities.RoleCoordinador)); err != nil {
+	if err := s.repo.UpdateUserRole(ctx, userID, entities.RoleNameFromID(entities.RoleVisitante), entities.RoleNameFromID(entities.RoleCourseAdmin)); err != nil {
 		s.logger.Error("error updating user role after provider approval", zap.Error(err))
 		return err
 	}

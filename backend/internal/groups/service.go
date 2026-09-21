@@ -3,27 +3,28 @@ package groups
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strconv"
 
 	"github.com/eaguilar88/deu/internal/entities"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 )
+
+const maxEnrichmentConcurrency = 10
 
 type Repository interface {
 	GetGroupByID(ctx context.Context, groupID string) (entities.ExtensionGroup, error)
 	GetGroups(ctx context.Context, filter entities.GroupFilter, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error)
 	GetRandomActiveGroups(ctx context.Context, limit int) ([]entities.ExtensionGroup, error)
+	GetGroupsSimple(ctx context.Context) ([]entities.ExtensionGroup, error)
 
 	// Unit of Work: Atomic operations
-	CreateGroupWithRequests(ctx context.Context, group entities.ExtensionGroup, requests []entities.GroupRequest) (int64, error)
+	CreateGroupWithRequests(ctx context.Context, group entities.ExtensionGroup, requests []entities.GroupRequest) (int64, []entities.GroupMember, error)
 
 	// Individual operations (for flexibility)
-	CreateGroup(ctx context.Context, group entities.ExtensionGroup) (int64, error)
-	UpdateGroup(ctx context.Context, group entities.ExtensionGroup) error
+	UpdateGroup(ctx context.Context, group entities.ExtensionGroup) ([]entities.GroupMember, error)
 	DeleteGroup(ctx context.Context, groupID string) error
-
-	// Requests
-	CreateGroupRequest(ctx context.Context, req entities.GroupRequest) (int64, error)
 
 	// Files
 	GetFilesByOwner(ctx context.Context, ownerID string, ownerType entities.OwnerType) (entities.GroupedFiles, error)
@@ -57,8 +58,23 @@ func (s *service) GetGroup(ctx context.Context, groupID string) (entities.Extens
 	if err != nil {
 		return entities.ExtensionGroup{}, err
 	}
-	s.enrichGroupFiles(ctx, &group)
-	s.enrichGroupContacts(ctx, &group)
+
+	g, gctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		s.enrichGroupFiles(gctx, &group)
+		return nil
+	})
+	g.Go(func() error {
+		s.enrichGroupContacts(gctx, &group)
+		return nil
+	})
+	g.Go(func() error {
+		s.enrichMemberFiles(gctx, group.Members)
+		return nil
+	})
+	if err := g.Wait(); err != nil {
+		s.log.Error("failed to enrich group", zap.Error(err), zap.String("group_id", groupID))
+	}
 
 	return group, nil
 }
@@ -69,9 +85,17 @@ func (s *service) GetGroups(ctx context.Context, filter entities.GroupFilter, pa
 		return nil, entities.PageScope{}, err
 	}
 
+	g, gctx := errgroup.WithContext(ctx)
+	g.SetLimit(maxEnrichmentConcurrency)
 	for i := range groups {
-		s.enrichGroupFiles(ctx, &groups[i])
-		s.enrichGroupContacts(ctx, &groups[i])
+		g.Go(func() error {
+			s.enrichGroupFiles(gctx, &groups[i])
+			s.enrichGroupContacts(gctx, &groups[i])
+			return nil
+		})
+	}
+	if err := g.Wait(); err != nil {
+		s.log.Error("failed to enrich groups", zap.Error(err))
 	}
 
 	return groups, page, nil
@@ -83,53 +107,87 @@ func (s *service) GetRandomActiveGroups(ctx context.Context, limit int) ([]entit
 		return nil, err
 	}
 
+	g, gctx := errgroup.WithContext(ctx)
+	g.SetLimit(maxRandomGroupsLimit)
 	for i := range groups {
-		s.enrichGroupFiles(ctx, &groups[i])
+		g.Go(func() error {
+			s.enrichGroupFiles(gctx, &groups[i])
+			return nil
+		})
+	}
+	if err := g.Wait(); err != nil {
+		s.log.Error("failed to enrich random active groups", zap.Error(err))
 	}
 
 	return groups, nil
 }
 
-func (s *service) enrichGroupFiles(ctx context.Context, group *entities.ExtensionGroup) {
-	if filesMap, err := s.repo.GetFilesByOwner(ctx, group.ID, entities.OwnerTypeExtensionGroup); err == nil {
-		if logoList, ok := filesMap[entities.GroupFileTypeLogo]; ok && len(logoList) > 0 {
-			logo := logoList[0]
-			if url, err := s.storage.GetFileURL(ctx, logo.Key); err == nil {
-				logo.URL = url
-			}
-			group.Logo = logo
-		}
+func (s *service) GetGroupsSimple(ctx context.Context) ([]entities.ExtensionGroup, error) {
+	return s.repo.GetGroupsSimple(ctx)
+}
 
-		if projectList, ok := filesMap[entities.GroupFileTypeProject]; ok && len(projectList) > 0 {
-			project := projectList[0]
-			if url, err := s.storage.GetFileURL(ctx, project.Key); err == nil {
-				project.URL = url
-			}
-			group.Project = project
+func (s *service) enrichGroupFiles(ctx context.Context, group *entities.ExtensionGroup) {
+	filesMap, err := s.repo.GetFilesByOwner(ctx, group.ID, entities.OwnerTypeExtensionGroup)
+	if err != nil {
+		s.log.Error("failed to get group files", zap.Error(err), zap.String("group_id", group.ID))
+		return
+	}
+
+	if logo := filesMap.GetSingleFile(entities.GroupFileTypeLogo); logo != nil {
+		if url, err := s.storage.GetFileURL(ctx, logo.Key); err == nil {
+			logo.URL = url
 		}
+		group.Logo = logo
+	}
+
+	if project := filesMap.GetSingleFile(entities.GroupFileTypeProject); project != nil {
+		if url, err := s.storage.GetFileURL(ctx, project.Key); err == nil {
+			project.URL = url
+		}
+		group.Project = project
 	}
 }
 
 func (s *service) enrichGroupContacts(ctx context.Context, group *entities.ExtensionGroup) {
-	if contacts, err := s.repo.GetContactsByOwner(ctx, group.ID, entities.OwnerTypeExtensionGroup); err == nil {
-		for _, c := range contacts {
-			switch c.Type {
-			case entities.ContactTypeEmail:
-				group.Email = c.Value
-			case entities.ContactTypePhone:
-				group.Phone = c.Value
-			}
+	contacts, err := s.repo.GetContactsByOwner(ctx, group.ID, entities.OwnerTypeExtensionGroup)
+	if err != nil {
+		s.log.Error("failed to get group contacts", zap.Error(err), zap.String("group_id", group.ID))
+		return
+	}
+
+	for _, c := range contacts {
+		switch c.Type {
+		case entities.ContactTypeEmail:
+			group.Email = c.Value
+		case entities.ContactTypePhone:
+			group.Phone = c.Value
 		}
 	}
 }
 
-func hasType(types []entities.GroupType, target entities.GroupType) bool {
-	for _, t := range types {
-		if t == target {
-			return true
-		}
+func (s *service) enrichMemberFiles(ctx context.Context, members []entities.GroupMember) {
+	g, gctx := errgroup.WithContext(ctx)
+	g.SetLimit(maxEnrichmentConcurrency)
+	for i := range members {
+		g.Go(func() error {
+			filesMap, err := s.repo.GetFilesByOwner(gctx, members[i].ID, entities.OwnerTypeGroupMember)
+			if err != nil {
+				s.log.Error("failed to get member files", zap.Error(err), zap.String("member_id", members[i].ID))
+				return nil
+			}
+
+			if doc := filesMap.GetSingleFile(entities.GroupMemberFileTypeDocument); doc != nil {
+				if url, err := s.storage.GetFileURL(gctx, doc.Key); err == nil {
+					doc.URL = url
+				}
+				members[i].Document = doc
+			}
+			return nil
+		})
 	}
-	return false
+	if err := g.Wait(); err != nil {
+		s.log.Error("failed to enrich member files", zap.Error(err))
+	}
 }
 
 func (s *service) CreateGroup(ctx context.Context, group entities.ExtensionGroup) (int64, string, error) {
@@ -149,7 +207,7 @@ func (s *service) CreateGroup(ctx context.Context, group entities.ExtensionGroup
 		Comments: "New group creation request",
 	}
 	var requests []entities.GroupRequest
-	if group.IsMultidisciplinary || hasType(group.Type, entities.MultidisciplinaryGroupType) {
+	if group.IsMultidisciplinary || slices.Contains(group.Type, entities.MultidisciplinaryGroupType) {
 		deuReq := base
 		deuReq.Faculty = entities.FacultyDEU
 		requests = []entities.GroupRequest{deuReq}
@@ -162,7 +220,7 @@ func (s *service) CreateGroup(ctx context.Context, group entities.ExtensionGroup
 	}
 
 	// Create group and requests in a single transaction
-	groupID, err := s.repo.CreateGroupWithRequests(ctx, group, requests)
+	groupID, insertedMembers, err := s.repo.CreateGroupWithRequests(ctx, group, requests)
 	if err != nil {
 		s.log.Error("failed to create group with requests",
 			zap.Error(err),
@@ -185,6 +243,12 @@ func (s *service) CreateGroup(ctx context.Context, group entities.ExtensionGroup
 		makeFileEntityFromFilePointer(group.Project, groupID, userID, entities.OwnerTypeExtensionGroup, entities.GroupFileTypeProject, commonMetadata),
 	}
 
+	for i, m := range insertedMembers {
+		if i < len(group.Members) && group.Members[i].Document != nil {
+			files = append(files, makeMemberFileEntity(group.Members[i].Document, groupID, m.ID, userID, commonMetadata))
+		}
+	}
+
 	validFiles := make([]*entities.File, 0, len(files))
 	for _, f := range files {
 		if f != nil {
@@ -193,6 +257,15 @@ func (s *service) CreateGroup(ctx context.Context, group entities.ExtensionGroup
 	}
 
 	if len(validFiles) > 0 {
+		if err := s.storage.UploadFile(ctx, validFiles); err != nil {
+			s.log.Error("failed to upload group files",
+				zap.Error(err),
+				zap.String("group_id", fmt.Sprintf("%d", groupID)),
+				zap.String("action", "upload_files"),
+			)
+			return -1, "", fmt.Errorf("failed to upload files: %w", err)
+		}
+
 		if err := s.repo.SaveFilesToDB(ctx, validFiles); err != nil {
 			s.log.Error("failed to save files",
 				zap.Error(err),
@@ -211,7 +284,7 @@ func (s *service) CreateGroup(ctx context.Context, group entities.ExtensionGroup
 }
 
 func (s *service) UpdateGroup(ctx context.Context, groupID string, group entities.ExtensionGroup) error {
-	err := s.repo.UpdateGroup(ctx, group)
+	updatedMembers, err := s.repo.UpdateGroup(ctx, group)
 	if err != nil {
 		return err
 	}
@@ -224,6 +297,7 @@ func (s *service) UpdateGroup(ctx context.Context, groupID string, group entitie
 	commonMetadata := map[string]string{
 		"group_owner": group.ID,
 		"group_id":    groupID,
+		"group_name":  group.Name,
 	}
 
 	var filesToSave []*entities.File
@@ -234,8 +308,20 @@ func (s *service) UpdateGroup(ctx context.Context, groupID string, group entitie
 		filesToSave = append(filesToSave, makeFileEntityFromFilePointer(group.Project, idNum, group.Owner.ID, entities.OwnerTypeExtensionGroup, entities.GroupFileTypeProject, commonMetadata))
 	}
 
+	for i, m := range updatedMembers {
+		if i < len(group.Members) && group.Members[i].Document != nil {
+			filesToSave = append(filesToSave, makeMemberFileEntity(group.Members[i].Document, idNum, m.ID, group.Owner.ID, commonMetadata))
+		}
+	}
+
 	if len(filesToSave) > 0 {
+		if err := s.storage.UploadFile(ctx, filesToSave); err != nil {
+			s.log.Error("failed to upload updated group files", zap.Error(err), zap.String("group_id", groupID))
+			return fmt.Errorf("failed to upload group files: %w", err)
+		}
+
 		if err := s.repo.SaveFilesToDB(ctx, filesToSave); err != nil {
+			s.log.Error("failed to update group files", zap.Error(err), zap.String("group_id", groupID))
 			return fmt.Errorf("failed to update group files: %w", err)
 		}
 	}
@@ -263,5 +349,25 @@ func makeFileEntityFromFilePointer(file *entities.File, groupID int64, uploadedB
 	file.Public = false
 	file.MetaData = fileMetadata
 	file.UploadedBy = uploadedBy
+	return file
+}
+
+func makeMemberFileEntity(file *entities.File, groupID int64, memberID, uploadedBy string, metadata map[string]string) *entities.File {
+	if file == nil {
+		return nil
+	}
+	file.OwnerID = memberID
+	file.OwnerType = entities.OwnerTypeGroupMember
+	fileMetadata := make(map[string]string)
+	for k, v := range metadata {
+		fileMetadata[k] = v
+	}
+	fileMetadata["file_type"] = entities.GroupMemberFileTypeDocument
+	fileMetadata["member_id"] = memberID
+	file.Key = fmt.Sprintf("files/groups/%d/members/%s/%s_%s", groupID, memberID, entities.GroupMemberFileTypeDocument, file.Name)
+	file.Public = false
+	file.MetaData = fileMetadata
+	file.UploadedBy = uploadedBy
+	file.Purpose = entities.GroupMemberFileTypeDocument
 	return file
 }

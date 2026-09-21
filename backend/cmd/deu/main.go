@@ -18,6 +18,8 @@ import (
 	"github.com/eaguilar88/deu/internal/courses"
 	"github.com/eaguilar88/deu/internal/email"
 	"github.com/eaguilar88/deu/internal/files"
+	"github.com/eaguilar88/deu/internal/group_analytics"
+	"github.com/eaguilar88/deu/internal/group_dashboards"
 	"github.com/eaguilar88/deu/internal/group_requests"
 	"github.com/eaguilar88/deu/internal/group_resource_requests"
 	"github.com/eaguilar88/deu/internal/groups"
@@ -103,7 +105,7 @@ func main() {
 	groupService := groups.NewService(repository, bbClient, logger)
 	groupEndpoints := groups.NewHandler(groupService, logger)
 
-	groupRequestService := group_requests.NewService(repository, logger)
+	groupRequestService := group_requests.NewService(repository, mailClient, logger)
 	groupRequestEndpoints := group_requests.NewHandler(groupRequestService, logger)
 
 	groupResourceRequestService := group_resource_requests.NewService(repository, logger)
@@ -117,6 +119,12 @@ func main() {
 
 	cycleCloseService := course_cycle_close_requests.NewService(repository, logger)
 	cycleCloseEndpoints := course_cycle_close_requests.NewHandler(cycleCloseService, logger)
+
+	dashboardSvc := group_dashboards.NewService(repository, logger)
+	dashboardEndpoints := group_dashboards.NewHandler(dashboardSvc, logger)
+
+	analyticsSvc := group_analytics.NewService(repository, logger)
+	analyticsEndpoints := group_analytics.NewHandler(analyticsSvc, logger)
 
 	e := echo.New()
 	e.Validator = security.NewCustomValidator()
@@ -141,6 +149,13 @@ func main() {
 	addGroupsRoutes(e, groupEndpoints, middlewares...)
 	addActivityRoutes(e, activityEndpoints, middlewares...)
 	addGroupResourceRequestRoutes(e, groupResourceRequestEndpoints, middlewares...)
+	addGroupDashboardRoutes(e, dashboardEndpoints, middlewares...)
+
+	// group_admin is the role granted to group-extension admins (see group_requests).
+	analyticsMiddlewares := append(append([]echo.MiddlewareFunc{}, middlewares...),
+		jwt.RequireRoles("root", "deu_admin", "faculty_admin", "group_admin"),
+	)
+	addGroupAnalyticsRoutes(e, analyticsEndpoints, analyticsMiddlewares...)
 
 	adminMiddlewares := append(append([]echo.MiddlewareFunc{}, middlewares...),
 		jwt.RequireRoles("root", "deu_admin", "faculty_admin"),
@@ -154,6 +169,7 @@ func main() {
 		providerRequestEndpoints.RegisterProviderRequestAdminEndpoints,
 		cycleCloseEndpoints.RegisterAdminEndpoints,
 		activityEndpoints.RegisterActivityAdminEndpoints,
+		dashboardEndpoints.RegisterDashboardAdminEndpoints,
 	)
 
 	addCourseCycleCloseRequestRoutes(e, cycleCloseEndpoints, middlewares...)
@@ -267,6 +283,16 @@ func addGroupsRoutes(e *echo.Echo, endpoints *groups.Handler, middlewares ...ech
 	protectedGroup.POST("", endpoints.CreateGroup)
 	protectedGroup.PUT("/:id", endpoints.UpdateGroup)
 	protectedGroup.DELETE("/:id", endpoints.DeleteGroup)
+}
+
+func addGroupDashboardRoutes(e *echo.Echo, endpoints *group_dashboards.Handler, middlewares ...echo.MiddlewareFunc) {
+	protected := e.Group("", middlewares...)
+	endpoints.RegisterDashboardProtectedEndpoints(protected)
+}
+
+func addGroupAnalyticsRoutes(e *echo.Echo, endpoints *group_analytics.Handler, middlewares ...echo.MiddlewareFunc) {
+	protected := e.Group("", middlewares...)
+	endpoints.RegisterAnalyticsEndpoints(protected)
 }
 
 func addCourseCycleCloseRequestRoutes(e *echo.Echo, endpoints *course_cycle_close_requests.Handler, middlewares ...echo.MiddlewareFunc) {

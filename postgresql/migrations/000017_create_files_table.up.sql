@@ -8,7 +8,8 @@ CREATE TABLE
         'group_activity',
         'course_cycle',
         'provider',
-        'user'
+        'user',
+        'group_member'
       )
     ),
     owner_id INTEGER NOT NULL,

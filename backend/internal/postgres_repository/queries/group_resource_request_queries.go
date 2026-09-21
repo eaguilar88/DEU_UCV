@@ -19,10 +19,14 @@ var resourceRequestSelectCommon = []string{
 }
 
 const effectiveFacultyExpr = `
-CASE 
-	WHEN g.is_multidisciplinary IS TRUE THEN 'DEU' 
-	ELSE g.faculty[1]::text 
+CASE
+	WHEN g.is_multidisciplinary IS TRUE THEN 'DEU'
+	ELSE g.faculty[1]::text
 END`
+
+// AllFaculties, passed as the faculty filter to CountPendingGroupResourceRequestsByFaculty,
+// returns pending counts grouped by every faculty instead of filtering to one.
+const AllFaculties = ""
 
 func GetGroupResourceRequestByID(reqID string) sq.SelectBuilder {
 	return psql.Select(resourceRequestSelectCommon...).
@@ -88,6 +92,8 @@ func CountGroupResourceRequestsByGroupID(groupID string, status string) sq.Selec
 	return q
 }
 
+// CountPendingGroupResourceRequestsByFaculty counts pending resource requests grouped by faculty.
+// Pass AllFaculties (or "") to get counts for every faculty; any other value filters to that faculty.
 func CountPendingGroupResourceRequestsByFaculty(faculty string) sq.SelectBuilder {
 	q := psql.Select("g.faculty", "COUNT(r.id) AS pending_count").
 		From(fmt.Sprintf("%s AS r", groupResourceRequestsTableName)).
