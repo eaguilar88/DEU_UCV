@@ -49,10 +49,19 @@ services:
     depends_on:
       - backend
       - db
+    environment:
+      - INTERNAL_API_URL=http://backend:8081
+      - NEXT_PUBLIC_API_URL=/api/proxy
     labels:
       - "traefik.enable=true" # Enable Traefik for this service
       - "traefik.http.routers.grupos.rule=Host(`grupos.extension.ucv.ve`)" # Route based on hostname
       - "traefik.http.routers.grupos.entrypoints=web" # Use the web entrypoint
+      - "traefik.http.routers.grupos.middlewares=grupos-https-redirect"
+      - "traefik.http.middlewares.grupos-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.grupos-https-redirect.redirectscheme.permanent=true"
+      - "traefik.http.routers.grupos-secure.rule=Host(`grupos.extension.ucv.ve`)"
+      - "traefik.http.routers.grupos-secure.entrypoints=websecure"
+      - "traefik.http.routers.grupos-secure.tls.certresolver=letsencrypt"
       - "traefik.http.services.grupos.loadbalancer.server.port=3000" # Target container's port
     networks:
       - web
@@ -74,9 +83,15 @@ services:
     links:
       - "db"
     labels:
-      - "traefik.enable=false"
+      - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`api.extension.ucv.ve`)"
       - "traefik.http.routers.backend.entrypoints=web" # Use the web entrypoint
+      #- "traefik.http.routers.backend.middlewares=backend-https-redirect"
+      #- "traefik.http.middlewares.backend-https-redirect.redirectscheme.scheme=https"
+      #- "traefik.http.middlewares.backend-https-redirect.redirectscheme.permanent=true"
+      #- "traefik.http.routers.backend-secure.rule=Host(`api.extension.ucv.ve`)"
+      #- "traefik.http.routers.backend-secure.entrypoints=websecure"
+      #- "traefik.http.routers.backend-secure.tls.certresolver=letsencrypt"
       - "traefik.http.services.backend.loadbalancer.server.port=8081" # Target container's port
     networks:
       - web
