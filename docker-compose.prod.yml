@@ -87,12 +87,12 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`api.extension.ucv.ve`)"
       - "traefik.http.routers.backend.entrypoints=web" # Use the web entrypoint
-      #- "traefik.http.routers.backend.middlewares=backend-https-redirect"
-      #- "traefik.http.middlewares.backend-https-redirect.redirectscheme.scheme=https"
-      #- "traefik.http.middlewares.backend-https-redirect.redirectscheme.permanent=true"
-      #- "traefik.http.routers.backend-secure.rule=Host(`api.extension.ucv.ve`)"
-      #- "traefik.http.routers.backend-secure.entrypoints=websecure"
-      #- "traefik.http.routers.backend-secure.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.backend.middlewares=backend-https-redirect"
+      - "traefik.http.middlewares.backend-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.backend-https-redirect.redirectscheme.permanent=true"
+      - "traefik.http.routers.backend-secure.rule=Host(`api.extension.ucv.ve`)"
+      - "traefik.http.routers.backend-secure.entrypoints=websecure"
+      - "traefik.http.routers.backend-secure.tls.certresolver=letsencrypt"
       - "traefik.http.services.backend.loadbalancer.server.port=8081" # Target container's port
     networks:
       - web
