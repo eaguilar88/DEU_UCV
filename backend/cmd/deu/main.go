@@ -130,7 +130,17 @@ func main() {
 	e.Validator = security.NewCustomValidator()
 	e.HTTPErrorHandler = httperrors.NewHTTPErrorHandler(logger)
 	e.Use(middleware.Recover())
-	e.Use(middleware.CORS())
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: config.AllowedOrigins,
+		AllowMethods: []string{
+			http.MethodGet, http.MethodHead, http.MethodPost,
+			http.MethodPut, http.MethodPatch, http.MethodDelete,
+		},
+		AllowHeaders: []string{
+			echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization,
+		},
+		AllowCredentials: false, // auth uses the Authorization header, not cookies
+	}))
 	middlewares := []echo.MiddlewareFunc{
 		jwt.JWTMiddleware(signer, logger),
 	}
