@@ -25,6 +25,7 @@ var (
 	ErrFileUploadFailed  = errors.New("failed to upload file")
 	ErrFileNotFound      = errors.New("file not found")
 	ErrNoIntentionLetter = errors.New("a new provider requires an intention letter")
+	ErrProviderForbidden = errors.New("not allowed to view this provider")
 )
 
 // Repository defines the data access operations required by the providers service.
@@ -60,6 +61,7 @@ type StorageClient interface {
 	UploadFile(ctx context.Context, file []*entities.File) error
 	DeleteFile(ctx context.Context, objectKey string) error
 	GetFileURL(ctx context.Context, objectKey string) (string, error)
+	GetPresignedFileURL(ctx context.Context, objectKey string) (string, error)
 	GetObject(ctx context.Context, objectKey string) (io.ReadCloser, string, error)
 	GetFileMetadata(ctx context.Context, objectKey string) (map[string]string, error)
 }
@@ -83,7 +85,10 @@ func NewService(repo Repository, storage StorageClient, emailClient MailClient, 
 }
 
 // GetProvider returns a provider by ID, including its associated files with pre-signed URLs.
-func (s *service) GetProvider(ctx context.Context, providerID string) (entities.Provider, error) {
+// GetProvider returns the provider with its documents to the provider's own user and to
+// admins (see canViewProvider). Everyone else gets ErrProviderForbidden, checked before
+// any document URL is generated.
+func (s *service) GetProvider(ctx context.Context, providerID string, viewer entities.Viewer) (entities.Provider, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -103,6 +108,15 @@ func (s *service) GetProvider(ctx context.Context, providerID string) (entities.
 			return entities.Provider{}, ErrProviderNotFound
 		}
 		return entities.Provider{}, fmt.Errorf("failed to get provider by ID: %w", err)
+	}
+
+	if !canViewProvider(provider, viewer) {
+		s.logger.Warn("provider access denied",
+			zap.String("provider_id", providerID),
+			zap.String("viewer_id", viewer.UserID),
+			zap.String("action", "get_provider"),
+		)
+		return entities.Provider{}, ErrProviderForbidden
 	}
 
 	files, err := s.getFilesForProvider(ctx, providerID)
@@ -409,7 +423,7 @@ func makeFileEntityFromFilePointer(file *entities.File, providerID int64, upload
 	file.OwnerID = fmt.Sprintf("%d", providerID)
 	file.OwnerType = ownerType
 	file.Key = fmt.Sprintf("files/providers/%d/%s", providerID, file.Name)
-	file.Public = false
+	file.Public = file.Purpose == entities.ProviderFileTypeLogo
 	file.MetaData = metadata
 	file.UploadedBy = uploadedBy
 	file.CreatedAt = time.Now().Format(time.RFC3339)
@@ -452,7 +466,12 @@ func (s *service) getFilesForProvider(ctx context.Context, providerID string) (e
 			urlCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
 			defer cancel()
 
-			url, err := s.storage.GetFileURL(urlCtx, f.Key)
+			// Only public files (the logo) go through the /files proxy; documents are pre-signed.
+			getURL := s.storage.GetPresignedFileURL
+			if f.Public {
+				getURL = s.storage.GetFileURL
+			}
+			url, err := getURL(urlCtx, f.Key)
 			if err != nil {
 				s.logger.Error("failed to get file URL",
 					zap.Error(err),
@@ -497,4 +516,17 @@ func (s *service) getFilesForProvider(ctx context.Context, providerID string) (e
 	)
 
 	return result, nil
+}
+
+// canViewProvider allows the provider's own user, root and deu_admin, and faculty_admin
+// for providers of their faculty (a DEU faculty claim covers all). group_admin is not an
+// admin here: provider documents (CI, RIF, ISLR, CV, letters) are personal data.
+func canViewProvider(provider entities.Provider, viewer entities.Viewer) bool {
+	if viewer.IsAnonymous() {
+		return false
+	}
+	if provider.User.ID == viewer.UserID {
+		return true
+	}
+	return viewer.IsGlobalAdmin() || viewer.IsFacultyAdminOf(provider.Faculty)
 }

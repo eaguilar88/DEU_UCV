@@ -10,17 +10,20 @@ import (
 	"go.uber.org/zap"
 )
 
-type StorageClient interface {
-	GetObject(ctx context.Context, objectKey string) (io.ReadCloser, string, error)
+// publicCacheControl lets browsers and proxies cache public images (logos, covers) for a day.
+const publicCacheControl = "public, max-age=86400"
+
+type Service interface {
+	GetPublicFile(ctx context.Context, key string) (io.ReadCloser, string, error)
 }
 
 type Handler struct {
-	storage StorageClient
-	logger  *zap.Logger
+	svc    Service
+	logger *zap.Logger
 }
 
-func NewHandler(storage StorageClient, logger *zap.Logger) *Handler {
-	return &Handler{storage: storage, logger: logger}
+func NewHandler(svc Service, logger *zap.Logger) *Handler {
+	return &Handler{svc: svc, logger: logger}
 }
 
 // KeyParam is the name Echo gives the wildcard segment of "/files/*". The object key is
@@ -34,10 +37,9 @@ func (h *Handler) ServeFile(c echo.Context) error {
 		return httperrors.NewBadRequest("missing file key")
 	}
 
-	ctx := c.Request().Context()
-	body, contentType, err := h.storage.GetObject(ctx, key)
+	body, contentType, err := h.svc.GetPublicFile(c.Request().Context(), key)
 	if err != nil {
-		h.logger.Error("failed to fetch file from storage", zap.Error(err), zap.String("key", key))
+		h.logger.Debug("file not served", zap.Error(err), zap.String("key", key))
 		return httperrors.NewNotFound("file not found")
 	}
 	defer func() {
@@ -46,5 +48,6 @@ func (h *Handler) ServeFile(c echo.Context) error {
 		}
 	}()
 
+	c.Response().Header().Set(echo.HeaderCacheControl, publicCacheControl)
 	return c.Stream(http.StatusOK, contentType, body)
 }

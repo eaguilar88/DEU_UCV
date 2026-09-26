@@ -137,7 +137,7 @@ func (s *service) CreateCourse(ctx context.Context, userID string, course entiti
 		course.Cover.OwnerType = entities.OwnerTypeCourse
 		course.Cover.Key = fmt.Sprintf("files/courses/%d/%s", courseID, course.Cover.Name)
 		course.Cover.Purpose = entities.CourseFileTypeCover
-		course.Cover.Public = false
+		course.Cover.Public = true
 		course.Cover.UploadedBy = userID
 		course.Cover.CreatedAt = time.Now().Format(time.RFC3339)
 

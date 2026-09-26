@@ -168,8 +168,8 @@ func (_c *MockService_DeleteUser_Call) RunAndReturn(run func(ctx context.Context
 }
 
 // GetUser provides a mock function for the type MockService
-func (_mock *MockService) GetUser(ctx context.Context, userID string) (entities.User, error) {
-	ret := _mock.Called(ctx, userID)
+func (_mock *MockService) GetUser(ctx context.Context, userID string, viewer entities.Viewer) (entities.User, error) {
+	ret := _mock.Called(ctx, userID, viewer)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetUser")
@@ -177,16 +177,16 @@ func (_mock *MockService) GetUser(ctx context.Context, userID string) (entities.
 
 	var r0 entities.User
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (entities.User, error)); ok {
-		return returnFunc(ctx, userID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, entities.Viewer) (entities.User, error)); ok {
+		return returnFunc(ctx, userID, viewer)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) entities.User); ok {
-		r0 = returnFunc(ctx, userID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, entities.Viewer) entities.User); ok {
+		r0 = returnFunc(ctx, userID, viewer)
 	} else {
 		r0 = ret.Get(0).(entities.User)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = returnFunc(ctx, userID)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, entities.Viewer) error); ok {
+		r1 = returnFunc(ctx, userID, viewer)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -201,11 +201,12 @@ type MockService_GetUser_Call struct {
 // GetUser is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID string
-func (_e *MockService_Expecter) GetUser(ctx interface{}, userID interface{}) *MockService_GetUser_Call {
-	return &MockService_GetUser_Call{Call: _e.mock.On("GetUser", ctx, userID)}
+//   - viewer entities.Viewer
+func (_e *MockService_Expecter) GetUser(ctx interface{}, userID interface{}, viewer interface{}) *MockService_GetUser_Call {
+	return &MockService_GetUser_Call{Call: _e.mock.On("GetUser", ctx, userID, viewer)}
 }
 
-func (_c *MockService_GetUser_Call) Run(run func(ctx context.Context, userID string)) *MockService_GetUser_Call {
+func (_c *MockService_GetUser_Call) Run(run func(ctx context.Context, userID string, viewer entities.Viewer)) *MockService_GetUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -215,9 +216,14 @@ func (_c *MockService_GetUser_Call) Run(run func(ctx context.Context, userID str
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
+		var arg2 entities.Viewer
+		if args[2] != nil {
+			arg2 = args[2].(entities.Viewer)
+		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -228,7 +234,7 @@ func (_c *MockService_GetUser_Call) Return(user entities.User, err error) *MockS
 	return _c
 }
 
-func (_c *MockService_GetUser_Call) RunAndReturn(run func(ctx context.Context, userID string) (entities.User, error)) *MockService_GetUser_Call {
+func (_c *MockService_GetUser_Call) RunAndReturn(run func(ctx context.Context, userID string, viewer entities.Viewer) (entities.User, error)) *MockService_GetUser_Call {
 	_c.Call.Return(run)
 	return _c
 }

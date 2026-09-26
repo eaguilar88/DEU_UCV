@@ -68,7 +68,7 @@ func TestService_GetUser(t *testing.T) {
 							"profile_picture": {&entities.File{Key: "users/1/profile_picture.jpg"}},
 						}, nil
 					})
-				storage.EXPECT().GetFileURL(mock.Anything, "users/1/profile_picture.jpg").
+				storage.EXPECT().GetPresignedFileURL(mock.Anything, "users/1/profile_picture.jpg").
 					RunAndReturn(func(_ context.Context, _ string) (string, error) {
 						return "https://cdn.example.com/users/1/profile_picture.jpg", nil
 					})
@@ -102,7 +102,7 @@ func TestService_GetUser(t *testing.T) {
 			tt.prepare(repo, storage)
 
 			svc := NewService(repo, email, storage, zap.NewNop())
-			got, err := svc.GetUser(context.Background(), tt.userID)
+			got, err := svc.GetUser(context.Background(), tt.userID, entities.Viewer{UserID: tt.userID})
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -428,6 +428,45 @@ func TestService_DeleteUser(t *testing.T) {
 			}
 			assert.NoError(t, err)
 			repo.AssertExpectations(t)
+		})
+	}
+}
+
+func TestService_GetUser_Visibility(t *testing.T) {
+	fullUser := &entities.User{
+		ID: "1", CI: "V123", Email: "ana@ucv.ve", FirstName: "Ana", LastName: "Pérez",
+		DateOfBirth: "2000-01-01", Address: "Caracas",
+	}
+
+	tests := []struct {
+		name     string
+		viewer   entities.Viewer
+		wantFull bool
+	}{
+		{name: "anonymous", viewer: entities.Viewer{}, wantFull: false},
+		{name: "other user", viewer: entities.Viewer{UserID: "2", Roles: []string{"group_admin"}}, wantFull: false},
+		{name: "self", viewer: entities.Viewer{UserID: "1"}, wantFull: true},
+		{name: "deu_admin", viewer: entities.Viewer{UserID: "9", Roles: []string{"deu_admin"}}, wantFull: true},
+		{name: "faculty_admin", viewer: entities.Viewer{UserID: "8", Roles: []string{"faculty_admin"}}, wantFull: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := mocks.NewMockRepository(t)
+			storage := mocks.NewMockStorageClient(t)
+			userCopy := *fullUser
+			repo.EXPECT().GetUser(mock.Anything, "1").Return(&userCopy, nil)
+			repo.EXPECT().GetFilesByOwner(mock.Anything, "1", entities.OwnerTypeUser).Return(entities.GroupedFiles{}, nil)
+
+			got, err := NewService(repo, mocks.NewMockMailClient(t), storage, zap.NewNop()).
+				GetUser(context.Background(), "1", tt.viewer)
+
+			assert.NoError(t, err)
+			if tt.wantFull {
+				assert.Equal(t, *fullUser, got)
+				return
+			}
+			assert.Equal(t, entities.User{ID: "1", FirstName: "Ana", LastName: "Pérez"}, got)
 		})
 	}
 }

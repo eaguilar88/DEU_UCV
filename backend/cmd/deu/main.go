@@ -148,20 +148,23 @@ func main() {
 	middlewares := []echo.MiddlewareFunc{
 		jwt.JWTMiddleware(signer, logger),
 	}
+	// Public reads whose response depends on who is asking.
+	optionalAuth := jwt.OptionalJWTMiddleware(signer, logger)
 
-	fileHandler := files.NewHandler(bbClient, logger)
+	filesSvc := files.NewService(repository, bbClient, logger)
+	fileHandler := files.NewHandler(filesSvc, logger)
 
 	docs.RegisterDocsRoute(e, logger)
 	addHealthRoute(e)
 	addVersionRoute(e, strings.TrimSpace(appVersion))
 	addFileRoutes(e, fileHandler)
 	addAuthRoutes(e, authEndpoints)
-	addUserRoutes(e, userEndpoints, middlewares...)
+	addUserRoutes(e, userEndpoints, optionalAuth, middlewares...)
 	addProviderRoutes(e, providerEndpoints, middlewares...)
 	addCourseRoutes(e, courseEndpoints, middlewares...)
 	addCoursePeriodRoutes(e, cpEndpoints, middlewares...)
-	addGroupsRoutes(e, groupEndpoints, middlewares...)
-	addActivityRoutes(e, activityEndpoints, middlewares...)
+	addGroupsRoutes(e, groupEndpoints, optionalAuth, middlewares...)
+	addActivityRoutes(e, activityEndpoints, optionalAuth, middlewares...)
 	addGroupResourceRequestRoutes(e, groupResourceRequestEndpoints, middlewares...)
 	addGroupDashboardRoutes(e, dashboardEndpoints, middlewares...)
 
@@ -236,9 +239,11 @@ func addAdminRoutes(e *echo.Echo, middlewares []echo.MiddlewareFunc, handlers ..
 	}
 }
 
-func addUserRoutes(e *echo.Echo, endpoints *users.Handler, middlewares ...echo.MiddlewareFunc) {
+// addUserRoutes serves GET /users/:id with optional auth: a public profile for everyone,
+// the full user for the user themself and admins.
+func addUserRoutes(e *echo.Echo, endpoints *users.Handler, optionalAuth echo.MiddlewareFunc, middlewares ...echo.MiddlewareFunc) {
 	public := e.Group("/users")
-	public.GET("/:id", endpoints.GetUser)
+	public.GET("/:id", endpoints.GetUser, optionalAuth)
 	public.POST("", endpoints.CreateUser)
 	protected := e.Group("/users", middlewares...)
 	protected.GET("", endpoints.GetUsers)
@@ -279,9 +284,11 @@ func addGroupResourceRequestRoutes(e *echo.Echo, endpoints *group_resource_reque
 	endpoints.RegisterGroupResourceRequestEndpoints(protected)
 }
 
-func addActivityRoutes(e *echo.Echo, endpoints *activities.Handler, middlewares ...echo.MiddlewareFunc) {
+// addActivityRoutes serves GET /activities/:id with optional auth: the participant list is
+// only included for viewers who may manage the activity's group.
+func addActivityRoutes(e *echo.Echo, endpoints *activities.Handler, optionalAuth echo.MiddlewareFunc, middlewares ...echo.MiddlewareFunc) {
 	publicGroup := e.Group("/activities")
-	publicGroup.GET("/:id", endpoints.GetActivity)
+	publicGroup.GET("/:id", endpoints.GetActivity, optionalAuth)
 	publicGroup.GET("", endpoints.GetActivities)
 	protectedGroup := e.Group("/activities", middlewares...)
 	protectedGroup.POST("", endpoints.CreateActivity)
@@ -291,10 +298,12 @@ func addActivityRoutes(e *echo.Echo, endpoints *activities.Handler, middlewares 
 	protectedGroup.GET("/group-summary/:groupId", endpoints.GetGroupDashboardSummary)
 }
 
-func addGroupsRoutes(e *echo.Echo, endpoints *groups.Handler, middlewares ...echo.MiddlewareFunc) {
+// addGroupsRoutes registers the group reads as public routes with optional auth: the
+// response is the public view unless the token's user may see the group's private data.
+func addGroupsRoutes(e *echo.Echo, endpoints *groups.Handler, optionalAuth echo.MiddlewareFunc, middlewares ...echo.MiddlewareFunc) {
 	publicGroup := e.Group("/groups")
-	publicGroup.GET("/:id", endpoints.GetGroup)
-	publicGroup.GET("", endpoints.GetGroups)
+	publicGroup.GET("/:id", endpoints.GetGroup, optionalAuth)
+	publicGroup.GET("", endpoints.GetGroups, optionalAuth)
 	protectedGroup := e.Group("/groups/requests", middlewares...)
 	protectedGroup.POST("", endpoints.CreateGroup)
 	protectedGroup.PUT("/:id", endpoints.UpdateGroup)

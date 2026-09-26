@@ -36,6 +36,7 @@ type StorageClient interface {
 	UploadFile(ctx context.Context, files []*entities.File) error
 	DeleteFile(ctx context.Context, objectKey string) error
 	GetFileURL(ctx context.Context, objectKey string) (string, error)
+	GetPresignedFileURL(ctx context.Context, objectKey string) (string, error)
 	GetFileMetadata(ctx context.Context, objectKey string) (map[string]string, error)
 }
 
@@ -53,25 +54,34 @@ func NewService(repository Repository, storage StorageClient, logger *zap.Logger
 	}
 }
 
-func (s *service) GetGroup(ctx context.Context, groupID string) (entities.ExtensionGroup, error) {
+// GetGroup returns the full group to viewers allowed to see its private data (see
+// entities.Viewer.CanManageGroup) and the public-facing view to everyone else.
+func (s *service) GetGroup(ctx context.Context, groupID string, viewer entities.Viewer) (entities.ExtensionGroup, error) {
 	group, err := s.repo.GetGroupByID(ctx, groupID)
 	if err != nil {
 		return entities.ExtensionGroup{}, err
 	}
 
+	private := viewer.CanManageGroup(group)
+	if !private {
+		redactPrivate(&group)
+	}
+
 	g, gctx := errgroup.WithContext(ctx)
 	g.Go(func() error {
-		s.enrichGroupFiles(gctx, &group)
+		s.enrichGroupFiles(gctx, &group, private)
 		return nil
 	})
 	g.Go(func() error {
 		s.enrichGroupContacts(gctx, &group)
 		return nil
 	})
-	g.Go(func() error {
-		s.enrichMemberFiles(gctx, group.Members)
-		return nil
-	})
+	if private {
+		g.Go(func() error {
+			s.enrichMemberFiles(gctx, group.Members)
+			return nil
+		})
+	}
 	if err := g.Wait(); err != nil {
 		s.log.Error("failed to enrich group", zap.Error(err), zap.String("group_id", groupID))
 	}
@@ -79,8 +89,10 @@ func (s *service) GetGroup(ctx context.Context, groupID string) (entities.Extens
 	return group, nil
 }
 
-func (s *service) GetGroups(ctx context.Context, filter entities.GroupFilter, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error) {
-	groups, page, err := s.repo.GetGroups(ctx, filter, pageScope)
+// GetGroups decides visibility per group, so a list can mix full views (e.g. the
+// viewer's own group) with public ones.
+func (s *service) GetGroups(ctx context.Context, filter entities.GroupFilter, pageScope entities.PageScope, viewer entities.Viewer) ([]entities.ExtensionGroup, entities.PageScope, error) {
+	groups, page, err := s.repo.GetGroups(ctx, restrictFilter(filter, viewer), pageScope)
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
@@ -88,8 +100,12 @@ func (s *service) GetGroups(ctx context.Context, filter entities.GroupFilter, pa
 	g, gctx := errgroup.WithContext(ctx)
 	g.SetLimit(maxEnrichmentConcurrency)
 	for i := range groups {
+		private := viewer.CanManageGroup(groups[i])
+		if !private {
+			redactPrivate(&groups[i])
+		}
 		g.Go(func() error {
-			s.enrichGroupFiles(gctx, &groups[i])
+			s.enrichGroupFiles(gctx, &groups[i], private)
 			s.enrichGroupContacts(gctx, &groups[i])
 			return nil
 		})
@@ -110,8 +126,9 @@ func (s *service) GetRandomActiveGroups(ctx context.Context, limit int) ([]entit
 	g, gctx := errgroup.WithContext(ctx)
 	g.SetLimit(maxRandomGroupsLimit)
 	for i := range groups {
+		redactPrivate(&groups[i])
 		g.Go(func() error {
-			s.enrichGroupFiles(gctx, &groups[i])
+			s.enrichGroupFiles(gctx, &groups[i], false)
 			return nil
 		})
 	}
@@ -126,7 +143,32 @@ func (s *service) GetGroupsSimple(ctx context.Context) ([]entities.ExtensionGrou
 	return s.repo.GetGroupsSimple(ctx)
 }
 
-func (s *service) enrichGroupFiles(ctx context.Context, group *entities.ExtensionGroup) {
+// restrictFilter limits non-admin viewers (anonymous callers included) to active,
+// non-deleted groups: unapproved and deleted groups are only listed for root, deu_admin
+// and faculty_admin, whatever the query params ask for.
+func restrictFilter(filter entities.GroupFilter, viewer entities.Viewer) entities.GroupFilter {
+	if viewer.IsGlobalAdmin() || viewer.IsFacultyAdmin() {
+		return filter
+	}
+	active := true
+	filter.Active = &active
+	filter.Deleted = false
+	return filter
+}
+
+// redactPrivate strips everything but the group's public-facing data. The response
+// fields are omitempty, so cleared fields drop out of the JSON.
+func redactPrivate(group *entities.ExtensionGroup) {
+	group.Members = nil
+	group.Project = nil
+	group.Owner = nil
+	group.Active = false
+	group.UpdatedAt = ""
+}
+
+// enrichGroupFiles sets the public logo URL and, when includePrivate is set, a pre-signed
+// URL for the project document. Private URLs are never generated for public views.
+func (s *service) enrichGroupFiles(ctx context.Context, group *entities.ExtensionGroup, includePrivate bool) {
 	filesMap, err := s.repo.GetFilesByOwner(ctx, group.ID, entities.OwnerTypeExtensionGroup)
 	if err != nil {
 		s.log.Error("failed to get group files", zap.Error(err), zap.String("group_id", group.ID))
@@ -140,8 +182,11 @@ func (s *service) enrichGroupFiles(ctx context.Context, group *entities.Extensio
 		group.Logo = logo
 	}
 
+	if !includePrivate {
+		return
+	}
 	if project := filesMap.GetSingleFile(entities.GroupFileTypeProject); project != nil {
-		if url, err := s.storage.GetFileURL(ctx, project.Key); err == nil {
+		if url, err := s.storage.GetPresignedFileURL(ctx, project.Key); err == nil {
 			project.URL = url
 		}
 		group.Project = project
@@ -177,7 +222,7 @@ func (s *service) enrichMemberFiles(ctx context.Context, members []entities.Grou
 			}
 
 			if doc := filesMap.GetSingleFile(entities.GroupMemberFileTypeDocument); doc != nil {
-				if url, err := s.storage.GetFileURL(gctx, doc.Key); err == nil {
+				if url, err := s.storage.GetPresignedFileURL(gctx, doc.Key); err == nil {
 					doc.URL = url
 				}
 				members[i].Document = doc
@@ -346,7 +391,7 @@ func makeFileEntityFromFilePointer(file *entities.File, groupID int64, uploadedB
 	}
 	fileMetadata["file_type"] = fileType
 	file.Key = fmt.Sprintf("files/groups/%d/%s_%s", groupID, fileType, file.Name)
-	file.Public = false
+	file.Public = fileType == entities.GroupFileTypeLogo
 	file.MetaData = fileMetadata
 	file.UploadedBy = uploadedBy
 	return file

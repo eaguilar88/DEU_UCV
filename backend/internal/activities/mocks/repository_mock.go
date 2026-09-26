@@ -513,6 +513,72 @@ func (_c *MockRepository_GetFilesByOwner_Call) RunAndReturn(run func(ctx context
 	return _c
 }
 
+// GetGroupByID provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetGroupByID(ctx context.Context, groupID string) (entities.ExtensionGroup, error) {
+	ret := _mock.Called(ctx, groupID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetGroupByID")
+	}
+
+	var r0 entities.ExtensionGroup
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (entities.ExtensionGroup, error)); ok {
+		return returnFunc(ctx, groupID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) entities.ExtensionGroup); ok {
+		r0 = returnFunc(ctx, groupID)
+	} else {
+		r0 = ret.Get(0).(entities.ExtensionGroup)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, groupID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetGroupByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetGroupByID'
+type MockRepository_GetGroupByID_Call struct {
+	*mock.Call
+}
+
+// GetGroupByID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - groupID string
+func (_e *MockRepository_Expecter) GetGroupByID(ctx interface{}, groupID interface{}) *MockRepository_GetGroupByID_Call {
+	return &MockRepository_GetGroupByID_Call{Call: _e.mock.On("GetGroupByID", ctx, groupID)}
+}
+
+func (_c *MockRepository_GetGroupByID_Call) Run(run func(ctx context.Context, groupID string)) *MockRepository_GetGroupByID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetGroupByID_Call) Return(extensionGroup entities.ExtensionGroup, err error) *MockRepository_GetGroupByID_Call {
+	_c.Call.Return(extensionGroup, err)
+	return _c
+}
+
+func (_c *MockRepository_GetGroupByID_Call) RunAndReturn(run func(ctx context.Context, groupID string) (entities.ExtensionGroup, error)) *MockRepository_GetGroupByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetGroupDashboardSummary provides a mock function for the type MockRepository
 func (_mock *MockRepository) GetGroupDashboardSummary(ctx context.Context, groupID string) (entities.GroupDashboardSummary, error) {
 	ret := _mock.Called(ctx, groupID)

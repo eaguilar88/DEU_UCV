@@ -9,6 +9,7 @@ import (
 
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/httperrors"
+	"github.com/eaguilar88/deu/internal/jwt"
 	"github.com/eaguilar88/deu/internal/utils"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -16,7 +17,7 @@ import (
 
 // Service defines the business logic operations for the providers domain.
 type Service interface {
-	GetProvider(ctx context.Context, providerID string) (entities.Provider, error)
+	GetProvider(ctx context.Context, providerID string, viewer entities.Viewer) (entities.Provider, error)
 	GetProviderByCode(ctx context.Context, providerCode string) (entities.Provider, error)
 	GetProviders(ctx context.Context, pageScope entities.PageScope, filters entities.ProviderFilters) ([]entities.Provider, entities.PageScope, error)
 	CreateProvider(ctx context.Context, provider *entities.Provider) (int64, error)
@@ -70,10 +71,13 @@ func (h *Handler) RejectProvider(c echo.Context) error {
 
 func (h *Handler) GetProvider(c echo.Context) error {
 	ctx := c.Request().Context()
-	provider, err := h.svc.GetProvider(ctx, c.Param("id"))
+	provider, err := h.svc.GetProvider(ctx, c.Param("id"), jwt.ViewerFromContext(c))
 	if err != nil {
 		if errors.Is(err, ErrProviderNotFound) {
 			return httperrors.NewNotFound("provider not found")
+		}
+		if errors.Is(err, ErrProviderForbidden) {
+			return httperrors.NewForbidden("you do not have permission to access this resource")
 		}
 		return httperrors.NewInternal(err)
 	}

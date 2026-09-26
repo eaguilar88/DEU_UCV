@@ -10,6 +10,7 @@ import (
 
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/httperrors"
+	"github.com/eaguilar88/deu/internal/jwt"
 	"github.com/eaguilar88/deu/internal/utils"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -21,8 +22,8 @@ const (
 )
 
 type Service interface {
-	GetGroup(ctx context.Context, groupID string) (entities.ExtensionGroup, error)
-	GetGroups(ctx context.Context, filter entities.GroupFilter, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error)
+	GetGroup(ctx context.Context, groupID string, viewer entities.Viewer) (entities.ExtensionGroup, error)
+	GetGroups(ctx context.Context, filter entities.GroupFilter, pageScope entities.PageScope, viewer entities.Viewer) ([]entities.ExtensionGroup, entities.PageScope, error)
 	GetRandomActiveGroups(ctx context.Context, limit int) ([]entities.ExtensionGroup, error)
 	GetGroupsSimple(ctx context.Context) ([]entities.ExtensionGroup, error)
 	CreateGroup(ctx context.Context, group entities.ExtensionGroup) (int64, string, error)
@@ -45,7 +46,7 @@ func NewHandler(svc Service, log *zap.Logger) *Handler {
 func (h *Handler) GetGroup(c echo.Context) error {
 	ctx := c.Request().Context()
 	req := GetGroupRequest{ID: c.Param("id")}
-	group, err := h.svc.GetGroup(ctx, req.ID)
+	group, err := h.svc.GetGroup(ctx, req.ID, jwt.ViewerFromContext(c))
 	if err != nil {
 		return mapGroupError(err)
 	}
@@ -114,7 +115,7 @@ func (h *Handler) GetGroups(c echo.Context) error {
 	//nolint:errcheck
 	scope.GetPerPageFromVars(c.QueryParam("per_page"))
 
-	groups, pageScope, err := h.svc.GetGroups(ctx, filter, scope)
+	groups, pageScope, err := h.svc.GetGroups(ctx, filter, scope, jwt.ViewerFromContext(c))
 	if err != nil {
 		return httperrors.NewInternal(err)
 	}
