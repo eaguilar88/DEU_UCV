@@ -53,6 +53,8 @@ services:
       - INTERNAL_API_URL=http://backend:8081
       - NEXT_PUBLIC_API_URL=/api/proxy
       - CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
+    volumes:
+      - ./grupos/src/data:/app/src/data
     labels:
       - "traefik.enable=true" # Enable Traefik for this service
       - "traefik.http.routers.grupos.rule=Host(`grupos.extension.ucv.ve`)" # Route based on hostname
