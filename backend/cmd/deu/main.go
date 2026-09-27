@@ -188,7 +188,9 @@ func main() {
 }
 
 func addFileRoutes(e *echo.Echo, handler *files.Handler) {
-	e.GET("/files/*key", handler.ServeFile)
+	// Echo names a wildcard segment "*" whatever follows it, so the key is read with
+	// c.Param(files.KeyParam); "/files/*key" would leave c.Param("key") empty.
+	e.GET("/files/*", handler.ServeFile)
 }
 
 func addHealthRoute(e *echo.Echo) {

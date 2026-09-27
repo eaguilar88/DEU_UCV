@@ -23,8 +23,13 @@ func NewHandler(storage StorageClient, logger *zap.Logger) *Handler {
 	return &Handler{storage: storage, logger: logger}
 }
 
+// KeyParam is the name Echo gives the wildcard segment of "/files/*". The object key is
+// everything after "/files/", e.g. "/files/files/activities/24/cubierta.png" serves the
+// object "files/activities/24/cubierta.png".
+const KeyParam = "*"
+
 func (h *Handler) ServeFile(c echo.Context) error {
-	key := c.Param("key")
+	key := c.Param(KeyParam)
 	if key == "" {
 		return httperrors.NewBadRequest("missing file key")
 	}
