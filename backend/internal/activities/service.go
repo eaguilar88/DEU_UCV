@@ -162,7 +162,9 @@ func (s *service) CreateActivity(ctx context.Context, activity entities.Activity
 	return activityID, nil
 }
 
-func (s *service) UpdateActivity(ctx context.Context, id string, activity entities.Activity) error {
+// UpdateActivity records userID (the authenticated caller) as the uploader of any new
+// files. The update request carries no CreatedBy, so it can't be used here.
+func (s *service) UpdateActivity(ctx context.Context, id, userID string, activity entities.Activity) error {
 	activity.ID = id
 	if err := s.repo.UpdateActivity(ctx, activity); err != nil {
 		return err
@@ -172,11 +174,11 @@ func (s *service) UpdateActivity(ctx context.Context, id string, activity entiti
 
 	var filesToUpload []*entities.File
 	if f := buildActivityFile(activity.CoverImage, id, entities.ActivityFileTypeCoverImage,
-		fmt.Sprintf("files/activities/%s/", id), activity.CreatedBy, now, true); f != nil {
+		fmt.Sprintf("files/activities/%s/", id), userID, now, true); f != nil {
 		filesToUpload = append(filesToUpload, f)
 	}
 	if f := buildActivityFile(activity.ParticipantList, id, entities.ActivityFileTypeListParticipants,
-		fmt.Sprintf("files/activities/%s/participants_", id), activity.CreatedBy, now, false); f != nil {
+		fmt.Sprintf("files/activities/%s/participants_", id), userID, now, false); f != nil {
 		filesToUpload = append(filesToUpload, f)
 	}
 

@@ -506,16 +506,16 @@ func (_c *MockService_ToggleReportCheck_Call) RunAndReturn(run func(ctx context.
 }
 
 // UpdateActivity provides a mock function for the type MockService
-func (_mock *MockService) UpdateActivity(ctx context.Context, id string, activity entities.Activity) error {
-	ret := _mock.Called(ctx, id, activity)
+func (_mock *MockService) UpdateActivity(ctx context.Context, id string, userID string, activity entities.Activity) error {
+	ret := _mock.Called(ctx, id, userID, activity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateActivity")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, entities.Activity) error); ok {
-		r0 = returnFunc(ctx, id, activity)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, entities.Activity) error); ok {
+		r0 = returnFunc(ctx, id, userID, activity)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -530,12 +530,13 @@ type MockService_UpdateActivity_Call struct {
 // UpdateActivity is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
+//   - userID string
 //   - activity entities.Activity
-func (_e *MockService_Expecter) UpdateActivity(ctx interface{}, id interface{}, activity interface{}) *MockService_UpdateActivity_Call {
-	return &MockService_UpdateActivity_Call{Call: _e.mock.On("UpdateActivity", ctx, id, activity)}
+func (_e *MockService_Expecter) UpdateActivity(ctx interface{}, id interface{}, userID interface{}, activity interface{}) *MockService_UpdateActivity_Call {
+	return &MockService_UpdateActivity_Call{Call: _e.mock.On("UpdateActivity", ctx, id, userID, activity)}
 }
 
-func (_c *MockService_UpdateActivity_Call) Run(run func(ctx context.Context, id string, activity entities.Activity)) *MockService_UpdateActivity_Call {
+func (_c *MockService_UpdateActivity_Call) Run(run func(ctx context.Context, id string, userID string, activity entities.Activity)) *MockService_UpdateActivity_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -545,14 +546,19 @@ func (_c *MockService_UpdateActivity_Call) Run(run func(ctx context.Context, id 
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 entities.Activity
+		var arg2 string
 		if args[2] != nil {
-			arg2 = args[2].(entities.Activity)
+			arg2 = args[2].(string)
+		}
+		var arg3 entities.Activity
+		if args[3] != nil {
+			arg3 = args[3].(entities.Activity)
 		}
 		run(
 			arg0,
 			arg1,
 			arg2,
+			arg3,
 		)
 	})
 	return _c
@@ -563,7 +569,7 @@ func (_c *MockService_UpdateActivity_Call) Return(err error) *MockService_Update
 	return _c
 }
 
-func (_c *MockService_UpdateActivity_Call) RunAndReturn(run func(ctx context.Context, id string, activity entities.Activity) error) *MockService_UpdateActivity_Call {
+func (_c *MockService_UpdateActivity_Call) RunAndReturn(run func(ctx context.Context, id string, userID string, activity entities.Activity) error) *MockService_UpdateActivity_Call {
 	_c.Call.Return(run)
 	return _c
 }

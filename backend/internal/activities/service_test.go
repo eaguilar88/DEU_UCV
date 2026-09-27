@@ -402,7 +402,6 @@ func TestService_UpdateActivity(t *testing.T) {
 			id:   "1",
 			activity: entities.Activity{
 				Name:       "Updated Workshop",
-				CreatedBy:  "user1",
 				CoverImage: &entities.File{Name: "cubierta.jpg"},
 			},
 			prepare: func(repo *mocks.MockRepository, storage *mocks.MockStorageClient) {
@@ -413,6 +412,7 @@ func TestService_UpdateActivity(t *testing.T) {
 						assert.Equal(t, "files/activities/1/cubierta.jpg", files[0].Key)
 						assert.Equal(t, entities.ActivityFileTypeCoverImage, files[0].Purpose)
 						assert.True(t, files[0].Public)
+						assert.Equal(t, "user1", files[0].UploadedBy, "uploader comes from the caller, not the request")
 						return nil
 					})
 				repo.EXPECT().SaveFilesToDB(mock.Anything, mock.Anything).Return(nil)
@@ -424,7 +424,6 @@ func TestService_UpdateActivity(t *testing.T) {
 			id:   "2",
 			activity: entities.Activity{
 				Name:            "Updated Workshop",
-				CreatedBy:       "user1",
 				CoverImage:      &entities.File{Name: "cubierta.jpg"},
 				ParticipantList: &entities.File{Name: "lista.pdf"},
 			},
@@ -478,7 +477,7 @@ func TestService_UpdateActivity(t *testing.T) {
 			if tt.prepare != nil {
 				tt.prepare(repo, storage)
 			}
-			err := svc.UpdateActivity(context.Background(), tt.id, tt.activity)
+			err := svc.UpdateActivity(context.Background(), tt.id, "user1", tt.activity)
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.errTarget != nil {
