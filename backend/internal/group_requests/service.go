@@ -22,7 +22,7 @@ type Repository interface {
 	GetGroupRequestByID(ctx context.Context, reqID string) (entities.GroupRequest, error)
 	GetGroupRequestsByGroupID(ctx context.Context, groupID string) ([]entities.GroupRequest, error)
 	GetPendingGroupRequestsCounts(ctx context.Context, faculty entities.Faculty) ([]entities.FacultyPendingCount, error)
-	CreateGroupAdminAndActivate(ctx context.Context, groupID string, adminUser entities.User) (int64, error)
+	ApproveGroupRequestAndActivate(ctx context.Context, reqID, groupID string, adminUser entities.User, notify func() error) (int64, error)
 	GetGroupByID(ctx context.Context, groupID string) (entities.ExtensionGroup, error)
 	GetUser(ctx context.Context, userID string) (*entities.User, error)
 }
@@ -52,10 +52,6 @@ func (s *service) ApproveGroupRequest(ctx context.Context, reqID string) error {
 		return err
 	}
 
-	if err := s.repo.ApproveGroupRequest(ctx, reqID); err != nil {
-		return err
-	}
-
 	allRequests, err := s.repo.GetGroupRequestsByGroupID(ctx, req.GroupID)
 	if err != nil {
 		s.logger.Error("failed to fetch group requests for activation check", zap.Error(err), zap.String("group_id", req.GroupID))
@@ -73,73 +69,78 @@ func (s *service) ApproveGroupRequest(ctx context.Context, reqID string) error {
 		}
 	}
 
-	if allApproved {
-		group, err := s.repo.GetGroupByID(ctx, req.GroupID)
-		if err != nil {
-			s.logger.Error("failed to fetch group before activation", zap.Error(err), zap.String("group_id", req.GroupID))
-			return err
-		}
+	if !allApproved {
+		return s.repo.ApproveGroupRequest(ctx, reqID)
+	}
 
-		// The original requester, captured before CreateGroupAdminAndActivate below
-		// reassigns extension_groups.user_id to the new dedicated group-admin login.
-		owner, err := s.repo.GetUser(ctx, group.Owner.ID)
-		if err != nil {
-			s.logger.Error("failed to fetch original group requester", zap.Error(err), zap.String("group_id", req.GroupID))
-			return err
-		}
+	group, err := s.repo.GetGroupByID(ctx, req.GroupID)
+	if err != nil {
+		s.logger.Error("failed to fetch group before activation", zap.Error(err), zap.String("group_id", req.GroupID))
+		return err
+	}
 
-		s.logger.Info("all requests approved for group, creating group admin user and activating group",
-			zap.String("group_id", req.GroupID),
-			zap.String("original_owner_id", owner.ID),
-			zap.String("original_owner_email", owner.Email),
-		)
+	// The original requester, captured before ApproveGroupRequestAndActivate below
+	// reassigns extension_groups.user_id to the new dedicated group-admin login.
+	owner, err := s.repo.GetUser(ctx, group.Owner.ID)
+	if err != nil {
+		s.logger.Error("failed to fetch original group requester", zap.Error(err), zap.String("group_id", req.GroupID))
+		return err
+	}
 
-		rawPassword, err := generateRandomPassword(12)
-		if err != nil {
-			s.logger.Error("failed to generate password for new group admin", zap.Error(err))
-			return err
-		}
+	s.logger.Info("all requests approved for group, creating group admin user and activating group",
+		zap.String("group_id", req.GroupID),
+		zap.String("original_owner_id", owner.ID),
+		zap.String("original_owner_email", owner.Email),
+	)
 
-		hashedPasswordBytes, err := bcrypt.GenerateFromPassword([]byte(rawPassword), bcrypt.DefaultCost)
-		if err != nil {
-			s.logger.Error("failed to hash password for new group admin", zap.Error(err))
-			return err
-		}
-		hashedPassword := string(hashedPasswordBytes)
+	rawPassword, err := generateRandomPassword(12)
+	if err != nil {
+		s.logger.Error("failed to generate password for new group admin", zap.Error(err))
+		return err
+	}
 
-		groupIDInt, err := strconv.Atoi(req.GroupID)
-		if err != nil {
-			return err
-		}
-		cleanGroupName := strings.ToLower(strings.ReplaceAll(req.GroupName, " ", "_"))
+	hashedPasswordBytes, err := bcrypt.GenerateFromPassword([]byte(rawPassword), bcrypt.DefaultCost)
+	if err != nil {
+		s.logger.Error("failed to hash password for new group admin", zap.Error(err))
+		return err
+	}
+	hashedPassword := string(hashedPasswordBytes)
 
-		adminUser := entities.User{
-			CI:             fmt.Sprintf("%d", 99000000+groupIDInt),
-			Email:          fmt.Sprintf("%s@extension.ucv.ve", cleanGroupName),
-			FirstName:      "Representante",
-			LastName:       req.GroupName,
-			Password:       hashedPassword,
-			DateOfBirth:    "2000-01-01",
-			EducationLevel: "bachiller",
-			Roles: []string{
-				entities.RoleNameFromID(entities.RoleGroupAdmin),
-			},
-		}
+	groupIDInt, err := strconv.Atoi(req.GroupID)
+	if err != nil {
+		return err
+	}
+	cleanGroupName := strings.ToLower(strings.ReplaceAll(req.GroupName, " ", "_"))
 
-		if _, err := s.repo.CreateGroupAdminAndActivate(ctx, req.GroupID, adminUser); err != nil {
-			s.logger.Error("failed to create group admin user and activate group", zap.Error(err), zap.String("group_id", req.GroupID))
-			return err
-		}
+	adminUser := entities.User{
+		CI:             fmt.Sprintf("%d", 99000000+groupIDInt),
+		Email:          fmt.Sprintf("%s@extension.ucv.ve", cleanGroupName),
+		FirstName:      "Representante",
+		LastName:       req.GroupName,
+		Password:       hashedPassword,
+		DateOfBirth:    "2000-01-01",
+		EducationLevel: "bachiller",
+		Roles: []string{
+			entities.RoleNameFromID(entities.RoleGroupAdmin),
+		},
+	}
 
-		subject := "Datos de acceso del grupo de extensión"
-		body := fmt.Sprintf(
-			"El grupo %s ha sido aprobado y activado.\n\nUsuario: %s\nContraseña: %s\n\nPor favor inicie sesión y cambie su contraseña.",
-			req.GroupName, adminUser.Email, rawPassword,
-		)
+	subject := "Datos de acceso del grupo de extensión"
+	body := fmt.Sprintf(
+		"El grupo %s ha sido aprobado y activado.\n\nUsuario: %s\nContraseña: %s\n\nPor favor inicie sesión y cambie su contraseña.",
+		req.GroupName, adminUser.Email, rawPassword,
+	)
+	sendCredentials := func() error {
 		if err := s.emailClient.Send(ctx, owner.Email, subject, body); err != nil {
 			s.logger.Error("failed to send group admin credentials email", zap.Error(err), zap.String("group_id", req.GroupID))
 			return fmt.Errorf("error sending credentials email: %w", err)
 		}
+		return nil
+	}
+
+	if _, err := s.repo.ApproveGroupRequestAndActivate(ctx, reqID, req.GroupID, adminUser, sendCredentials); err != nil {
+		s.logger.Error("failed to approve group request and activate group", zap.Error(err), zap.String("group_id", req.GroupID))
+		return err
 	}
 
 	return nil

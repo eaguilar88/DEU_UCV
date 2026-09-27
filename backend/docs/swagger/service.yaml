@@ -73,45 +73,87 @@ components:
       properties:
         id:
           type: string
+        cedula:
+          type: string
         email:
           type: string
-        first_name:
+        nombres:
           type: string
-        last_name:
+        apellidos:
           type: string
-        roles:
-          type: array
-          items:
-            type: string
-        is_active:
-          type: boolean
-        created_at:
+        biografia:
           type: string
-          format: date-time
-        updated_at:
+        fecha_de_nacimiento:
           type: string
-          format: date-time
+          description: DD-MM-YYYY
+          pattern: '^\d{2}-\d{2}-\d{4}$'
+          example: "14-07-1995"
+        edad:
+          type: integer
+        genero:
+          type: string
+        nivel_educativo:
+          type: string
+        codigo_proveedor:
+          type: string
+        direccion:
+          type: string
+        creado_en:
+          type: string
+        foto_perfil:
+          type: string
 
     CreateUserRequest:
       type: object
-      required: [ email, password, first_name, last_name ]
+      required: [ cedula, email, nombres, apellidos, fecha_de_nacimiento ]
       properties:
+        cedula:
+          type: string
         email:
           type: string
           format: email
+        nombres:
+          type: string
+        apellidos:
+          type: string
+        fecha_de_nacimiento:
+          type: string
+          description: DD-MM-YYYY
+          pattern: '^\d{2}-\d{2}-\d{4}$'
+          example: "14-07-1995"
+        genero:
+          type: string
+        nivel_educativo:
+          type: string
+        direccion:
+          type: string
         password:
           type: string
-        first_name:
+        profile_picture:
           type: string
-        last_name:
-          type: string
+          format: binary
 
     UpdateUserRequest:
       type: object
+      description: >
+        All listed fields overwrite the stored values. cedula, email and password
+        cannot be changed through this endpoint.
+      required: [ fecha_nacimiento ]
       properties:
-        first_name:
+        primer_nombre:
           type: string
-        last_name:
+        apellido:
+          type: string
+        fecha_nacimiento:
+          type: string
+          description: DD-MM-YYYY
+          pattern: '^\d{2}-\d{2}-\d{4}$'
+          example: "14-07-1995"
+        genero:
+          type: string
+        nivel_educacion:
+          type: string
+        direccion:
           type: string
 
     # ── Providers ─────────────────────────────────────────────────────────────
@@ -544,6 +586,17 @@ paths:
       responses:
         "200":
           description: Paginated user list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  usuarios:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/User"
+                  paginas:
+                    $ref: "#/components/schemas/Pagination"
         "401":
           description: Unauthorized
     post:
@@ -552,14 +605,23 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               $ref: "#/components/schemas/CreateUserRequest"
       responses:
         "201":
           description: User created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+        "400":
+          description: Validation failed, fecha_de_nacimiento not in DD-MM-YYYY format, or invalid profile picture
         "409":
-          description: Email already in use
+          description: User already exists
 
   /users/{id}:
     get:
@@ -592,13 +654,18 @@ paths:
           schema:
             type: string
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/UpdateUserRequest"
       responses:
-        "200":
-          description: Updated user
+        "202":
+          description: Updated
+        "400":
+          description: Invalid body or fecha_nacimiento missing / not in DD-MM-YYYY format
+        "401":
+          description: Unauthorized
         "404":
           description: User not found
     delete:
@@ -613,8 +680,10 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        "202":
           description: Deleted
+        "401":
+          description: Unauthorized
         "404":
           description: User not found
 

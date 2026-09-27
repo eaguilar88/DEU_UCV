@@ -202,16 +202,36 @@ func (r *PostgresRepository) RejectGroupRequest(ctx context.Context, reqID strin
 	return nil
 }
 
-// CreateGroupAdminAndActivate creates the login user for a group's admin, assigns it a role,
-// links it to the group, and activates the group — all inside a single transaction, so a
-// failure partway through never leaves an orphaned, unlinked user behind.
-func (r *PostgresRepository) CreateGroupAdminAndActivate(ctx context.Context, groupID string, adminUser entities.User) (int64, error) {
+// ApproveGroupRequestAndActivate approves a group's last pending request, creates the login
+// user for the group's admin, assigns it a role, links it to the group, and activates the
+// group — all inside a single transaction. notify runs after every write but before commit;
+// if it fails the whole transaction is rolled back, so the request stays under_review and the
+// approval can be retried instead of leaving an active group whose credentials were never sent.
+func (r *PostgresRepository) ApproveGroupRequestAndActivate(ctx context.Context, reqID, groupID string, adminUser entities.User, notify func() error) (int64, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		r.logger.Error("failed to begin transaction", zap.Error(err))
 		return -1, fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback()
+
+	approveSQL, approveArgs, err := queries.ApproveGroupRequest(reqID).ToSql()
+	if err != nil {
+		r.logger.Error("failed to build approve group request query", zap.Error(err))
+		return -1, fmt.Errorf("database error: %w", err)
+	}
+	approveRes, err := tx.ExecContext(ctx, approveSQL, approveArgs...)
+	if err != nil {
+		r.logger.Error("failed to approve group request", zap.Error(err))
+		return -1, fmt.Errorf("database error: %w", err)
+	}
+	rowsAffected, err := approveRes.RowsAffected()
+	if err != nil {
+		return -1, fmt.Errorf("database error: %w", err)
+	}
+	if rowsAffected == 0 {
+		return -1, fmt.Errorf("%w", group_requests.ErrGroupRequestNotFound)
+	}
 
 	userModel := newUserFromEntity(adminUser, false)
 
@@ -263,8 +283,12 @@ func (r *PostgresRepository) CreateGroupAdminAndActivate(ctx context.Context, gr
 		return -1, fmt.Errorf("failed to activate group: %w", err)
 	}
 
+	if err := notify(); err != nil {
+		return -1, err
+	}
+
 	if err := tx.Commit(); err != nil {
-		r.logger.Error("failed to commit transaction", zap.Error(err))
+		r.logger.Error("failed to commit transaction after notification was sent", zap.Error(err), zap.String("group_id", groupID))
 		return -1, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 

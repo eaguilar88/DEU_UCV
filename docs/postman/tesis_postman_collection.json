@@ -104,27 +104,27 @@
                             "formdata": [
                                 {
                                     "key": "cedula",
-                                    "value": "18245415",
+                                    "value": "26789123",
                                     "type": "text"
                                 },
                                 {
                                     "key": "nombres",
-                                    "value": "Ellery",
+                                    "value": "María Fernanda",
                                     "type": "text"
                                 },
                                 {
                                     "key": "apellidos",
-                                    "value": "Aguilar",
+                                    "value": "González Pérez",
                                     "type": "text"
                                 },
                                 {
                                     "key": "fecha_de_nacimiento",
-                                    "value": "03-09-1988",
+                                    "value": "14-07-1995",
                                     "type": "text"
                                 },
                                 {
                                     "key": "genero",
-                                    "value": " masculino",
+                                    "value": " femenino",
                                     "type": "text"
                                 },
                                 {
@@ -139,7 +139,7 @@
                                 },
                                 {
                                     "key": "email",
-                                    "value": "esaulagj@gmail.com",
+                                    "value": "maria.gonzalez@example.com",
                                     "type": "text"
                                 },
                                 {
@@ -191,7 +191,7 @@
                         "header": [],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n\t\"cedula\": \"18245417\",\n    \"nombres\": \"Ellery\",\n    \"apellidos\": \"Aguilar\",\n    \"fecha_de_nacimiento\": \"1988-09-03\",\n    \"genero\": \"masculino\",\n    \"nivel_educativo\": \"universitaria_incompleta\",\n    \"direccion\": \"caracas\",\n    \"email\": \"esaulagj@gmail.com\",\n    \"password\": \"nolodire\"\n}",
+                            "raw": "{\n    \"primer_nombre\": \"María Fernanda\",\n    \"apellido\": \"González Pérez\",\n    \"fecha_nacimiento\": \"14-07-1995\",\n    \"genero\": \"femenino\",\n    \"nivel_educacion\": \"universitaria_incompleta\",\n    \"direccion\": \"caracas\"\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
@@ -509,7 +509,7 @@
                         "header": [],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n\t\"ci\": \"V-18245415\",\n    \"first_name\": \"Ellery\",\n    \"last_name\": \"Aguilar\",\n    \"date_of_birth\": \"1988-09-03\",\n    \"gender\": \"masculino\",\n    \"education_level\": \"universitario_incompleta\",\n    \"address\": \"caracas\",\n    \"username\": \"ellery@gmail.com\",\n    \"password\": \"nolodire\",\n    \"role\": \"admin\"\n\n}",
+                            "raw": "{\n\t\"ci\": \"V-26789123\",\n    \"first_name\": \"María Fernanda\",\n    \"last_name\": \"González Pérez\",\n    \"date_of_birth\": \"1995-07-14\",\n    \"gender\": \"femenino\",\n    \"education_level\": \"universitario_incompleta\",\n    \"address\": \"caracas\",\n    \"username\": \"maria.gonzalez@example.com\",\n    \"password\": \"nolodire\",\n    \"role\": \"admin\"\n\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
@@ -872,7 +872,7 @@
                         "header": [],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n\t\"ci\": \"V-18245415\",\n    \"first_name\": \"Ellery\",\n    \"last_name\": \"Aguilar\",\n    \"date_of_birth\": \"1988-09-03\",\n    \"gender\": \"masculino\",\n    \"education_level\": \"universitario_incompleta\",\n    \"address\": \"caracas\",\n    \"username\": \"ellery@gmail.com\",\n    \"password\": \"nolodire\",\n    \"role\": \"admin\"\n\n}",
+                            "raw": "{\n\t\"ci\": \"V-26789123\",\n    \"first_name\": \"María Fernanda\",\n    \"last_name\": \"González Pérez\",\n    \"date_of_birth\": \"1995-07-14\",\n    \"gender\": \"femenino\",\n    \"education_level\": \"universitario_incompleta\",\n    \"address\": \"caracas\",\n    \"username\": \"maria.gonzalez@example.com\",\n    \"password\": \"nolodire\",\n    \"role\": \"admin\"\n\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"

@@ -15,7 +15,7 @@ start-deu: start-prod start-prod-landing start-espacios
 stop-deu:
 	docker compose -f docker-compose.prod.yml down
 	docker compose -f docker-compose.landing.yml down
-	docker compose -f docker-compose.espacios.yml down
+	docker compose -f docker-compose.espacios.yml --env-file .env.espacios down
 
 start-prod-landing:
 	git submodule sync -- landing
@@ -31,10 +31,10 @@ seed-landing:
 start-espacios:
 	git submodule sync -- espacios-universitarios
 	git submodule update --init --recursive espacios-universitarios
-	docker compose -f docker-compose.espacios.yml up -d --build
+	docker compose -f docker-compose.espacios.yml --env-file .env.espacios up -d --build
 
 stop-espacios:
-	docker compose -f docker-compose.espacios.yml down
+	docker compose -f docker-compose.espacios.yml --env-file .env.espacios down
 
 start-db:
 	docker compose -f docker-compose.dev.yml up  --build -d

@@ -41,6 +41,9 @@ func NewSMTPClient(config config.EmailConfig, logger *zap.Logger) (*SMTPClient, 
 	if from == "" {
 		from = config.Username
 	}
+	if err := mail.NewMsg().From(from); err != nil {
+		return nil, fmt.Errorf("invalid sender address %q: %w", from, err)
+	}
 
 	return &SMTPClient{
 		from:   from,
