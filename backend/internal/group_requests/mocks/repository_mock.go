@@ -95,46 +95,48 @@ func (_c *MockRepository_ApproveGroupRequest_Call) RunAndReturn(run func(ctx con
 	return _c
 }
 
-// CreateGroupAdminAndActivate provides a mock function for the type MockRepository
-func (_mock *MockRepository) CreateGroupAdminAndActivate(ctx context.Context, groupID string, adminUser entities.User) (int64, error) {
-	ret := _mock.Called(ctx, groupID, adminUser)
+// ApproveGroupRequestAndActivate provides a mock function for the type MockRepository
+func (_mock *MockRepository) ApproveGroupRequestAndActivate(ctx context.Context, reqID string, groupID string, adminUser entities.User, notify func() error) (int64, error) {
+	ret := _mock.Called(ctx, reqID, groupID, adminUser, notify)
 
 	if len(ret) == 0 {
-		panic("no return value specified for CreateGroupAdminAndActivate")
+		panic("no return value specified for ApproveGroupRequestAndActivate")
 	}
 
 	var r0 int64
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, entities.User) (int64, error)); ok {
-		return returnFunc(ctx, groupID, adminUser)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, entities.User, func() error) (int64, error)); ok {
+		return returnFunc(ctx, reqID, groupID, adminUser, notify)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, entities.User) int64); ok {
-		r0 = returnFunc(ctx, groupID, adminUser)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, entities.User, func() error) int64); ok {
+		r0 = returnFunc(ctx, reqID, groupID, adminUser, notify)
 	} else {
 		r0 = ret.Get(0).(int64)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, entities.User) error); ok {
-		r1 = returnFunc(ctx, groupID, adminUser)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, entities.User, func() error) error); ok {
+		r1 = returnFunc(ctx, reqID, groupID, adminUser, notify)
 	} else {
 		r1 = ret.Error(1)
 	}
 	return r0, r1
 }
 
-// MockRepository_CreateGroupAdminAndActivate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateGroupAdminAndActivate'
-type MockRepository_CreateGroupAdminAndActivate_Call struct {
+// MockRepository_ApproveGroupRequestAndActivate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ApproveGroupRequestAndActivate'
+type MockRepository_ApproveGroupRequestAndActivate_Call struct {
 	*mock.Call
 }
 
-// CreateGroupAdminAndActivate is a helper method to define mock.On call
+// ApproveGroupRequestAndActivate is a helper method to define mock.On call
 //   - ctx context.Context
+//   - reqID string
 //   - groupID string
 //   - adminUser entities.User
-func (_e *MockRepository_Expecter) CreateGroupAdminAndActivate(ctx interface{}, groupID interface{}, adminUser interface{}) *MockRepository_CreateGroupAdminAndActivate_Call {
-	return &MockRepository_CreateGroupAdminAndActivate_Call{Call: _e.mock.On("CreateGroupAdminAndActivate", ctx, groupID, adminUser)}
+//   - notify func() error
+func (_e *MockRepository_Expecter) ApproveGroupRequestAndActivate(ctx interface{}, reqID interface{}, groupID interface{}, adminUser interface{}, notify interface{}) *MockRepository_ApproveGroupRequestAndActivate_Call {
+	return &MockRepository_ApproveGroupRequestAndActivate_Call{Call: _e.mock.On("ApproveGroupRequestAndActivate", ctx, reqID, groupID, adminUser, notify)}
 }
 
-func (_c *MockRepository_CreateGroupAdminAndActivate_Call) Run(run func(ctx context.Context, groupID string, adminUser entities.User)) *MockRepository_CreateGroupAdminAndActivate_Call {
+func (_c *MockRepository_ApproveGroupRequestAndActivate_Call) Run(run func(ctx context.Context, reqID string, groupID string, adminUser entities.User, notify func() error)) *MockRepository_ApproveGroupRequestAndActivate_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -144,25 +146,35 @@ func (_c *MockRepository_CreateGroupAdminAndActivate_Call) Run(run func(ctx cont
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 entities.User
+		var arg2 string
 		if args[2] != nil {
-			arg2 = args[2].(entities.User)
+			arg2 = args[2].(string)
+		}
+		var arg3 entities.User
+		if args[3] != nil {
+			arg3 = args[3].(entities.User)
+		}
+		var arg4 func() error
+		if args[4] != nil {
+			arg4 = args[4].(func() error)
 		}
 		run(
 			arg0,
 			arg1,
 			arg2,
+			arg3,
+			arg4,
 		)
 	})
 	return _c
 }
 
-func (_c *MockRepository_CreateGroupAdminAndActivate_Call) Return(n int64, err error) *MockRepository_CreateGroupAdminAndActivate_Call {
+func (_c *MockRepository_ApproveGroupRequestAndActivate_Call) Return(n int64, err error) *MockRepository_ApproveGroupRequestAndActivate_Call {
 	_c.Call.Return(n, err)
 	return _c
 }
 
-func (_c *MockRepository_CreateGroupAdminAndActivate_Call) RunAndReturn(run func(ctx context.Context, groupID string, adminUser entities.User) (int64, error)) *MockRepository_CreateGroupAdminAndActivate_Call {
+func (_c *MockRepository_ApproveGroupRequestAndActivate_Call) RunAndReturn(run func(ctx context.Context, reqID string, groupID string, adminUser entities.User, notify func() error) (int64, error)) *MockRepository_ApproveGroupRequestAndActivate_Call {
 	_c.Call.Return(run)
 	return _c
 }

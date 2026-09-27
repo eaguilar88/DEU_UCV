@@ -86,7 +86,11 @@ func main() {
 	repository := repository.NewRepository(postgres, config.FilePath, logger)
 	authService := auth.NewService(repository, signer, logger)
 	authEndpoints := auth.NewHandler(authService)
-	mailClient := email.NewMailgunClient(config.Email, logger)
+	mailClient, err := email.NewSMTPClient(config.Email, logger)
+	if err != nil {
+		logger.Error("error creating smtp client", zap.Error(err))
+		os.Exit(1)
+	}
 	userSvc := users.NewService(repository, mailClient, bbClient, logger)
 	userEndpoints := users.NewHandler(userSvc, logger)
 

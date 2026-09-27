@@ -2,7 +2,7 @@ services:
   espacios-db:
     image: postgres:18
     restart: unless-stopped
-    env_file: .env
+    env_file: .env.espacios
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -24,7 +24,7 @@ services:
       context: "./espacios-universitarios/backend"
       dockerfile: "Dockerfile"
     restart: unless-stopped
-    env_file: .env
+    env_file: .env.espacios
     environment:
       PORT: 3000
       DB_HOST: espacios-db

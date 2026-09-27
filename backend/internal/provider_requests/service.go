@@ -3,7 +3,6 @@ package provider_requests
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/eaguilar88/deu/internal/entities"
@@ -63,8 +62,10 @@ func (s *service) ApproveProviderRequest(ctx context.Context, id, reviewerID str
 	}
 
 	if err := s.emailClient.Send(ctx, provider.User.Email, "Solicitud de registro aprobada", "Tu solicitud ha sido aprobada"); err != nil {
-		s.logger.Error("failed to send approval email", zap.Error(err))
-		return fmt.Errorf("error sending approval email: %w", err)
+		s.logger.Warn("failed to send approval email",
+			zap.Error(err),
+			zap.String("provider_request_id", id),
+		)
 	}
 
 	return nil

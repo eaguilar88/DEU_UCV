@@ -43,10 +43,11 @@ type DatabaseConfig struct {
 }
 
 type EmailConfig struct {
-	Domain string `env:"DOMAIN"   envDefault:"smtp.gmail.com"`
-	APIKey string `env:"API_KEY"  envDefault:"DEU"`
-	From   string `env:"FROM"`
-	Port   int    `env:"PORT"     envDefault:"587"`
+	Domain   string `env:"DOMAIN"   envDefault:"smtp.gmail.com"`
+	APIKey   string `env:"API_KEY"  envDefault:"DEU"`
+	Username string `env:"USERNAME"`
+	From     string `env:"FROM"`
+	Port     int    `env:"PORT"     envDefault:"587"`
 }
 
 type BlackBlazeB2Config struct {
