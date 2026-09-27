@@ -24,7 +24,7 @@ type Service interface {
 	GetActivities(ctx context.Context, filter entities.ActivityFilter, pageScope entities.PageScope) ([]entities.Activity, entities.PageScope, entities.ActivityMetrics, error)
 	GetGroupDashboardSummary(ctx context.Context, groupID string) (entities.GroupDashboardSummary, error)
 	CreateActivity(ctx context.Context, activity entities.Activity) (int64, error)
-	UpdateActivity(ctx context.Context, id string, activity entities.Activity) error
+	UpdateActivity(ctx context.Context, id, userID string, activity entities.Activity) error
 	ToggleReportCheck(ctx context.Context, id string, checked bool) error
 	ToggleFeature(ctx context.Context, id string, featured bool) error
 	DeleteActivity(ctx context.Context, id string) error
@@ -201,7 +201,7 @@ func (h *Handler) CreateActivity(c echo.Context) error {
 func (h *Handler) UpdateActivity(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	_, ok := c.Get("userID").(string)
+	userID, ok := c.Get("userID").(string)
 	if !ok {
 		return httperrors.NewUnauthorized("authentication required")
 	}
@@ -224,7 +224,7 @@ func (h *Handler) UpdateActivity(c echo.Context) error {
 		activity.ParticipantList = participantList
 	}
 
-	err := h.svc.UpdateActivity(ctx, req.ID, activity)
+	err := h.svc.UpdateActivity(ctx, req.ID, userID, activity)
 	if err != nil {
 		if errors.Is(err, ErrActivityNotFound) {
 			return httperrors.NewNotFound("activity not found")
