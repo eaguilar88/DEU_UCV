@@ -179,6 +179,80 @@ func (_c *MockRepository_ApproveGroupRequestAndActivate_Call) RunAndReturn(run f
 	return _c
 }
 
+// GetContactsByOwner provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetContactsByOwner(ctx context.Context, ownerID string, ownerType entities.OwnerType) ([]entities.Contact, error) {
+	ret := _mock.Called(ctx, ownerID, ownerType)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetContactsByOwner")
+	}
+
+	var r0 []entities.Contact
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, entities.OwnerType) ([]entities.Contact, error)); ok {
+		return returnFunc(ctx, ownerID, ownerType)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, entities.OwnerType) []entities.Contact); ok {
+		r0 = returnFunc(ctx, ownerID, ownerType)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]entities.Contact)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, entities.OwnerType) error); ok {
+		r1 = returnFunc(ctx, ownerID, ownerType)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetContactsByOwner_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetContactsByOwner'
+type MockRepository_GetContactsByOwner_Call struct {
+	*mock.Call
+}
+
+// GetContactsByOwner is a helper method to define mock.On call
+//   - ctx context.Context
+//   - ownerID string
+//   - ownerType entities.OwnerType
+func (_e *MockRepository_Expecter) GetContactsByOwner(ctx interface{}, ownerID interface{}, ownerType interface{}) *MockRepository_GetContactsByOwner_Call {
+	return &MockRepository_GetContactsByOwner_Call{Call: _e.mock.On("GetContactsByOwner", ctx, ownerID, ownerType)}
+}
+
+func (_c *MockRepository_GetContactsByOwner_Call) Run(run func(ctx context.Context, ownerID string, ownerType entities.OwnerType)) *MockRepository_GetContactsByOwner_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 entities.OwnerType
+		if args[2] != nil {
+			arg2 = args[2].(entities.OwnerType)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetContactsByOwner_Call) Return(contacts []entities.Contact, err error) *MockRepository_GetContactsByOwner_Call {
+	_c.Call.Return(contacts, err)
+	return _c
+}
+
+func (_c *MockRepository_GetContactsByOwner_Call) RunAndReturn(run func(ctx context.Context, ownerID string, ownerType entities.OwnerType) ([]entities.Contact, error)) *MockRepository_GetContactsByOwner_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetGroupByID provides a mock function for the type MockRepository
 func (_mock *MockRepository) GetGroupByID(ctx context.Context, groupID string) (entities.ExtensionGroup, error) {
 	ret := _mock.Called(ctx, groupID)
@@ -608,16 +682,16 @@ func (_c *MockRepository_GetUser_Call) RunAndReturn(run func(ctx context.Context
 }
 
 // RejectGroupRequest provides a mock function for the type MockRepository
-func (_mock *MockRepository) RejectGroupRequest(ctx context.Context, reqID string) error {
-	ret := _mock.Called(ctx, reqID)
+func (_mock *MockRepository) RejectGroupRequest(ctx context.Context, reqID string, reason string) error {
+	ret := _mock.Called(ctx, reqID, reason)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RejectGroupRequest")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, reqID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = returnFunc(ctx, reqID, reason)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -632,11 +706,12 @@ type MockRepository_RejectGroupRequest_Call struct {
 // RejectGroupRequest is a helper method to define mock.On call
 //   - ctx context.Context
 //   - reqID string
-func (_e *MockRepository_Expecter) RejectGroupRequest(ctx interface{}, reqID interface{}) *MockRepository_RejectGroupRequest_Call {
-	return &MockRepository_RejectGroupRequest_Call{Call: _e.mock.On("RejectGroupRequest", ctx, reqID)}
+//   - reason string
+func (_e *MockRepository_Expecter) RejectGroupRequest(ctx interface{}, reqID interface{}, reason interface{}) *MockRepository_RejectGroupRequest_Call {
+	return &MockRepository_RejectGroupRequest_Call{Call: _e.mock.On("RejectGroupRequest", ctx, reqID, reason)}
 }
 
-func (_c *MockRepository_RejectGroupRequest_Call) Run(run func(ctx context.Context, reqID string)) *MockRepository_RejectGroupRequest_Call {
+func (_c *MockRepository_RejectGroupRequest_Call) Run(run func(ctx context.Context, reqID string, reason string)) *MockRepository_RejectGroupRequest_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -646,9 +721,14 @@ func (_c *MockRepository_RejectGroupRequest_Call) Run(run func(ctx context.Conte
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -659,7 +739,7 @@ func (_c *MockRepository_RejectGroupRequest_Call) Return(err error) *MockReposit
 	return _c
 }
 
-func (_c *MockRepository_RejectGroupRequest_Call) RunAndReturn(run func(ctx context.Context, reqID string) error) *MockRepository_RejectGroupRequest_Call {
+func (_c *MockRepository_RejectGroupRequest_Call) RunAndReturn(run func(ctx context.Context, reqID string, reason string) error) *MockRepository_RejectGroupRequest_Call {
 	_c.Call.Return(run)
 	return _c
 }

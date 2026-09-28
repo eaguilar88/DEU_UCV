@@ -16,6 +16,7 @@ var resourceRequestSelectCommon = []string{
 	"r.status",
 	"r.created_at",
 	"r.updated_at",
+	"r.rejection_reason",
 }
 
 const effectiveFacultyExpr = `
@@ -121,9 +122,10 @@ func ApproveGroupResourceRequest(reqID string) sq.UpdateBuilder {
 		Where(sq.Eq{"id": reqID, "status": "under_review", "deleted_at": nil})
 }
 
-func RejectGroupResourceRequest(reqID string) sq.UpdateBuilder {
+func RejectGroupResourceRequest(reqID, reason string) sq.UpdateBuilder {
 	return psql.Update(groupResourceRequestsTableName).
 		Set("status", "rejected").
+		Set("rejection_reason", reason).
 		Set("updated_at", sq.Expr("NOW()")).
 		Where(sq.Eq{"id": reqID, "status": "under_review", "deleted_at": nil})
 }

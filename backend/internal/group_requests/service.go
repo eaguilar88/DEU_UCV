@@ -17,7 +17,7 @@ const passwordCharset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012
 
 type Repository interface {
 	ApproveGroupRequest(ctx context.Context, reqID string) error
-	RejectGroupRequest(ctx context.Context, reqID string) error
+	RejectGroupRequest(ctx context.Context, reqID, reason string) error
 	GetGroupRequestsByFaculty(ctx context.Context, faculty entities.Faculty, status string, pageScope entities.PageScope) ([]entities.GroupRequest, entities.PageScope, int, error)
 	GetGroupRequestByID(ctx context.Context, reqID string) (entities.GroupRequest, error)
 	GetGroupRequestsByGroupID(ctx context.Context, groupID string) ([]entities.GroupRequest, error)
@@ -25,6 +25,7 @@ type Repository interface {
 	ApproveGroupRequestAndActivate(ctx context.Context, reqID, groupID string, adminUser entities.User, notify func() error) (int64, error)
 	GetGroupByID(ctx context.Context, groupID string) (entities.ExtensionGroup, error)
 	GetUser(ctx context.Context, userID string) (*entities.User, error)
+	GetContactsByOwner(ctx context.Context, ownerID string, ownerType entities.OwnerType) ([]entities.Contact, error)
 }
 
 // MailClient defines the email sending operations required by the group_requests service.
@@ -161,8 +162,44 @@ func generateRandomPassword(length int) (string, error) {
 	return string(password), nil
 }
 
-func (s *service) RejectGroupRequest(ctx context.Context, reqID string) error {
-	return s.repo.RejectGroupRequest(ctx, reqID)
+func (s *service) RejectGroupRequest(ctx context.Context, reqID, reason string) error {
+	req, err := s.repo.GetGroupRequestByID(ctx, reqID)
+	if err != nil {
+		return err
+	}
+
+	if err := s.repo.RejectGroupRequest(ctx, reqID, reason); err != nil {
+		return err
+	}
+
+	// The rejection is already saved, so a notification failure is logged but not returned.
+	logFields := []zap.Field{zap.String("group_id", req.GroupID), zap.String("request_id", reqID)}
+	to, err := s.groupContactEmail(ctx, req.GroupID)
+	if err != nil {
+		s.logger.Warn("failed to get group contact email for rejection notice", append(logFields, zap.Error(err))...)
+		return nil
+	}
+
+	subject := "Solicitud de registro de grupo rechazada"
+	body := fmt.Sprintf("La solicitud de registro del grupo %s ha sido rechazada por la facultad %s.\n\nRazón: %s", req.GroupName, req.Faculty, reason)
+	if err := s.emailClient.Send(ctx, to, subject, body); err != nil {
+		s.logger.Warn("failed to send group rejection email", append(logFields, zap.Error(err))...)
+	}
+	return nil
+}
+
+// groupContactEmail returns the email saved in deu.contacts when the group was registered.
+func (s *service) groupContactEmail(ctx context.Context, groupID string) (string, error) {
+	contacts, err := s.repo.GetContactsByOwner(ctx, groupID, entities.OwnerTypeExtensionGroup)
+	if err != nil {
+		return "", err
+	}
+	for _, c := range contacts {
+		if c.Type == entities.ContactTypeEmail && c.Value != "" {
+			return c.Value, nil
+		}
+	}
+	return "", fmt.Errorf("group %s has no email contact", groupID)
 }
 
 func (s *service) GetGroupRequestsByFaculty(ctx context.Context, faculty entities.Faculty, status string, pageScope entities.PageScope) ([]entities.GroupRequest, entities.PageScope, int, error) {

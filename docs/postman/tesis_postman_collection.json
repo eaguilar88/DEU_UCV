@@ -366,15 +366,6 @@
                                 "users",
                                 "{{user_id}}"
                             ]
-                        },
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"ci\": \"18245415\",\n    \"primer_nombre\": \"Ellery\",\n    \"apellido\": \"Aguilar\",\n    \"fecha_nacimiento\": \"1988-09-03\",\n    \"genero\": \"masculino\",\n    \"nivel_educacion\": \"universitaria_incompleta\",\n    \"direccion\": \"caracas\",\n    \"password\": \"nolodire\"\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
-                                }
-                            }
                         }
                     },
                     "response": []
@@ -1003,15 +994,6 @@
                     "request": {
                         "method": "PUT",
                         "header": [],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n\t\"ci\": \"V-26789123\",\n    \"first_name\": \"María Fernanda\",\n    \"last_name\": \"González Pérez\",\n    \"date_of_birth\": \"1995-07-14\",\n    \"gender\": \"femenino\",\n    \"education_level\": \"universitario_incompleta\",\n    \"address\": \"caracas\",\n    \"username\": \"maria.gonzalez@example.com\",\n    \"password\": \"nolodire\",\n    \"role\": \"admin\"\n\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
-                                }
-                            }
-                        },
                         "url": {
                             "raw": "{{base_url}}/courses/{{course_id}}",
                             "host": [
@@ -2855,6 +2837,15 @@
                             "request": {
                                 "method": "POST",
                                 "header": [],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"razon\": \"Documentación incompleta\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
                                 "url": {
                                     "raw": "{{base_url}}/admin/group-requests/{{group_requests_id}}/reject",
                                     "host": [
@@ -2982,6 +2973,15 @@
                             "request": {
                                 "method": "POST",
                                 "header": [],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"razon\": \"Documentación incompleta\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
                                 "url": {
                                     "raw": "{{base_url}}/admin/group-resource-requests/{{group_resource_request_id}}/reject",
                                     "host": [

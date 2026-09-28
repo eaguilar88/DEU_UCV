@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/facultyscope"
@@ -14,7 +15,7 @@ import (
 
 type Service interface {
 	ApproveGroupRequest(ctx context.Context, reqID string) error
-	RejectGroupRequest(ctx context.Context, reqID string) error
+	RejectGroupRequest(ctx context.Context, reqID, reason string) error
 	GetGroupRequestsByFaculty(ctx context.Context, faculty entities.Faculty, status string, pageScope entities.PageScope) ([]entities.GroupRequest, entities.PageScope, int, error)
 	GetGroupRequestByID(ctx context.Context, reqID string) (entities.GroupRequest, error)
 	GetPendingGroupRequestsCounts(ctx context.Context, faculty entities.Faculty) ([]entities.FacultyPendingCount, error)
@@ -65,7 +66,16 @@ func (h *Handler) RejectGroupRequest(c echo.Context) error {
 		return httperrors.NewBadRequest("request ID is required")
 	}
 
-	if err := h.svc.RejectGroupRequest(ctx, reqID); err != nil {
+	var req RejectGroupRequestRequest
+	if err := c.Bind(&req); err != nil {
+		return httperrors.NewBadRequest("invalid request body")
+	}
+	req.Reason = strings.TrimSpace(req.Reason)
+	if req.Reason == "" {
+		return httperrors.NewBadRequest("razon es requerida")
+	}
+
+	if err := h.svc.RejectGroupRequest(ctx, reqID, req.Reason); err != nil {
 		if errors.Is(err, ErrGroupRequestNotFound) {
 			return httperrors.NewNotFound("group request not found")
 		}

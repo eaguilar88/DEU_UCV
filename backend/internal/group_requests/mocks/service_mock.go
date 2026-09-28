@@ -322,16 +322,16 @@ func (_c *MockService_GetPendingGroupRequestsCounts_Call) RunAndReturn(run func(
 }
 
 // RejectGroupRequest provides a mock function for the type MockService
-func (_mock *MockService) RejectGroupRequest(ctx context.Context, reqID string) error {
-	ret := _mock.Called(ctx, reqID)
+func (_mock *MockService) RejectGroupRequest(ctx context.Context, reqID string, reason string) error {
+	ret := _mock.Called(ctx, reqID, reason)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RejectGroupRequest")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, reqID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = returnFunc(ctx, reqID, reason)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -346,11 +346,12 @@ type MockService_RejectGroupRequest_Call struct {
 // RejectGroupRequest is a helper method to define mock.On call
 //   - ctx context.Context
 //   - reqID string
-func (_e *MockService_Expecter) RejectGroupRequest(ctx interface{}, reqID interface{}) *MockService_RejectGroupRequest_Call {
-	return &MockService_RejectGroupRequest_Call{Call: _e.mock.On("RejectGroupRequest", ctx, reqID)}
+//   - reason string
+func (_e *MockService_Expecter) RejectGroupRequest(ctx interface{}, reqID interface{}, reason interface{}) *MockService_RejectGroupRequest_Call {
+	return &MockService_RejectGroupRequest_Call{Call: _e.mock.On("RejectGroupRequest", ctx, reqID, reason)}
 }
 
-func (_c *MockService_RejectGroupRequest_Call) Run(run func(ctx context.Context, reqID string)) *MockService_RejectGroupRequest_Call {
+func (_c *MockService_RejectGroupRequest_Call) Run(run func(ctx context.Context, reqID string, reason string)) *MockService_RejectGroupRequest_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -360,9 +361,14 @@ func (_c *MockService_RejectGroupRequest_Call) Run(run func(ctx context.Context,
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -373,7 +379,7 @@ func (_c *MockService_RejectGroupRequest_Call) Return(err error) *MockService_Re
 	return _c
 }
 
-func (_c *MockService_RejectGroupRequest_Call) RunAndReturn(run func(ctx context.Context, reqID string) error) *MockService_RejectGroupRequest_Call {
+func (_c *MockService_RejectGroupRequest_Call) RunAndReturn(run func(ctx context.Context, reqID string, reason string) error) *MockService_RejectGroupRequest_Call {
 	_c.Call.Return(run)
 	return _c
 }

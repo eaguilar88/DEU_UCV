@@ -112,7 +112,7 @@ func main() {
 	groupRequestService := group_requests.NewService(repository, mailClient, logger)
 	groupRequestEndpoints := group_requests.NewHandler(groupRequestService, logger)
 
-	groupResourceRequestService := group_resource_requests.NewService(repository, logger)
+	groupResourceRequestService := group_resource_requests.NewService(repository, mailClient, logger)
 	groupResourceRequestEndpoints := group_resource_requests.NewHandler(groupResourceRequestService, logger)
 
 	courseRequestService := course_requests.NewService(repository, logger)

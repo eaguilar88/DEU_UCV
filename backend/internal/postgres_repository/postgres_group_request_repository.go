@@ -178,8 +178,8 @@ func (r *PostgresRepository) ApproveGroupRequest(ctx context.Context, reqID stri
 	return nil
 }
 
-func (r *PostgresRepository) RejectGroupRequest(ctx context.Context, reqID string) error {
-	query, args, err := queries.RejectGroupRequest(reqID).ToSql()
+func (r *PostgresRepository) RejectGroupRequest(ctx context.Context, reqID, reason string) error {
+	query, args, err := queries.RejectGroupRequest(reqID, reason).ToSql()
 	if err != nil {
 		return err
 	}
