@@ -115,13 +115,13 @@ func main() {
 	groupResourceRequestService := group_resource_requests.NewService(repository, mailClient, logger)
 	groupResourceRequestEndpoints := group_resource_requests.NewHandler(groupResourceRequestService, logger)
 
-	courseRequestService := course_requests.NewService(repository, logger)
+	courseRequestService := course_requests.NewService(repository, mailClient, logger)
 	courseRequestEndpoints := course_requests.NewHandler(courseRequestService, logger)
 
 	providerRequestService := provider_requests.NewService(repository, mailClient, logger)
 	providerRequestEndpoints := provider_requests.NewHandler(providerRequestService, logger)
 
-	cycleCloseService := course_cycle_close_requests.NewService(repository, bbClient, logger)
+	cycleCloseService := course_cycle_close_requests.NewService(repository, bbClient, mailClient, logger)
 	cycleCloseEndpoints := course_cycle_close_requests.NewHandler(cycleCloseService, logger)
 
 	dashboardSvc := group_dashboards.NewService(repository, logger)

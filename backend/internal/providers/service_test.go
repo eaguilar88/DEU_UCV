@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/eaguilar88/deu/internal/email"
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/providers/mocks"
 	"github.com/stretchr/testify/assert"
@@ -616,8 +617,8 @@ func TestService_uploadAndSave(t *testing.T) {
 					RunAndReturn(func(_ context.Context, _ string) (entities.User, error) {
 						return entities.User{Email: "user@test.com", FirstName: "Test", LastName: "User"}, nil
 					})
-				mailMock.EXPECT().Send(mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).
-					RunAndReturn(func(_ context.Context, _, _, _ string) error { return nil })
+				mailMock.EXPECT().SendTemplate(mock.Anything, mock.AnythingOfType("string"), email.TemplateProviderRegistrationReceived, nil).
+					RunAndReturn(func(_ context.Context, _ string, _ email.Template, _ any) error { return nil })
 			},
 			wantID:  int64(1),
 			wantErr: false,
@@ -688,8 +689,8 @@ func TestService_uploadAndSave(t *testing.T) {
 					RunAndReturn(func(_ context.Context, _ string) (entities.User, error) {
 						return entities.User{Email: "user@test.com", FirstName: "Test", LastName: "User"}, nil
 					})
-				mailMock.EXPECT().Send(mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).
-					RunAndReturn(func(_ context.Context, _, _, _ string) error {
+				mailMock.EXPECT().SendTemplate(mock.Anything, mock.AnythingOfType("string"), email.TemplateProviderRegistrationReceived, nil).
+					RunAndReturn(func(_ context.Context, _ string, _ email.Template, _ any) error {
 						return errors.New("email failed")
 					})
 			},

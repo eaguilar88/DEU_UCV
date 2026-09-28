@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/eaguilar88/deu/internal/email"
 	"github.com/eaguilar88/deu/internal/entities"
 	"go.uber.org/zap"
 )
@@ -20,8 +21,13 @@ type Repository interface {
 	HasPendingCloseRequestForCycle(ctx context.Context, cycleID int64) (bool, error)
 	GetCourseCycleCloseRequests(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.CourseCycleCloseRequest, entities.PageScope, error)
 	GetCourseCycleCloseRequestByID(ctx context.Context, id string) (entities.CourseCycleCloseRequest, error)
-	ApproveCourseCycleCloseRequest(ctx context.Context, id, reviewerID, cycleID string) error
-	RejectCourseCycleCloseRequest(ctx context.Context, id, reviewerID, comments, cycleID string) error
+	ApproveCourseCycleCloseRequest(ctx context.Context, id, reviewerID, cycleID string, notify func() error) error
+	RejectCourseCycleCloseRequest(ctx context.Context, id, reviewerID, comments, cycleID string, notify func() error) error
+
+	// Notification lookups
+	GetUser(ctx context.Context, userID string) (*entities.User, error)
+	GetCoursePeriodByID(ctx context.Context, periodID string) (entities.CoursePeriod, error)
+	GetCourse(ctx context.Context, courseID string) (entities.Course, error)
 
 	// Files
 	SaveFilesToDB(ctx context.Context, files []*entities.File) error
@@ -32,17 +38,24 @@ type StorageClient interface {
 	UploadFile(ctx context.Context, files []*entities.File) error
 }
 
-type service struct {
-	repo    Repository
-	storage StorageClient
-	logger  *zap.Logger
+// MailClient defines the email sending operations required by the course_cycle_close_requests service.
+type MailClient interface {
+	SendTemplate(ctx context.Context, to string, tmpl email.Template, data any) error
 }
 
-func NewService(repo Repository, storage StorageClient, logger *zap.Logger) Service {
+type service struct {
+	repo        Repository
+	storage     StorageClient
+	emailClient MailClient
+	logger      *zap.Logger
+}
+
+func NewService(repo Repository, storage StorageClient, emailClient MailClient, logger *zap.Logger) Service {
 	return &service{
-		repo:    repo,
-		storage: storage,
-		logger:  logger,
+		repo:        repo,
+		storage:     storage,
+		emailClient: emailClient,
+		logger:      logger,
 	}
 }
 
@@ -102,7 +115,15 @@ func (s *service) ApproveCloseRequest(ctx context.Context, id, reviewerID string
 	}
 
 	cycleID := strconv.FormatInt(existing.CourseCycleID, 10)
-	return s.repo.ApproveCourseCycleCloseRequest(ctx, id, reviewerID, cycleID)
+	recipient, courseName, err := s.closeRequestRecipient(ctx, existing)
+	if err != nil {
+		return err
+	}
+
+	notify := s.notifier(ctx, id, recipient, email.TemplateCourseCycleCloseApproved, email.CourseCycleCloseApprovedData{
+		CourseName: courseName,
+	})
+	return s.repo.ApproveCourseCycleCloseRequest(ctx, id, reviewerID, cycleID, notify)
 }
 
 func (s *service) RejectCloseRequest(ctx context.Context, id, reviewerID, comments string) error {
@@ -116,7 +137,54 @@ func (s *service) RejectCloseRequest(ctx context.Context, id, reviewerID, commen
 	}
 
 	cycleID := strconv.FormatInt(existing.CourseCycleID, 10)
-	return s.repo.RejectCourseCycleCloseRequest(ctx, id, reviewerID, comments, cycleID)
+	recipient, courseName, err := s.closeRequestRecipient(ctx, existing)
+	if err != nil {
+		return err
+	}
+
+	notify := s.notifier(ctx, id, recipient, email.TemplateCourseCycleCloseRejected, email.CourseCycleCloseRejectedData{
+		CourseName: courseName,
+		Reason:     comments,
+	})
+	return s.repo.RejectCourseCycleCloseRequest(ctx, id, reviewerID, comments, cycleID, notify)
+}
+
+// closeRequestRecipient resolves the email of the user who submitted the close request and the name
+// of the course the closed cycle belongs to.
+func (s *service) closeRequestRecipient(ctx context.Context, request entities.CourseCycleCloseRequest) (string, string, error) {
+	requestID := strconv.FormatInt(request.ID, 10)
+
+	submitter, err := s.repo.GetUser(ctx, request.SubmittedByID)
+	if err != nil {
+		s.logger.Error("failed to get close request submitter", zap.Error(err), zap.String("close_request_id", requestID))
+		return "", "", err
+	}
+
+	period, err := s.repo.GetCoursePeriodByID(ctx, strconv.FormatInt(request.CourseCycleID, 10))
+	if err != nil {
+		s.logger.Error("failed to get close request course cycle", zap.Error(err), zap.String("close_request_id", requestID))
+		return "", "", err
+	}
+
+	course, err := s.repo.GetCourse(ctx, period.Course.ID)
+	if err != nil {
+		s.logger.Error("failed to get close request course", zap.Error(err), zap.String("close_request_id", requestID))
+		return "", "", err
+	}
+
+	return submitter.Email, course.Name, nil
+}
+
+// notifier returns the callback the repository runs inside its transaction, so a failed email rolls
+// back the admin action.
+func (s *service) notifier(ctx context.Context, requestID, to string, tmpl email.Template, data any) func() error {
+	return func() error {
+		if err := s.emailClient.SendTemplate(ctx, to, tmpl, data); err != nil {
+			s.logger.Error("failed to send close request notification email", zap.Error(err), zap.String("close_request_id", requestID))
+			return fmt.Errorf("error sending close request notification email: %w", err)
+		}
+		return nil
+	}
 }
 
 func (s *service) GetCloseRequests(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.CourseCycleCloseRequest, entities.PageScope, error) {

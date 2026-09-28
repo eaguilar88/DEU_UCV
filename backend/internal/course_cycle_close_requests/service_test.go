@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/eaguilar88/deu/internal/course_cycle_close_requests/mocks"
+	"github.com/eaguilar88/deu/internal/email"
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -15,7 +16,7 @@ import (
 func TestNewService(t *testing.T) {
 	repoMock := mocks.NewMockRepository(t)
 	storageMock := mocks.NewMockStorageClient(t)
-	got := NewService(repoMock, storageMock, zap.NewNop())
+	got := NewService(repoMock, storageMock, mocks.NewMockMailClient(t), zap.NewNop())
 	assert.NotNil(t, got)
 }
 
@@ -132,7 +133,7 @@ func TestCourseCycleCloseRequestService_SubmitCloseRequest(t *testing.T) {
 			if tt.prepare != nil {
 				tt.prepare(repoMock, storageMock)
 			}
-			s := NewService(repoMock, storageMock, zap.NewNop())
+			s := NewService(repoMock, storageMock, mocks.NewMockMailClient(t), zap.NewNop())
 			got, err := s.SubmitCloseRequest(ctx, tt.request, tt.submittedByID)
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
@@ -144,26 +145,49 @@ func TestCourseCycleCloseRequestService_SubmitCloseRequest(t *testing.T) {
 	}
 }
 
+// expectRecipientLookups stubs the lookups used to build the notification email: the submitter
+// (user "5"), the closed cycle ("2") and its course ("3").
+func expectRecipientLookups(repoMock *mocks.MockRepository) {
+	repoMock.EXPECT().GetUser(mock.Anything, "5").Return(&entities.User{ID: "5", Email: "submitter@test.com"}, nil)
+	repoMock.EXPECT().GetCoursePeriodByID(mock.Anything, "2").
+		Return(entities.CoursePeriod{ID: "2", Course: entities.Course{ID: "3"}}, nil)
+	repoMock.EXPECT().GetCourse(mock.Anything, "3").Return(entities.Course{ID: "3", Name: "Curso de prueba"}, nil)
+}
+
+func pendingCloseRequest() entities.CourseCycleCloseRequest {
+	return entities.CourseCycleCloseRequest{ID: 1, CourseCycleID: 2, SubmittedByID: "5", Status: entities.RequestStatus_UNDER_REVIEW}
+}
+
 func TestCourseCycleCloseRequestService_ApproveCloseRequest(t *testing.T) {
 	type testCase struct {
 		name    string
-		prepare func(repoMock *mocks.MockRepository)
+		prepare func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient)
 		wantErr error
+	}
+
+	// runNotify mimics the repository: it runs the notify callback inside the "transaction" and
+	// propagates its error, as the real implementation does before committing.
+	runNotify := func(_ context.Context, _, _, _ string, notify func() error) error {
+		return notify()
 	}
 
 	tests := []testCase{
 		{
-			name: "success",
-			prepare: func(repoMock *mocks.MockRepository) {
-				repoMock.EXPECT().GetCourseCycleCloseRequestByID(mock.Anything, "1").
-					Return(entities.CourseCycleCloseRequest{ID: 1, CourseCycleID: 2, Status: entities.RequestStatus_UNDER_REVIEW}, nil)
-				repoMock.EXPECT().ApproveCourseCycleCloseRequest(mock.Anything, "1", "reviewer-1", "2").Return(nil)
+			name: "success sends approval email to submitter",
+			prepare: func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient) {
+				repoMock.EXPECT().GetCourseCycleCloseRequestByID(mock.Anything, "1").Return(pendingCloseRequest(), nil)
+				expectRecipientLookups(repoMock)
+				repoMock.EXPECT().ApproveCourseCycleCloseRequest(mock.Anything, "1", "reviewer-1", "2", mock.Anything).
+					RunAndReturn(runNotify)
+				mailMock.EXPECT().SendTemplate(mock.Anything, "submitter@test.com", email.TemplateCourseCycleCloseApproved,
+					email.CourseCycleCloseApprovedData{CourseName: "Curso de prueba"}).
+					Return(nil)
 			},
 			wantErr: nil,
 		},
 		{
 			name: "error getting close request",
-			prepare: func(repoMock *mocks.MockRepository) {
+			prepare: func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient) {
 				repoMock.EXPECT().GetCourseCycleCloseRequestByID(mock.Anything, "1").
 					Return(entities.CourseCycleCloseRequest{}, ErrCycleCloseRequestNotFound)
 			},
@@ -171,11 +195,42 @@ func TestCourseCycleCloseRequestService_ApproveCloseRequest(t *testing.T) {
 		},
 		{
 			name: "error request already processed",
-			prepare: func(repoMock *mocks.MockRepository) {
+			prepare: func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient) {
 				repoMock.EXPECT().GetCourseCycleCloseRequestByID(mock.Anything, "1").
 					Return(entities.CourseCycleCloseRequest{ID: 1, Status: entities.RequestStatus_APPROVED}, nil)
 			},
 			wantErr: ErrRequestIsProcessed,
+		},
+		{
+			name: "error getting submitter does not touch the request",
+			prepare: func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient) {
+				repoMock.EXPECT().GetCourseCycleCloseRequestByID(mock.Anything, "1").Return(pendingCloseRequest(), nil)
+				repoMock.EXPECT().GetUser(mock.Anything, "5").Return(nil, errors.New("user not found"))
+			},
+			wantErr: errors.New("user not found"),
+		},
+		{
+			name: "error getting course cycle does not touch the request",
+			prepare: func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient) {
+				repoMock.EXPECT().GetCourseCycleCloseRequestByID(mock.Anything, "1").Return(pendingCloseRequest(), nil)
+				repoMock.EXPECT().GetUser(mock.Anything, "5").Return(&entities.User{ID: "5", Email: "submitter@test.com"}, nil)
+				repoMock.EXPECT().GetCoursePeriodByID(mock.Anything, "2").
+					Return(entities.CoursePeriod{}, errors.New("period not found"))
+			},
+			wantErr: errors.New("period not found"),
+		},
+		{
+			name: "error sending email rolls back the approval",
+			prepare: func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient) {
+				repoMock.EXPECT().GetCourseCycleCloseRequestByID(mock.Anything, "1").Return(pendingCloseRequest(), nil)
+				expectRecipientLookups(repoMock)
+				repoMock.EXPECT().ApproveCourseCycleCloseRequest(mock.Anything, "1", "reviewer-1", "2", mock.Anything).
+					RunAndReturn(runNotify)
+				mailMock.EXPECT().SendTemplate(mock.Anything, "submitter@test.com", email.TemplateCourseCycleCloseApproved,
+					email.CourseCycleCloseApprovedData{CourseName: "Curso de prueba"}).
+					Return(errors.New("smtp down"))
+			},
+			wantErr: errors.New("error sending close request notification email: smtp down"),
 		},
 	}
 
@@ -183,10 +238,11 @@ func TestCourseCycleCloseRequestService_ApproveCloseRequest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repoMock := mocks.NewMockRepository(t)
+			mailMock := mocks.NewMockMailClient(t)
 			if tt.prepare != nil {
-				tt.prepare(repoMock)
+				tt.prepare(repoMock, mailMock)
 			}
-			s := NewService(repoMock, mocks.NewMockStorageClient(t), zap.NewNop())
+			s := NewService(repoMock, mocks.NewMockStorageClient(t), mailMock, zap.NewNop())
 			err := s.ApproveCloseRequest(ctx, "1", "reviewer-1")
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
@@ -200,27 +256,59 @@ func TestCourseCycleCloseRequestService_ApproveCloseRequest(t *testing.T) {
 func TestCourseCycleCloseRequestService_RejectCloseRequest(t *testing.T) {
 	type testCase struct {
 		name    string
-		prepare func(repoMock *mocks.MockRepository)
+		prepare func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient)
 		wantErr error
+	}
+
+	runNotify := func(_ context.Context, _, _, _, _ string, notify func() error) error {
+		return notify()
 	}
 
 	tests := []testCase{
 		{
-			name: "success",
-			prepare: func(repoMock *mocks.MockRepository) {
-				repoMock.EXPECT().GetCourseCycleCloseRequestByID(mock.Anything, "1").
-					Return(entities.CourseCycleCloseRequest{ID: 1, CourseCycleID: 2, Status: entities.RequestStatus_UNDER_REVIEW}, nil)
-				repoMock.EXPECT().RejectCourseCycleCloseRequest(mock.Anything, "1", "reviewer-1", "no cumple", "2").Return(nil)
+			name: "success sends rejection email with reason to submitter",
+			prepare: func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient) {
+				repoMock.EXPECT().GetCourseCycleCloseRequestByID(mock.Anything, "1").Return(pendingCloseRequest(), nil)
+				expectRecipientLookups(repoMock)
+				repoMock.EXPECT().RejectCourseCycleCloseRequest(mock.Anything, "1", "reviewer-1", "no cumple", "2", mock.Anything).
+					RunAndReturn(runNotify)
+				mailMock.EXPECT().SendTemplate(mock.Anything, "submitter@test.com", email.TemplateCourseCycleCloseRejected,
+					email.CourseCycleCloseRejectedData{CourseName: "Curso de prueba", Reason: "no cumple"}).
+					Return(nil)
 			},
 			wantErr: nil,
 		},
 		{
 			name: "error request already processed",
-			prepare: func(repoMock *mocks.MockRepository) {
+			prepare: func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient) {
 				repoMock.EXPECT().GetCourseCycleCloseRequestByID(mock.Anything, "1").
 					Return(entities.CourseCycleCloseRequest{ID: 1, Status: entities.RequestStatus_REJECTED}, nil)
 			},
 			wantErr: ErrRequestIsProcessed,
+		},
+		{
+			name: "error getting course does not touch the request",
+			prepare: func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient) {
+				repoMock.EXPECT().GetCourseCycleCloseRequestByID(mock.Anything, "1").Return(pendingCloseRequest(), nil)
+				repoMock.EXPECT().GetUser(mock.Anything, "5").Return(&entities.User{ID: "5", Email: "submitter@test.com"}, nil)
+				repoMock.EXPECT().GetCoursePeriodByID(mock.Anything, "2").
+					Return(entities.CoursePeriod{ID: "2", Course: entities.Course{ID: "3"}}, nil)
+				repoMock.EXPECT().GetCourse(mock.Anything, "3").Return(entities.Course{}, errors.New("course not found"))
+			},
+			wantErr: errors.New("course not found"),
+		},
+		{
+			name: "error sending email rolls back the rejection",
+			prepare: func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient) {
+				repoMock.EXPECT().GetCourseCycleCloseRequestByID(mock.Anything, "1").Return(pendingCloseRequest(), nil)
+				expectRecipientLookups(repoMock)
+				repoMock.EXPECT().RejectCourseCycleCloseRequest(mock.Anything, "1", "reviewer-1", "no cumple", "2", mock.Anything).
+					RunAndReturn(runNotify)
+				mailMock.EXPECT().SendTemplate(mock.Anything, "submitter@test.com", email.TemplateCourseCycleCloseRejected,
+					email.CourseCycleCloseRejectedData{CourseName: "Curso de prueba", Reason: "no cumple"}).
+					Return(errors.New("smtp down"))
+			},
+			wantErr: errors.New("error sending close request notification email: smtp down"),
 		},
 	}
 
@@ -228,10 +316,11 @@ func TestCourseCycleCloseRequestService_RejectCloseRequest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repoMock := mocks.NewMockRepository(t)
+			mailMock := mocks.NewMockMailClient(t)
 			if tt.prepare != nil {
-				tt.prepare(repoMock)
+				tt.prepare(repoMock, mailMock)
 			}
-			s := NewService(repoMock, mocks.NewMockStorageClient(t), zap.NewNop())
+			s := NewService(repoMock, mocks.NewMockStorageClient(t), mailMock, zap.NewNop())
 			err := s.RejectCloseRequest(ctx, "1", "reviewer-1", "no cumple")
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
@@ -247,7 +336,7 @@ func TestCourseCycleCloseRequestService_GetCloseRequests(t *testing.T) {
 	repoMock := mocks.NewMockRepository(t)
 	repoMock.EXPECT().GetCourseCycleCloseRequests(mock.Anything, entities.Faculty(""), entities.PageScope{}).
 		Return([]entities.CourseCycleCloseRequest{{ID: 1}}, entities.PageScope{}, nil)
-	s := NewService(repoMock, mocks.NewMockStorageClient(t), zap.NewNop())
+	s := NewService(repoMock, mocks.NewMockStorageClient(t), mocks.NewMockMailClient(t), zap.NewNop())
 	got, _, err := s.GetCloseRequests(ctx, "", entities.PageScope{})
 	assert.NoError(t, err)
 	assert.Equal(t, []entities.CourseCycleCloseRequest{{ID: 1}}, got)
@@ -258,7 +347,7 @@ func TestCourseCycleCloseRequestService_GetCloseRequestByID(t *testing.T) {
 	repoMock := mocks.NewMockRepository(t)
 	repoMock.EXPECT().GetCourseCycleCloseRequestByID(mock.Anything, "1").
 		Return(entities.CourseCycleCloseRequest{ID: 1}, nil)
-	s := NewService(repoMock, mocks.NewMockStorageClient(t), zap.NewNop())
+	s := NewService(repoMock, mocks.NewMockStorageClient(t), mocks.NewMockMailClient(t), zap.NewNop())
 	got, err := s.GetCloseRequestByID(ctx, "1")
 	assert.NoError(t, err)
 	assert.Equal(t, entities.CourseCycleCloseRequest{ID: 1}, got)

@@ -117,7 +117,7 @@ func (r *PostgresRepository) GetCourseCycleCloseRequests(ctx context.Context, fa
 	return requests, pageScope, nil
 }
 
-func (r *PostgresRepository) ApproveCourseCycleCloseRequest(ctx context.Context, id, reviewerID, cycleID string) error {
+func (r *PostgresRepository) ApproveCourseCycleCloseRequest(ctx context.Context, id, reviewerID, cycleID string, notify func() error) error {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -156,10 +156,14 @@ func (r *PostgresRepository) ApproveCourseCycleCloseRequest(ctx context.Context,
 		return err
 	}
 
+	if err = notify(); err != nil {
+		return err
+	}
+
 	return tx.Commit()
 }
 
-func (r *PostgresRepository) RejectCourseCycleCloseRequest(ctx context.Context, id, reviewerID, comments, cycleID string) error {
+func (r *PostgresRepository) RejectCourseCycleCloseRequest(ctx context.Context, id, reviewerID, comments, cycleID string, notify func() error) error {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -190,6 +194,10 @@ func (r *PostgresRepository) RejectCourseCycleCloseRequest(ctx context.Context, 
 	}
 	if _, err = tx.ExecContext(ctx, statusQuery, statusArgs...); err != nil {
 		r.logger.Error("error setting course management status", zap.Error(err))
+		return err
+	}
+
+	if err = notify(); err != nil {
 		return err
 	}
 

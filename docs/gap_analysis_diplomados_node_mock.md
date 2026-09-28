@@ -10,6 +10,8 @@ Este documento compara ambos backends y documenta **en una sola dirección**: qu
 
 **Método:** lectura directa del código de rutas/handlers en `diplomados/src/app/api/**` + esquemas de `db.json`, comparado contra `backend/internal/**` + el enrutamiento de `backend/cmd/deu/main.go`.
 
+**Última re-evaluación:** 2026-09-28, sobre el estado del backend en `c3788d0` (incluye `0fc656c` — `estado_gestion`, `GET /courses/public`, `GET /course-requests` — y `c3788d0` — transiciones `abierto`/`cerrado`). Resultado: §2.2, §2.3, §5.4 y §5.5 pasan a resueltos; §5.1 se reclasifica; se agregan §2.6–§2.9 y §5.8 como brechas no documentadas antes.
+
 **Leyenda de prioridad:**
 - 🔴 **Alta** — bloquea o distorsiona el flujo de aprobación/negocio central.
 - 🟡 **Media** — funcionalidad real que falta, pero con workaround o impacto acotado.
@@ -25,18 +27,19 @@ Este documento compara ambos backends y documenta **en una sola dirección**: qu
 - **Go (histórico):** `POST /courses/:course_id/periods` (`backend/internal/course_periods/endpoints.go:80`). Era un alta simple (`fecha_inicio, fecha_fin, fecha_inscripcion`), sin guarda de estado previo del curso, sin campo de capacidad (`entities.CoursePeriod` no tenía `Capacity`), y sin relación con el estado de un contrato legal (que tampoco existe en Go — ver §5.2).
 - **Resuelto:** el mismo endpoint (`POST /courses/:course_id/periods`) ahora exige `capacidad` (> 0) y agrega una guarda de negocio: solo se permite crear un período si el curso existe/está aprobado (`courses.ErrCourseNotFound` si no) **y** no tiene ya un período activo sin cerrar (`ErrCoursePeriodAlreadyOpen` en caso contrario). Esto cubre ambas ramas de la regla `canOpen` de Node sin necesitar el concepto de contrato: un curso recién aprobado no tiene períodos activos (pasa), y un curso previamente cerrado tampoco (pasa); uno con un período ya abierto es rechazado con 409. **No** depende de §5.2 (contrato) — ver §8.
 
-### 2.2 Solicitud de cierre de cohorte con evidencias (🟡 Media) — ✅ Resuelto (parcial)
+### 2.2 Solicitud de cierre de cohorte con evidencias (🟡 Media) — ✅ Resuelto
 
 - **Node:** `POST /api/courses/[id]/closures` (`diplomados/src/app/api/courses/[id]/closures/route.ts`). Multipart con 3 archivos **obligatorios**: `archivo_participantes`, `archivo_vouchers`, `archivo_encuesta`, más `titulo_curso`, `nombre_cohorte`, `observaciones`. Al crear la solicitud de cierre (`course-cycle-closures`), además bloquea el curso poniendo `estado_gestion='solicitud-cierre'`.
 - **Go (histórico):** `POST /course-cycle-close-requests` (`backend/internal/course_cycle_close_requests/endpoints.go:48`). Body JSON simple: `{course_cycle_id, observaciones}`. No exigía ni aceptaba adjuntos (participantes/vouchers/encuesta), y no había ningún bloqueo contra solicitudes duplicadas para el mismo período.
 - **Resuelto:** el mismo endpoint ahora recibe `multipart/form-data` y exige los 3 archivos (`archivo_participantes`, `archivo_vouchers`, `archivo_encuesta`), que se suben a B2 y se persisten en la tabla `files` con `owner_type='course_cycle_close_request'`. Se agregó además una guarda de duplicados: si ya existe una solicitud de cierre `under_review` para el mismo `course_cycle_id`, la nueva es rechazada con `ErrCloseRequestAlreadyPending` (409).
-- **Parcial — no resuelto:** a diferencia de Node (`estado_gestion='solicitud-cierre'` bloquea el curso completo mientras la revisión está pendiente), Go solo impide *solicitudes de cierre duplicadas* para el mismo período — no bloquea otras operaciones sobre el curso/período (p. ej. crear un nuevo período) mientras una solicitud está pendiente, porque eso requeriría un estado a nivel de curso que no existe hoy (ver §5.2). Se deja como posible trabajo futuro, no bloqueante para cerrar esta brecha en su alcance original.
+- **Bloqueo a nivel de curso — resuelto en `0fc656c`:** se agregó la columna `courses.estado_gestion` (`entities.CourseManagementStatus`, migraciones `000025`/`000026`). `PostgresRepository.CreateCourseCycleCloseRequest` ahora inserta la solicitud **y** pone `estado_gestion='solicitud-cierre'` en la misma transacción, y `course_periods.CreateCoursePeriod` rechaza abrir un período nuevo mientras el curso esté en ese estado (`courses.ErrCourseClosureRequestPending`, 409). Esto replica el bloqueo de Node.
 
-### 2.3 Listado público filtrado por curso "listo" (🟡 Media)
+### 2.3 Listado público filtrado por curso "listo" (🟡 Media) — ✅ Resuelto
 
 - **Node:** `GET /api/courses/public` (`diplomados/src/app/api/courses/public/route.ts`). Filtra únicamente cursos con contrato legal firmado (`documento_legal_id`/`contrato_id`) y `estado ∈ {abierto, cerrado}` — pensado para el landing público.
-- **Go:** `GET /courses` (`backend/internal/courses/endpoints.go:65`) es público pero no aplica ningún filtro de este tipo (y no hay campo de contrato para filtrar por — ver §5.2). Devuelve todos los cursos sin distinguir si están "listos" para mostrarse públicamente.
-- **Impacto:** el listado público en Go puede exponer cursos aún no habilitados legalmente para dictarse.
+- **Go (histórico):** `GET /courses` era público pero no aplicaba ningún filtro de este tipo.
+- **Resuelto en `0fc656c`:** nuevo endpoint público `GET /courses/public` (`backend/internal/courses/endpoints.go` → `GetPublicCourses`; query `queries.GetPublicCourses`). Filtra `is_active=true` (aprobado) **y** `has_documentation=true` (amparado por contrato, §5.2) **y** que exista al menos un período no borrado (el curso se abrió alguna vez).
+- **Diferencia residual menor (⚪):** Go usa "existe un período" como proxy de `estado ∈ {abierto, cerrado}` en lugar de leer `estado_gestion`, que ya existe. La consecuencia es que un curso en `solicitud-cierre` **sí** aparece en el listado público de Go, mientras que Node lo oculta (su filtro solo acepta `abierto`/`cerrado`). Si se quiere paridad exacta, el filtro podría pasar a `estado_gestion IN ('abierto','cerrado')`; no se considera bloqueante porque ocultar un curso mientras se revisa su cierre parece más un efecto colateral del mock que una regla de negocio.
 
 ### 2.4 Anuncios/publicaciones ligados a curso+cohorte, no solo a período (⚪ Baja)
 
@@ -46,6 +49,33 @@ Este documento compara ambos backends y documenta **en una sola dirección**: qu
 ### 2.5 Endpoint de inscripción/participantes (🔴 Alta)
 
 Ver el detalle completo en §5.1 — se incluye aquí como referencia cruzada porque también es, en esencia, una funcionalidad de "curso" (gestionar quién cursa un período).
+
+### 2.6 Facultad/coordinador de origen inmutable tras una redirección (🟡 Media)
+
+- **Node:** al crear el curso (`POST /api/courses`, `diplomados/src/app/api/courses/route.ts`) guarda dos pares de campos: `facultad`/`coordinador_id` (dueño **actual**, que cambia con `remit`) y `facultad_origen`/`coordinador_origen` (el "anfitrión inmutable"). Los usa de forma distinta según el trámite:
+  - la revisión de la solicitud va a la facultad **actual** (`admin/courses/route.ts`: `isMyTurn = isUnderReview && facultadCurso === miFacultad`);
+  - la bandeja de "aprobados sin contrato" va a la facultad de **origen** (`isMyProviderMissingContract = … && facultadOrigen === miFacultad`);
+  - la solicitud de cierre de cohorte se envía al coordinador de **origen** (`courses/[id]/closures/route.ts`: `coordinador_id: course.coordinador_origen || course.coordinador_id`).
+- **Go:** hay una sola columna `courses.faculty`. `PostgresRepository.RedirectCourseRequest` (`backend/internal/postgres_repository/postgres_course_requests_repository.go:210`) la **sobrescribe** con `queries.UpdateCourseFaculty`, sin conservar la original. `GET /admin/course-cycle-close-requests` filtra por `c.faculty` (`queries.GetCourseCycleCloseRequests`), es decir, por la facultad actual.
+- **Impacto:** después de redirigir un curso, sus solicitudes de cierre llegan a la facultad a la que se redirigió y no a la facultad anfitriona, al revés de lo que hace Node. Resolverlo requiere guardar la facultad de origen (columna nueva o tomarla del proveedor, ver §2.7) y usarla para dirigir los cierres.
+
+### 2.7 Facultad del curso enviada por el cliente en vez de heredada del proveedor (🟡 Media)
+
+- **Node:** `POST /api/courses` no acepta la facultad del cliente. La **hereda** del proveedor: busca el `provider` del usuario, toma su `coordinador_id` y de ahí la `facultad` del coordinador (`admin/courses/route.ts` hace lo mismo leyendo `provider.facultad` directamente).
+- **Go:** `POST /courses` (`backend/internal/courses/decoders.go:32` → `toCourseEntity`) exige un campo de formulario `facultad` y lo usa tal cual. `courses.service.CreateCourse` ya carga el proveedor (`GetProviderByUserID`) y `entities.Provider.Faculty` existe, pero solo se usa para `Owner.ID`.
+- **Impacto:** un proveedor puede enviar su solicitud a cualquier facultad eligiéndola en el formulario, y así saltarse la facultad a la que está adscrito. El arreglo es acotado: tomar `course.Faculty = provider.Faculty` en el servicio y dejar de exigir el campo.
+
+### 2.8 `GET /courses` sin filtros por dueño/estado ni visibilidad por rol (⚪ Baja)
+
+- **Node:** `GET /api/courses` acepta `usuario_id`, `codigo_proveedor` y `estado`. Si quien consulta no es admin/coordinador ni dueño, solo devuelve cursos en `abierto`/`cerrado`.
+- **Go:** `GET /courses` (`backend/internal/courses/endpoints.go:65`) es público, solo pagina, y devuelve todo curso con `is_active=true` (aprobado), tenga contrato o no, sin importar quién consulta.
+- **Mitigación existente:** el landing ya puede usar `GET /courses/public` (§2.3), y el proveedor ya puede ver lo suyo con `GET /course-requests` (§5.5). Lo que falta es solo el filtro por `estado`/proveedor sobre el listado general y, si importa, dejar de exponer públicamente cursos aprobados sin contrato por `GET /courses`.
+
+### 2.9 Cohorte sin nombre (⚪ Baja)
+
+- **Node:** cada `course-cycles` tiene `nombre_cohorte` (viene de `cohortName` en `POST /api/courses/[id]/open`), y la solicitud de cierre lo repite en `payload.nombre_cohorte`.
+- **Go:** `entities.CoursePeriod` (`backend/internal/entities/course_period.go`) no tiene campo de nombre; un período se identifica solo por ID y fechas.
+- **Impacto:** cosmético/UX: la UI de `diplomados/` muestra el nombre de la cohorte en el detalle del curso y en la bandeja de cierres.
 
 ---
 
@@ -62,6 +92,7 @@ Por lo tanto esta sección no aporta brechas nuevas de endpoints — las brechas
 
 - **Node:** el registro de `course-requests`/`courses` incluye `clasificacion`, `calificacion`, `motivo_rechazo`, `archivo_evaluacion_url`, `contrato_id`/`documento_legal_id` directamente sobre el curso.
 - **Go:** `Course`/`GetCourseResponse` (`backend/internal/courses/response.go`) no expone ninguno de estos campos; `motivo_rechazo`-equivalente (`Comments`) vive solo en `CourseRequest`, no en `Course`, y `clasificacion`/`calificacion`/contrato no existen en absoluto en el modelo (ver §5.3 y §5.2 para el detalle funcional).
+- **Actualización (2026-09-28):** la parte de contrato y estado ya está cubierta. `GetCourseResponse` expone `tiene_documentacion_legal` (§5.2) y `estado_gestion` (`abierto`/`cerrado`/`solicitud-cierre`, §2.2/§5.4). Faltan solo `clasificacion`, `calificacion` y `archivo_evaluacion_url`, que dependen de §5.3.
 
 ---
 
@@ -92,11 +123,12 @@ Ninguno de los dos lados tiene registro completo con verificación de email, log
 
 Esta es la sección central del documento: el flujo de aprobación de solicitudes de curso es donde el mock de Node modela más reglas de negocio que el backend Go aún no implementa.
 
-### 5.1 Sin gestión de inscripción/participantes de un período (🔴 Alta)
+### 5.1 Sin gestión de inscripción/participantes de un período (⚪ Fuera de alcance — no es brecha frente a Node; antes 🔴 Alta)
 
 - **Go:** `entities.CoursePeriod.Participants []User` existe como campo (`backend/internal/entities/course_period.go:6`), pero **no hay ningún endpoint HTTP** que lo lea o escriba — ni en `internal/courses` ni en `internal/course_periods` (confirmado por búsqueda directa en el código, sin resultados de un handler de inscripción).
 - **Node:** tampoco tiene un endpoint explícito de inscripción de participantes individuales (el mock no llegó a modelar esa parte tampoco), pero sí registra `capacidad` por cohorte en `course-cycles` (ver §2.1) como paso previo a habilitar inscripciones.
 - **Nota:** se marca como Alta porque es un campo ya modelado en la entidad Go pero completamente huérfano de endpoint — es la brecha con mayor riesgo de quedar "olvidada" al no aparecer en ningún inventario de rutas.
+- **Reclasificación (2026-09-28):** este documento lista solo lo que Node tiene y Go no (§1). Node tampoco inscribe participantes, y la única pieza que sí tiene (`capacidad` por cohorte) ya existe en Go desde §2.1. Por eso deja de contarse como brecha de migración. Sigue siendo trabajo pendiente de producto (y `CoursePeriod.Participants` sigue sin endpoint, confirmado de nuevo), pero debe planificarse aparte, no como parte de la migración del mock.
 
 ### 5.2 Sin paso de "estado legal"/contrato que finaliza la habilitación de un curso (🔴 Alta — la brecha más grande del documento) — ✅ Resuelto
 
@@ -111,18 +143,26 @@ Esta es la sección central del documento: el flujo de aprobación de solicitude
 - **Go:** `POST /admin/course-requests/:id/approve` (`backend/internal/course_requests/endpoints.go:44`) solo acepta `{tipo_curso, observaciones}` — no hay campo de calificación numérica, clasificación, ni adjunto de documento de evaluación.
 - **Impacto:** se pierde la trazabilidad de *por qué* se aprobó un curso y con qué nota/documento de respaldo lo evaluó el comité.
 
-### 5.4 Cierre de cohorte sin cascada de estado (🔴 Alta)
+### 5.4 Cierre de cohorte sin cascada de estado (🔴 Alta) — ✅ Resuelto
 
 - **Node:** `POST /api/course-cycle-closures/[id]/approve` (`diplomados/src/app/api/course-cycle-closures/[id]/[action]/route.ts`). Al aprobar, además de marcar la propia solicitud de cierre, **cascada**: pone el curso en `estado_gestion='cerrado'` y marca **todas** sus cohortes activas (`course-cycles?estado=activa`) como `cerrada`. Al rechazar, revierte el curso a `estado_gestion='abierto'`.
 - **Go:** `POST /admin/course-cycle-close-requests/:id/approve` (`backend/internal/course_cycle_close_requests/endpoints.go:72`) **sí es transaccional**: `PostgresRepository.ApproveCourseCycleCloseRequest` (`backend/internal/postgres_repository/postgres_course_cycle_close_requests_repository.go:84-113`) marca la solicitud `approved` **y**, en la misma transacción, ejecuta `queries.SetCourseCycleClosed(cycleID)` — que pone `course_cycles.closed_at = NOW()` e `is_active = false` para el ciclo/período específico de la solicitud. `.../reject` (`endpoints.go:94`) solo cambia el `Status` de la solicitud, sin revertir nada (no había nada bloqueado que revertir).
 - **Corrección respecto a una versión anterior de este documento:** este ítem originalmente afirmaba que Go "no tocaba" el período al aprobar — eso era incorrecto; sí lo hace, a nivel del `course_cycle` específico. La brecha real, más acotada, es: (a) Go no tiene un estado a nivel de **curso** (`estado_gestion`) que reflejar, porque ese campo no existe en la entidad `Course` (ver §5.2/§3.1); y (b) Go solo cierra el ciclo referenciado por la solicitud, no **todas** las cohortes activas del curso como hace Node — en la práctica esto no debería diferir si (como ahora, tras la resolución de §2.1) solo puede existir un período activo por curso a la vez, pero el comportamiento no es una cascada explícita a nivel de curso como en Node.
 - **Impacto:** menor de lo que se pensaba — el período sí se cierra correctamente al aprobar. Queda pendiente solo si en el futuro se modela un estado explícito a nivel de curso (`estado_gestion`), momento en el cual este approve debería actualizarlo también.
+- **Resuelto en `0fc656c` + `c3788d0`:** ya existe `courses.estado_gestion`, y todas las transiciones de Node están replicadas de forma transaccional:
+  - abrir período (`CreateCoursePeriod`) → `estado_gestion='abierto'`;
+  - enviar solicitud de cierre → `'solicitud-cierre'` (§2.2);
+  - aprobar cierre → `'cerrado'`; además, `queries.SetCourseCycleClosed` ahora cierra **todos** los ciclos activos del curso (`course_id = (SELECT course_id …) AND is_active`), no solo el de la solicitud;
+  - rechazar cierre → vuelve a `'abierto'`.
 
-### 5.5 Sin bandeja de "mis solicitudes" para el solicitante (⚪ Baja)
+  Esto cubre los dos puntos pendientes: (a) el estado a nivel de curso y (b) la cascada explícita sobre todas las cohortes activas.
+
+### 5.5 Sin bandeja de "mis solicitudes" para el solicitante (⚪ Baja) — ✅ Resuelto
 
 - **Node:** el cliente arma esta vista agregando client-side contra los mismos endpoints de administración (no hay un endpoint dedicado tampoco en Node), filtrando por `usuario_id`/`coordinador_id`.
 - **Go:** `GET /admin/course-requests` (`backend/internal/course_requests/endpoints.go:140`) es exclusivamente admin/faculty-scoped (vía `facultyscope.Resolve`) — no existe una variante para que un proveedor/coordinador consulte el estado de sus propias solicitudes enviadas.
 - **Impacto:** bajo, ya que tampoco es un endpoint real en el mock, pero se señala porque es una necesidad de producto evidente en el flujo (el solicitante necesita saber en qué estado quedó su curso) que ninguno de los dos backends resuelve hoy con un endpoint propio.
+- **Resuelto en `0fc656c`:** nuevo endpoint protegido `GET /course-requests` (`backend/internal/course_requests/endpoints.go` → `GetMyCourseRequests`). Resuelve el proveedor del usuario autenticado (`GetProviderByUserID`) y devuelve, paginadas, las solicitudes de sus cursos (`queries.GetCourseRequestsByProvider`). Usa el mismo formato de respuesta que el listado admin. Si el usuario no es proveedor, devuelve una lista vacía.
 
 ### 5.6 Redirección de solicitud — ya cubierto en ambos lados (sin brecha)
 
@@ -131,6 +171,16 @@ Esta es la sección central del documento: el flujo de aprobación de solicitude
 ### 5.7 Nota sobre nomenclatura de roles (no es una brecha funcional)
 
 `entities.Role` (`backend/internal/entities/user.go`) no define constantes para `deu_admin`/`faculty_admin`/`root`, aunque estos strings se usan de forma consistente y correcta como literales en `backend/cmd/deu/main.go:146`, `backend/internal/providers/endpoints.go:326-327` y `backend/internal/facultyscope/`. Node tiene el mismo patrón (roles como strings sueltos, sin un enum central). No se lista como brecha porque ambos lados comparten esta característica — se documenta únicamente como observación de higiene de código para quien trabaje en agregar nuevos roles de administración.
+
+### 5.8 Bandejas de admin sin filtro por estado ni bandeja de "aprobados sin contrato" (🟡 Media)
+
+- **Node:**
+  - `GET /api/admin/courses` (`diplomados/src/app/api/admin/courses/route.ts`) no es un listado plano. Arma una bandeja de trabajo con dos grupos: solicitudes `under_review` y cursos `aprobado` **sin contrato** (`!contrato_id && !documento_legal_id`). Excluye rechazados y redirigidos. El coordinador ve el primer grupo según la facultad actual y el segundo según la facultad de origen (ver §2.6).
+  - `GET /api/admin/closures` filtra por `estado`, y por defecto muestra solo `under_review`.
+- **Go:**
+  - `GET /admin/course-requests` (`backend/internal/course_requests/endpoints.go:147`) y `GET /admin/course-cycle-close-requests` (`backend/internal/course_cycle_close_requests/endpoints.go:124`) aceptan solo `faculty` y paginación, y devuelven solicitudes en **todos** los estados.
+  - No hay forma de listar "cursos aprobados que aún no tienen contrato", que es justamente la lista que el admin necesita para saber a qué proveedores enviarles `POST /admin/providers/:id/legal-contracts` (§5.2). Por dentro esa consulta ya existe (`provider_contracts_queries.go` filtra `has_documentation=false` para amparar cursos), pero no está expuesta como listado. `GET /admin/providers` tampoco tiene un filtro equivalente.
+- **Impacto:** el frontend tendría que traer todo y filtrar del lado del cliente, y para la bandeja de contratos pendientes directamente no hay de dónde sacar la información. Arreglo sugerido: agregar `?status=` a ambos listados admin y un filtro del tipo `has_documentation=false` (sobre cursos aprobados o sobre proveedores).
 
 ---
 
@@ -153,6 +203,12 @@ Algunos ítems de este documento no se pueden resolver de forma aislada — depe
 - **§2.1 (apertura de período) NO depende de §5.2.** A diferencia de §2.3, la guarda de apertura de período implementada no necesita el concepto de contrato: basta con que el curso esté aprobado (`courses.is_active`, ya existente) y no tenga un período activo sin cerrar. Se señala explícitamente para que quede claro que §2.1 pudo resolverse de forma independiente y ya está hecho (ver §2.1).
 - **§5.4 (cascada de cierre) queda parcialmente ligada a §5.2/§3.1.** Como se detalla en §5.4, Go ya cierra correctamente el período/ciclo específico al aprobar una solicitud de cierre; lo único que falta es reflejar ese cierre en un estado a nivel de **curso** (`estado_gestion`), que hoy no existe en la entidad `Course`. Modelar ese campo probablemente ocurra junto con — o como parte de — el trabajo de §5.2, ya que ambos requieren extender `entities.Course` con nuevos campos de estado/ciclo de vida.
 
+**Estado al 2026-09-28:** las tres dependencias de arriba ya están saldadas. §5.2 se resolvió y con eso §2.3 se pudo implementar sobre `has_documentation`. `estado_gestion` se modeló (`0fc656c`/`c3788d0`) y con eso se cerraron §5.4 y el bloqueo pendiente de §2.2. Dependencias vigentes entre las brechas abiertas:
+
+- **§5.8 (bandeja de "aprobados sin contrato") depende de §2.6 (facultad de origen)** para la parte de coordinadores: Node asigna esa bandeja por facultad de origen. Para el admin DEU (sin facultad), §5.8 se puede hacer ya.
+- **§2.6 conviene resolverla junto con §2.7:** si la facultad del curso se hereda del proveedor (§2.7), la facultad del proveedor puede servir directamente como "facultad de origen", sin agregar una columna nueva en `courses`.
+- **§3.1 depende de §5.3:** los campos restantes de `Course` (`clasificacion`, `calificacion`, evaluación) solo existen si se capturan al aprobar.
+
 ---
 
 ## 8. Tabla resumen
@@ -160,16 +216,21 @@ Algunos ítems de este documento no se pueden resolver de forma aislada — depe
 | #   | Brecha                                                                                                                         | Sección          | Prioridad | Estado |
 | --- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------- | --------- | ------ |
 | 1   | Sin paso de "estado legal"/contrato que habilita un curso aprobado                                                             | §5.2             | 🔴 Alta    | ✅ Resuelto |
-| 2   | Sin cascada de cierre de cohorte a nivel de curso (el período sí se cierra; falta reflejarlo en un estado de curso inexistente) | §5.4             | 🟡 Media   | Pendiente (alcance reducido, ver §5.4) |
-| 3   | Sin endpoint de inscripción/gestión de participantes de un período                                                             | §5.1 (ref. §2.5) | 🔴 Alta    | Pendiente |
+| 2   | Sin cascada de cierre de cohorte a nivel de curso (el período sí se cierra; falta reflejarlo en un estado de curso inexistente) | §5.4             | 🟡 Media   | ✅ Resuelto (`estado_gestion` + cierre de todas las cohortes activas) |
+| 3   | Sin endpoint de inscripción/gestión de participantes de un período                                                             | §5.1 (ref. §2.5) | ⚪ —       | Fuera de alcance — Node tampoco lo tiene (ver §5.1) |
 | 4   | Apertura de cohorte sin reglas de estado ni campo de capacidad                                                                 | §2.1             | 🔴 Alta    | ✅ Resuelto |
 | 5   | Aprobación de solicitud sin calificación/clasificación/documento de evaluación                                                 | §5.3             | 🟡 Media   | Pendiente |
-| 6   | Solicitud de cierre sin adjuntos obligatorios (participantes/vouchers/encuesta) ni bloqueo del período mientras está pendiente | §2.2             | 🟡 Media   | ✅ Resuelto (adjuntos + guarda de duplicados; bloqueo a nivel de curso queda pendiente, ver §2.2) |
-| 7   | Listado público de cursos sin filtro por curso "listo" (contrato + estado)                                                     | §2.3             | 🟡 Media   | Bloqueado — depende de #1 (ver §7) |
-| 8   | Sin bandeja de "mis solicitudes" para el solicitante                                                                           | §5.5             | ⚪ Baja    | Pendiente |
+| 6   | Solicitud de cierre sin adjuntos obligatorios (participantes/vouchers/encuesta) ni bloqueo del período mientras está pendiente | §2.2             | 🟡 Media   | ✅ Resuelto (adjuntos + guarda de duplicados + bloqueo `solicitud-cierre`) |
+| 7   | Listado público de cursos sin filtro por curso "listo" (contrato + estado)                                                     | §2.3             | 🟡 Media   | ✅ Resuelto (`GET /courses/public`; diferencia menor con `solicitud-cierre`, ver §2.3) |
+| 8   | Sin bandeja de "mis solicitudes" para el solicitante                                                                           | §5.5             | ⚪ Baja    | ✅ Resuelto (`GET /course-requests`) |
 | 9   | Sin filtro por rol en listado de usuarios                                                                                      | §4.1             | ⚪ Baja    | Pendiente |
 | 10  | Inconsistencia de nombres de campo entre alta y edición de usuario (`cedula`/`nombres` vs. `ci`/`primer_nombre`)               | §4.1             | ⚪ Baja    | Pendiente |
-| 11  | Campos de clasificación/evaluación/contrato ausentes en la entidad `Course`                                                    | §3.1             | ⚪ Baja    | Pendiente |
+| 11  | Campos de clasificación/evaluación/contrato ausentes en la entidad `Course`                                                    | §3.1             | ⚪ Baja    | Parcial — contrato y estado ya expuestos; clasificación/evaluación dependen de #5 |
 | 12  | Modelado de anuncios por período vs. curso+cohorte independientes                                                              | §2.4             | ⚪ Baja    | Pendiente |
+| 13  | Redirección sobrescribe la facultad del curso; no hay facultad/coordinador de origen para dirigir cierres                      | §2.6             | 🟡 Media   | Pendiente |
+| 14  | Facultad del curso la elige el cliente en vez de heredarse del proveedor                                                       | §2.7             | 🟡 Media   | Pendiente |
+| 15  | Bandejas admin sin filtro por estado ni listado de "aprobados sin contrato"                                                    | §5.8             | 🟡 Media   | Pendiente |
+| 16  | `GET /courses` sin filtros por dueño/estado ni visibilidad por rol                                                             | §2.8             | ⚪ Baja    | Pendiente (mitigado por `/courses/public` y `/course-requests`) |
+| 17  | Cohorte/período sin nombre (`nombre_cohorte`)                                                                                  | §2.9             | ⚪ Baja    | Pendiente |
 
 **Sin brechas:** redirección/remit de solicitudes (§5.6), autenticación básica (§4.2), solapamiento curso+grupo (§6).

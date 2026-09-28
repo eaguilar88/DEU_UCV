@@ -39,16 +39,16 @@ func (_m *MockRepository) EXPECT() *MockRepository_Expecter {
 }
 
 // ApproveCourseRequest provides a mock function for the type MockRepository
-func (_mock *MockRepository) ApproveCourseRequest(ctx context.Context, reqID string, reviewerID string, courseType string, comments string) error {
-	ret := _mock.Called(ctx, reqID, reviewerID, courseType, comments)
+func (_mock *MockRepository) ApproveCourseRequest(ctx context.Context, reqID string, reviewerID string, courseType string, comments string, notify func() error) error {
+	ret := _mock.Called(ctx, reqID, reviewerID, courseType, comments, notify)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ApproveCourseRequest")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) error); ok {
-		r0 = returnFunc(ctx, reqID, reviewerID, courseType, comments)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string, func() error) error); ok {
+		r0 = returnFunc(ctx, reqID, reviewerID, courseType, comments, notify)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -66,11 +66,12 @@ type MockRepository_ApproveCourseRequest_Call struct {
 //   - reviewerID string
 //   - courseType string
 //   - comments string
-func (_e *MockRepository_Expecter) ApproveCourseRequest(ctx interface{}, reqID interface{}, reviewerID interface{}, courseType interface{}, comments interface{}) *MockRepository_ApproveCourseRequest_Call {
-	return &MockRepository_ApproveCourseRequest_Call{Call: _e.mock.On("ApproveCourseRequest", ctx, reqID, reviewerID, courseType, comments)}
+//   - notify func() error
+func (_e *MockRepository_Expecter) ApproveCourseRequest(ctx interface{}, reqID interface{}, reviewerID interface{}, courseType interface{}, comments interface{}, notify interface{}) *MockRepository_ApproveCourseRequest_Call {
+	return &MockRepository_ApproveCourseRequest_Call{Call: _e.mock.On("ApproveCourseRequest", ctx, reqID, reviewerID, courseType, comments, notify)}
 }
 
-func (_c *MockRepository_ApproveCourseRequest_Call) Run(run func(ctx context.Context, reqID string, reviewerID string, courseType string, comments string)) *MockRepository_ApproveCourseRequest_Call {
+func (_c *MockRepository_ApproveCourseRequest_Call) Run(run func(ctx context.Context, reqID string, reviewerID string, courseType string, comments string, notify func() error)) *MockRepository_ApproveCourseRequest_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -92,12 +93,17 @@ func (_c *MockRepository_ApproveCourseRequest_Call) Run(run func(ctx context.Con
 		if args[4] != nil {
 			arg4 = args[4].(string)
 		}
+		var arg5 func() error
+		if args[5] != nil {
+			arg5 = args[5].(func() error)
+		}
 		run(
 			arg0,
 			arg1,
 			arg2,
 			arg3,
 			arg4,
+			arg5,
 		)
 	})
 	return _c
@@ -108,7 +114,7 @@ func (_c *MockRepository_ApproveCourseRequest_Call) Return(err error) *MockRepos
 	return _c
 }
 
-func (_c *MockRepository_ApproveCourseRequest_Call) RunAndReturn(run func(ctx context.Context, reqID string, reviewerID string, courseType string, comments string) error) *MockRepository_ApproveCourseRequest_Call {
+func (_c *MockRepository_ApproveCourseRequest_Call) RunAndReturn(run func(ctx context.Context, reqID string, reviewerID string, courseType string, comments string, notify func() error) error) *MockRepository_ApproveCourseRequest_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -339,6 +345,72 @@ func (_c *MockRepository_GetCourseRequestsByProvider_Call) RunAndReturn(run func
 	return _c
 }
 
+// GetProvider provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetProvider(ctx context.Context, providerID string) (entities.Provider, error) {
+	ret := _mock.Called(ctx, providerID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetProvider")
+	}
+
+	var r0 entities.Provider
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (entities.Provider, error)); ok {
+		return returnFunc(ctx, providerID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) entities.Provider); ok {
+		r0 = returnFunc(ctx, providerID)
+	} else {
+		r0 = ret.Get(0).(entities.Provider)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, providerID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetProvider_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetProvider'
+type MockRepository_GetProvider_Call struct {
+	*mock.Call
+}
+
+// GetProvider is a helper method to define mock.On call
+//   - ctx context.Context
+//   - providerID string
+func (_e *MockRepository_Expecter) GetProvider(ctx interface{}, providerID interface{}) *MockRepository_GetProvider_Call {
+	return &MockRepository_GetProvider_Call{Call: _e.mock.On("GetProvider", ctx, providerID)}
+}
+
+func (_c *MockRepository_GetProvider_Call) Run(run func(ctx context.Context, providerID string)) *MockRepository_GetProvider_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetProvider_Call) Return(provider entities.Provider, err error) *MockRepository_GetProvider_Call {
+	_c.Call.Return(provider, err)
+	return _c
+}
+
+func (_c *MockRepository_GetProvider_Call) RunAndReturn(run func(ctx context.Context, providerID string) (entities.Provider, error)) *MockRepository_GetProvider_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetProviderByUserID provides a mock function for the type MockRepository
 func (_mock *MockRepository) GetProviderByUserID(ctx context.Context, userID string) (entities.Provider, error) {
 	ret := _mock.Called(ctx, userID)
@@ -406,16 +478,16 @@ func (_c *MockRepository_GetProviderByUserID_Call) RunAndReturn(run func(ctx con
 }
 
 // RedirectCourseRequest provides a mock function for the type MockRepository
-func (_mock *MockRepository) RedirectCourseRequest(ctx context.Context, reqID string, reviewerID string, faculty entities.Faculty, reason string) error {
-	ret := _mock.Called(ctx, reqID, reviewerID, faculty, reason)
+func (_mock *MockRepository) RedirectCourseRequest(ctx context.Context, reqID string, reviewerID string, faculty entities.Faculty, reason string, notify func() error) error {
+	ret := _mock.Called(ctx, reqID, reviewerID, faculty, reason, notify)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RedirectCourseRequest")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, entities.Faculty, string) error); ok {
-		r0 = returnFunc(ctx, reqID, reviewerID, faculty, reason)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, entities.Faculty, string, func() error) error); ok {
+		r0 = returnFunc(ctx, reqID, reviewerID, faculty, reason, notify)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -433,11 +505,12 @@ type MockRepository_RedirectCourseRequest_Call struct {
 //   - reviewerID string
 //   - faculty entities.Faculty
 //   - reason string
-func (_e *MockRepository_Expecter) RedirectCourseRequest(ctx interface{}, reqID interface{}, reviewerID interface{}, faculty interface{}, reason interface{}) *MockRepository_RedirectCourseRequest_Call {
-	return &MockRepository_RedirectCourseRequest_Call{Call: _e.mock.On("RedirectCourseRequest", ctx, reqID, reviewerID, faculty, reason)}
+//   - notify func() error
+func (_e *MockRepository_Expecter) RedirectCourseRequest(ctx interface{}, reqID interface{}, reviewerID interface{}, faculty interface{}, reason interface{}, notify interface{}) *MockRepository_RedirectCourseRequest_Call {
+	return &MockRepository_RedirectCourseRequest_Call{Call: _e.mock.On("RedirectCourseRequest", ctx, reqID, reviewerID, faculty, reason, notify)}
 }
 
-func (_c *MockRepository_RedirectCourseRequest_Call) Run(run func(ctx context.Context, reqID string, reviewerID string, faculty entities.Faculty, reason string)) *MockRepository_RedirectCourseRequest_Call {
+func (_c *MockRepository_RedirectCourseRequest_Call) Run(run func(ctx context.Context, reqID string, reviewerID string, faculty entities.Faculty, reason string, notify func() error)) *MockRepository_RedirectCourseRequest_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -459,12 +532,17 @@ func (_c *MockRepository_RedirectCourseRequest_Call) Run(run func(ctx context.Co
 		if args[4] != nil {
 			arg4 = args[4].(string)
 		}
+		var arg5 func() error
+		if args[5] != nil {
+			arg5 = args[5].(func() error)
+		}
 		run(
 			arg0,
 			arg1,
 			arg2,
 			arg3,
 			arg4,
+			arg5,
 		)
 	})
 	return _c
@@ -475,22 +553,22 @@ func (_c *MockRepository_RedirectCourseRequest_Call) Return(err error) *MockRepo
 	return _c
 }
 
-func (_c *MockRepository_RedirectCourseRequest_Call) RunAndReturn(run func(ctx context.Context, reqID string, reviewerID string, faculty entities.Faculty, reason string) error) *MockRepository_RedirectCourseRequest_Call {
+func (_c *MockRepository_RedirectCourseRequest_Call) RunAndReturn(run func(ctx context.Context, reqID string, reviewerID string, faculty entities.Faculty, reason string, notify func() error) error) *MockRepository_RedirectCourseRequest_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RejectCourseRequest provides a mock function for the type MockRepository
-func (_mock *MockRepository) RejectCourseRequest(ctx context.Context, reqID string, reviewerID string, comments string) error {
-	ret := _mock.Called(ctx, reqID, reviewerID, comments)
+func (_mock *MockRepository) RejectCourseRequest(ctx context.Context, reqID string, reviewerID string, comments string, notify func() error) error {
+	ret := _mock.Called(ctx, reqID, reviewerID, comments, notify)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RejectCourseRequest")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) error); ok {
-		r0 = returnFunc(ctx, reqID, reviewerID, comments)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, func() error) error); ok {
+		r0 = returnFunc(ctx, reqID, reviewerID, comments, notify)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -507,11 +585,12 @@ type MockRepository_RejectCourseRequest_Call struct {
 //   - reqID string
 //   - reviewerID string
 //   - comments string
-func (_e *MockRepository_Expecter) RejectCourseRequest(ctx interface{}, reqID interface{}, reviewerID interface{}, comments interface{}) *MockRepository_RejectCourseRequest_Call {
-	return &MockRepository_RejectCourseRequest_Call{Call: _e.mock.On("RejectCourseRequest", ctx, reqID, reviewerID, comments)}
+//   - notify func() error
+func (_e *MockRepository_Expecter) RejectCourseRequest(ctx interface{}, reqID interface{}, reviewerID interface{}, comments interface{}, notify interface{}) *MockRepository_RejectCourseRequest_Call {
+	return &MockRepository_RejectCourseRequest_Call{Call: _e.mock.On("RejectCourseRequest", ctx, reqID, reviewerID, comments, notify)}
 }
 
-func (_c *MockRepository_RejectCourseRequest_Call) Run(run func(ctx context.Context, reqID string, reviewerID string, comments string)) *MockRepository_RejectCourseRequest_Call {
+func (_c *MockRepository_RejectCourseRequest_Call) Run(run func(ctx context.Context, reqID string, reviewerID string, comments string, notify func() error)) *MockRepository_RejectCourseRequest_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -529,11 +608,16 @@ func (_c *MockRepository_RejectCourseRequest_Call) Run(run func(ctx context.Cont
 		if args[3] != nil {
 			arg3 = args[3].(string)
 		}
+		var arg4 func() error
+		if args[4] != nil {
+			arg4 = args[4].(func() error)
+		}
 		run(
 			arg0,
 			arg1,
 			arg2,
 			arg3,
+			arg4,
 		)
 	})
 	return _c
@@ -544,7 +628,7 @@ func (_c *MockRepository_RejectCourseRequest_Call) Return(err error) *MockReposi
 	return _c
 }
 
-func (_c *MockRepository_RejectCourseRequest_Call) RunAndReturn(run func(ctx context.Context, reqID string, reviewerID string, comments string) error) *MockRepository_RejectCourseRequest_Call {
+func (_c *MockRepository_RejectCourseRequest_Call) RunAndReturn(run func(ctx context.Context, reqID string, reviewerID string, comments string, notify func() error) error) *MockRepository_RejectCourseRequest_Call {
 	_c.Call.Return(run)
 	return _c
 }

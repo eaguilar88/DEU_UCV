@@ -39,16 +39,16 @@ func (_m *MockRepository) EXPECT() *MockRepository_Expecter {
 }
 
 // ApproveCourseCycleCloseRequest provides a mock function for the type MockRepository
-func (_mock *MockRepository) ApproveCourseCycleCloseRequest(ctx context.Context, id string, reviewerID string, cycleID string) error {
-	ret := _mock.Called(ctx, id, reviewerID, cycleID)
+func (_mock *MockRepository) ApproveCourseCycleCloseRequest(ctx context.Context, id string, reviewerID string, cycleID string, notify func() error) error {
+	ret := _mock.Called(ctx, id, reviewerID, cycleID, notify)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ApproveCourseCycleCloseRequest")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) error); ok {
-		r0 = returnFunc(ctx, id, reviewerID, cycleID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, func() error) error); ok {
+		r0 = returnFunc(ctx, id, reviewerID, cycleID, notify)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -65,11 +65,12 @@ type MockRepository_ApproveCourseCycleCloseRequest_Call struct {
 //   - id string
 //   - reviewerID string
 //   - cycleID string
-func (_e *MockRepository_Expecter) ApproveCourseCycleCloseRequest(ctx interface{}, id interface{}, reviewerID interface{}, cycleID interface{}) *MockRepository_ApproveCourseCycleCloseRequest_Call {
-	return &MockRepository_ApproveCourseCycleCloseRequest_Call{Call: _e.mock.On("ApproveCourseCycleCloseRequest", ctx, id, reviewerID, cycleID)}
+//   - notify func() error
+func (_e *MockRepository_Expecter) ApproveCourseCycleCloseRequest(ctx interface{}, id interface{}, reviewerID interface{}, cycleID interface{}, notify interface{}) *MockRepository_ApproveCourseCycleCloseRequest_Call {
+	return &MockRepository_ApproveCourseCycleCloseRequest_Call{Call: _e.mock.On("ApproveCourseCycleCloseRequest", ctx, id, reviewerID, cycleID, notify)}
 }
 
-func (_c *MockRepository_ApproveCourseCycleCloseRequest_Call) Run(run func(ctx context.Context, id string, reviewerID string, cycleID string)) *MockRepository_ApproveCourseCycleCloseRequest_Call {
+func (_c *MockRepository_ApproveCourseCycleCloseRequest_Call) Run(run func(ctx context.Context, id string, reviewerID string, cycleID string, notify func() error)) *MockRepository_ApproveCourseCycleCloseRequest_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -87,11 +88,16 @@ func (_c *MockRepository_ApproveCourseCycleCloseRequest_Call) Run(run func(ctx c
 		if args[3] != nil {
 			arg3 = args[3].(string)
 		}
+		var arg4 func() error
+		if args[4] != nil {
+			arg4 = args[4].(func() error)
+		}
 		run(
 			arg0,
 			arg1,
 			arg2,
 			arg3,
+			arg4,
 		)
 	})
 	return _c
@@ -102,7 +108,7 @@ func (_c *MockRepository_ApproveCourseCycleCloseRequest_Call) Return(err error) 
 	return _c
 }
 
-func (_c *MockRepository_ApproveCourseCycleCloseRequest_Call) RunAndReturn(run func(ctx context.Context, id string, reviewerID string, cycleID string) error) *MockRepository_ApproveCourseCycleCloseRequest_Call {
+func (_c *MockRepository_ApproveCourseCycleCloseRequest_Call) RunAndReturn(run func(ctx context.Context, id string, reviewerID string, cycleID string, notify func() error) error) *MockRepository_ApproveCourseCycleCloseRequest_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -175,6 +181,72 @@ func (_c *MockRepository_CreateCourseCycleCloseRequest_Call) Return(n int64, err
 }
 
 func (_c *MockRepository_CreateCourseCycleCloseRequest_Call) RunAndReturn(run func(ctx context.Context, cycleID int64, submittedByID int64) (int64, error)) *MockRepository_CreateCourseCycleCloseRequest_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetCourse provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetCourse(ctx context.Context, courseID string) (entities.Course, error) {
+	ret := _mock.Called(ctx, courseID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCourse")
+	}
+
+	var r0 entities.Course
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (entities.Course, error)); ok {
+		return returnFunc(ctx, courseID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) entities.Course); ok {
+		r0 = returnFunc(ctx, courseID)
+	} else {
+		r0 = ret.Get(0).(entities.Course)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, courseID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetCourse_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCourse'
+type MockRepository_GetCourse_Call struct {
+	*mock.Call
+}
+
+// GetCourse is a helper method to define mock.On call
+//   - ctx context.Context
+//   - courseID string
+func (_e *MockRepository_Expecter) GetCourse(ctx interface{}, courseID interface{}) *MockRepository_GetCourse_Call {
+	return &MockRepository_GetCourse_Call{Call: _e.mock.On("GetCourse", ctx, courseID)}
+}
+
+func (_c *MockRepository_GetCourse_Call) Run(run func(ctx context.Context, courseID string)) *MockRepository_GetCourse_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetCourse_Call) Return(course entities.Course, err error) *MockRepository_GetCourse_Call {
+	_c.Call.Return(course, err)
+	return _c
+}
+
+func (_c *MockRepository_GetCourse_Call) RunAndReturn(run func(ctx context.Context, courseID string) (entities.Course, error)) *MockRepository_GetCourse_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -325,6 +397,140 @@ func (_c *MockRepository_GetCourseCycleCloseRequests_Call) RunAndReturn(run func
 	return _c
 }
 
+// GetCoursePeriodByID provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetCoursePeriodByID(ctx context.Context, periodID string) (entities.CoursePeriod, error) {
+	ret := _mock.Called(ctx, periodID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCoursePeriodByID")
+	}
+
+	var r0 entities.CoursePeriod
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (entities.CoursePeriod, error)); ok {
+		return returnFunc(ctx, periodID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) entities.CoursePeriod); ok {
+		r0 = returnFunc(ctx, periodID)
+	} else {
+		r0 = ret.Get(0).(entities.CoursePeriod)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, periodID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetCoursePeriodByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCoursePeriodByID'
+type MockRepository_GetCoursePeriodByID_Call struct {
+	*mock.Call
+}
+
+// GetCoursePeriodByID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - periodID string
+func (_e *MockRepository_Expecter) GetCoursePeriodByID(ctx interface{}, periodID interface{}) *MockRepository_GetCoursePeriodByID_Call {
+	return &MockRepository_GetCoursePeriodByID_Call{Call: _e.mock.On("GetCoursePeriodByID", ctx, periodID)}
+}
+
+func (_c *MockRepository_GetCoursePeriodByID_Call) Run(run func(ctx context.Context, periodID string)) *MockRepository_GetCoursePeriodByID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetCoursePeriodByID_Call) Return(coursePeriod entities.CoursePeriod, err error) *MockRepository_GetCoursePeriodByID_Call {
+	_c.Call.Return(coursePeriod, err)
+	return _c
+}
+
+func (_c *MockRepository_GetCoursePeriodByID_Call) RunAndReturn(run func(ctx context.Context, periodID string) (entities.CoursePeriod, error)) *MockRepository_GetCoursePeriodByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetUser provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetUser(ctx context.Context, userID string) (*entities.User, error) {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetUser")
+	}
+
+	var r0 *entities.User
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*entities.User, error)); ok {
+		return returnFunc(ctx, userID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *entities.User); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*entities.User)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUser'
+type MockRepository_GetUser_Call struct {
+	*mock.Call
+}
+
+// GetUser is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID string
+func (_e *MockRepository_Expecter) GetUser(ctx interface{}, userID interface{}) *MockRepository_GetUser_Call {
+	return &MockRepository_GetUser_Call{Call: _e.mock.On("GetUser", ctx, userID)}
+}
+
+func (_c *MockRepository_GetUser_Call) Run(run func(ctx context.Context, userID string)) *MockRepository_GetUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetUser_Call) Return(user *entities.User, err error) *MockRepository_GetUser_Call {
+	_c.Call.Return(user, err)
+	return _c
+}
+
+func (_c *MockRepository_GetUser_Call) RunAndReturn(run func(ctx context.Context, userID string) (*entities.User, error)) *MockRepository_GetUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // HasPendingCloseRequestForCycle provides a mock function for the type MockRepository
 func (_mock *MockRepository) HasPendingCloseRequestForCycle(ctx context.Context, cycleID int64) (bool, error) {
 	ret := _mock.Called(ctx, cycleID)
@@ -392,16 +598,16 @@ func (_c *MockRepository_HasPendingCloseRequestForCycle_Call) RunAndReturn(run f
 }
 
 // RejectCourseCycleCloseRequest provides a mock function for the type MockRepository
-func (_mock *MockRepository) RejectCourseCycleCloseRequest(ctx context.Context, id string, reviewerID string, comments string, cycleID string) error {
-	ret := _mock.Called(ctx, id, reviewerID, comments, cycleID)
+func (_mock *MockRepository) RejectCourseCycleCloseRequest(ctx context.Context, id string, reviewerID string, comments string, cycleID string, notify func() error) error {
+	ret := _mock.Called(ctx, id, reviewerID, comments, cycleID, notify)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RejectCourseCycleCloseRequest")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) error); ok {
-		r0 = returnFunc(ctx, id, reviewerID, comments, cycleID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string, func() error) error); ok {
+		r0 = returnFunc(ctx, id, reviewerID, comments, cycleID, notify)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -419,11 +625,12 @@ type MockRepository_RejectCourseCycleCloseRequest_Call struct {
 //   - reviewerID string
 //   - comments string
 //   - cycleID string
-func (_e *MockRepository_Expecter) RejectCourseCycleCloseRequest(ctx interface{}, id interface{}, reviewerID interface{}, comments interface{}, cycleID interface{}) *MockRepository_RejectCourseCycleCloseRequest_Call {
-	return &MockRepository_RejectCourseCycleCloseRequest_Call{Call: _e.mock.On("RejectCourseCycleCloseRequest", ctx, id, reviewerID, comments, cycleID)}
+//   - notify func() error
+func (_e *MockRepository_Expecter) RejectCourseCycleCloseRequest(ctx interface{}, id interface{}, reviewerID interface{}, comments interface{}, cycleID interface{}, notify interface{}) *MockRepository_RejectCourseCycleCloseRequest_Call {
+	return &MockRepository_RejectCourseCycleCloseRequest_Call{Call: _e.mock.On("RejectCourseCycleCloseRequest", ctx, id, reviewerID, comments, cycleID, notify)}
 }
 
-func (_c *MockRepository_RejectCourseCycleCloseRequest_Call) Run(run func(ctx context.Context, id string, reviewerID string, comments string, cycleID string)) *MockRepository_RejectCourseCycleCloseRequest_Call {
+func (_c *MockRepository_RejectCourseCycleCloseRequest_Call) Run(run func(ctx context.Context, id string, reviewerID string, comments string, cycleID string, notify func() error)) *MockRepository_RejectCourseCycleCloseRequest_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -445,12 +652,17 @@ func (_c *MockRepository_RejectCourseCycleCloseRequest_Call) Run(run func(ctx co
 		if args[4] != nil {
 			arg4 = args[4].(string)
 		}
+		var arg5 func() error
+		if args[5] != nil {
+			arg5 = args[5].(func() error)
+		}
 		run(
 			arg0,
 			arg1,
 			arg2,
 			arg3,
 			arg4,
+			arg5,
 		)
 	})
 	return _c
@@ -461,7 +673,7 @@ func (_c *MockRepository_RejectCourseCycleCloseRequest_Call) Return(err error) *
 	return _c
 }
 
-func (_c *MockRepository_RejectCourseCycleCloseRequest_Call) RunAndReturn(run func(ctx context.Context, id string, reviewerID string, comments string, cycleID string) error) *MockRepository_RejectCourseCycleCloseRequest_Call {
+func (_c *MockRepository_RejectCourseCycleCloseRequest_Call) RunAndReturn(run func(ctx context.Context, id string, reviewerID string, comments string, cycleID string, notify func() error) error) *MockRepository_RejectCourseCycleCloseRequest_Call {
 	_c.Call.Return(run)
 	return _c
 }

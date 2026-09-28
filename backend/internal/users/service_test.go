@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/eaguilar88/deu/internal/email"
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/users/mocks"
 	"github.com/stretchr/testify/assert"
@@ -143,8 +144,8 @@ func TestService_CreateUser(t *testing.T) {
 					RunAndReturn(func(_ context.Context, _ entities.User) (int64, error) {
 						return 1, nil
 					})
-				mail.EXPECT().Send(mock.Anything, "test@test.com", mock.Anything, mock.Anything).
-					RunAndReturn(func(_ context.Context, _, _, _ string) error {
+				mail.EXPECT().SendTemplate(mock.Anything, "test@test.com", email.TemplateUserWelcome, nil).
+					RunAndReturn(func(_ context.Context, _ string, _ email.Template, _ any) error {
 						return nil
 					})
 			},
@@ -176,8 +177,8 @@ func TestService_CreateUser(t *testing.T) {
 					RunAndReturn(func(_ context.Context, _ []*entities.File) error {
 						return nil
 					})
-				mail.EXPECT().Send(mock.Anything, "test@test.com", mock.Anything, mock.Anything).
-					RunAndReturn(func(_ context.Context, _, _, _ string) error {
+				mail.EXPECT().SendTemplate(mock.Anything, "test@test.com", email.TemplateUserWelcome, nil).
+					RunAndReturn(func(_ context.Context, _ string, _ email.Template, _ any) error {
 						return nil
 					})
 			},
@@ -279,8 +280,8 @@ func TestService_CreateUser(t *testing.T) {
 					RunAndReturn(func(_ context.Context, _ entities.User) (int64, error) {
 						return 1, nil
 					})
-				mail.EXPECT().Send(mock.Anything, "test@test.com", mock.Anything, mock.Anything).
-					RunAndReturn(func(_ context.Context, _, _, _ string) error {
+				mail.EXPECT().SendTemplate(mock.Anything, "test@test.com", email.TemplateUserWelcome, nil).
+					RunAndReturn(func(_ context.Context, _ string, _ email.Template, _ any) error {
 						return errors.New("mail error")
 					})
 			},

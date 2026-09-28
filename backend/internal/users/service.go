@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/eaguilar88/deu/internal/email"
 	"github.com/eaguilar88/deu/internal/entities"
 	"go.uber.org/zap"
 )
@@ -24,7 +25,7 @@ type Repository interface {
 }
 
 type MailClient interface {
-	Send(ctx context.Context, to string, subject string, body string) error
+	SendTemplate(ctx context.Context, to string, tmpl email.Template, data any) error
 }
 
 type StorageClient interface {
@@ -129,7 +130,7 @@ func (s *service) CreateUser(ctx context.Context, user entities.User, profilePic
 		}
 	}
 
-	if err := s.emailClient.Send(ctx, user.Email, "Welcome to DEU", "Welcome to DEU"); err != nil {
+	if err := s.emailClient.SendTemplate(ctx, user.Email, email.TemplateUserWelcome, nil); err != nil {
 		s.log.Warn("failed to send welcome email", zap.Error(err))
 	}
 	return id, nil

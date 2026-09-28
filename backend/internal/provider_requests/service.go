@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strconv"
 
+	"github.com/eaguilar88/deu/internal/email"
 	"github.com/eaguilar88/deu/internal/entities"
 	"go.uber.org/zap"
 )
@@ -22,7 +23,7 @@ type Repository interface {
 }
 
 type MailClient interface {
-	Send(ctx context.Context, to string, subject string, body string) error
+	SendTemplate(ctx context.Context, to string, tmpl email.Template, data any) error
 }
 
 type service struct {
@@ -61,7 +62,7 @@ func (s *service) ApproveProviderRequest(ctx context.Context, id, reviewerID str
 		return err
 	}
 
-	if err := s.emailClient.Send(ctx, provider.User.Email, "Solicitud de registro aprobada", "Tu solicitud ha sido aprobada"); err != nil {
+	if err := s.emailClient.SendTemplate(ctx, provider.User.Email, email.TemplateProviderRequestApproved, nil); err != nil {
 		s.logger.Warn("failed to send approval email",
 			zap.Error(err),
 			zap.String("provider_request_id", id),

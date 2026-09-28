@@ -265,6 +265,7 @@ func newCourseFromModel(course models.Course) entities.Course {
 	c := entities.Course{
 		ID:               course.ID,
 		Name:             course.Name,
+		Owner:            entities.User{ID: course.OwnerID},
 		HasDocumentation: course.HasDocumentation,
 		CreatedAt:        course.CreatedAt,
 		UpdatedAt:        course.UpdatedAt,

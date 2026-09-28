@@ -11,6 +11,7 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
+	"github.com/eaguilar88/deu/internal/email"
 	"github.com/eaguilar88/deu/internal/entities"
 	"go.uber.org/zap"
 )
@@ -59,7 +60,7 @@ type Repository interface {
 
 // MailClient defines the email sending operations required by the providers service.
 type MailClient interface {
-	Send(ctx context.Context, to string, subject string, body string) error
+	SendTemplate(ctx context.Context, to string, tmpl email.Template, data any) error
 }
 
 // StorageClient defines the file storage operations required by the providers service.
@@ -247,7 +248,7 @@ func (s *service) CreateProvider(ctx context.Context, provider *entities.Provide
 		return -1, err
 	}
 
-	if err := s.emailClient.Send(ctx, contact.Email, "Solicitud de registro recibida", "Tu solicitud de registro como proveedor ha sido recibida y está bajo revisión. Recibirás una notificación cuando sea procesada."); err != nil {
+	if err := s.emailClient.SendTemplate(ctx, contact.Email, email.TemplateProviderRegistrationReceived, nil); err != nil {
 		s.logger.Warn("failed to send provider registration email",
 			zap.Error(err),
 			zap.String("action", "send_email"),

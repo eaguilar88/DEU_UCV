@@ -1,0 +1,6 @@
+{{define "subject"}}Cierre de cohorte rechazado{{end}}
+
+{{define "content"}}
+<p>La solicitud de cierre de cohorte del curso <strong>{{.CourseName}}</strong> ha sido rechazada. El curso vuelve a estar abierto.</p>
+{{if .Reason}}<p>Motivo: {{.Reason}}</p>{{end}}
+{{end}}

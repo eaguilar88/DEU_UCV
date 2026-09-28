@@ -114,7 +114,7 @@ func (r *PostgresRepository) GetCourseRequestsByProvider(ctx context.Context, pr
 	return requests, scope, nil
 }
 
-func (r *PostgresRepository) ApproveCourseRequest(ctx context.Context, reqID, reviewerID, courseType, comments string) error {
+func (r *PostgresRepository) ApproveCourseRequest(ctx context.Context, reqID, reviewerID, courseType, comments string, notify func() error) error {
 	// Start transaction
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -166,7 +166,12 @@ func (r *PostgresRepository) ApproveCourseRequest(ctx context.Context, reqID, re
 	}
 	if rowsAffected == 0 {
 		r.logger.Error("no rows affected when approving course request")
-		return fmt.Errorf("%w", course_requests.ErrCourseRequestNotFound)
+		err = fmt.Errorf("%w", course_requests.ErrCourseRequestNotFound)
+		return err
+	}
+
+	if err = notify(); err != nil {
+		return err
 	}
 
 	// Commit transaction
@@ -183,17 +188,25 @@ func (r *PostgresRepository) ApproveCourseRequest(ctx context.Context, reqID, re
 	return nil
 }
 
-func (r *PostgresRepository) RejectCourseRequest(ctx context.Context, reqID, reviewerID, comments string) error {
+func (r *PostgresRepository) RejectCourseRequest(ctx context.Context, reqID, reviewerID, comments string, notify func() error) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		r.logger.Error("failed to begin transaction", zap.Error(err))
+		return err
+	}
+	defer func() {
+		if err != nil {
+			if rbErr := tx.Rollback(); rbErr != nil {
+				r.logger.Error("failed to rollback transaction", zap.Error(rbErr))
+			}
+		}
+	}()
+
 	query, args, err := queries.RejectCourseRequest(reqID, reviewerID, comments).ToSql()
 	if err != nil {
 		return err
 	}
-	stmt, err := r.db.PrepareContext(ctx, query)
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
-	res, err := stmt.ExecContext(ctx, args...)
+	res, err := tx.ExecContext(ctx, query, args...)
 	if err != nil {
 		return err
 	}
@@ -202,12 +215,22 @@ func (r *PostgresRepository) RejectCourseRequest(ctx context.Context, reqID, rev
 		return err
 	}
 	if rowsAffected == 0 {
-		return fmt.Errorf("%w", course_requests.ErrCourseRequestNotFound)
+		err = fmt.Errorf("%w", course_requests.ErrCourseRequestNotFound)
+		return err
+	}
+
+	if err = notify(); err != nil {
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+		r.logger.Error("failed to commit transaction", zap.Error(err))
+		return err
 	}
 	return nil
 }
 
-func (r *PostgresRepository) RedirectCourseRequest(ctx context.Context, reqID, reviewerID string, faculty entities.Faculty, reason string) error {
+func (r *PostgresRepository) RedirectCourseRequest(ctx context.Context, reqID, reviewerID string, faculty entities.Faculty, reason string, notify func() error) error {
 	// Start transaction
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -263,7 +286,12 @@ func (r *PostgresRepository) RedirectCourseRequest(ctx context.Context, reqID, r
 	}
 	if rowsAffected == 0 {
 		r.logger.Error("no rows affected when redirecting course request")
-		return fmt.Errorf("%w", course_requests.ErrCourseRequestNotFound)
+		err = fmt.Errorf("%w", course_requests.ErrCourseRequestNotFound)
+		return err
+	}
+
+	if err = notify(); err != nil {
+		return err
 	}
 
 	// Commit transaction
