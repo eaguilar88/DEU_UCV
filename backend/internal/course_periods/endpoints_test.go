@@ -272,7 +272,7 @@ func TestHandler_CreateCoursePeriod(t *testing.T) {
 					Return(int64(-1), ErrInvalidCapacity)
 			},
 			userID:  &userID,
-			req:     CreateCoursePeriodRequest{},
+			req:     CreateCoursePeriodRequest{Capacity: 30},
 			wantErr: httperrors.NewBadRequest(ErrInvalidCapacity.Error()),
 		},
 		{

@@ -2,8 +2,8 @@ package group_resource_requests
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/eaguilar88/deu/internal/email"
 	"github.com/eaguilar88/deu/internal/entities"
 	"go.uber.org/zap"
 )
@@ -21,7 +21,7 @@ type Repository interface {
 
 // MailClient defines the email sending operations required by the group_resource_requests service.
 type MailClient interface {
-	Send(ctx context.Context, to string, subject string, body string) error
+	SendTemplate(ctx context.Context, to string, tmpl email.Template, data any) error
 }
 
 type service struct {
@@ -53,8 +53,11 @@ func (s *service) ApproveGroupResourceRequest(ctx context.Context, reqID string)
 		return err
 	}
 
-	body := fmt.Sprintf("La solicitud de recursos \"%s\" del grupo %s ha sido aprobada.", req.Type, req.GroupName)
-	s.notifyGroup(ctx, req, "Solicitud de recursos aprobada", body)
+	body := email.GroupResourceRequestApprovedData{
+		GroupName:    req.GroupName,
+		ResourceType: req.Type,
+	}
+	s.notifyGroup(ctx, req, email.TemplateGroupResourceRequestApproved, body)
 	return nil
 }
 
@@ -68,14 +71,18 @@ func (s *service) RejectGroupResourceRequest(ctx context.Context, reqID, reason 
 		return err
 	}
 
-	body := fmt.Sprintf("La solicitud de recursos \"%s\" del grupo %s ha sido rechazada.\n\nRazón: %s", req.Type, req.GroupName, reason)
-	s.notifyGroup(ctx, req, "Solicitud de recursos rechazada", body)
+	body := email.GroupResourceRequestRejectedData{
+		GroupName:    req.GroupName,
+		ResourceType: req.Type,
+		Reason:       reason,
+	}
+	s.notifyGroup(ctx, req, email.TemplateGroupResourceRequestRejected, body)
 	return nil
 }
 
 // notifyGroup emails the group's contact address. The status change is already saved,
 // so failures are logged but never returned.
-func (s *service) notifyGroup(ctx context.Context, req entities.GroupResourceRequest, subject, body string) {
+func (s *service) notifyGroup(ctx context.Context, req entities.GroupResourceRequest, template email.Template, body any) {
 	logFields := []zap.Field{zap.String("group_id", req.GroupID), zap.String("request_id", req.ID)}
 
 	contacts, err := s.repo.GetContactsByOwner(ctx, req.GroupID, entities.OwnerTypeExtensionGroup)
@@ -96,7 +103,7 @@ func (s *service) notifyGroup(ctx context.Context, req entities.GroupResourceReq
 		return
 	}
 
-	if err := s.emailClient.Send(ctx, to, subject, body); err != nil {
+	if err := s.emailClient.SendTemplate(ctx, to, template, body); err != nil {
 		s.logger.Warn("failed to send resource request email", append(logFields, zap.Error(err))...)
 	}
 }

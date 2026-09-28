@@ -3,9 +3,9 @@ package group_resource_requests_test
 import (
 	"context"
 	"errors"
-	"strings"
 	"testing"
 
+	"github.com/eaguilar88/deu/internal/email"
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/group_resource_requests"
 	"github.com/eaguilar88/deu/internal/group_resource_requests/mocks"
@@ -24,17 +24,17 @@ func TestService_ReviewGroupResourceRequest(t *testing.T) {
 	reason := "Documentación incompleta"
 
 	type action struct {
-		name    string
-		subject string
-		inBody  string
-		mockOp  func(repoMock *mocks.MockRepository, err error)
-		call    func(s group_resource_requests.Service) error
+		name     string
+		template email.Template
+		data     any
+		mockOp   func(repoMock *mocks.MockRepository, err error)
+		call     func(s group_resource_requests.Service) error
 	}
 	ops := []action{
 		{
-			name:    "approve",
-			subject: "Solicitud de recursos aprobada",
-			inBody:  "ha sido aprobada",
+			name:     "approve",
+			template: email.TemplateGroupResourceRequestApproved,
+			data:     email.GroupResourceRequestApprovedData{GroupName: "Grupo Test", ResourceType: "Auditorio"},
 			mockOp: func(repoMock *mocks.MockRepository, err error) {
 				repoMock.EXPECT().ApproveGroupResourceRequest(mock.Anything, "req-1").Return(err)
 			},
@@ -43,9 +43,9 @@ func TestService_ReviewGroupResourceRequest(t *testing.T) {
 			},
 		},
 		{
-			name:    "reject",
-			subject: "Solicitud de recursos rechazada",
-			inBody:  "Razón: " + reason,
+			name:     "reject",
+			template: email.TemplateGroupResourceRequestRejected,
+			data:     email.GroupResourceRequestRejectedData{GroupName: "Grupo Test", ResourceType: "Auditorio", Reason: reason},
 			mockOp: func(repoMock *mocks.MockRepository, err error) {
 				repoMock.EXPECT().RejectGroupResourceRequest(mock.Anything, "req-1", reason).Return(err)
 			},
@@ -67,7 +67,7 @@ func TestService_ReviewGroupResourceRequest(t *testing.T) {
 					repoMock.EXPECT().GetGroupResourceRequestByID(mock.Anything, "req-1").Return(baseReq, nil)
 					op.mockOp(repoMock, nil)
 					repoMock.EXPECT().GetContactsByOwner(mock.Anything, "1", entities.OwnerTypeExtensionGroup).Return(emailContact, nil)
-					mailMock.EXPECT().Send(mock.Anything, "grupo@example.com", op.subject, mock.MatchedBy(func(body string) bool { return strings.Contains(body, op.inBody) })).Return(nil)
+					mailMock.EXPECT().SendTemplate(mock.Anything, "grupo@example.com", op.template, op.data).Return(nil)
 				},
 			},
 			{
@@ -91,7 +91,7 @@ func TestService_ReviewGroupResourceRequest(t *testing.T) {
 					repoMock.EXPECT().GetGroupResourceRequestByID(mock.Anything, "req-1").Return(baseReq, nil)
 					op.mockOp(repoMock, nil)
 					repoMock.EXPECT().GetContactsByOwner(mock.Anything, "1", entities.OwnerTypeExtensionGroup).Return(emailContact, nil)
-					mailMock.EXPECT().Send(mock.Anything, "grupo@example.com", mock.Anything, mock.Anything).Return(errors.New("smtp error"))
+					mailMock.EXPECT().SendTemplate(mock.Anything, "grupo@example.com", mock.Anything, mock.Anything).Return(errors.New("smtp error"))
 				},
 			},
 			{

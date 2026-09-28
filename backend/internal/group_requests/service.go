@@ -181,9 +181,11 @@ func (s *service) RejectGroupRequest(ctx context.Context, reqID, reason string) 
 		return nil
 	}
 
-	subject := "Solicitud de registro de grupo rechazada"
-	body := fmt.Sprintf("La solicitud de registro del grupo %s ha sido rechazada por la facultad %s.\n\nRazón: %s", req.GroupName, req.Faculty, reason)
-	if err := s.emailClient.Send(ctx, to, subject, body); err != nil {
+	body := email.GroupRequestRejectedData{
+		GroupName: req.GroupName,
+		Reason:    reason,
+	}
+	if err := s.emailClient.SendTemplate(ctx, to, email.TemplateGroupRequestRejected, body); err != nil {
 		s.logger.Warn("failed to send group rejection email", append(logFields, zap.Error(err))...)
 	}
 	return nil

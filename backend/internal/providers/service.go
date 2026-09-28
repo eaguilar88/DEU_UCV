@@ -18,16 +18,15 @@ import (
 
 // Custom domain errors
 var (
-	ErrProviderNotFound  = errors.New("provider not found")
-	ErrInvalidProvider   = errors.New("invalid provider data")
-	ErrProviderExists    = errors.New("provider already exists")
-	ErrFileUploadFailed  = errors.New("failed to upload file")
-	ErrFileNotFound      = errors.New("file not found")
-	ErrNoIntentionLetter = errors.New("a new provider requires an intention letter")
-	ErrProviderForbidden = errors.New("not allowed to view this provider")
-	ErrMissingInitialContract = errors.New("carta_intencion y carta_compromiso son requeridas para el contrato inicial")
-	ErrMissingAddendum        = errors.New("adenda es requerida")
-	ErrNoCoursesToCoverage    = errors.New("no hay cursos aprobados sin cobertura legal para este proveedor")
+	ErrProviderNotFound       = errors.New("provider not found")
+	ErrInvalidProvider        = errors.New("invalid provider data")
+	ErrProviderExists         = errors.New("provider already exists")
+	ErrFileUploadFailed       = errors.New("failed to upload file")
+	ErrFileNotFound           = errors.New("file not found")
+	ErrProviderForbidden      = errors.New("not allowed to view this provider")
+	ErrMissingInitialContract = errors.New("carta_intencion and carta_compromiso are required for the initial contract")
+	ErrMissingAddendum        = errors.New("adenda is required")
+	ErrNoCoursesToCoverage    = errors.New("no approved courses without legal coverage for this provider")
 )
 
 // Repository defines the data access operations required by the providers service.

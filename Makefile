@@ -125,6 +125,7 @@ quality:
 	go vet ./... && \
 	go fmt ./... && \
 	goimports -w . && \
+	govulncheck ./... && \
 	golangci-lint run && \
 	go mod tidy && \
 	go test -count=1 -race -short -cover ./...

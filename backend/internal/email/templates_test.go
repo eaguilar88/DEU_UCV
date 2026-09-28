@@ -16,6 +16,14 @@ func sampleData(name Template, value string) any {
 	switch name {
 	case TemplateGroupAdminCredentials:
 		return GroupAdminCredentialsData{GroupName: value, Username: value, Password: value}
+	case TemplateGroupRequestApproved:
+		return GroupRequestApprovedData{GroupName: value}
+	case TemplateGroupRequestRejected:
+		return GroupRequestRejectedData{GroupName: value, Reason: value}
+	case TemplateGroupResourceRequestApproved:
+		return GroupResourceRequestApprovedData{GroupName: value, ResourceType: value}
+	case TemplateGroupResourceRequestRejected:
+		return GroupResourceRequestRejectedData{GroupName: value, ResourceType: value, Reason: value}
 	case TemplateCourseRequestApproved:
 		return CourseRequestApprovedData{CourseName: value, Comments: value}
 	case TemplateCourseRequestRejected:

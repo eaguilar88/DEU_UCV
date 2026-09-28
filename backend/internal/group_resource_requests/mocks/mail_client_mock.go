@@ -7,6 +7,7 @@ package mocks
 import (
 	"context"
 
+	"github.com/eaguilar88/deu/internal/email"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -37,38 +38,38 @@ func (_m *MockMailClient) EXPECT() *MockMailClient_Expecter {
 	return &MockMailClient_Expecter{mock: &_m.Mock}
 }
 
-// Send provides a mock function for the type MockMailClient
-func (_mock *MockMailClient) Send(ctx context.Context, to string, subject string, body string) error {
-	ret := _mock.Called(ctx, to, subject, body)
+// SendTemplate provides a mock function for the type MockMailClient
+func (_mock *MockMailClient) SendTemplate(ctx context.Context, to string, tmpl email.Template, data any) error {
+	ret := _mock.Called(ctx, to, tmpl, data)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Send")
+		panic("no return value specified for SendTemplate")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) error); ok {
-		r0 = returnFunc(ctx, to, subject, body)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, email.Template, any) error); ok {
+		r0 = returnFunc(ctx, to, tmpl, data)
 	} else {
 		r0 = ret.Error(0)
 	}
 	return r0
 }
 
-// MockMailClient_Send_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Send'
-type MockMailClient_Send_Call struct {
+// MockMailClient_SendTemplate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SendTemplate'
+type MockMailClient_SendTemplate_Call struct {
 	*mock.Call
 }
 
-// Send is a helper method to define mock.On call
+// SendTemplate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - to string
-//   - subject string
-//   - body string
-func (_e *MockMailClient_Expecter) Send(ctx interface{}, to interface{}, subject interface{}, body interface{}) *MockMailClient_Send_Call {
-	return &MockMailClient_Send_Call{Call: _e.mock.On("Send", ctx, to, subject, body)}
+//   - tmpl email.Template
+//   - data any
+func (_e *MockMailClient_Expecter) SendTemplate(ctx interface{}, to interface{}, tmpl interface{}, data interface{}) *MockMailClient_SendTemplate_Call {
+	return &MockMailClient_SendTemplate_Call{Call: _e.mock.On("SendTemplate", ctx, to, tmpl, data)}
 }
 
-func (_c *MockMailClient_Send_Call) Run(run func(ctx context.Context, to string, subject string, body string)) *MockMailClient_Send_Call {
+func (_c *MockMailClient_SendTemplate_Call) Run(run func(ctx context.Context, to string, tmpl email.Template, data any)) *MockMailClient_SendTemplate_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -78,13 +79,13 @@ func (_c *MockMailClient_Send_Call) Run(run func(ctx context.Context, to string,
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 string
+		var arg2 email.Template
 		if args[2] != nil {
-			arg2 = args[2].(string)
+			arg2 = args[2].(email.Template)
 		}
-		var arg3 string
+		var arg3 any
 		if args[3] != nil {
-			arg3 = args[3].(string)
+			arg3 = args[3].(any)
 		}
 		run(
 			arg0,
@@ -96,12 +97,12 @@ func (_c *MockMailClient_Send_Call) Run(run func(ctx context.Context, to string,
 	return _c
 }
 
-func (_c *MockMailClient_Send_Call) Return(err error) *MockMailClient_Send_Call {
+func (_c *MockMailClient_SendTemplate_Call) Return(err error) *MockMailClient_SendTemplate_Call {
 	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockMailClient_Send_Call) RunAndReturn(run func(ctx context.Context, to string, subject string, body string) error) *MockMailClient_Send_Call {
+func (_c *MockMailClient_SendTemplate_Call) RunAndReturn(run func(ctx context.Context, to string, tmpl email.Template, data any) error) *MockMailClient_SendTemplate_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -1126,6 +1126,8 @@ func TestService_GetProvider_Access(t *testing.T) {
 			if tt.allowed {
 				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "5", entities.OwnerTypeProvider).
 					Return(entities.GroupedFiles{}, nil)
+				repoMock.EXPECT().GetProviderContracts(mock.Anything, "5").
+					Return([]entities.ProviderContract{}, nil)
 			}
 			// When denied, no file lookups or URL generation happen: the mocks fail on unexpected calls.
 

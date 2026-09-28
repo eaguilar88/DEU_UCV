@@ -3,7 +3,6 @@ package group_requests
 import (
 	"context"
 	"errors"
-	"strings"
 	"testing"
 
 	"github.com/eaguilar88/deu/internal/email"
@@ -149,7 +148,7 @@ func TestService_RejectGroupRequest(t *testing.T) {
 	}
 	dbErr := errors.New("db error")
 	reason := "Documentación incompleta"
-	bodyHasReason := mock.MatchedBy(func(body string) bool { return strings.Contains(body, "Razón: "+reason) })
+	rejectedData := email.GroupRequestRejectedData{GroupName: "Grupo Test", Reason: reason}
 
 	tests := []testCase{
 		{
@@ -158,7 +157,7 @@ func TestService_RejectGroupRequest(t *testing.T) {
 				repoMock.EXPECT().GetGroupRequestByID(mock.Anything, "req-1").Return(baseReq, nil)
 				repoMock.EXPECT().RejectGroupRequest(mock.Anything, "req-1", reason).Return(nil)
 				repoMock.EXPECT().GetContactsByOwner(mock.Anything, "1", entities.OwnerTypeExtensionGroup).Return(emailContact, nil)
-				mailMock.EXPECT().Send(mock.Anything, "grupo@example.com", "Solicitud de registro de grupo rechazada", bodyHasReason).Return(nil)
+				mailMock.EXPECT().SendTemplate(mock.Anything, "grupo@example.com", email.TemplateGroupRequestRejected, rejectedData).Return(nil)
 			},
 		},
 		{
@@ -182,7 +181,7 @@ func TestService_RejectGroupRequest(t *testing.T) {
 				repoMock.EXPECT().GetGroupRequestByID(mock.Anything, "req-1").Return(baseReq, nil)
 				repoMock.EXPECT().RejectGroupRequest(mock.Anything, "req-1", reason).Return(nil)
 				repoMock.EXPECT().GetContactsByOwner(mock.Anything, "1", entities.OwnerTypeExtensionGroup).Return(emailContact, nil)
-				mailMock.EXPECT().Send(mock.Anything, "grupo@example.com", mock.Anything, mock.Anything).Return(errors.New("smtp error"))
+				mailMock.EXPECT().SendTemplate(mock.Anything, "grupo@example.com", mock.Anything, mock.Anything).Return(errors.New("smtp error"))
 			},
 		},
 		{

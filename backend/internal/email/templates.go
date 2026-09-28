@@ -22,6 +22,10 @@ const (
 	TemplateProviderRegistrationReceived Template = "provider_registration_received"
 	TemplateProviderRequestApproved      Template = "provider_request_approved"
 	TemplateGroupAdminCredentials        Template = "group_admin_credentials"
+	TemplateGroupRequestRejected         Template = "group_request_rejected"
+	TemplateGroupRequestApproved         Template = "group_request_approved"
+	TemplateGroupResourceRequestApproved Template = "group_resource_request_approved"
+	TemplateGroupResourceRequestRejected Template = "group_resource_request_rejected"
 	TemplateCourseRequestApproved        Template = "course_request_approved"
 	TemplateCourseRequestRejected        Template = "course_request_rejected"
 	TemplateCourseRequestRedirected      Template = "course_request_redirected"
@@ -35,6 +39,10 @@ var allTemplates = []Template{
 	TemplateProviderRegistrationReceived,
 	TemplateProviderRequestApproved,
 	TemplateGroupAdminCredentials,
+	TemplateGroupRequestApproved,
+	TemplateGroupRequestRejected,
+	TemplateGroupResourceRequestApproved,
+	TemplateGroupResourceRequestRejected,
 	TemplateCourseRequestApproved,
 	TemplateCourseRequestRejected,
 	TemplateCourseRequestRedirected,
@@ -59,6 +67,25 @@ type CourseRequestApprovedData struct {
 type CourseRequestRejectedData struct {
 	CourseName string
 	Reason     string
+}
+
+type GroupRequestApprovedData struct {
+	GroupName string
+}
+type GroupRequestRejectedData struct {
+	GroupName string
+	Reason    string
+}
+
+type GroupResourceRequestApprovedData struct {
+	GroupName    string
+	ResourceType string
+}
+
+type GroupResourceRequestRejectedData struct {
+	GroupName    string
+	ResourceType string
+	Reason       string
 }
 
 type CourseRequestRedirectedData struct {
