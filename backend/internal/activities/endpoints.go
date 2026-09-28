@@ -9,6 +9,7 @@ import (
 
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/httperrors"
+	"github.com/eaguilar88/deu/internal/jwt"
 	"github.com/eaguilar88/deu/internal/utils"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -20,7 +21,7 @@ const (
 )
 
 type Service interface {
-	GetActivity(ctx context.Context, id string) (entities.Activity, error)
+	GetActivity(ctx context.Context, id string, viewer entities.Viewer) (entities.Activity, error)
 	GetActivities(ctx context.Context, filter entities.ActivityFilter, pageScope entities.PageScope) ([]entities.Activity, entities.PageScope, entities.ActivityMetrics, error)
 	GetGroupDashboardSummary(ctx context.Context, groupID string) (entities.GroupDashboardSummary, error)
 	CreateActivity(ctx context.Context, activity entities.Activity) (int64, error)
@@ -51,7 +52,7 @@ func (h *Handler) GetActivity(c echo.Context) error {
 		return httperrors.NewBadRequest("activity id is required")
 	}
 
-	activity, err := h.svc.GetActivity(ctx, id)
+	activity, err := h.svc.GetActivity(ctx, id, jwt.ViewerFromContext(c))
 	if err != nil {
 		if errors.Is(err, ErrActivityNotFound) {
 			return httperrors.NewNotFound("activity not found")

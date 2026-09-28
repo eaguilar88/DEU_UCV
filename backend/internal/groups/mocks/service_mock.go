@@ -174,8 +174,8 @@ func (_c *MockService_DeleteGroup_Call) RunAndReturn(run func(ctx context.Contex
 }
 
 // GetGroup provides a mock function for the type MockService
-func (_mock *MockService) GetGroup(ctx context.Context, groupID string) (entities.ExtensionGroup, error) {
-	ret := _mock.Called(ctx, groupID)
+func (_mock *MockService) GetGroup(ctx context.Context, groupID string, viewer entities.Viewer) (entities.ExtensionGroup, error) {
+	ret := _mock.Called(ctx, groupID, viewer)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetGroup")
@@ -183,16 +183,16 @@ func (_mock *MockService) GetGroup(ctx context.Context, groupID string) (entitie
 
 	var r0 entities.ExtensionGroup
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (entities.ExtensionGroup, error)); ok {
-		return returnFunc(ctx, groupID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, entities.Viewer) (entities.ExtensionGroup, error)); ok {
+		return returnFunc(ctx, groupID, viewer)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) entities.ExtensionGroup); ok {
-		r0 = returnFunc(ctx, groupID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, entities.Viewer) entities.ExtensionGroup); ok {
+		r0 = returnFunc(ctx, groupID, viewer)
 	} else {
 		r0 = ret.Get(0).(entities.ExtensionGroup)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = returnFunc(ctx, groupID)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, entities.Viewer) error); ok {
+		r1 = returnFunc(ctx, groupID, viewer)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -207,11 +207,12 @@ type MockService_GetGroup_Call struct {
 // GetGroup is a helper method to define mock.On call
 //   - ctx context.Context
 //   - groupID string
-func (_e *MockService_Expecter) GetGroup(ctx interface{}, groupID interface{}) *MockService_GetGroup_Call {
-	return &MockService_GetGroup_Call{Call: _e.mock.On("GetGroup", ctx, groupID)}
+//   - viewer entities.Viewer
+func (_e *MockService_Expecter) GetGroup(ctx interface{}, groupID interface{}, viewer interface{}) *MockService_GetGroup_Call {
+	return &MockService_GetGroup_Call{Call: _e.mock.On("GetGroup", ctx, groupID, viewer)}
 }
 
-func (_c *MockService_GetGroup_Call) Run(run func(ctx context.Context, groupID string)) *MockService_GetGroup_Call {
+func (_c *MockService_GetGroup_Call) Run(run func(ctx context.Context, groupID string, viewer entities.Viewer)) *MockService_GetGroup_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -221,9 +222,14 @@ func (_c *MockService_GetGroup_Call) Run(run func(ctx context.Context, groupID s
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
+		var arg2 entities.Viewer
+		if args[2] != nil {
+			arg2 = args[2].(entities.Viewer)
+		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -234,14 +240,14 @@ func (_c *MockService_GetGroup_Call) Return(extensionGroup entities.ExtensionGro
 	return _c
 }
 
-func (_c *MockService_GetGroup_Call) RunAndReturn(run func(ctx context.Context, groupID string) (entities.ExtensionGroup, error)) *MockService_GetGroup_Call {
+func (_c *MockService_GetGroup_Call) RunAndReturn(run func(ctx context.Context, groupID string, viewer entities.Viewer) (entities.ExtensionGroup, error)) *MockService_GetGroup_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetGroups provides a mock function for the type MockService
-func (_mock *MockService) GetGroups(ctx context.Context, filter entities.GroupFilter, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error) {
-	ret := _mock.Called(ctx, filter, pageScope)
+func (_mock *MockService) GetGroups(ctx context.Context, filter entities.GroupFilter, pageScope entities.PageScope, viewer entities.Viewer) ([]entities.ExtensionGroup, entities.PageScope, error) {
+	ret := _mock.Called(ctx, filter, pageScope, viewer)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetGroups")
@@ -250,23 +256,23 @@ func (_mock *MockService) GetGroups(ctx context.Context, filter entities.GroupFi
 	var r0 []entities.ExtensionGroup
 	var r1 entities.PageScope
 	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.GroupFilter, entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error)); ok {
-		return returnFunc(ctx, filter, pageScope)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.GroupFilter, entities.PageScope, entities.Viewer) ([]entities.ExtensionGroup, entities.PageScope, error)); ok {
+		return returnFunc(ctx, filter, pageScope, viewer)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.GroupFilter, entities.PageScope) []entities.ExtensionGroup); ok {
-		r0 = returnFunc(ctx, filter, pageScope)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.GroupFilter, entities.PageScope, entities.Viewer) []entities.ExtensionGroup); ok {
+		r0 = returnFunc(ctx, filter, pageScope, viewer)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]entities.ExtensionGroup)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.GroupFilter, entities.PageScope) entities.PageScope); ok {
-		r1 = returnFunc(ctx, filter, pageScope)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.GroupFilter, entities.PageScope, entities.Viewer) entities.PageScope); ok {
+		r1 = returnFunc(ctx, filter, pageScope, viewer)
 	} else {
 		r1 = ret.Get(1).(entities.PageScope)
 	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, entities.GroupFilter, entities.PageScope) error); ok {
-		r2 = returnFunc(ctx, filter, pageScope)
+	if returnFunc, ok := ret.Get(2).(func(context.Context, entities.GroupFilter, entities.PageScope, entities.Viewer) error); ok {
+		r2 = returnFunc(ctx, filter, pageScope, viewer)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -282,11 +288,12 @@ type MockService_GetGroups_Call struct {
 //   - ctx context.Context
 //   - filter entities.GroupFilter
 //   - pageScope entities.PageScope
-func (_e *MockService_Expecter) GetGroups(ctx interface{}, filter interface{}, pageScope interface{}) *MockService_GetGroups_Call {
-	return &MockService_GetGroups_Call{Call: _e.mock.On("GetGroups", ctx, filter, pageScope)}
+//   - viewer entities.Viewer
+func (_e *MockService_Expecter) GetGroups(ctx interface{}, filter interface{}, pageScope interface{}, viewer interface{}) *MockService_GetGroups_Call {
+	return &MockService_GetGroups_Call{Call: _e.mock.On("GetGroups", ctx, filter, pageScope, viewer)}
 }
 
-func (_c *MockService_GetGroups_Call) Run(run func(ctx context.Context, filter entities.GroupFilter, pageScope entities.PageScope)) *MockService_GetGroups_Call {
+func (_c *MockService_GetGroups_Call) Run(run func(ctx context.Context, filter entities.GroupFilter, pageScope entities.PageScope, viewer entities.Viewer)) *MockService_GetGroups_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -300,10 +307,15 @@ func (_c *MockService_GetGroups_Call) Run(run func(ctx context.Context, filter e
 		if args[2] != nil {
 			arg2 = args[2].(entities.PageScope)
 		}
+		var arg3 entities.Viewer
+		if args[3] != nil {
+			arg3 = args[3].(entities.Viewer)
+		}
 		run(
 			arg0,
 			arg1,
 			arg2,
+			arg3,
 		)
 	})
 	return _c
@@ -314,7 +326,7 @@ func (_c *MockService_GetGroups_Call) Return(extensionGroups []entities.Extensio
 	return _c
 }
 
-func (_c *MockService_GetGroups_Call) RunAndReturn(run func(ctx context.Context, filter entities.GroupFilter, pageScope entities.PageScope) ([]entities.ExtensionGroup, entities.PageScope, error)) *MockService_GetGroups_Call {
+func (_c *MockService_GetGroups_Call) RunAndReturn(run func(ctx context.Context, filter entities.GroupFilter, pageScope entities.PageScope, viewer entities.Viewer) ([]entities.ExtensionGroup, entities.PageScope, error)) *MockService_GetGroups_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -15,10 +15,5 @@ func NewCustomValidator() *CustomValidator {
 }
 
 func (cv *CustomValidator) Validate(req any) error {
-	if err := cv.validator.Struct(req); err != nil {
-		if _, ok := err.(*validator.InvalidValidationError); ok {
-			return err
-		}
-	}
-	return nil
+	return cv.validator.Struct(req)
 }

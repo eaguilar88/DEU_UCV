@@ -8,13 +8,14 @@ import (
 
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/httperrors"
+	"github.com/eaguilar88/deu/internal/jwt"
 	"github.com/eaguilar88/deu/internal/utils"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
 
 type Service interface {
-	GetUser(ctx context.Context, userID string) (entities.User, error)
+	GetUser(ctx context.Context, userID string, viewer entities.Viewer) (entities.User, error)
 	GetUsers(ctx context.Context, pageScope entities.PageScope) ([]entities.User, entities.PageScope, error)
 	CreateUser(ctx context.Context, user entities.User, profilePic *entities.File) (int64, error)
 	UpdateUser(ctx context.Context, userID string, user entities.User) error
@@ -36,7 +37,7 @@ func NewHandler(svc Service, log *zap.Logger) *Handler {
 func (h *Handler) GetUser(c echo.Context) error {
 	ctx := c.Request().Context()
 	req := GetUserRequest{ID: c.Param("id")}
-	user, err := h.svc.GetUser(ctx, req.ID)
+	user, err := h.svc.GetUser(ctx, req.ID, jwt.ViewerFromContext(c))
 	if err != nil {
 		if errors.Is(err, ErrUserNotFound) {
 			return httperrors.NewNotFound("user not found")

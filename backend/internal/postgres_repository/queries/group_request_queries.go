@@ -84,9 +84,10 @@ func ApproveGroupRequest(requestID string) sq.UpdateBuilder {
 		Where(sq.Eq{"id": requestID, "status": "under_review"})
 }
 
-func RejectGroupRequest(requestID string) sq.UpdateBuilder {
+func RejectGroupRequest(requestID, reason string) sq.UpdateBuilder {
 	return psql.Update(groupRequestsTableName).
 		Set("status", "rejected").
+		Set("comments", reason).
 		Set("reviewed_at", "NOW()").
 		Where(sq.Eq{"id": requestID, "status": "under_review"})
 }

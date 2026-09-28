@@ -22,11 +22,13 @@ type Repository interface {
 	DeleteActivity(ctx context.Context, id string) error
 	GetFilesByOwner(ctx context.Context, ownerID string, ownerType entities.OwnerType) (entities.GroupedFiles, error)
 	SaveFilesToDB(ctx context.Context, files []*entities.File) error
+	GetGroupByID(ctx context.Context, groupID string) (entities.ExtensionGroup, error)
 }
 
 type StorageClient interface {
 	UploadFile(ctx context.Context, files []*entities.File) error
 	GetFileURL(ctx context.Context, objectKey string) (string, error)
+	GetPresignedFileURL(ctx context.Context, objectKey string) (string, error)
 }
 
 const maxFeaturedActivities = 4
@@ -58,7 +60,9 @@ func buildActivityFile(file *entities.File, ownerID, purpose, keyPrefix, uploade
 	return file
 }
 
-func (s *service) GetActivity(ctx context.Context, id string) (entities.Activity, error) {
+// GetActivity returns the activity with its cover image. The participant list (personal
+// data) is only included for viewers allowed by canSeeParticipantList.
+func (s *service) GetActivity(ctx context.Context, id string, viewer entities.Viewer) (entities.Activity, error) {
 	activity, err := s.repo.GetActivityByID(ctx, id)
 	if err != nil {
 		return entities.Activity{}, err
@@ -80,8 +84,8 @@ func (s *service) GetActivity(ctx context.Context, id string) (entities.Activity
 		activity.CoverImage = cover
 	}
 
-	if list := files.GetSingleFile(entities.ActivityFileTypeListParticipants); list != nil {
-		url, err := s.storage.GetFileURL(ctx, list.Key)
+	if list := files.GetSingleFile(entities.ActivityFileTypeListParticipants); list != nil && s.canSeeParticipantList(ctx, activity, viewer) {
+		url, err := s.storage.GetPresignedFileURL(ctx, list.Key)
 		if err == nil {
 			list.URL = url
 			activity.ParticipantList = list
@@ -89,6 +93,25 @@ func (s *service) GetActivity(ctx context.Context, id string) (entities.Activity
 	}
 
 	return activity, nil
+}
+
+// canSeeParticipantList allows the activity's creator and anyone who can manage the
+// activity's group (see entities.Viewer.CanManageGroup). The group is only loaded when the
+// cheaper checks don't already decide.
+func (s *service) canSeeParticipantList(ctx context.Context, activity entities.Activity, viewer entities.Viewer) bool {
+	if viewer.IsAnonymous() {
+		return false
+	}
+	if activity.CreatedBy == viewer.UserID || viewer.IsGlobalAdmin() {
+		return true
+	}
+	group, err := s.repo.GetGroupByID(ctx, activity.GroupID)
+	if err != nil {
+		s.logger.Error("failed to get activity group", zap.Error(err),
+			zap.String("activity_id", activity.ID), zap.String("group_id", activity.GroupID))
+		return false
+	}
+	return viewer.CanManageGroup(group)
 }
 
 func (s *service) GetActivities(ctx context.Context, filter entities.ActivityFilter, pageScope entities.PageScope) ([]entities.Activity, entities.PageScope, entities.ActivityMetrics, error) {

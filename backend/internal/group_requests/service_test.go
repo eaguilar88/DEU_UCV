@@ -3,6 +3,7 @@ package group_requests
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/eaguilar88/deu/internal/entities"
@@ -129,6 +130,92 @@ func TestService_ApproveGroupRequest(t *testing.T) {
 			}
 			repoMock.AssertExpectations(t)
 			mailMock.AssertExpectations(t)
+		})
+	}
+}
+
+func TestService_RejectGroupRequest(t *testing.T) {
+	type testCase struct {
+		name    string
+		prepare func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient)
+		wantErr error
+	}
+
+	baseReq := entities.GroupRequest{ID: "req-1", GroupID: "1", GroupName: "Grupo Test", Faculty: entities.Faculty("Ingeniería"), Status: entities.RequestStatus_UNDER_REVIEW}
+	emailContact := []entities.Contact{
+		{Type: entities.ContactTypePhone, Value: "0212-5555555"},
+		{Type: entities.ContactTypeEmail, Value: "grupo@example.com"},
+	}
+	dbErr := errors.New("db error")
+	reason := "Documentación incompleta"
+	bodyHasReason := mock.MatchedBy(func(body string) bool { return strings.Contains(body, "Razón: "+reason) })
+
+	tests := []testCase{
+		{
+			name: "rejection emails the group contact with the reason",
+			prepare: func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient) {
+				repoMock.EXPECT().GetGroupRequestByID(mock.Anything, "req-1").Return(baseReq, nil)
+				repoMock.EXPECT().RejectGroupRequest(mock.Anything, "req-1", reason).Return(nil)
+				repoMock.EXPECT().GetContactsByOwner(mock.Anything, "1", entities.OwnerTypeExtensionGroup).Return(emailContact, nil)
+				mailMock.EXPECT().Send(mock.Anything, "grupo@example.com", "Solicitud de registro de grupo rechazada", bodyHasReason).Return(nil)
+			},
+		},
+		{
+			name: "request not found is propagated",
+			prepare: func(repoMock *mocks.MockRepository, _ *mocks.MockMailClient) {
+				repoMock.EXPECT().GetGroupRequestByID(mock.Anything, "req-1").Return(entities.GroupRequest{}, ErrGroupRequestNotFound)
+			},
+			wantErr: ErrGroupRequestNotFound,
+		},
+		{
+			name: "reject error is returned and no email is sent",
+			prepare: func(repoMock *mocks.MockRepository, _ *mocks.MockMailClient) {
+				repoMock.EXPECT().GetGroupRequestByID(mock.Anything, "req-1").Return(baseReq, nil)
+				repoMock.EXPECT().RejectGroupRequest(mock.Anything, "req-1", reason).Return(dbErr)
+			},
+			wantErr: dbErr,
+		},
+		{
+			name: "email send error does not fail the rejection",
+			prepare: func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient) {
+				repoMock.EXPECT().GetGroupRequestByID(mock.Anything, "req-1").Return(baseReq, nil)
+				repoMock.EXPECT().RejectGroupRequest(mock.Anything, "req-1", reason).Return(nil)
+				repoMock.EXPECT().GetContactsByOwner(mock.Anything, "1", entities.OwnerTypeExtensionGroup).Return(emailContact, nil)
+				mailMock.EXPECT().Send(mock.Anything, "grupo@example.com", mock.Anything, mock.Anything).Return(errors.New("smtp error"))
+			},
+		},
+		{
+			name: "group without email contact skips the email",
+			prepare: func(repoMock *mocks.MockRepository, _ *mocks.MockMailClient) {
+				repoMock.EXPECT().GetGroupRequestByID(mock.Anything, "req-1").Return(baseReq, nil)
+				repoMock.EXPECT().RejectGroupRequest(mock.Anything, "req-1", reason).Return(nil)
+				repoMock.EXPECT().GetContactsByOwner(mock.Anything, "1", entities.OwnerTypeExtensionGroup).
+					Return([]entities.Contact{{Type: entities.ContactTypePhone, Value: "0212-5555555"}}, nil)
+			},
+		},
+		{
+			name: "contacts lookup error does not fail the rejection",
+			prepare: func(repoMock *mocks.MockRepository, _ *mocks.MockMailClient) {
+				repoMock.EXPECT().GetGroupRequestByID(mock.Anything, "req-1").Return(baseReq, nil)
+				repoMock.EXPECT().RejectGroupRequest(mock.Anything, "req-1", reason).Return(nil)
+				repoMock.EXPECT().GetContactsByOwner(mock.Anything, "1", entities.OwnerTypeExtensionGroup).Return(nil, dbErr)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repoMock := mocks.NewMockRepository(t)
+			mailMock := mocks.NewMockMailClient(t)
+			tt.prepare(repoMock, mailMock)
+
+			s := NewService(repoMock, mailMock, zap.NewNop())
+			err := s.RejectGroupRequest(context.Background(), "req-1", reason)
+			if tt.wantErr != nil {
+				assert.ErrorIs(t, err, tt.wantErr)
+			} else {
+				assert.NoError(t, err)
+			}
 		})
 	}
 }

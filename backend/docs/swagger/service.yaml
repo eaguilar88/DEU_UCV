@@ -361,6 +361,9 @@ components:
         actualizado_en:
           type: string
           format: date-time
+        razon_rechazo:
+          type: string
+          description: Only present when the request was rejected
 
     CreateGroupResourceRequestBody:
       type: object
@@ -412,6 +415,15 @@ components:
       properties:
         observaciones:
           type: string
+
+    RejectWithReasonBody:
+      type: object
+      required: [ razon ]
+      properties:
+        razon:
+          type: string
+          description: Rejection reason. Saved and included in the email sent to the group's contact address. Blank values are rejected.
+          example: Documentación incompleta
 
     RedirectCourseRequestBody:
       type: object
@@ -1543,9 +1555,17 @@ paths:
           required: true
           schema:
             type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RejectWithReasonBody"
       responses:
         "202":
-          description: Rejected
+          description: Rejected; the group's contact email is notified with the reason
+        "400":
+          description: razon missing or blank
         "404":
           description: Request not found (or not in reviewable state)
 
@@ -1798,9 +1818,17 @@ paths:
           required: true
           schema:
             type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RejectWithReasonBody"
       responses:
-        "200":
-          description: Rejected
+        "202":
+          description: Rejected; razon is saved as comentarios and emailed to the group's contact address
+        "400":
+          description: razon missing or blank
         "404":
           description: Request not found
 

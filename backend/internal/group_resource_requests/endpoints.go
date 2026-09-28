@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/facultyscope"
@@ -16,7 +17,7 @@ import (
 type Service interface {
 	CreateGroupResourceRequest(ctx context.Context, req entities.GroupResourceRequest) (int64, error)
 	ApproveGroupResourceRequest(ctx context.Context, reqID string) error
-	RejectGroupResourceRequest(ctx context.Context, reqID string) error
+	RejectGroupResourceRequest(ctx context.Context, reqID, reason string) error
 	GetGroupResourceRequestsByFaculty(ctx context.Context, faculty entities.Faculty, status string, pageScope entities.PageScope) ([]entities.GroupResourceRequest, int, entities.PageScope, error)
 	GetGroupResourceRequestsByGroupID(ctx context.Context, groupID string, status string, pageScope entities.PageScope) ([]entities.GroupResourceRequest, entities.PageScope, error)
 	GetPendingGroupResourceRequestsCountByFaculty(ctx context.Context, faculty entities.Faculty) ([]FacultyPendingCount, error)
@@ -99,7 +100,15 @@ func (h *Handler) RejectGroupResourceRequest(c echo.Context) error {
 	if reqID == "" {
 		return httperrors.NewBadRequest("request ID is required")
 	}
-	if err := h.svc.RejectGroupResourceRequest(ctx, reqID); err != nil {
+	var req RejectGroupResourceRequestRequest
+	if err := c.Bind(&req); err != nil {
+		return httperrors.NewBadRequest("invalid request body")
+	}
+	req.Reason = strings.TrimSpace(req.Reason)
+	if req.Reason == "" {
+		return httperrors.NewBadRequest("razon es requerida")
+	}
+	if err := h.svc.RejectGroupResourceRequest(ctx, reqID, req.Reason); err != nil {
 		if errors.Is(err, ErrNotFound) {
 			return httperrors.NewNotFound("group resource request not found")
 		}
@@ -200,13 +209,14 @@ func (h *Handler) GetGroupResourceRequestByID(c echo.Context) error {
 
 func toResponse(r entities.GroupResourceRequest) GetGroupResourceRequestResponse {
 	return GetGroupResourceRequestResponse{
-		ID:        r.ID,
-		GroupID:   r.GroupID,
-		GroupName: r.GroupName,
-		Type:      r.Type,
-		Content:   r.Content,
-		Status:    r.Status,
-		CreatedAt: r.CreatedAt,
-		UpdatedAt: r.UpdatedAt,
+		ID:              r.ID,
+		GroupID:         r.GroupID,
+		GroupName:       r.GroupName,
+		Type:            r.Type,
+		Content:         r.Content,
+		Status:          r.Status,
+		CreatedAt:       r.CreatedAt,
+		UpdatedAt:       r.UpdatedAt,
+		RejectionReason: r.RejectionReason,
 	}
 }

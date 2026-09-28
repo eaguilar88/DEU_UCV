@@ -82,7 +82,7 @@ func TestService_GetProvider(t *testing.T) {
 					RunAndReturn(func(_ context.Context, _ string, _ entities.OwnerType) (entities.GroupedFiles, error) {
 						return entities.GroupedFiles{entities.ProviderFileTypeCI: {ciFile}}, nil
 					})
-				storageMock.EXPECT().GetFileURL(mock.Anything, "ci-key").
+				storageMock.EXPECT().GetPresignedFileURL(mock.Anything, "ci-key").
 					RunAndReturn(func(_ context.Context, _ string) (string, error) {
 						return "http://url/ci.pdf", nil
 					})
@@ -157,7 +157,7 @@ func TestService_GetProvider(t *testing.T) {
 				tt.prepare(repoMock, storageMock)
 			}
 			s := NewService(repoMock, storageMock, mailMock, loggerMock)
-			got, err := s.GetProvider(context.Background(), tt.providerID)
+			got, err := s.GetProvider(context.Background(), tt.providerID, entities.Viewer{UserID: "admin", Roles: []string{"deu_admin"}})
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.errTarget != nil {
@@ -729,7 +729,7 @@ func TestService_getFilesForProvider(t *testing.T) {
 					RunAndReturn(func(_ context.Context, _ string, _ entities.OwnerType) (entities.GroupedFiles, error) {
 						return entities.GroupedFiles{entities.ProviderFileTypeCI: {ciFile}}, nil
 					})
-				storageMock.EXPECT().GetFileURL(mock.Anything, "ci-key").
+				storageMock.EXPECT().GetPresignedFileURL(mock.Anything, "ci-key").
 					RunAndReturn(func(_ context.Context, _ string) (string, error) {
 						return "http://url/ci.pdf", nil
 					})
@@ -737,6 +737,25 @@ func TestService_getFilesForProvider(t *testing.T) {
 			want: entities.ProviderFiles{
 				CI: &entities.File{Key: "ci-key", Name: "ci.pdf", URL: "http://url/ci.pdf"},
 			},
+			wantErr: false,
+		},
+		{
+			name:       "public logo uses proxied URL",
+			providerID: "1",
+			prepare: func(repoMock *mocks.MockRepository, storageMock *mocks.MockStorageClient) {
+				logo := &entities.File{Key: "logo-key", Name: "logo.png", Public: true}
+				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1", entities.OwnerTypeProvider).
+					RunAndReturn(func(_ context.Context, _ string, _ entities.OwnerType) (entities.GroupedFiles, error) {
+						return entities.GroupedFiles{entities.ProviderFileTypeLogo: {logo}}, nil
+					})
+				storageMock.EXPECT().GetFileURL(mock.Anything, "logo-key").
+					RunAndReturn(func(_ context.Context, _ string) (string, error) {
+						return "https://extension.ucv.ve/files/logo-key", nil
+					})
+			},
+			// The GetFileURL expectation asserts the public branch; ProviderFiles.Logo is not
+			// populated by getFilesForProvider, so the result itself stays empty.
+			want:    entities.ProviderFiles{},
 			wantErr: false,
 		},
 		{
@@ -770,7 +789,7 @@ func TestService_getFilesForProvider(t *testing.T) {
 					RunAndReturn(func(_ context.Context, _ string, _ entities.OwnerType) (entities.GroupedFiles, error) {
 						return entities.GroupedFiles{entities.ProviderFileTypeCI: {{Key: "ci-key"}}}, nil
 					})
-				storageMock.EXPECT().GetFileURL(mock.Anything, "ci-key").
+				storageMock.EXPECT().GetPresignedFileURL(mock.Anything, "ci-key").
 					RunAndReturn(func(_ context.Context, _ string) (string, error) {
 						return "", errors.New("url error")
 					})
@@ -871,4 +890,52 @@ func Test_makeFileEntityFromFilePointer(t *testing.T) {
 	assert.Equal(t, metadata, got.MetaData)
 	assert.Equal(t, "user-1", got.UploadedBy)
 	assert.NotEmpty(t, got.CreatedAt)
+}
+
+func TestService_GetProvider_Access(t *testing.T) {
+	provider := entities.Provider{ID: "5", User: entities.User{ID: "10"}, Faculty: entities.FacultyIngenieria}
+
+	tests := []struct {
+		name    string
+		viewer  entities.Viewer
+		allowed bool
+	}{
+		{name: "anonymous", viewer: entities.Viewer{}, allowed: false},
+		{name: "provider's own user", viewer: entities.Viewer{UserID: "10"}, allowed: true},
+		{name: "root", viewer: entities.Viewer{UserID: "1", Roles: []string{"root"}}, allowed: true},
+		{
+			name:    "faculty_admin of the provider's faculty",
+			viewer:  entities.Viewer{UserID: "3", Roles: []string{"faculty_admin"}, Faculty: entities.FacultyIngenieria},
+			allowed: true,
+		},
+		{
+			name:    "faculty_admin of another faculty",
+			viewer:  entities.Viewer{UserID: "4", Roles: []string{"faculty_admin"}, Faculty: entities.FacultyCiencias},
+			allowed: false,
+		},
+		{name: "group_admin", viewer: entities.Viewer{UserID: "6", Roles: []string{"group_admin"}}, allowed: false},
+		{name: "other provider", viewer: entities.Viewer{UserID: "11", Roles: []string{"course_admin"}}, allowed: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repoMock := mocks.NewMockRepository(t)
+			storageMock := mocks.NewMockStorageClient(t)
+			repoMock.EXPECT().GetProvider(mock.Anything, "5").Return(provider, nil)
+			if tt.allowed {
+				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "5", entities.OwnerTypeProvider).
+					Return(entities.GroupedFiles{}, nil)
+			}
+			// When denied, no file lookups or URL generation happen: the mocks fail on unexpected calls.
+
+			_, err := NewService(repoMock, storageMock, mocks.NewMockMailClient(t), zap.NewNop()).
+				GetProvider(context.Background(), "5", tt.viewer)
+
+			if tt.allowed {
+				assert.NoError(t, err)
+			} else {
+				assert.ErrorIs(t, err, ErrProviderForbidden)
+			}
+		})
+	}
 }

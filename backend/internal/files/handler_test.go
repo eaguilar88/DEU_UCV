@@ -8,26 +8,69 @@ import (
 	"testing"
 
 	"github.com/eaguilar88/deu/internal/files/mocks"
+	"github.com/eaguilar88/deu/internal/httperrors"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
 )
 
-// TestServeFile_Routing goes through a real Echo router, so it catches a mismatch between
-// the route pattern and the param name the handler reads.
-func TestServeFile_Routing(t *testing.T) {
-	storage := mocks.NewMockStorageClient(t)
-	storage.EXPECT().GetObject(mock.Anything, "files/activities/24/cubierta.png").
-		Return(io.NopCloser(strings.NewReader("png")), "image/png", nil)
+func TestHandler_ServeFile(t *testing.T) {
+	const key = "files/activities/24/cubierta.png"
 
-	e := echo.New()
-	e.GET("/files/*", NewHandler(storage, zap.NewNop()).ServeFile)
+	tests := []struct {
+		name       string
+		path       string
+		prepare    func(svc *mocks.MockService)
+		wantStatus int
+		wantBody   string
+		wantCache  string
+	}{
+		{
+			name: "public file is streamed with cache header",
+			path: "/files/" + key,
+			prepare: func(svc *mocks.MockService) {
+				svc.EXPECT().GetPublicFile(mock.Anything, key).
+					Return(io.NopCloser(strings.NewReader("png")), "image/png", nil)
+			},
+			wantStatus: http.StatusOK,
+			wantBody:   "png",
+			wantCache:  publicCacheControl,
+		},
+		{
+			name: "service error is a 404",
+			path: "/files/" + key,
+			prepare: func(svc *mocks.MockService) {
+				svc.EXPECT().GetPublicFile(mock.Anything, key).Return(nil, "", ErrFileNotFound)
+			},
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name:       "missing key is a 400",
+			path:       "/files/",
+			prepare:    func(_ *mocks.MockService) {},
+			wantStatus: http.StatusBadRequest,
+		},
+	}
 
-	rec := httptest.NewRecorder()
-	e.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/files/files/activities/24/cubierta.png", nil))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			svc := mocks.NewMockService(t)
+			tt.prepare(svc)
 
-	assert.Equal(t, http.StatusOK, rec.Code)
-	assert.Equal(t, "png", rec.Body.String())
-	assert.Equal(t, "image/png", rec.Header().Get(echo.HeaderContentType))
+			e := echo.New()
+			e.HTTPErrorHandler = httperrors.NewHTTPErrorHandler(zap.NewNop())
+			e.GET("/files/*", NewHandler(svc, zap.NewNop()).ServeFile)
+
+			rec := httptest.NewRecorder()
+			e.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, tt.path, nil))
+
+			assert.Equal(t, tt.wantStatus, rec.Code)
+			if tt.wantStatus == http.StatusOK {
+				assert.Equal(t, tt.wantBody, rec.Body.String())
+				assert.Equal(t, "image/png", rec.Header().Get(echo.HeaderContentType))
+				assert.Equal(t, tt.wantCache, rec.Header().Get(echo.HeaderCacheControl))
+			}
+		})
+	}
 }

@@ -110,14 +110,21 @@ func (b *B2Client) DeleteFile(ctx context.Context, objectKey string) error {
 	return nil
 }
 
-func (b *B2Client) GetFileURL(_ context.Context, objectKey string) (string, error) {
+// GetFileURL returns the proxied URL for a public file. The /files proxy only serves
+// files flagged as public, so private files must use GetPresignedFileURL instead.
+func (b *B2Client) GetFileURL(ctx context.Context, objectKey string) (string, error) {
 	if b.baseURL != "" {
 		return fmt.Sprintf("%s/%s", b.baseURL, objectKey), nil
 	}
 
 	// Fallback: generate a pre-signed URL when no base URL is configured
+	return b.GetPresignedFileURL(ctx, objectKey)
+}
+
+// GetPresignedFileURL returns a short-lived signed URL pointing directly at B2.
+func (b *B2Client) GetPresignedFileURL(ctx context.Context, objectKey string) (string, error) {
 	presignClient := s3.NewPresignClient(b.client)
-	presignResult, err := presignClient.PresignGetObject(context.Background(), &s3.GetObjectInput{
+	presignResult, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(b.bucketName),
 		Key:    aws.String(objectKey),
 	}, func(opts *s3.PresignOptions) {

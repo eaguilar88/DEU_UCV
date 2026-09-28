@@ -225,8 +225,8 @@ func (_c *MockService_DeleteProvider_Call) RunAndReturn(run func(ctx context.Con
 }
 
 // GetProvider provides a mock function for the type MockService
-func (_mock *MockService) GetProvider(ctx context.Context, providerID string) (entities.Provider, error) {
-	ret := _mock.Called(ctx, providerID)
+func (_mock *MockService) GetProvider(ctx context.Context, providerID string, viewer entities.Viewer) (entities.Provider, error) {
+	ret := _mock.Called(ctx, providerID, viewer)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetProvider")
@@ -234,16 +234,16 @@ func (_mock *MockService) GetProvider(ctx context.Context, providerID string) (e
 
 	var r0 entities.Provider
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (entities.Provider, error)); ok {
-		return returnFunc(ctx, providerID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, entities.Viewer) (entities.Provider, error)); ok {
+		return returnFunc(ctx, providerID, viewer)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) entities.Provider); ok {
-		r0 = returnFunc(ctx, providerID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, entities.Viewer) entities.Provider); ok {
+		r0 = returnFunc(ctx, providerID, viewer)
 	} else {
 		r0 = ret.Get(0).(entities.Provider)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = returnFunc(ctx, providerID)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, entities.Viewer) error); ok {
+		r1 = returnFunc(ctx, providerID, viewer)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -258,11 +258,12 @@ type MockService_GetProvider_Call struct {
 // GetProvider is a helper method to define mock.On call
 //   - ctx context.Context
 //   - providerID string
-func (_e *MockService_Expecter) GetProvider(ctx interface{}, providerID interface{}) *MockService_GetProvider_Call {
-	return &MockService_GetProvider_Call{Call: _e.mock.On("GetProvider", ctx, providerID)}
+//   - viewer entities.Viewer
+func (_e *MockService_Expecter) GetProvider(ctx interface{}, providerID interface{}, viewer interface{}) *MockService_GetProvider_Call {
+	return &MockService_GetProvider_Call{Call: _e.mock.On("GetProvider", ctx, providerID, viewer)}
 }
 
-func (_c *MockService_GetProvider_Call) Run(run func(ctx context.Context, providerID string)) *MockService_GetProvider_Call {
+func (_c *MockService_GetProvider_Call) Run(run func(ctx context.Context, providerID string, viewer entities.Viewer)) *MockService_GetProvider_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -272,9 +273,14 @@ func (_c *MockService_GetProvider_Call) Run(run func(ctx context.Context, provid
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
+		var arg2 entities.Viewer
+		if args[2] != nil {
+			arg2 = args[2].(entities.Viewer)
+		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -285,7 +291,7 @@ func (_c *MockService_GetProvider_Call) Return(provider entities.Provider, err e
 	return _c
 }
 
-func (_c *MockService_GetProvider_Call) RunAndReturn(run func(ctx context.Context, providerID string) (entities.Provider, error)) *MockService_GetProvider_Call {
+func (_c *MockService_GetProvider_Call) RunAndReturn(run func(ctx context.Context, providerID string, viewer entities.Viewer) (entities.Provider, error)) *MockService_GetProvider_Call {
 	_c.Call.Return(run)
 	return _c
 }

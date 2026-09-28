@@ -6,12 +6,13 @@ import (
 )
 
 type GroupResourceRequest struct {
-	ID        int64
-	GroupID   int64
-	GroupName sql.NullString
-	Type      string
-	Content   sql.NullString
-	Status    string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID              int64
+	GroupID         int64
+	GroupName       sql.NullString
+	Type            string
+	Content         sql.NullString
+	Status          string
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	RejectionReason sql.NullString
 }

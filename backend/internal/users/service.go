@@ -30,6 +30,7 @@ type MailClient interface {
 type StorageClient interface {
 	UploadFile(ctx context.Context, files []*entities.File) error
 	GetFileURL(ctx context.Context, objectKey string) (string, error)
+	GetPresignedFileURL(ctx context.Context, objectKey string) (string, error)
 }
 
 type service struct {
@@ -48,7 +49,9 @@ func NewService(repository Repository, emailClient MailClient, storage StorageCl
 	}
 }
 
-func (s *service) GetUser(ctx context.Context, userID string) (entities.User, error) {
+// GetUser returns the full user to the user themself and to admins (root, deu_admin,
+// faculty_admin) and only the public profile to everyone else.
+func (s *service) GetUser(ctx context.Context, userID string, viewer entities.Viewer) (entities.User, error) {
 	user, err := s.repo.GetUser(ctx, userID)
 	if err != nil {
 		return entities.User{}, err
@@ -58,13 +61,34 @@ func (s *service) GetUser(ctx context.Context, userID string) (entities.User, er
 		return entities.User{}, err
 	}
 	if pic := files.GetSingleFile("profile_picture"); pic != nil {
-		if url, err := s.storage.GetFileURL(ctx, pic.Key); err != nil {
+		if url, err := s.storage.GetPresignedFileURL(ctx, pic.Key); err != nil {
 			s.log.Error("failed to get profile picture URL", zap.Error(err))
 		} else {
 			user.ProfilePictureURL = url
 		}
 	}
+	if !canViewFullUser(userID, viewer) {
+		return publicProfile(*user), nil
+	}
 	return *user, nil
+}
+
+func canViewFullUser(userID string, viewer entities.Viewer) bool {
+	if viewer.IsAnonymous() {
+		return false
+	}
+	return viewer.UserID == userID || viewer.IsGlobalAdmin() || viewer.IsFacultyAdmin()
+}
+
+// publicProfile keeps only what may be shown to anyone: no cédula, email, date of birth,
+// address or other personal data.
+func publicProfile(user entities.User) entities.User {
+	return entities.User{
+		ID:                user.ID,
+		FirstName:         user.FirstName,
+		LastName:          user.LastName,
+		ProfilePictureURL: user.ProfilePictureURL,
+	}
 }
 
 func (s *service) GetUsers(ctx context.Context, pageScope entities.PageScope) ([]entities.User, entities.PageScope, error) {

@@ -2,7 +2,9 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
+	"errors"
 
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/postgres_repository/models"
@@ -165,4 +167,21 @@ func (r *PostgresRepository) GetFilesByOwnerAndPurpose(ctx context.Context, owne
 		files = []*entities.File{}
 	}
 	return files, nil
+}
+
+// IsPublicFile reports whether key belongs to a live file flagged as public.
+// An unknown key is not an error: it simply isn't public.
+func (r *PostgresRepository) IsPublicFile(ctx context.Context, key string) (bool, error) {
+	query, args, err := queries.IsPublicFileKey(key).ToSql()
+	if err != nil {
+		return false, err
+	}
+	var one int
+	if err := r.db.QueryRowContext(ctx, query, args...).Scan(&one); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
 }

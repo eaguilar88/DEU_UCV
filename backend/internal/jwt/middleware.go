@@ -1,6 +1,8 @@
 package jwt
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -15,89 +17,82 @@ const authErrorMessage = "invalid or expired authorization token"
 func JWTMiddleware(signer Signer, logger *zap.Logger) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			tokenString := c.Request().Header.Get("Authorization")
-
-			if tokenString == "" {
-				logger.Error("authorization token is missing")
+			if err := authenticate(c, signer); err != nil {
+				logger.Error("authentication failed", zap.Error(err))
 				return echo.NewHTTPError(http.StatusUnauthorized, authErrorMessage)
 			}
-
-			// Remove "Bearer " prefix if present
-			tokenString = strings.TrimPrefix(tokenString, "Bearer ")
-
-			// Use your Signer to validate the token
-			claims, err := signer.ValidateToken(tokenString)
-			if err != nil {
-				logger.Error("invalid authorization token", zap.Error(err))
-				return echo.NewHTTPError(http.StatusUnauthorized, authErrorMessage)
-			}
-
-			// Extract "v1" map from claims
-			v1Claims, ok := claims["v1"].(map[string]any)
-			if !ok {
-				logger.Error("v1 claims missing or invalid")
-				return echo.NewHTTPError(http.StatusUnauthorized, authErrorMessage)
-			}
-
-			// Extract userID from v1 map
-			userID, ok := v1Claims["userID"].(string)
-			if !ok || userID == "" {
-				logger.Error("userID missing in v1 claims")
-				return echo.NewHTTPError(http.StatusUnauthorized, authErrorMessage)
-			}
-
-			// Extract roles from v1 map
-			var roles []string
-			if rolesRaw, ok := v1Claims["roles"].([]any); ok {
-				for _, r := range rolesRaw {
-					if roleName, ok := r.(string); ok {
-						roles = append(roles, roleName)
-					}
-				}
-			}
-
-			var domainType string
-			if d, ok := v1Claims["domainType"].(string); ok {
-				domainType = d
-			}
-			var faculty string
-			if f, ok := v1Claims["faculty"].(string); ok {
-				faculty = f
-			}
-			var providerCode string
-			if p, ok := v1Claims["providerCode"].(string); ok {
-				providerCode = p
-			}
-			var groupID string
-			if g, ok := v1Claims["groupID"].(string); ok {
-				groupID = g
-			}
-			var groupName string
-			if g, ok := v1Claims["groupName"].(string); ok {
-				groupName = g
-			}
-			var providerID string
-			if p, ok := v1Claims["providerID"].(string); ok {
-				providerID = p
-			}
-			var providerName string
-			if p, ok := v1Claims["providerName"].(string); ok {
-				providerName = p
-			}
-
-			c.Set("userID", userID)
-			c.Set("roles", roles)
-			c.Set("domainType", domainType)
-			c.Set("faculty", faculty)
-			c.Set("providerCode", providerCode)
-			c.Set("groupID", groupID)
-			c.Set("groupName", groupName)
-			c.Set("providerID", providerID)
-			c.Set("providerName", providerName)
-
 			return next(c)
 		}
 	}
+}
+
+// OptionalJWTMiddleware authenticates the request when a valid token is present and
+// otherwise lets it through anonymously. It is meant for public endpoints whose response
+// depends on who is asking; handlers must treat a missing "userID" as an anonymous caller.
+// A missing, invalid or expired token never fails the request.
+func OptionalJWTMiddleware(signer Signer, logger *zap.Logger) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			if c.Request().Header.Get("Authorization") == "" {
+				return next(c)
+			}
+			if err := authenticate(c, signer); err != nil {
+				logger.Debug("optional authentication failed, continuing as anonymous", zap.Error(err))
+			}
+			return next(c)
+		}
+	}
+}
+
+// authenticate validates the request's bearer token and stores its v1 claims in the
+// context. Nothing is stored in the context when it returns an error.
+func authenticate(c echo.Context, signer Signer) error {
+	tokenString := c.Request().Header.Get("Authorization")
+	if tokenString == "" {
+		return errors.New("authorization token is missing")
+	}
+
+	// Remove "Bearer " prefix if present
+	tokenString = strings.TrimPrefix(tokenString, "Bearer ")
+
+	claims, err := signer.ValidateToken(tokenString)
+	if err != nil {
+		return fmt.Errorf("invalid authorization token: %w", err)
+	}
+
+	// Extract "v1" map from claims
+	v1Claims, ok := claims["v1"].(map[string]any)
+	if !ok {
+		return errors.New("v1 claims missing or invalid")
+	}
+
+	// Extract userID from v1 map
+	userID, ok := v1Claims["userID"].(string)
+	if !ok || userID == "" {
+		return errors.New("userID missing in v1 claims")
+	}
+
+	// Extract roles from v1 map
+	var roles []string
+	if rolesRaw, ok := v1Claims["roles"].([]any); ok {
+		for _, r := range rolesRaw {
+			if roleName, ok := r.(string); ok {
+				roles = append(roles, roleName)
+			}
+		}
+	}
+
+	c.Set("userID", userID)
+	c.Set("roles", roles)
+	for _, key := range []string{"domainType", "faculty", "providerCode", "groupID", "groupName", "providerID", "providerName"} {
+		var value string
+		if v, ok := v1Claims[key].(string); ok {
+			value = v
+		}
+		c.Set(key, value)
+	}
+
+	return nil
 }
 
 // RequireRoles returns middleware that only allows the request through if

@@ -130,7 +130,7 @@ func TestService_GetActivity(t *testing.T) {
 			if tt.prepare != nil {
 				tt.prepare(repo, storage)
 			}
-			got, err := svc.GetActivity(context.Background(), tt.id)
+			got, err := svc.GetActivity(context.Background(), tt.id, entities.Viewer{})
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.errTarget != nil {
@@ -644,6 +644,60 @@ func TestService_DeleteActivity(t *testing.T) {
 				}
 			} else {
 				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestService_GetActivity_ParticipantListVisibility(t *testing.T) {
+	list := &entities.File{Key: "files/activities/1/participants_lista.xlsx", Purpose: entities.ActivityFileTypeListParticipants}
+	activity := entities.Activity{ID: "1", GroupID: "7", CreatedBy: "10"}
+	group := entities.ExtensionGroup{ID: "7", Owner: &entities.User{ID: "10"}, Faculty: []entities.Faculty{entities.FacultyIngenieria}}
+
+	tests := []struct {
+		name      string
+		viewer    entities.Viewer
+		loadGroup bool
+		wantList  bool
+	}{
+		{name: "anonymous", viewer: entities.Viewer{}, wantList: false},
+		{name: "creator", viewer: entities.Viewer{UserID: "10"}, wantList: true},
+		{name: "deu_admin", viewer: entities.Viewer{UserID: "1", Roles: []string{"deu_admin"}}, wantList: true},
+		{
+			name:      "faculty_admin of the group's faculty",
+			viewer:    entities.Viewer{UserID: "3", Roles: []string{"faculty_admin"}, Faculty: entities.FacultyIngenieria},
+			loadGroup: true,
+			wantList:  true,
+		},
+		{
+			name:      "unrelated user",
+			viewer:    entities.Viewer{UserID: "99", Roles: []string{"group_admin"}},
+			loadGroup: true,
+			wantList:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			svc, repo, storage := newTestService(t)
+			repo.EXPECT().GetActivityByID(mock.Anything, "1").Return(activity, nil)
+			repo.EXPECT().GetFilesByOwner(mock.Anything, "1", entities.OwnerTypeActivity).
+				Return(entities.GroupedFiles{entities.ActivityFileTypeListParticipants: {list}}, nil)
+			if tt.loadGroup {
+				repo.EXPECT().GetGroupByID(mock.Anything, "7").Return(group, nil)
+			}
+			if tt.wantList {
+				storage.EXPECT().GetPresignedFileURL(mock.Anything, list.Key).Return("https://b2/list?sig", nil)
+			}
+
+			got, err := svc.GetActivity(context.Background(), "1", tt.viewer)
+
+			assert.NoError(t, err)
+			if tt.wantList {
+				require.NotNil(t, got.ParticipantList)
+				assert.Equal(t, "https://b2/list?sig", got.ParticipantList.URL)
+			} else {
+				assert.Nil(t, got.ParticipantList)
 			}
 		})
 	}

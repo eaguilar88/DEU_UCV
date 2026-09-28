@@ -207,8 +207,8 @@ func (r *PostgresRepository) ApproveGroupResourceRequest(ctx context.Context, re
 	return nil
 }
 
-func (r *PostgresRepository) RejectGroupResourceRequest(ctx context.Context, reqID string) error {
-	query, args, err := queries.RejectGroupResourceRequest(reqID).ToSql()
+func (r *PostgresRepository) RejectGroupResourceRequest(ctx context.Context, reqID, reason string) error {
+	query, args, err := queries.RejectGroupResourceRequest(reqID, reason).ToSql()
 	if err != nil {
 		return err
 	}
@@ -233,19 +233,20 @@ func (r *PostgresRepository) RejectGroupResourceRequest(ctx context.Context, req
 
 func scanGroupResourceRequest(row scannable) (models.GroupResourceRequest, error) {
 	var m models.GroupResourceRequest
-	err := row.Scan(&m.ID, &m.GroupID, &m.GroupName, &m.Type, &m.Content, &m.Status, &m.CreatedAt, &m.UpdatedAt)
+	err := row.Scan(&m.ID, &m.GroupID, &m.GroupName, &m.Type, &m.Content, &m.Status, &m.CreatedAt, &m.UpdatedAt, &m.RejectionReason)
 	return m, err
 }
 
 func newGroupResourceRequestFromModel(m models.GroupResourceRequest) entities.GroupResourceRequest {
 	return entities.GroupResourceRequest{
-		ID:        fmt.Sprintf("%d", m.ID),
-		GroupID:   fmt.Sprintf("%d", m.GroupID),
-		GroupName: m.GroupName.String,
-		Type:      m.Type,
-		Content:   m.Content.String,
-		Status:    m.Status,
-		CreatedAt: m.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: m.UpdatedAt.Format(time.RFC3339),
+		ID:              fmt.Sprintf("%d", m.ID),
+		GroupID:         fmt.Sprintf("%d", m.GroupID),
+		GroupName:       m.GroupName.String,
+		Type:            m.Type,
+		Content:         m.Content.String,
+		Status:          m.Status,
+		CreatedAt:       m.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:       m.UpdatedAt.Format(time.RFC3339),
+		RejectionReason: m.RejectionReason.String,
 	}
 }

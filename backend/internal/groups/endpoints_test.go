@@ -116,7 +116,7 @@ func TestHandler_GetGroups(t *testing.T) {
 			url:  "/groups",
 			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
-				tc.svc.On("GetGroups", ctx.Request().Context(), entities.GroupFilter{}, mock.AnythingOfType("entities.PageScope")).
+				tc.svc.On("GetGroups", ctx.Request().Context(), entities.GroupFilter{}, mock.AnythingOfType("entities.PageScope"), entities.Viewer{}).
 					Return([]entities.ExtensionGroup{{ID: "1"}}, entities.PageScope{Page: 1, PerPage: 10}, nil)
 			},
 			resp: GetGroupsResponse{
@@ -129,7 +129,7 @@ func TestHandler_GetGroups(t *testing.T) {
 			url:  "/groups?faculty=Ingenier%C3%ADa",
 			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
-				tc.svc.On("GetGroups", ctx.Request().Context(), entities.GroupFilter{Faculty: entities.FacultyIngenieria}, mock.AnythingOfType("entities.PageScope")).
+				tc.svc.On("GetGroups", ctx.Request().Context(), entities.GroupFilter{Faculty: entities.FacultyIngenieria}, mock.AnythingOfType("entities.PageScope"), entities.Viewer{}).
 					Return([]entities.ExtensionGroup{{ID: "1"}}, entities.PageScope{}, nil)
 			},
 			resp: GetGroupsResponse{
@@ -147,7 +147,7 @@ func TestHandler_GetGroups(t *testing.T) {
 			url:  "/groups?type=cultural",
 			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
-				tc.svc.On("GetGroups", ctx.Request().Context(), entities.GroupFilter{Type: entities.CulturalGroupType}, mock.AnythingOfType("entities.PageScope")).
+				tc.svc.On("GetGroups", ctx.Request().Context(), entities.GroupFilter{Type: entities.CulturalGroupType}, mock.AnythingOfType("entities.PageScope"), entities.Viewer{}).
 					Return([]entities.ExtensionGroup{{ID: "1"}}, entities.PageScope{}, nil)
 			},
 			resp: GetGroupsResponse{
@@ -160,7 +160,7 @@ func TestHandler_GetGroups(t *testing.T) {
 			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
 				active := true
-				tc.svc.On("GetGroups", ctx.Request().Context(), entities.GroupFilter{Active: &active}, mock.AnythingOfType("entities.PageScope")).
+				tc.svc.On("GetGroups", ctx.Request().Context(), entities.GroupFilter{Active: &active}, mock.AnythingOfType("entities.PageScope"), entities.Viewer{}).
 					Return([]entities.ExtensionGroup{{ID: "1"}}, entities.PageScope{}, nil)
 			},
 			resp: GetGroupsResponse{
@@ -178,7 +178,7 @@ func TestHandler_GetGroups(t *testing.T) {
 			url:  "/groups?deleted=true",
 			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
-				tc.svc.On("GetGroups", ctx.Request().Context(), entities.GroupFilter{Deleted: true}, mock.AnythingOfType("entities.PageScope")).
+				tc.svc.On("GetGroups", ctx.Request().Context(), entities.GroupFilter{Deleted: true}, mock.AnythingOfType("entities.PageScope"), entities.Viewer{}).
 					Return([]entities.ExtensionGroup{{ID: "1"}}, entities.PageScope{}, nil)
 			},
 			resp: GetGroupsResponse{
@@ -212,6 +212,46 @@ func TestHandler_GetGroups(t *testing.T) {
 				require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &respBody))
 				assert.Equal(t, tt.resp, respBody)
 			}
+		})
+	}
+}
+
+func TestHandler_GetGroup_PassesViewer(t *testing.T) {
+	tests := []struct {
+		name   string
+		setCtx func(c echo.Context)
+		viewer entities.Viewer
+	}{
+		{
+			name:   "anonymous",
+			setCtx: func(_ echo.Context) {},
+			viewer: entities.Viewer{},
+		},
+		{
+			name: "authenticated",
+			setCtx: func(c echo.Context) {
+				c.Set("userID", "10")
+				c.Set("roles", []string{"faculty_admin"})
+				c.Set("faculty", string(entities.FacultyIngenieria))
+			},
+			viewer: entities.Viewer{UserID: "10", Roles: []string{"faculty_admin"}, Faculty: entities.FacultyIngenieria},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/groups/1", nil)
+			rec := httptest.NewRecorder()
+			c := echo.New().NewContext(req, rec)
+			c.SetParamNames("id")
+			c.SetParamValues("1")
+			tt.setCtx(c)
+
+			svc := mocks.NewMockService(t)
+			svc.EXPECT().GetGroup(mock.Anything, "1", tt.viewer).Return(entities.ExtensionGroup{ID: "1"}, nil)
+
+			require.NoError(t, NewHandler(svc, zap.NewNop()).GetGroup(c))
+			assert.Equal(t, http.StatusOK, rec.Code)
 		})
 	}
 }
