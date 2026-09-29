@@ -76,6 +76,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      gotenberg:
+        condition: service_started
     ports:
       - ${HTTP_SERVE_PORT}:${HTTP_SERVE_PORT}
     env_file:
@@ -103,7 +105,20 @@ services:
       - "traefik.http.routers.backend-files.tls.certresolver=letsencrypt"
       - "traefik.http.routers.backend-files.priority=100"
       - "traefik.http.routers.backend-files.service=backend"
+      # Páginas públicas de verificación de certificados (enlaces de los códigos QR)
+      - "traefik.http.routers.backend-certificates.rule=Host(`extension.ucv.ve`) && PathPrefix(`/certificados`)"
+      - "traefik.http.routers.backend-certificates.entrypoints=websecure"
+      - "traefik.http.routers.backend-certificates.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.backend-certificates.priority=100"
+      - "traefik.http.routers.backend-certificates.service=backend"
       - "traefik.http.services.backend.loadbalancer.server.port=8081" # Target container's port
+    networks:
+      - web
+  gotenberg:
+    # Renders certificate HTML to PDF for the backend (internal/gotenberg). Not published: only
+    # reachable from the backend over the web network.
+    image: gotenberg/gotenberg:8
+    restart: unless-stopped
     networks:
       - web
   db:

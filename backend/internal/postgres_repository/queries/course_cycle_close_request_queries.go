@@ -16,6 +16,7 @@ var cycleCloseRequestSelectCommon = []string{
 	"ccr.reviewed_at",
 	"ccr.created_at",
 	"ccr.updated_at",
+	"ccr.certificates_token",
 }
 
 func InsertCourseCycleCloseRequest(cycleID, submittedBy int64) sq.InsertBuilder {
@@ -37,6 +38,13 @@ func GetCourseCycleCloseRequestByID(id string) sq.SelectBuilder {
 	return psql.Select(cycleCloseRequestSelectCommon...).
 		From(fmt.Sprintf("%s AS ccr", cycleCloseRequestsTableName)).
 		Where(sq.Eq{"ccr.id": id}).
+		Where(sq.Eq{"ccr.deleted_at": nil})
+}
+
+func GetCourseCycleCloseRequestByCertificatesToken(token string) sq.SelectBuilder {
+	return psql.Select(cycleCloseRequestSelectCommon...).
+		From(fmt.Sprintf("%s AS ccr", cycleCloseRequestsTableName)).
+		Where(sq.Eq{"ccr.certificates_token": token}).
 		Where(sq.Eq{"ccr.deleted_at": nil})
 }
 
@@ -62,10 +70,11 @@ func CountCourseCycleCloseRequests() sq.SelectBuilder {
 		Where(sq.Eq{"deleted_at": nil})
 }
 
-func ApproveCourseCycleCloseRequest(id, reviewerID string) sq.UpdateBuilder {
+func ApproveCourseCycleCloseRequest(id, reviewerID, certificatesToken string) sq.UpdateBuilder {
 	return psql.Update(cycleCloseRequestsTableName).
 		Set("status", "approved").
 		Set("reviewer_id", reviewerID).
+		Set("certificates_token", certificatesToken).
 		Set("reviewed_at", sq.Expr("NOW()")).
 		Set("updated_at", sq.Expr("NOW()")).
 		Where(sq.Eq{"id": id})

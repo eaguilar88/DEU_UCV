@@ -1577,23 +1577,147 @@ paths:
   /course-cycle-close-requests:
     post:
       summary: Submit a course cycle close request
+      description: >
+        archivo_participantes must be the .xlsx template from
+        GET /course-cycle-close-requests/participants-template, listing only the participants who
+        passed the course. Each row becomes a certificate, issued when the request is approved.
       tags: [ Course Cycle Close Requests ]
       security:
         - BearerAuth: []
       requestBody:
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
-              required: [ course_cycle_id ]
+              required: [ course_cycle_id, archivo_participantes, archivo_vouchers, archivo_encuesta ]
               properties:
                 course_cycle_id:
                   type: string
+                  example: "12"
                 observaciones:
                   type: string
+                archivo_participantes:
+                  type: string
+                  format: binary
+                  description: Approved participants (.xlsx template, up to 2000 rows)
+                archivo_vouchers:
+                  type: string
+                  format: binary
+                archivo_encuesta:
+                  type: string
+                  format: binary
       responses:
         "201":
           description: Request submitted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: "10"
+        "400":
+          description: >
+            Missing field or invalid participants file (wrong extension or headers, empty,
+            blank or invalid values, duplicate cédula, too many rows). Row errors name the
+            spreadsheet row, e.g. "archivo de participantes, fila 7: cédula vacía".
+        "409":
+          description: A close request is already pending for this cycle
+
+  /course-cycle-close-requests/participants-template:
+    get:
+      summary: Download the approved participants template
+      description: >
+        .xlsx with a "Participantes" sheet (headers Nombres, Apellidos, Cédula, Correo; Correo
+        optional) and an "Instrucciones" sheet.
+      tags: [ Course Cycle Close Requests ]
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: participantes_aprobados.xlsx
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+
+  # ── Certificates (public) ─────────────────────────────────────────────────
+
+  /certificados/{code}:
+    get:
+      summary: Certificate verification page
+      description: >
+        HTML page reached from the certificate's QR code. Unknown, not yet issued and revoked
+        certificates all get the same "Certificado no válido" page with status 404.
+      tags: [ Certificates ]
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: Verification code (26 base32 characters, case-insensitive)
+          schema:
+            type: string
+            example: ABCDEFGHIJKLMNOPQRSTUVWXY2
+      responses:
+        "200":
+          description: Valid certificate page
+          content:
+            text/html:
+              schema:
+                type: string
+        "404":
+          description: Certificate not valid
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /certificados/{code}/pdf:
+    get:
+      summary: Download a certificate PDF
+      tags: [ Certificates ]
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+            example: ABCDEFGHIJKLMNOPQRSTUVWXY2
+      responses:
+        "200":
+          description: Certificate PDF (attachment)
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Certificate not valid
+
+  /certificados/lotes/{token}/zip:
+    get:
+      summary: Download every certificate of a close request as a ZIP
+      description: The link is emailed to the close request's submitter once the certificates are generated.
+      tags: [ Certificates ]
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+            example: ZYXWVUTSRQPONMLKJIHGFEDCB7
+      responses:
+        "200":
+          description: certificados.zip (attachment)
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Unknown token, or certificates not generated yet
 
   # ── Admin — Course Requests ───────────────────────────────────────────────
 
@@ -1991,6 +2115,9 @@ paths:
   /admin/course-cycle-close-requests/{id}/approve:
     post:
       summary: Approve a course cycle close request
+      description: >
+        Closes the cycle and queues the generation of the participants' certificates. A
+        background job renders them and emails the submitter the verification links and a ZIP.
       tags: [ Admin - Course Cycle Close Requests ]
       security:
         - BearerAuth: []
@@ -2028,3 +2155,22 @@ paths:
           description: Rejected
         "404":
           description: Request not found
+
+  /admin/course-cycle-close-requests/{id}/certificates/retry:
+    post:
+      summary: Retry a failed certificates generation
+      description: Requeues the close request's certificates job after it exhausted its attempts.
+      tags: [ Admin - Course Cycle Close Requests ]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "202":
+          description: Job requeued
+        "409":
+          description: The close request has no failed certificates job

@@ -19,4 +19,7 @@ type CourseCycleCloseRequest struct {
 	ParticipantsFile *File
 	VouchersFile     *File
 	SurveyFile       *File
+
+	// CertificatesToken is the random token of the ZIP download link, set on approval.
+	CertificatesToken string
 }

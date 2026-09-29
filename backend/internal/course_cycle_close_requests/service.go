@@ -1,9 +1,14 @@
 package course_cycle_close_requests
 
 import (
+	"bytes"
 	"context"
+	"crypto/rand"
+	"encoding/base32"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"strconv"
 	"time"
 
@@ -17,11 +22,11 @@ var (
 )
 
 type Repository interface {
-	CreateCourseCycleCloseRequest(ctx context.Context, cycleID, submittedByID int64) (int64, error)
+	CreateCourseCycleCloseRequest(ctx context.Context, cycleID, submittedByID int64, certificates []entities.Certificate) (int64, error)
 	HasPendingCloseRequestForCycle(ctx context.Context, cycleID int64) (bool, error)
 	GetCourseCycleCloseRequests(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.CourseCycleCloseRequest, entities.PageScope, error)
 	GetCourseCycleCloseRequestByID(ctx context.Context, id string) (entities.CourseCycleCloseRequest, error)
-	ApproveCourseCycleCloseRequest(ctx context.Context, id, reviewerID, cycleID string, notify func() error) error
+	ApproveCourseCycleCloseRequest(ctx context.Context, id, reviewerID, cycleID, certificatesToken string, certificatesJob entities.Job, notify func() error) error
 	RejectCourseCycleCloseRequest(ctx context.Context, id, reviewerID, comments, cycleID string, notify func() error) error
 
 	// Notification lookups
@@ -65,6 +70,27 @@ func (s *service) SubmitCloseRequest(ctx context.Context, request entities.Cours
 		return -1, fmt.Errorf("invalid submitter ID: %w", err)
 	}
 
+	participants, err := readParticipants(request.ParticipantsFile)
+	if err != nil {
+		return -1, err
+	}
+
+	certificates := make([]entities.Certificate, 0, len(participants))
+	for _, p := range participants {
+		code, err := newRandomCode()
+		if err != nil {
+			s.logger.Error("failed to generate certificate verification code", zap.Error(err))
+			return -1, err
+		}
+		certificates = append(certificates, entities.Certificate{
+			FirstName:        p.FirstName,
+			LastName:         p.LastName,
+			Document:         p.Document,
+			Email:            p.Email,
+			VerificationCode: code,
+		})
+	}
+
 	pending, err := s.repo.HasPendingCloseRequestForCycle(ctx, request.CourseCycleID)
 	if err != nil {
 		s.logger.Error("failed to check for pending close requests", zap.Error(err))
@@ -74,7 +100,7 @@ func (s *service) SubmitCloseRequest(ctx context.Context, request entities.Cours
 		return -1, ErrCloseRequestAlreadyPending
 	}
 
-	id, err := s.repo.CreateCourseCycleCloseRequest(ctx, request.CourseCycleID, submitterID)
+	id, err := s.repo.CreateCourseCycleCloseRequest(ctx, request.CourseCycleID, submitterID, certificates)
 	if err != nil {
 		s.logger.Error("failed to create cycle close request", zap.Error(err))
 		return -1, err
@@ -120,10 +146,21 @@ func (s *service) ApproveCloseRequest(ctx context.Context, id, reviewerID string
 		return err
 	}
 
+	certificatesToken, err := newRandomCode()
+	if err != nil {
+		s.logger.Error("failed to generate certificates token", zap.Error(err), zap.String("close_request_id", id))
+		return err
+	}
+	payload, err := json.Marshal(entities.CourseCycleCertificatesPayload{CloseRequestID: existing.ID})
+	if err != nil {
+		return err
+	}
+	certificatesJob := entities.Job{Kind: entities.JobKindCourseCycleCertificates, Payload: payload}
+
 	notify := s.notifier(ctx, id, recipient, email.TemplateCourseCycleCloseApproved, email.CourseCycleCloseApprovedData{
 		CourseName: courseName,
 	})
-	return s.repo.ApproveCourseCycleCloseRequest(ctx, id, reviewerID, cycleID, notify)
+	return s.repo.ApproveCourseCycleCloseRequest(ctx, id, reviewerID, cycleID, certificatesToken, certificatesJob, notify)
 }
 
 func (s *service) RejectCloseRequest(ctx context.Context, id, reviewerID, comments string) error {
@@ -187,6 +224,16 @@ func (s *service) notifier(ctx context.Context, requestID, to string, tmpl email
 	}
 }
 
+// ParticipantsTemplate returns the XLSX template submitters fill with the approved participants.
+func (s *service) ParticipantsTemplate(ctx context.Context) ([]byte, error) {
+	data, err := buildParticipantsTemplate()
+	if err != nil {
+		s.logger.Error("failed to build participants template", zap.Error(err))
+		return nil, err
+	}
+	return data, nil
+}
+
 func (s *service) GetCloseRequests(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.CourseCycleCloseRequest, entities.PageScope, error) {
 	requests, ps, err := s.repo.GetCourseCycleCloseRequests(ctx, faculty, pageScope)
 	if err != nil {
@@ -198,4 +245,26 @@ func (s *service) GetCloseRequests(ctx context.Context, faculty entities.Faculty
 
 func (s *service) GetCloseRequestByID(ctx context.Context, id string) (entities.CourseCycleCloseRequest, error) {
 	return s.repo.GetCourseCycleCloseRequestByID(ctx, id)
+}
+
+// readParticipants parses the participants file and rewinds its body, so it can still be uploaded.
+func readParticipants(file *entities.File) ([]entities.Participant, error) {
+	if file == nil || file.Body == nil {
+		return nil, fileError("es obligatorio")
+	}
+	data, err := io.ReadAll(file.Body)
+	if err != nil {
+		return nil, fmt.Errorf("reading participants file: %w", err)
+	}
+	file.Body = bytes.NewReader(data)
+	return parseParticipants(file.Name, bytes.NewReader(data))
+}
+
+// newRandomCode returns an unguessable, URL-safe code: 128 random bits in unpadded base32.
+func newRandomCode() (string, error) {
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(b), nil
 }

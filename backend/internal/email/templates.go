@@ -31,6 +31,7 @@ const (
 	TemplateCourseRequestRedirected      Template = "course_request_redirected"
 	TemplateCourseCycleCloseApproved     Template = "course_cycle_close_approved"
 	TemplateCourseCycleCloseRejected     Template = "course_cycle_close_rejected"
+	TemplateCourseCycleCertificatesReady Template = "course_cycle_certificates_ready"
 )
 
 // allTemplates lists every template parsed at startup. A template missing from this list cannot be sent.
@@ -48,6 +49,7 @@ var allTemplates = []Template{
 	TemplateCourseRequestRedirected,
 	TemplateCourseCycleCloseApproved,
 	TemplateCourseCycleCloseRejected,
+	TemplateCourseCycleCertificatesReady,
 }
 
 // Data passed to each template. Templates without variables (user_welcome,
@@ -101,6 +103,18 @@ type CourseCycleCloseApprovedData struct {
 type CourseCycleCloseRejectedData struct {
 	CourseName string
 	Reason     string
+}
+
+type CourseCycleCertificatesReadyData struct {
+	CourseName   string
+	ZipURL       string
+	Certificates []CertificateLink
+}
+
+// CertificateLink is a participant's name and the link to their certificate's verification page.
+type CertificateLink struct {
+	Name string
+	URL  string
 }
 
 // parseTemplates parses every template together with the shared layout. Each email gets its own

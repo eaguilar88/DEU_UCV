@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Certificado</title>
+  <style>
+    @page { size: 11in 8.5in; margin: 0; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      width: 11in;
+      height: 8.5in;
+      font-family: Georgia, "Times New Roman", serif;
+      color: #1f2a44;
+    }
+    .page {
+      position: relative;
+      width: 11in;
+      height: 8.5in;
+      padding: 0.45in;
+    }
+    .frame {
+      position: relative;
+      height: 100%;
+      border: 3px solid #1f3a68;
+      outline: 1px solid #1f3a68;
+      outline-offset: -10px;
+      padding: 0.45in 0.7in 0.35in;
+      text-align: center;
+    }
+    .institution { font-size: 20pt; letter-spacing: 2px; text-transform: uppercase; margin: 0; }
+    .unit { font-size: 13pt; margin: 4px 0 0; color: #3b4a6b; }
+    .title { font-size: 36pt; margin: 0.3in 0 0.15in; color: #1f3a68; letter-spacing: 4px; text-transform: uppercase; }
+    .lead { font-size: 13pt; margin: 0; }
+    .name { font-size: 28pt; font-weight: bold; margin: 0.12in 0 0.04in; }
+    .document { font-size: 12pt; margin: 0 0 0.18in; color: #3b4a6b; }
+    .course { font-size: 20pt; font-style: italic; margin: 0.08in 0 0.12in; }
+    .details { font-size: 12pt; margin: 0; line-height: 1.6; }
+    .signatures {
+      position: absolute;
+      left: 0.7in;
+      right: 2.2in;
+      bottom: 0.45in;
+      display: flex;
+      justify-content: space-around;
+    }
+    .signature { width: 2.6in; font-size: 10.5pt; }
+    .signature .line { border-bottom: 1px solid #1f2a44; margin-bottom: 4px; height: 0.55in; }
+    .verification {
+      position: absolute;
+      right: 0.35in;
+      bottom: 0.3in;
+      width: 1.6in;
+      text-align: center;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 7pt;
+      color: #3b4a6b;
+    }
+    .verification img { width: 1.25in; height: 1.25in; display: block; margin: 0 auto 2px; }
+    .verification .code { font-family: "Courier New", monospace; font-size: 7pt; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="frame">
+      <p class="institution">Universidad Central de Venezuela</p>
+      <p class="unit">Dirección de Extensión Universitaria</p>
+
+      <h1 class="title">Certificado</h1>
+      <p class="lead">Se otorga el presente certificado a</p>
+      <p class="name">{{.FullName}}</p>
+      <p class="document">C.I. {{.Document}}</p>
+      <p class="lead">por haber aprobado el curso</p>
+      <p class="course">{{.CourseName}}</p>
+      <p class="details">
+        {{- if .Duration}}Con una duración de {{.Duration}}. {{end -}}
+        {{- if .StartDate}}Dictado del {{.StartDate}}{{if .EndDate}} al {{.EndDate}}{{end}}. {{end -}}
+        {{- if .Faculty}}<br>{{.Faculty}}.{{end}}
+        <br>Caracas, {{.IssueDate}}.
+      </p>
+
+      {{/* Signatures are placeholders until signers and instructor names are defined. */}}
+      <div class="signatures">
+        <div class="signature">
+          <div class="line"></div>
+          Director(a) de Extensión Universitaria
+        </div>
+        <div class="signature">
+          <div class="line"></div>
+          Instructor(a)
+        </div>
+      </div>
+
+      <div class="verification">
+        <img src="{{.QRCode}}" alt="Código QR de verificación">
+        Verifique este certificado en<br>{{.VerifyHost}}
+        <div class="code">{{.VerificationCode}}</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

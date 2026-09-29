@@ -39,16 +39,16 @@ func (_m *MockRepository) EXPECT() *MockRepository_Expecter {
 }
 
 // ApproveCourseCycleCloseRequest provides a mock function for the type MockRepository
-func (_mock *MockRepository) ApproveCourseCycleCloseRequest(ctx context.Context, id string, reviewerID string, cycleID string, notify func() error) error {
-	ret := _mock.Called(ctx, id, reviewerID, cycleID, notify)
+func (_mock *MockRepository) ApproveCourseCycleCloseRequest(ctx context.Context, id string, reviewerID string, cycleID string, certificatesToken string, certificatesJob entities.Job, notify func() error) error {
+	ret := _mock.Called(ctx, id, reviewerID, cycleID, certificatesToken, certificatesJob, notify)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ApproveCourseCycleCloseRequest")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, func() error) error); ok {
-		r0 = returnFunc(ctx, id, reviewerID, cycleID, notify)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string, entities.Job, func() error) error); ok {
+		r0 = returnFunc(ctx, id, reviewerID, cycleID, certificatesToken, certificatesJob, notify)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -65,12 +65,14 @@ type MockRepository_ApproveCourseCycleCloseRequest_Call struct {
 //   - id string
 //   - reviewerID string
 //   - cycleID string
+//   - certificatesToken string
+//   - certificatesJob entities.Job
 //   - notify func() error
-func (_e *MockRepository_Expecter) ApproveCourseCycleCloseRequest(ctx interface{}, id interface{}, reviewerID interface{}, cycleID interface{}, notify interface{}) *MockRepository_ApproveCourseCycleCloseRequest_Call {
-	return &MockRepository_ApproveCourseCycleCloseRequest_Call{Call: _e.mock.On("ApproveCourseCycleCloseRequest", ctx, id, reviewerID, cycleID, notify)}
+func (_e *MockRepository_Expecter) ApproveCourseCycleCloseRequest(ctx interface{}, id interface{}, reviewerID interface{}, cycleID interface{}, certificatesToken interface{}, certificatesJob interface{}, notify interface{}) *MockRepository_ApproveCourseCycleCloseRequest_Call {
+	return &MockRepository_ApproveCourseCycleCloseRequest_Call{Call: _e.mock.On("ApproveCourseCycleCloseRequest", ctx, id, reviewerID, cycleID, certificatesToken, certificatesJob, notify)}
 }
 
-func (_c *MockRepository_ApproveCourseCycleCloseRequest_Call) Run(run func(ctx context.Context, id string, reviewerID string, cycleID string, notify func() error)) *MockRepository_ApproveCourseCycleCloseRequest_Call {
+func (_c *MockRepository_ApproveCourseCycleCloseRequest_Call) Run(run func(ctx context.Context, id string, reviewerID string, cycleID string, certificatesToken string, certificatesJob entities.Job, notify func() error)) *MockRepository_ApproveCourseCycleCloseRequest_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -88,9 +90,17 @@ func (_c *MockRepository_ApproveCourseCycleCloseRequest_Call) Run(run func(ctx c
 		if args[3] != nil {
 			arg3 = args[3].(string)
 		}
-		var arg4 func() error
+		var arg4 string
 		if args[4] != nil {
-			arg4 = args[4].(func() error)
+			arg4 = args[4].(string)
+		}
+		var arg5 entities.Job
+		if args[5] != nil {
+			arg5 = args[5].(entities.Job)
+		}
+		var arg6 func() error
+		if args[6] != nil {
+			arg6 = args[6].(func() error)
 		}
 		run(
 			arg0,
@@ -98,6 +108,8 @@ func (_c *MockRepository_ApproveCourseCycleCloseRequest_Call) Run(run func(ctx c
 			arg2,
 			arg3,
 			arg4,
+			arg5,
+			arg6,
 		)
 	})
 	return _c
@@ -108,14 +120,14 @@ func (_c *MockRepository_ApproveCourseCycleCloseRequest_Call) Return(err error) 
 	return _c
 }
 
-func (_c *MockRepository_ApproveCourseCycleCloseRequest_Call) RunAndReturn(run func(ctx context.Context, id string, reviewerID string, cycleID string, notify func() error) error) *MockRepository_ApproveCourseCycleCloseRequest_Call {
+func (_c *MockRepository_ApproveCourseCycleCloseRequest_Call) RunAndReturn(run func(ctx context.Context, id string, reviewerID string, cycleID string, certificatesToken string, certificatesJob entities.Job, notify func() error) error) *MockRepository_ApproveCourseCycleCloseRequest_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CreateCourseCycleCloseRequest provides a mock function for the type MockRepository
-func (_mock *MockRepository) CreateCourseCycleCloseRequest(ctx context.Context, cycleID int64, submittedByID int64) (int64, error) {
-	ret := _mock.Called(ctx, cycleID, submittedByID)
+func (_mock *MockRepository) CreateCourseCycleCloseRequest(ctx context.Context, cycleID int64, submittedByID int64, certificates []entities.Certificate) (int64, error) {
+	ret := _mock.Called(ctx, cycleID, submittedByID, certificates)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateCourseCycleCloseRequest")
@@ -123,16 +135,16 @@ func (_mock *MockRepository) CreateCourseCycleCloseRequest(ctx context.Context, 
 
 	var r0 int64
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64) (int64, error)); ok {
-		return returnFunc(ctx, cycleID, submittedByID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64, []entities.Certificate) (int64, error)); ok {
+		return returnFunc(ctx, cycleID, submittedByID, certificates)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64) int64); ok {
-		r0 = returnFunc(ctx, cycleID, submittedByID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64, []entities.Certificate) int64); ok {
+		r0 = returnFunc(ctx, cycleID, submittedByID, certificates)
 	} else {
 		r0 = ret.Get(0).(int64)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, int64) error); ok {
-		r1 = returnFunc(ctx, cycleID, submittedByID)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, int64, []entities.Certificate) error); ok {
+		r1 = returnFunc(ctx, cycleID, submittedByID, certificates)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -148,11 +160,12 @@ type MockRepository_CreateCourseCycleCloseRequest_Call struct {
 //   - ctx context.Context
 //   - cycleID int64
 //   - submittedByID int64
-func (_e *MockRepository_Expecter) CreateCourseCycleCloseRequest(ctx interface{}, cycleID interface{}, submittedByID interface{}) *MockRepository_CreateCourseCycleCloseRequest_Call {
-	return &MockRepository_CreateCourseCycleCloseRequest_Call{Call: _e.mock.On("CreateCourseCycleCloseRequest", ctx, cycleID, submittedByID)}
+//   - certificates []entities.Certificate
+func (_e *MockRepository_Expecter) CreateCourseCycleCloseRequest(ctx interface{}, cycleID interface{}, submittedByID interface{}, certificates interface{}) *MockRepository_CreateCourseCycleCloseRequest_Call {
+	return &MockRepository_CreateCourseCycleCloseRequest_Call{Call: _e.mock.On("CreateCourseCycleCloseRequest", ctx, cycleID, submittedByID, certificates)}
 }
 
-func (_c *MockRepository_CreateCourseCycleCloseRequest_Call) Run(run func(ctx context.Context, cycleID int64, submittedByID int64)) *MockRepository_CreateCourseCycleCloseRequest_Call {
+func (_c *MockRepository_CreateCourseCycleCloseRequest_Call) Run(run func(ctx context.Context, cycleID int64, submittedByID int64, certificates []entities.Certificate)) *MockRepository_CreateCourseCycleCloseRequest_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -166,10 +179,15 @@ func (_c *MockRepository_CreateCourseCycleCloseRequest_Call) Run(run func(ctx co
 		if args[2] != nil {
 			arg2 = args[2].(int64)
 		}
+		var arg3 []entities.Certificate
+		if args[3] != nil {
+			arg3 = args[3].([]entities.Certificate)
+		}
 		run(
 			arg0,
 			arg1,
 			arg2,
+			arg3,
 		)
 	})
 	return _c
@@ -180,7 +198,7 @@ func (_c *MockRepository_CreateCourseCycleCloseRequest_Call) Return(n int64, err
 	return _c
 }
 
-func (_c *MockRepository_CreateCourseCycleCloseRequest_Call) RunAndReturn(run func(ctx context.Context, cycleID int64, submittedByID int64) (int64, error)) *MockRepository_CreateCourseCycleCloseRequest_Call {
+func (_c *MockRepository_CreateCourseCycleCloseRequest_Call) RunAndReturn(run func(ctx context.Context, cycleID int64, submittedByID int64, certificates []entities.Certificate) (int64, error)) *MockRepository_CreateCourseCycleCloseRequest_Call {
 	_c.Call.Return(run)
 	return _c
 }

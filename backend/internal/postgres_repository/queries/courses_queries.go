@@ -41,6 +41,14 @@ func GetCourseByID(courseID string) sq.SelectBuilder {
 		Where(sq.Eq{"c.id": courseID})
 }
 
+// GetCourseByIDIncludingInactive also returns inactive and soft-deleted courses, e.g. to show the
+// course an issued certificate refers to.
+func GetCourseByIDIncludingInactive(courseID string) sq.SelectBuilder {
+	return psql.Select(courseQuerySelectCommon...).
+		From(fmt.Sprintf("%s AS c", coursesTableName)).
+		Where(sq.Eq{"c.id": courseID})
+}
+
 func GetCourses(limit, offset int) sq.SelectBuilder {
 	return psql.Select(courseQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS c", coursesTableName)).

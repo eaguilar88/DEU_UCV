@@ -85,6 +85,16 @@ func TestHandler_SubmitCloseRequest(t *testing.T) {
 			wantErr: httperrors.NewConflict(ErrCloseRequestAlreadyPending.Error()),
 		},
 		{
+			name:   "error invalid participants file",
+			userID: &userID,
+			prepare: func(ctx echo.Context, svc *mocks.MockService) {
+				svc.EXPECT().SubmitCloseRequest(ctx.Request().Context(), mock.AnythingOfType("entities.CourseCycleCloseRequest"), userID).
+					Return(int64(-1), rowError(3, "cédula vacía"))
+			},
+			fields:  map[string]string{"course_cycle_id": "5"},
+			wantErr: httperrors.NewBadRequest("archivo de participantes, fila 3: cédula vacía"),
+		},
+		{
 			name:   "error submitting close request",
 			userID: &userID,
 			prepare: func(ctx echo.Context, svc *mocks.MockService) {
@@ -240,4 +250,21 @@ func TestHandler_GetCloseRequestByID(t *testing.T) {
 	err := h.GetCloseRequestByID(ctx)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, rec.Code)
+}
+
+func TestHandler_GetParticipantsTemplate(t *testing.T) {
+	svc := mocks.NewMockService(t)
+	req := httptest.NewRequest(http.MethodGet, "/course-cycle-close-requests/participants-template", nil)
+	rec := httptest.NewRecorder()
+	ctx := e.NewContext(req, rec)
+	svc.EXPECT().ParticipantsTemplate(ctx.Request().Context()).Return([]byte("xlsx"), nil)
+
+	h := NewHandler(svc, zap.NewNop())
+	err := h.GetParticipantsTemplate(ctx)
+
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, ParticipantsTemplateContentType, rec.Header().Get(echo.HeaderContentType))
+	assert.Equal(t, `attachment; filename="participantes_aprobados.xlsx"`, rec.Header().Get(echo.HeaderContentDisposition))
+	assert.Equal(t, "xlsx", rec.Body.String())
 }

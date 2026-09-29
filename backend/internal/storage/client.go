@@ -97,6 +97,23 @@ func (b *B2Client) UploadFile(ctx context.Context, files []*entities.File) error
 	return nil
 }
 
+// PutObject uploads a single object. Unlike UploadFile it has no built-in timeout, so large
+// objects (e.g. a certificates ZIP) are bounded only by ctx. body should be seekable (a
+// bytes.Reader or *os.File) so the SDK can sign the payload.
+func (b *B2Client) PutObject(ctx context.Context, objectKey, contentType string, body io.Reader) error {
+	_, err := b.client.PutObject(ctx, &s3.PutObjectInput{
+		Bucket:      aws.String(b.bucketName),
+		Key:         aws.String(objectKey),
+		Body:        body,
+		ContentType: aws.String(contentType),
+	})
+	if err != nil {
+		b.logger.Error("failed to put object", zap.String("objectKey", objectKey), zap.Error(err))
+		return fmt.Errorf("failed to put object: %w", err)
+	}
+	return nil
+}
+
 func (b *B2Client) DeleteFile(ctx context.Context, objectKey string) error {
 	_, err := b.client.DeleteObject(ctx, &s3.DeleteObjectInput{
 		Bucket: aws.String(b.bucketName),

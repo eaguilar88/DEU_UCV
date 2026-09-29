@@ -11,6 +11,15 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      gotenberg:
+        condition: service_started
+    networks:
+      - web
+  gotenberg:
+    # Renders certificate HTML to PDF for the backend (internal/gotenberg). Not published: only
+    # reachable from the backend over the web network.
+    image: gotenberg/gotenberg:8
+    restart: unless-stopped
     networks:
       - web
   db:

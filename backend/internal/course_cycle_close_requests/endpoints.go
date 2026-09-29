@@ -3,6 +3,7 @@ package course_cycle_close_requests
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -19,6 +20,7 @@ type Service interface {
 	RejectCloseRequest(ctx context.Context, id, reviewerID, comments string) error
 	GetCloseRequests(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.CourseCycleCloseRequest, entities.PageScope, error)
 	GetCloseRequestByID(ctx context.Context, id string) (entities.CourseCycleCloseRequest, error)
+	ParticipantsTemplate(ctx context.Context) ([]byte, error)
 }
 
 type Handler struct {
@@ -35,6 +37,7 @@ func NewHandler(svc Service, log *zap.Logger) *Handler {
 
 func (h *Handler) RegisterProtectedEndpoints(g *echo.Group) {
 	g.POST("/course-cycle-close-requests", h.SubmitCloseRequest)
+	g.GET("/course-cycle-close-requests/participants-template", h.GetParticipantsTemplate)
 }
 
 func (h *Handler) RegisterAdminEndpoints(g *echo.Group) {
@@ -60,6 +63,10 @@ func (h *Handler) SubmitCloseRequest(c echo.Context) error {
 
 	id, err := h.svc.SubmitCloseRequest(ctx, request, userID)
 	if err != nil {
+		var fileErr *ParticipantsFileError
+		if errors.As(err, &fileErr) {
+			return httperrors.NewBadRequest(fileErr.Error())
+		}
 		if errors.Is(err, ErrCloseRequestAlreadyPending) {
 			return httperrors.NewConflict(ErrCloseRequestAlreadyPending.Error())
 		}
@@ -67,6 +74,16 @@ func (h *Handler) SubmitCloseRequest(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, map[string]string{"id": strconv.FormatInt(id, 10)})
+}
+
+// GetParticipantsTemplate downloads the XLSX template for the approved participants file.
+func (h *Handler) GetParticipantsTemplate(c echo.Context) error {
+	data, err := h.svc.ParticipantsTemplate(c.Request().Context())
+	if err != nil {
+		return httperrors.NewInternal(err)
+	}
+	c.Response().Header().Set(echo.HeaderContentDisposition, fmt.Sprintf("attachment; filename=%q", ParticipantsTemplateFileName))
+	return c.Blob(http.StatusOK, ParticipantsTemplateContentType, data)
 }
 
 func (h *Handler) ApproveCloseRequest(c echo.Context) error {

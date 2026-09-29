@@ -29,6 +29,14 @@ func GetCoursePeriodByID(periodID string) sq.SelectBuilder {
 		Where(sq.Eq{"cp.id": periodID})
 }
 
+// GetCoursePeriodByIDIncludingInactive also returns closed (inactive) cycles, e.g. to show the
+// cycle a certificate was issued for.
+func GetCoursePeriodByIDIncludingInactive(periodID string) sq.SelectBuilder {
+	return psql.Select(periodQuerySelectCommon...).
+		From(fmt.Sprintf("%s AS cp", periodsTableName)).
+		Where(sq.Eq{"cp.id": periodID})
+}
+
 func GetCoursePeriods(courseID string, page entities.PageScope) sq.SelectBuilder {
 	return psql.Select(periodQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS cp", periodsTableName)).

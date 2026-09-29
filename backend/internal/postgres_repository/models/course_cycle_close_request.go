@@ -12,4 +12,6 @@ type CourseCycleCloseRequest struct {
 	ReviewedAt    sql.NullString
 	CreatedAt     string
 	UpdatedAt     string
+
+	CertificatesToken sql.NullString
 }

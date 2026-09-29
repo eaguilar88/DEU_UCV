@@ -1,29 +1,39 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	_ "embed"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"sync"
+	"syscall"
+	"time"
 
 	"github.com/eaguilar88/deu/docs"
 	"github.com/eaguilar88/deu/internal/activities"
 	"github.com/eaguilar88/deu/internal/auth"
+	"github.com/eaguilar88/deu/internal/certificates"
 	"github.com/eaguilar88/deu/internal/config"
 	"github.com/eaguilar88/deu/internal/course_cycle_close_requests"
 	"github.com/eaguilar88/deu/internal/course_periods"
 	"github.com/eaguilar88/deu/internal/course_requests"
 	"github.com/eaguilar88/deu/internal/courses"
 	"github.com/eaguilar88/deu/internal/email"
+	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/files"
+	"github.com/eaguilar88/deu/internal/gotenberg"
 	"github.com/eaguilar88/deu/internal/group_analytics"
 	"github.com/eaguilar88/deu/internal/group_dashboards"
 	"github.com/eaguilar88/deu/internal/group_requests"
 	"github.com/eaguilar88/deu/internal/group_resource_requests"
 	"github.com/eaguilar88/deu/internal/groups"
 	"github.com/eaguilar88/deu/internal/httperrors"
+	"github.com/eaguilar88/deu/internal/jobs"
 	"github.com/eaguilar88/deu/internal/jwt"
 	repository "github.com/eaguilar88/deu/internal/postgres_repository"
 	"github.com/eaguilar88/deu/internal/provider_requests"
@@ -39,6 +49,9 @@ import (
 
 //go:embed VERSION
 var appVersion string
+
+// shutdownTimeout bounds how long in-flight HTTP requests and the running job get to finish.
+const shutdownTimeout = 15 * time.Second
 
 type RegisterAdminEndpoints func(g *echo.Group)
 
@@ -124,6 +137,13 @@ func main() {
 	cycleCloseService := course_cycle_close_requests.NewService(repository, bbClient, mailClient, logger)
 	cycleCloseEndpoints := course_cycle_close_requests.NewHandler(cycleCloseService, logger)
 
+	pdfRenderer := gotenberg.NewClient(config.GotenbergURL)
+	certificatesService := certificates.NewService(repository, bbClient, mailClient, pdfRenderer, config.PublicBaseURL, logger)
+	certificatesEndpoints := certificates.NewHandler(certificatesService, logger)
+
+	worker := jobs.NewWorker(repository, logger)
+	worker.Register(entities.JobKindCourseCycleCertificates, certificatesService.GenerateForCloseRequest)
+
 	dashboardSvc := group_dashboards.NewService(repository, logger)
 	dashboardEndpoints := group_dashboards.NewHandler(dashboardSvc, logger)
 
@@ -186,13 +206,49 @@ func main() {
 		courseRequestEndpoints.RegisterCourseRequestAdminEndpoints,
 		providerRequestEndpoints.RegisterProviderRequestAdminEndpoints,
 		cycleCloseEndpoints.RegisterAdminEndpoints,
+		certificatesEndpoints.RegisterAdminEndpoints,
 		activityEndpoints.RegisterActivityAdminEndpoints,
 		dashboardEndpoints.RegisterDashboardAdminEndpoints,
 	)
 
 	addCourseCycleCloseRequestRoutes(e, cycleCloseEndpoints, middlewares...)
+	certificatesEndpoints.RegisterPublicEndpoints(e)
 
-	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", config.HTTPPort)))
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		worker.Run(ctx)
+	}()
+
+	go func() {
+		if err := e.Start(fmt.Sprintf(":%d", config.HTTPPort)); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.Error("http server stopped", zap.Error(err))
+			stop()
+		}
+	}()
+
+	<-ctx.Done()
+	logger.Info("shutting down")
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	defer cancel()
+	if err := e.Shutdown(shutdownCtx); err != nil {
+		logger.Error("error shutting down http server", zap.Error(err))
+	}
+
+	workerDone := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(workerDone)
+	}()
+	select {
+	case <-workerDone:
+	case <-shutdownCtx.Done():
+		logger.Warn("jobs worker did not stop in time")
+	}
 }
 
 func addFileRoutes(e *echo.Echo, handler *files.Handler) {

@@ -38,6 +38,23 @@ func (r *PostgresRepository) GetCoursePeriodByID(ctx context.Context, periodID s
 	return newCoursePeriodFromModel(coursePeriod), nil
 }
 
+// GetCoursePeriodByIDIncludingInactive is GetCoursePeriodByID without the is_active filter, so it
+// also finds cycles closed by an approved close request.
+func (r *PostgresRepository) GetCoursePeriodByIDIncludingInactive(ctx context.Context, periodID string) (entities.CoursePeriod, error) {
+	query, args, err := queries.GetCoursePeriodByIDIncludingInactive(periodID).ToSql()
+	if err != nil {
+		return entities.CoursePeriod{}, err
+	}
+	coursePeriod, err := scanCoursePeriod(r.db.QueryRowContext(ctx, query, args...))
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return entities.CoursePeriod{}, fmt.Errorf("%w: %w", course_periods.ErrCoursePeriodNotFound, err)
+		}
+		return entities.CoursePeriod{}, err
+	}
+	return newCoursePeriodFromModel(coursePeriod), nil
+}
+
 func (r *PostgresRepository) GetCoursePeriods(ctx context.Context, courseID string, pageScope entities.PageScope) ([]entities.CoursePeriod, entities.PageScope, error) {
 	query, args, err := queries.GetCoursePeriods(courseID, pageScope).ToSql()
 	if err != nil {

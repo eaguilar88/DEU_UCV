@@ -31,7 +31,9 @@ func (r *PostgresRepository) HasPendingCloseRequestForCycle(ctx context.Context,
 	return count > 0, nil
 }
 
-func (r *PostgresRepository) CreateCourseCycleCloseRequest(ctx context.Context, cycleID, submittedByID int64) (int64, error) {
+// CreateCourseCycleCloseRequest creates the close request together with one pending (not yet
+// issued) certificate per approved participant.
+func (r *PostgresRepository) CreateCourseCycleCloseRequest(ctx context.Context, cycleID, submittedByID int64, certificates []entities.Certificate) (int64, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return -1, err
@@ -51,6 +53,24 @@ func (r *PostgresRepository) CreateCourseCycleCloseRequest(ctx context.Context, 
 	if err = tx.QueryRowContext(ctx, insertQuery, insertArgs...).Scan(&id); err != nil {
 		r.logger.Error("error inserting cycle close request", zap.Error(err))
 		return -1, err
+	}
+
+	if len(certificates) > 0 {
+		certModels := make([]models.Certificate, 0, len(certificates))
+		for _, c := range certificates {
+			c.CloseRequestID = id
+			c.CourseCycleID = cycleID
+			certModels = append(certModels, newCertificateModelFromEntity(c))
+		}
+		certQuery, certArgs, qerr := queries.InsertCertificates(certModels).ToSql()
+		if qerr != nil {
+			err = qerr
+			return -1, httperrors.NewBadQueryError(err)
+		}
+		if _, err = tx.ExecContext(ctx, certQuery, certArgs...); err != nil {
+			r.logger.Error("error inserting close request certificates", zap.Error(err))
+			return -1, err
+		}
 	}
 
 	closureRequested := string(entities.CourseManagementStatusClosureRequested)
@@ -90,6 +110,21 @@ func (r *PostgresRepository) GetCourseCycleCloseRequestByID(ctx context.Context,
 	return newCourseCycleCloseRequestFromModel(m), nil
 }
 
+func (r *PostgresRepository) GetCourseCycleCloseRequestByCertificatesToken(ctx context.Context, token string) (entities.CourseCycleCloseRequest, error) {
+	query, args, err := queries.GetCourseCycleCloseRequestByCertificatesToken(token).ToSql()
+	if err != nil {
+		return entities.CourseCycleCloseRequest{}, err
+	}
+	m, err := scanCourseCycleCloseRequest(r.db.QueryRowContext(ctx, query, args...))
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return entities.CourseCycleCloseRequest{}, fmt.Errorf("%w: %w", course_cycle_close_requests.ErrCycleCloseRequestNotFound, err)
+		}
+		return entities.CourseCycleCloseRequest{}, err
+	}
+	return newCourseCycleCloseRequestFromModel(m), nil
+}
+
 func (r *PostgresRepository) GetCourseCycleCloseRequests(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.CourseCycleCloseRequest, entities.PageScope, error) {
 	query, args, err := queries.GetCourseCycleCloseRequests(faculty.String(), uint64(pageScope.PerPage), uint64(pageScope.Offset())).ToSql()
 	if err != nil {
@@ -117,7 +152,9 @@ func (r *PostgresRepository) GetCourseCycleCloseRequests(ctx context.Context, fa
 	return requests, pageScope, nil
 }
 
-func (r *PostgresRepository) ApproveCourseCycleCloseRequest(ctx context.Context, id, reviewerID, cycleID string, notify func() error) error {
+// ApproveCourseCycleCloseRequest approves the request, closes its cycle and enqueues certificatesJob,
+// all in one transaction, so the certificates are generated only if the approval commits.
+func (r *PostgresRepository) ApproveCourseCycleCloseRequest(ctx context.Context, id, reviewerID, cycleID, certificatesToken string, certificatesJob entities.Job, notify func() error) error {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -128,7 +165,7 @@ func (r *PostgresRepository) ApproveCourseCycleCloseRequest(ctx context.Context,
 		}
 	}()
 
-	approveQuery, approveArgs, err := queries.ApproveCourseCycleCloseRequest(id, reviewerID).ToSql()
+	approveQuery, approveArgs, err := queries.ApproveCourseCycleCloseRequest(id, reviewerID, certificatesToken).ToSql()
 	if err != nil {
 		return httperrors.NewBadQueryError(err)
 	}
@@ -153,6 +190,15 @@ func (r *PostgresRepository) ApproveCourseCycleCloseRequest(ctx context.Context,
 	}
 	if _, err = tx.ExecContext(ctx, statusQuery, statusArgs...); err != nil {
 		r.logger.Error("error setting course management status", zap.Error(err))
+		return err
+	}
+
+	jobQuery, jobArgs, err := queries.InsertJob(certificatesJob.Kind, certificatesJob.Payload).ToSql()
+	if err != nil {
+		return httperrors.NewBadQueryError(err)
+	}
+	if _, err = tx.ExecContext(ctx, jobQuery, jobArgs...); err != nil {
+		r.logger.Error("error enqueuing certificates job", zap.Error(err))
 		return err
 	}
 
@@ -216,6 +262,7 @@ func scanCourseCycleCloseRequest(row scannable) (models.CourseCycleCloseRequest,
 		&m.ReviewedAt,
 		&m.CreatedAt,
 		&m.UpdatedAt,
+		&m.CertificatesToken,
 	)
 	return m, err
 }
@@ -224,6 +271,7 @@ func newCourseCycleCloseRequestFromModel(m models.CourseCycleCloseRequest) entit
 	req := entities.CourseCycleCloseRequest{
 		ID:            m.ID,
 		CourseCycleID: m.CourseCycleID,
+		SubmittedByID: strconv.FormatInt(m.SubmittedBy, 10),
 		Status:        entities.RequestStatus(m.Status),
 		CreatedAt:     m.CreatedAt,
 		UpdatedAt:     m.UpdatedAt,
@@ -233,6 +281,9 @@ func newCourseCycleCloseRequestFromModel(m models.CourseCycleCloseRequest) entit
 	}
 	if m.ReviewedAt.Valid {
 		req.ReviewedAt = m.ReviewedAt.String
+	}
+	if m.CertificatesToken.Valid {
+		req.CertificatesToken = m.CertificatesToken.String
 	}
 	return req
 }

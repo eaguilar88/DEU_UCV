@@ -1,8 +1,10 @@
 package course_cycle_close_requests
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"io"
 	"testing"
 
 	"github.com/eaguilar88/deu/internal/course_cycle_close_requests/mocks"
@@ -21,10 +23,11 @@ func TestNewService(t *testing.T) {
 }
 
 func newValidCloseRequest() entities.CourseCycleCloseRequest {
+	participants := buildParticipantsXLSX(participantsHeaders, []string{"Ana María", "Pérez Gómez", "12.345.678", "ana@example.com"})
 	return entities.CourseCycleCloseRequest{
 		CourseCycleID:    1,
 		Comments:         "cierre de cohorte",
-		ParticipantsFile: &entities.File{Name: "archivo_participantes.pdf"},
+		ParticipantsFile: &entities.File{Name: "archivo_participantes.xlsx", Body: bytes.NewReader(participants)},
 		VouchersFile:     &entities.File{Name: "archivo_vouchers.pdf"},
 		SurveyFile:       &entities.File{Name: "archivo_encuesta.pdf"},
 	}
@@ -47,9 +50,12 @@ func TestCourseCycleCloseRequestService_SubmitCloseRequest(t *testing.T) {
 			submittedByID: "1",
 			prepare: func(repoMock *mocks.MockRepository, storageMock *mocks.MockStorageClient) {
 				repoMock.EXPECT().HasPendingCloseRequestForCycle(mock.Anything, int64(1)).Return(false, nil)
-				repoMock.EXPECT().CreateCourseCycleCloseRequest(mock.Anything, int64(1), int64(1)).Return(int64(10), nil)
+				repoMock.EXPECT().CreateCourseCycleCloseRequest(mock.Anything, int64(1), int64(1), mock.MatchedBy(isParsedCertificate)).
+					Return(int64(10), nil)
 				storageMock.EXPECT().UploadFile(mock.Anything, mock.MatchedBy(func(files []*entities.File) bool {
-					return len(files) == 3
+					// The participants file was read to parse it; its body must still be uploadable.
+					data, err := io.ReadAll(files[0].Body)
+					return len(files) == 3 && err == nil && len(data) > 0
 				})).Return(nil)
 				repoMock.EXPECT().SaveFilesToDB(mock.Anything, mock.MatchedBy(func(files []*entities.File) bool {
 					return len(files) == 3
@@ -64,6 +70,17 @@ func TestCourseCycleCloseRequestService_SubmitCloseRequest(t *testing.T) {
 			submittedByID: "not-a-number",
 			want:          -1,
 			wantErr:       errors.New("invalid submitter ID: strconv.ParseInt: parsing \"not-a-number\": invalid syntax"),
+		},
+		{
+			name: "error invalid participants file does not create the request",
+			request: func() entities.CourseCycleCloseRequest {
+				r := newValidCloseRequest()
+				r.ParticipantsFile = &entities.File{Name: "archivo_participantes.pdf", Body: bytes.NewReader([]byte("%PDF"))}
+				return r
+			}(),
+			submittedByID: "1",
+			want:          -1,
+			wantErr:       errors.New("archivo de participantes: debe ser un archivo .xlsx generado a partir de la plantilla"),
 		},
 		{
 			name:          "error checking pending close requests",
@@ -92,7 +109,7 @@ func TestCourseCycleCloseRequestService_SubmitCloseRequest(t *testing.T) {
 			submittedByID: "1",
 			prepare: func(repoMock *mocks.MockRepository, storageMock *mocks.MockStorageClient) {
 				repoMock.EXPECT().HasPendingCloseRequestForCycle(mock.Anything, int64(1)).Return(false, nil)
-				repoMock.EXPECT().CreateCourseCycleCloseRequest(mock.Anything, int64(1), int64(1)).
+				repoMock.EXPECT().CreateCourseCycleCloseRequest(mock.Anything, int64(1), int64(1), mock.Anything).
 					Return(int64(-1), errors.New("insert error"))
 			},
 			want:    -1,
@@ -104,7 +121,7 @@ func TestCourseCycleCloseRequestService_SubmitCloseRequest(t *testing.T) {
 			submittedByID: "1",
 			prepare: func(repoMock *mocks.MockRepository, storageMock *mocks.MockStorageClient) {
 				repoMock.EXPECT().HasPendingCloseRequestForCycle(mock.Anything, int64(1)).Return(false, nil)
-				repoMock.EXPECT().CreateCourseCycleCloseRequest(mock.Anything, int64(1), int64(1)).Return(int64(10), nil)
+				repoMock.EXPECT().CreateCourseCycleCloseRequest(mock.Anything, int64(1), int64(1), mock.Anything).Return(int64(10), nil)
 				storageMock.EXPECT().UploadFile(mock.Anything, mock.Anything).Return(errors.New("upload error"))
 			},
 			want:    -1,
@@ -116,7 +133,7 @@ func TestCourseCycleCloseRequestService_SubmitCloseRequest(t *testing.T) {
 			submittedByID: "1",
 			prepare: func(repoMock *mocks.MockRepository, storageMock *mocks.MockStorageClient) {
 				repoMock.EXPECT().HasPendingCloseRequestForCycle(mock.Anything, int64(1)).Return(false, nil)
-				repoMock.EXPECT().CreateCourseCycleCloseRequest(mock.Anything, int64(1), int64(1)).Return(int64(10), nil)
+				repoMock.EXPECT().CreateCourseCycleCloseRequest(mock.Anything, int64(1), int64(1), mock.Anything).Return(int64(10), nil)
 				storageMock.EXPECT().UploadFile(mock.Anything, mock.Anything).Return(nil)
 				repoMock.EXPECT().SaveFilesToDB(mock.Anything, mock.Anything).Return(errors.New("save error"))
 			},
@@ -145,6 +162,16 @@ func TestCourseCycleCloseRequestService_SubmitCloseRequest(t *testing.T) {
 	}
 }
 
+// isParsedCertificate matches the certificates created from newValidCloseRequest's participants file.
+func isParsedCertificate(certs []entities.Certificate) bool {
+	return len(certs) == 1 &&
+		certs[0].FirstName == "Ana María" &&
+		certs[0].LastName == "Pérez Gómez" &&
+		certs[0].Document == "V-12345678" &&
+		certs[0].Email == "ana@example.com" &&
+		len(certs[0].VerificationCode) == 26
+}
+
 // expectRecipientLookups stubs the lookups used to build the notification email: the submitter
 // (user "5"), the closed cycle ("2") and its course ("3").
 func expectRecipientLookups(repoMock *mocks.MockRepository) {
@@ -167,9 +194,15 @@ func TestCourseCycleCloseRequestService_ApproveCloseRequest(t *testing.T) {
 
 	// runNotify mimics the repository: it runs the notify callback inside the "transaction" and
 	// propagates its error, as the real implementation does before committing.
-	runNotify := func(_ context.Context, _, _, _ string, notify func() error) error {
+	runNotify := func(_ context.Context, _, _, _, _ string, _ entities.Job, notify func() error) error {
 		return notify()
 	}
+
+	// isCertificatesJob matches the certificates job enqueued for close request 1.
+	isCertificatesJob := mock.MatchedBy(func(job entities.Job) bool {
+		return job.Kind == entities.JobKindCourseCycleCertificates && string(job.Payload) == `{"close_request_id":1}`
+	})
+	isToken := mock.MatchedBy(func(token string) bool { return len(token) == 26 })
 
 	tests := []testCase{
 		{
@@ -177,7 +210,7 @@ func TestCourseCycleCloseRequestService_ApproveCloseRequest(t *testing.T) {
 			prepare: func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient) {
 				repoMock.EXPECT().GetCourseCycleCloseRequestByID(mock.Anything, "1").Return(pendingCloseRequest(), nil)
 				expectRecipientLookups(repoMock)
-				repoMock.EXPECT().ApproveCourseCycleCloseRequest(mock.Anything, "1", "reviewer-1", "2", mock.Anything).
+				repoMock.EXPECT().ApproveCourseCycleCloseRequest(mock.Anything, "1", "reviewer-1", "2", isToken, isCertificatesJob, mock.Anything).
 					RunAndReturn(runNotify)
 				mailMock.EXPECT().SendTemplate(mock.Anything, "submitter@test.com", email.TemplateCourseCycleCloseApproved,
 					email.CourseCycleCloseApprovedData{CourseName: "Curso de prueba"}).
@@ -224,7 +257,7 @@ func TestCourseCycleCloseRequestService_ApproveCloseRequest(t *testing.T) {
 			prepare: func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient) {
 				repoMock.EXPECT().GetCourseCycleCloseRequestByID(mock.Anything, "1").Return(pendingCloseRequest(), nil)
 				expectRecipientLookups(repoMock)
-				repoMock.EXPECT().ApproveCourseCycleCloseRequest(mock.Anything, "1", "reviewer-1", "2", mock.Anything).
+				repoMock.EXPECT().ApproveCourseCycleCloseRequest(mock.Anything, "1", "reviewer-1", "2", isToken, isCertificatesJob, mock.Anything).
 					RunAndReturn(runNotify)
 				mailMock.EXPECT().SendTemplate(mock.Anything, "submitter@test.com", email.TemplateCourseCycleCloseApproved,
 					email.CourseCycleCloseApprovedData{CourseName: "Curso de prueba"}).

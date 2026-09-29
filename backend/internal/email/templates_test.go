@@ -34,6 +34,12 @@ func sampleData(name Template, value string) any {
 		return CourseCycleCloseApprovedData{CourseName: value}
 	case TemplateCourseCycleCloseRejected:
 		return CourseCycleCloseRejectedData{CourseName: value, Reason: value}
+	case TemplateCourseCycleCertificatesReady:
+		return CourseCycleCertificatesReadyData{
+			CourseName:   value,
+			ZipURL:       "https://example.com/zip",
+			Certificates: []CertificateLink{{Name: value, URL: "https://example.com/c"}},
+		}
 	default:
 		return nil
 	}

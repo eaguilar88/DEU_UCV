@@ -247,6 +247,68 @@ func (_c *MockService_GetCloseRequests_Call) RunAndReturn(run func(ctx context.C
 	return _c
 }
 
+// ParticipantsTemplate provides a mock function for the type MockService
+func (_mock *MockService) ParticipantsTemplate(ctx context.Context) ([]byte, error) {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ParticipantsTemplate")
+	}
+
+	var r0 []byte
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]byte, error)); ok {
+		return returnFunc(ctx)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []byte); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]byte)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockService_ParticipantsTemplate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ParticipantsTemplate'
+type MockService_ParticipantsTemplate_Call struct {
+	*mock.Call
+}
+
+// ParticipantsTemplate is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockService_Expecter) ParticipantsTemplate(ctx interface{}) *MockService_ParticipantsTemplate_Call {
+	return &MockService_ParticipantsTemplate_Call{Call: _e.mock.On("ParticipantsTemplate", ctx)}
+}
+
+func (_c *MockService_ParticipantsTemplate_Call) Run(run func(ctx context.Context)) *MockService_ParticipantsTemplate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *MockService_ParticipantsTemplate_Call) Return(bytes []byte, err error) *MockService_ParticipantsTemplate_Call {
+	_c.Call.Return(bytes, err)
+	return _c
+}
+
+func (_c *MockService_ParticipantsTemplate_Call) RunAndReturn(run func(ctx context.Context) ([]byte, error)) *MockService_ParticipantsTemplate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // RejectCloseRequest provides a mock function for the type MockService
 func (_mock *MockService) RejectCloseRequest(ctx context.Context, id string, reviewerID string, comments string) error {
 	ret := _mock.Called(ctx, id, reviewerID, comments)

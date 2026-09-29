@@ -28,6 +28,12 @@ type DeuConfig struct {
 	Database         DatabaseConfig     `envPrefix:"POSTGRES_"`
 	Email            EmailConfig        `envPrefix:"EMAIL_"`
 	BlackBlazeB2     BlackBlazeB2Config `envPrefix:"BLACKBLAZE_B2_"`
+
+	// PublicBaseURL is where the public certificate pages (/certificados/...) are reached, so it's
+	// the URL encoded in certificate QR codes and emailed links. Unlike BaseURL it has no /files
+	// suffix, and may be a different host.
+	PublicBaseURL string `env:"PUBLIC_BASE_URL" envDefault:"http://localhost:8080"`
+	GotenbergURL  string `env:"GOTENBERG_URL" envDefault:"http://gotenberg:3000"`
 }
 
 func (s *DeuConfig) IsProd() bool {

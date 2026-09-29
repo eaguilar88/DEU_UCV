@@ -37,6 +37,23 @@ func (r *PostgresRepository) GetCourse(ctx context.Context, courseID string) (en
 	return newCourseFromModel(course), nil
 }
 
+// GetCourseIncludingInactive is GetCourse without the is_active and deleted_at filters, so issued
+// certificates keep resolving their course.
+func (r *PostgresRepository) GetCourseIncludingInactive(ctx context.Context, courseID string) (entities.Course, error) {
+	query, args, err := queries.GetCourseByIDIncludingInactive(courseID).ToSql()
+	if err != nil {
+		return entities.Course{}, err
+	}
+	course, err := scanCourse(r.db.QueryRowContext(ctx, query, args...))
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return entities.Course{}, fmt.Errorf("%w: %w", courses.ErrCourseNotFound, err)
+		}
+		return entities.Course{}, err
+	}
+	return newCourseFromModel(course), nil
+}
+
 func (r *PostgresRepository) GetCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error) {
 	query, args, err := queries.GetCourses(pageScope.PerPage, pageScope.Offset()).ToSql()
 	if err != nil {
