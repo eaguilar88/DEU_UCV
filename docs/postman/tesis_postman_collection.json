@@ -1412,18 +1412,152 @@
                             ]
                         },
                         "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"course_cycle_id\": 1,\n    \"observaciones\": \"El ciclo ha finalizado exitosamente\"\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "course_cycle_id",
+                                    "value": "{{period_id}}",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "observaciones",
+                                    "value": "El ciclo ha finalizado exitosamente",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "archivo_participantes",
+                                    "type": "file",
+                                    "src": []
+                                },
+                                {
+                                    "key": "archivo_vouchers",
+                                    "type": "file",
+                                    "src": []
+                                },
+                                {
+                                    "key": "archivo_encuesta",
+                                    "type": "file",
+                                    "src": []
                                 }
+                            ]
+                        },
+                        "description": "`archivo_participantes` debe ser la plantilla .xlsx de **Descargar Plantilla de Participantes** con solo los participantes aprobados (máx. 2000 filas). Cada fila se convierte en un certificado al aprobarse la solicitud. `archivo_vouchers` y `archivo_encuesta` son obligatorios. El test guarda `close_request_id`."
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Successful POST request\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                                    "    var resp = pm.response.json()",
+                                    "    pm.environment.set('close_request_id', resp.id)",
+                                    "});",
+                                    ""
+                                ],
+                                "type": "text/javascript",
+                                "packages": {},
+                                "requests": {}
                             }
                         }
+                    ]
+                },
+                {
+                    "name": "Descargar Plantilla de Participantes",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/course-cycle-close-requests/participants-template",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "course-cycle-close-requests",
+                                "participants-template"
+                            ]
+                        },
+                        "description": "Descarga `participantes_aprobados.xlsx`: hoja \"Participantes\" (Nombres, Apellidos, Cédula, Correo; Correo opcional) y hoja \"Instrucciones\". Usa **Send and Download** para guardarlo."
                     },
                     "response": []
                 }
             ]
+        },
+        {
+            "name": "Certificados",
+            "item": [
+                {
+                    "name": "Verificar Certificado",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/certificados/{{certificate_code}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "certificados",
+                                "{{certificate_code}}"
+                            ]
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "description": "Página HTML de verificación (destino del código QR). `certificate_code` son 26 caracteres base32, sin distinguir mayúsculas. Los certificados desconocidos, no emitidos o revocados devuelven la misma página \"Certificado no válido\" con 404."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Descargar Certificado PDF",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/certificados/{{certificate_code}}/pdf",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "certificados",
+                                "{{certificate_code}}",
+                                "pdf"
+                            ]
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "description": "Descarga el PDF del certificado (`certificado-<code>.pdf`). 404 si el certificado no es válido."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Descargar Lote de Certificados (ZIP)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/certificados/lotes/{{certificates_token}}/zip",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "certificados",
+                                "lotes",
+                                "{{certificates_token}}",
+                                "zip"
+                            ]
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "description": "Descarga `certificados.zip` con todos los certificados de una solicitud de cierre. El enlace con `certificates_token` se envía por correo al solicitante al terminar la generación. 404 si el token no existe o los certificados aún no se han generado."
+                    },
+                    "response": []
+                }
+            ],
+            "description": "Rutas públicas: el código o token aleatorio actúa como credencial."
         },
         {
             "name": "Grupos de Extensión",
@@ -2692,7 +2826,8 @@
                                         "{{close_request_id}}",
                                         "approve"
                                     ]
-                                }
+                                },
+                                "description": "Cierra el ciclo y encola la generación de certificados. Un job en segundo plano los genera y envía al solicitante los enlaces de verificación y el ZIP."
                             },
                             "response": []
                         },
@@ -2722,6 +2857,42 @@
                                         }
                                     }
                                 }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Reintentar Certificados",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Status code is 202\", function () {",
+                                            "    pm.response.to.have.status(202);",
+                                            "});"
+                                        ],
+                                        "type": "text/javascript",
+                                        "packages": {}
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{base_url}}/admin/course-cycle-close-requests/{{close_request_id}}/certificates/retry",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "admin",
+                                        "course-cycle-close-requests",
+                                        "{{close_request_id}}",
+                                        "certificates",
+                                        "retry"
+                                    ]
+                                },
+                                "description": "Reencola el job de certificados de la solicitud de cierre tras agotar sus intentos. Devuelve 202; 409 si la solicitud no tiene un job de certificados fallido."
                             },
                             "response": []
                         }
@@ -3153,6 +3324,14 @@
         },
         {
             "key": "file_key",
+            "value": ""
+        },
+        {
+            "key": "certificate_code",
+            "value": ""
+        },
+        {
+            "key": "certificates_token",
             "value": ""
         }
     ]
