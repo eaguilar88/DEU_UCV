@@ -56,7 +56,7 @@ func GetCourseCycleCloseRequests(faculty string, perPage, offset uint64) sq.Sele
 	if faculty != "" {
 		q = q.Join(fmt.Sprintf("%s AS pd ON pd.id = ccr.course_cycle_id", periodsTableName)).
 			Join(fmt.Sprintf("%s AS c ON c.id = pd.course_id", coursesTableName)).
-			Where(sq.Eq{"c.faculty": faculty})
+			Where(sq.Eq{"c.origin_faculty": faculty})
 	}
 
 	return q.OrderBy("ccr.created_at DESC").

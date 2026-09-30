@@ -37,6 +37,7 @@ func courseToResponse(course entities.Course) GetCourseResponse {
 		Schedule:          course.Schedule,
 		ProviderID:        course.Owner.ID,
 		Faculty:           string(course.Faculty),
+		OriginFaculty:     string(course.OriginFaculty),
 		Location:          course.Location,
 		Type:              course.Type.String(),
 		CreatedAt:         course.CreatedAt,

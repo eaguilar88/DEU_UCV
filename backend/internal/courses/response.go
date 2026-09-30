@@ -29,6 +29,7 @@ type GetCourseResponse struct {
 	ProviderCode      string                  `json:"codigo_proveedor,omitempty"`
 	ProviderID        string                  `json:"id_proveedor,omitempty"`
 	Faculty           string                  `json:"facultad,omitempty"`
+	OriginFaculty     string                  `json:"facultad_origen,omitempty"`
 	Location          string                  `json:"ubicacion,omitempty"`
 	Type              string                  `json:"tipo,omitempty"`
 	CreatedAt         string                  `json:"creado_en,omitempty"`

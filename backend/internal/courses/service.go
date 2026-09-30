@@ -138,6 +138,13 @@ func (s *service) CreateCourse(ctx context.Context, userID string, course entiti
 	}
 
 	course.Owner.ID = provider.ID
+	// The faculty is inherited from the provider, never taken from the client.
+	// OriginFaculty is immutable: redirects only change Faculty.
+	course.Faculty = provider.Faculty
+	if course.Faculty == "" {
+		course.Faculty = entities.FacultyDEU
+	}
+	course.OriginFaculty = course.Faculty
 	courseID, requestID, err := s.repo.CreateCourseWithRequest(ctx, course)
 	if err != nil {
 		s.log.Error("failed to create course with request", zap.Error(err))

@@ -44,6 +44,7 @@ type Course struct {
 	CourseRequest     CourseRequest
 	Duration          string
 	Faculty           Faculty
+	OriginFaculty     Faculty
 	Location          string
 	Objectives        string
 	Owner             User

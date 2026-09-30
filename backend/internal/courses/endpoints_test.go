@@ -36,7 +36,6 @@ func buildCourseForm() (*bytes.Buffer, string) {
 		"estructura_curricular": "Course content",
 		"evaluacion":            "Evaluation method",
 		"cronograma":            "Schedule",
-		"facultad":              "DEU",
 	}
 	for k, v := range fields {
 		_ = w.WriteField(k, v)
@@ -318,6 +317,42 @@ func TestHandler_CreateCourse(t *testing.T) {
 			prepare: func(ctx echo.Context, tc *testCase) {
 				tc.svc.On("CreateCourse", ctx.Request().Context(), userID, mock.AnythingOfType("entities.Course")).
 					Return(int64(42), nil)
+			},
+			resp: CreateCoursesResponse{ID: "42"},
+		},
+		{
+			name:   "success ignores client-sent facultad",
+			svc:    &mocks.MockService{},
+			userID: &userID,
+			buildForm: func() (*bytes.Buffer, string) {
+				var b bytes.Buffer
+				w := multipart.NewWriter(&b)
+				fields := map[string]string{
+					"nombre":                "Test Course",
+					"descripcion":           "A test description",
+					"objetivos":             "Test objectives",
+					"fundamentacion":        "Test rationale",
+					"duracion":              "40 horas",
+					"estructura_costos":     "1000 BsS",
+					"perfil_docente":        "Instructor profile",
+					"exigencias":            "Requirements",
+					"estructura_curricular": "Course content",
+					"evaluacion":            "Evaluation method",
+					"cronograma":            "Schedule",
+					"facultad":              "Medicina",
+				}
+				for k, v := range fields {
+					_ = w.WriteField(k, v)
+				}
+				fw, _ := w.CreateFormFile("portada", "cover.jpg")
+				_, _ = fw.Write([]byte("fake image data"))
+				w.Close()
+				return &b, w.FormDataContentType()
+			},
+			prepare: func(ctx echo.Context, tc *testCase) {
+				tc.svc.On("CreateCourse", ctx.Request().Context(), userID, mock.MatchedBy(func(c entities.Course) bool {
+					return c.Faculty == "" && c.OriginFaculty == ""
+				})).Return(int64(42), nil)
 			},
 			resp: CreateCoursesResponse{ID: "42"},
 		},

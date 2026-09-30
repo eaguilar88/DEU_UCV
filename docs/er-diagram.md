@@ -104,6 +104,7 @@ erDiagram
         text schedule
         course_type_enum type
         faculty_enum faculty
+        faculty_enum origin_faculty
         course_location_enum location
         bool is_active
         bool has_documentation

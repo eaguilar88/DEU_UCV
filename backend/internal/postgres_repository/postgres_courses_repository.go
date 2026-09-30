@@ -270,6 +270,7 @@ func scanCourse(row scannable) (models.Course, error) {
 		&course.IsActive,
 		&course.HasDocumentation,
 		&course.ManagementStatus,
+		&course.OriginFaculty,
 		&course.CreatedAt,
 		&course.UpdatedAt,
 		&course.DeletedAt,
@@ -343,6 +344,13 @@ func newCourseFromModel(course models.Course) entities.Course {
 		}
 	}
 
+	if course.OriginFaculty.Valid {
+		originFaculty, err := entities.FromString(course.OriginFaculty.String)
+		if err == nil {
+			c.OriginFaculty = originFaculty
+		}
+	}
+
 	if course.Location.Valid {
 		c.Location = course.Location.String
 	}
@@ -410,6 +418,10 @@ func newCourseModelFromEntities(course entities.Course) models.Course {
 		Faculty: sql.NullString{
 			String: string(course.Faculty),
 			Valid:  course.Faculty != "",
+		},
+		OriginFaculty: sql.NullString{
+			String: string(course.OriginFaculty),
+			Valid:  course.OriginFaculty != "",
 		},
 		Location: sql.NullString{
 			String: course.Location,

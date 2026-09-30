@@ -149,6 +149,7 @@ Table courses {
   schedule text
   type course_type_enum [default: 'unassigned']
   faculty faculty_enum [default: 'DEU']
+  origin_faculty faculty_enum [note: 'immutable faculty at creation; redirects only change faculty']
   location course_location_enum
   is_active boolean [default: false]
   has_documentation boolean [default: false]

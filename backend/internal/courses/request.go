@@ -24,7 +24,6 @@ type CreateCourseRequest struct {
 	Evaluation        string `json:"evaluacion"`
 	Schedule          string `json:"cronograma"`
 	Type              string `json:"tipo"`
-	Faculty           string `json:"facultad"`
 	Location          string `json:"ubicacion"`
 }
 
@@ -47,6 +46,5 @@ type UpdateCourseRequest struct {
 	Evaluation        string `json:"evaluacion"`
 	Schedule          string `json:"cronograma"`
 	Type              string `json:"tipo"`
-	Faculty           string `json:"facultad"`
 	Location          string `json:"ubicacion"`
 }

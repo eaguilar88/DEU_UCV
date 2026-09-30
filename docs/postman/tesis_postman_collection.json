@@ -954,11 +954,6 @@
                                     "type": "text"
                                 },
                                 {
-                                    "key": "facultad",
-                                    "value": "Ingeniería",
-                                    "type": "text"
-                                },
-                                {
                                     "key": "ubicacion",
                                     "value": "online",
                                     "type": "text"
@@ -1006,7 +1001,7 @@
                         },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"nombre\": \"Introducción a la Programación con Python\",\n    \"descripcion\": \"Curso práctico orientado al aprendizaje de los fundamentos de la programación usando Python como lenguaje base.\",\n    \"objetivos\": \"Desarrollar habilidades básicas de programación y resolución de problemas mediante el uso de Python.\",\n    \"fundamentacion\": \"La demanda de profesionales con competencias en programación ha crecido significativamente en todos los sectores productivos del país.\",\n    \"duracion\": \"40 horas\",\n    \"estructura_costos\": \"Bs. 150.000\",\n    \"perfil_docente\": \"Profesional con título universitario en Computación, Ingeniería de Sistemas o afín, con experiencia docente mínima de 2 años.\",\n    \"perfiles\": \"Estudiantes universitarios, profesionales en ejercicio y público en general interesados en iniciarse en la programación.\",\n    \"exigencias\": \"Manejo básico de computadora. No se requieren conocimientos previos de programación.\",\n    \"estructura_curricular\": \"Módulo 1: Variables y tipos de datos. Módulo 2: Estructuras de control. Módulo 3: Funciones. Módulo 4: Listas y diccionarios. Módulo 5: Proyecto final.\",\n    \"evaluacion\": \"Participación en clase (20%), ejercicios prácticos (40%), proyecto final (40%).\",\n    \"cronograma\": \"Sesiones los sábados de 8:00am a 12:00pm durante 10 semanas.\",\n    \"tipo\": \"skill_development\",\n    \"facultad\": \"Ingeniería\",\n    \"ubicacion\": \"online\"\n}",
+                            "raw": "{\n    \"nombre\": \"Introducción a la Programación con Python\",\n    \"descripcion\": \"Curso práctico orientado al aprendizaje de los fundamentos de la programación usando Python como lenguaje base.\",\n    \"objetivos\": \"Desarrollar habilidades básicas de programación y resolución de problemas mediante el uso de Python.\",\n    \"fundamentacion\": \"La demanda de profesionales con competencias en programación ha crecido significativamente en todos los sectores productivos del país.\",\n    \"duracion\": \"40 horas\",\n    \"estructura_costos\": \"Bs. 150.000\",\n    \"perfil_docente\": \"Profesional con título universitario en Computación, Ingeniería de Sistemas o afín, con experiencia docente mínima de 2 años.\",\n    \"perfiles\": \"Estudiantes universitarios, profesionales en ejercicio y público en general interesados en iniciarse en la programación.\",\n    \"exigencias\": \"Manejo básico de computadora. No se requieren conocimientos previos de programación.\",\n    \"estructura_curricular\": \"Módulo 1: Variables y tipos de datos. Módulo 2: Estructuras de control. Módulo 3: Funciones. Módulo 4: Listas y diccionarios. Módulo 5: Proyecto final.\",\n    \"evaluacion\": \"Participación en clase (20%), ejercicios prácticos (40%), proyecto final (40%).\",\n    \"cronograma\": \"Sesiones los sábados de 8:00am a 12:00pm durante 10 semanas.\",\n    \"tipo\": \"skill_development\",\n    \"ubicacion\": \"online\"\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
