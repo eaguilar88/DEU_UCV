@@ -107,6 +107,9 @@ func (h *Handler) CreateCoursePeriod(c echo.Context) error {
 		if errors.Is(err, ErrInvalidCapacity) {
 			return httperrors.NewBadRequest(ErrInvalidCapacity.Error())
 		}
+		if errors.Is(err, ErrCohortNameRequired) {
+			return httperrors.NewBadRequest(ErrCohortNameRequired.Error())
+		}
 		return httperrors.NewInternal(err)
 	}
 
@@ -135,6 +138,9 @@ func (h *Handler) UpdateCoursePeriod(c echo.Context) error {
 	if err != nil {
 		if errors.Is(err, ErrCoursePeriodNotFound) {
 			return httperrors.NewNotFound("course period not found")
+		}
+		if errors.Is(err, ErrCohortNameRequired) {
+			return httperrors.NewBadRequest(ErrCohortNameRequired.Error())
 		}
 		return httperrors.NewInternal(err)
 	}

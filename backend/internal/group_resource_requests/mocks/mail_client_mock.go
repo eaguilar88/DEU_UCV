@@ -17,10 +17,19 @@ func NewMockMailClient(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockMailClient {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockMailClient{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -65,7 +74,7 @@ type MockMailClient_SendTemplate_Call struct {
 //   - to string
 //   - tmpl email.Template
 //   - data any
-func (_e *MockMailClient_Expecter) SendTemplate(ctx interface{}, to interface{}, tmpl interface{}, data interface{}) *MockMailClient_SendTemplate_Call {
+func (_e *MockMailClient_Expecter) SendTemplate(ctx any, to any, tmpl any, data any) *MockMailClient_SendTemplate_Call {
 	return &MockMailClient_SendTemplate_Call{Call: _e.mock.On("SendTemplate", ctx, to, tmpl, data)}
 }
 

@@ -17,10 +17,19 @@ func newMockpreparer(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *mockpreparer {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &mockpreparer{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -74,7 +83,7 @@ type mockpreparer_PrepareContext_Call struct {
 // PrepareContext is a helper method to define mock.On call
 //   - ctx context.Context
 //   - query string
-func (_e *mockpreparer_Expecter) PrepareContext(ctx interface{}, query interface{}) *mockpreparer_PrepareContext_Call {
+func (_e *mockpreparer_Expecter) PrepareContext(ctx any, query any) *mockpreparer_PrepareContext_Call {
 	return &mockpreparer_PrepareContext_Call{Call: _e.mock.On("PrepareContext", ctx, query)}
 }
 

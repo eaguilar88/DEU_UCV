@@ -18,10 +18,19 @@ func NewMockRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockRepository {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockRepository{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -66,7 +75,7 @@ type MockRepository_AddRoleToUser_Call struct {
 //   - tx *sql.Tx
 //   - userID string
 //   - role int
-func (_e *MockRepository_Expecter) AddRoleToUser(ctx interface{}, tx interface{}, userID interface{}, role interface{}) *MockRepository_AddRoleToUser_Call {
+func (_e *MockRepository_Expecter) AddRoleToUser(ctx any, tx any, userID any, role any) *MockRepository_AddRoleToUser_Call {
 	return &MockRepository_AddRoleToUser_Call{Call: _e.mock.On("AddRoleToUser", ctx, tx, userID, role)}
 }
 
@@ -142,7 +151,7 @@ type MockRepository_CreateUser_Call struct {
 // CreateUser is a helper method to define mock.On call
 //   - ctx context.Context
 //   - user entities.User
-func (_e *MockRepository_Expecter) CreateUser(ctx interface{}, user interface{}) *MockRepository_CreateUser_Call {
+func (_e *MockRepository_Expecter) CreateUser(ctx any, user any) *MockRepository_CreateUser_Call {
 	return &MockRepository_CreateUser_Call{Call: _e.mock.On("CreateUser", ctx, user)}
 }
 
@@ -199,7 +208,7 @@ type MockRepository_DeleteUser_Call struct {
 // DeleteUser is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID string
-func (_e *MockRepository_Expecter) DeleteUser(ctx interface{}, userID interface{}) *MockRepository_DeleteUser_Call {
+func (_e *MockRepository_Expecter) DeleteUser(ctx any, userID any) *MockRepository_DeleteUser_Call {
 	return &MockRepository_DeleteUser_Call{Call: _e.mock.On("DeleteUser", ctx, userID)}
 }
 
@@ -268,7 +277,7 @@ type MockRepository_GetFilesByOwner_Call struct {
 //   - ctx context.Context
 //   - ownerID string
 //   - ownerType entities.OwnerType
-func (_e *MockRepository_Expecter) GetFilesByOwner(ctx interface{}, ownerID interface{}, ownerType interface{}) *MockRepository_GetFilesByOwner_Call {
+func (_e *MockRepository_Expecter) GetFilesByOwner(ctx any, ownerID any, ownerType any) *MockRepository_GetFilesByOwner_Call {
 	return &MockRepository_GetFilesByOwner_Call{Call: _e.mock.On("GetFilesByOwner", ctx, ownerID, ownerType)}
 }
 
@@ -341,7 +350,7 @@ type MockRepository_GetUser_Call struct {
 // GetUser is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID string
-func (_e *MockRepository_Expecter) GetUser(ctx interface{}, userID interface{}) *MockRepository_GetUser_Call {
+func (_e *MockRepository_Expecter) GetUser(ctx any, userID any) *MockRepository_GetUser_Call {
 	return &MockRepository_GetUser_Call{Call: _e.mock.On("GetUser", ctx, userID)}
 }
 
@@ -409,7 +418,7 @@ type MockRepository_GetUserByUsername_Call struct {
 // GetUserByUsername is a helper method to define mock.On call
 //   - ctx context.Context
 //   - username string
-func (_e *MockRepository_Expecter) GetUserByUsername(ctx interface{}, username interface{}) *MockRepository_GetUserByUsername_Call {
+func (_e *MockRepository_Expecter) GetUserByUsername(ctx any, username any) *MockRepository_GetUserByUsername_Call {
 	return &MockRepository_GetUserByUsername_Call{Call: _e.mock.On("GetUserByUsername", ctx, username)}
 }
 
@@ -477,7 +486,7 @@ type MockRepository_GetUserRoles_Call struct {
 // GetUserRoles is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID string
-func (_e *MockRepository_Expecter) GetUserRoles(ctx interface{}, userID interface{}) *MockRepository_GetUserRoles_Call {
+func (_e *MockRepository_Expecter) GetUserRoles(ctx any, userID any) *MockRepository_GetUserRoles_Call {
 	return &MockRepository_GetUserRoles_Call{Call: _e.mock.On("GetUserRoles", ctx, userID)}
 }
 
@@ -551,7 +560,7 @@ type MockRepository_GetUsers_Call struct {
 // GetUsers is a helper method to define mock.On call
 //   - ctx context.Context
 //   - pageScope entities.PageScope
-func (_e *MockRepository_Expecter) GetUsers(ctx interface{}, pageScope interface{}) *MockRepository_GetUsers_Call {
+func (_e *MockRepository_Expecter) GetUsers(ctx any, pageScope any) *MockRepository_GetUsers_Call {
 	return &MockRepository_GetUsers_Call{Call: _e.mock.On("GetUsers", ctx, pageScope)}
 }
 
@@ -608,7 +617,7 @@ type MockRepository_SaveFilesToDB_Call struct {
 // SaveFilesToDB is a helper method to define mock.On call
 //   - ctx context.Context
 //   - files []*entities.File
-func (_e *MockRepository_Expecter) SaveFilesToDB(ctx interface{}, files interface{}) *MockRepository_SaveFilesToDB_Call {
+func (_e *MockRepository_Expecter) SaveFilesToDB(ctx any, files any) *MockRepository_SaveFilesToDB_Call {
 	return &MockRepository_SaveFilesToDB_Call{Call: _e.mock.On("SaveFilesToDB", ctx, files)}
 }
 
@@ -666,7 +675,7 @@ type MockRepository_UpdateUser_Call struct {
 //   - ctx context.Context
 //   - userID string
 //   - user entities.User
-func (_e *MockRepository_Expecter) UpdateUser(ctx interface{}, userID interface{}, user interface{}) *MockRepository_UpdateUser_Call {
+func (_e *MockRepository_Expecter) UpdateUser(ctx any, userID any, user any) *MockRepository_UpdateUser_Call {
 	return &MockRepository_UpdateUser_Call{Call: _e.mock.On("UpdateUser", ctx, userID, user)}
 }
 

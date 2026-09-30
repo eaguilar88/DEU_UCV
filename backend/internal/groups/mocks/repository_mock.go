@@ -17,10 +17,19 @@ func NewMockRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockRepository {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockRepository{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -81,7 +90,7 @@ type MockRepository_CreateGroupWithRequests_Call struct {
 //   - ctx context.Context
 //   - group entities.ExtensionGroup
 //   - requests []entities.GroupRequest
-func (_e *MockRepository_Expecter) CreateGroupWithRequests(ctx interface{}, group interface{}, requests interface{}) *MockRepository_CreateGroupWithRequests_Call {
+func (_e *MockRepository_Expecter) CreateGroupWithRequests(ctx any, group any, requests any) *MockRepository_CreateGroupWithRequests_Call {
 	return &MockRepository_CreateGroupWithRequests_Call{Call: _e.mock.On("CreateGroupWithRequests", ctx, group, requests)}
 }
 
@@ -143,7 +152,7 @@ type MockRepository_DeleteGroup_Call struct {
 // DeleteGroup is a helper method to define mock.On call
 //   - ctx context.Context
 //   - groupID string
-func (_e *MockRepository_Expecter) DeleteGroup(ctx interface{}, groupID interface{}) *MockRepository_DeleteGroup_Call {
+func (_e *MockRepository_Expecter) DeleteGroup(ctx any, groupID any) *MockRepository_DeleteGroup_Call {
 	return &MockRepository_DeleteGroup_Call{Call: _e.mock.On("DeleteGroup", ctx, groupID)}
 }
 
@@ -212,7 +221,7 @@ type MockRepository_GetContactsByOwner_Call struct {
 //   - ctx context.Context
 //   - ownerID string
 //   - ownerType entities.OwnerType
-func (_e *MockRepository_Expecter) GetContactsByOwner(ctx interface{}, ownerID interface{}, ownerType interface{}) *MockRepository_GetContactsByOwner_Call {
+func (_e *MockRepository_Expecter) GetContactsByOwner(ctx any, ownerID any, ownerType any) *MockRepository_GetContactsByOwner_Call {
 	return &MockRepository_GetContactsByOwner_Call{Call: _e.mock.On("GetContactsByOwner", ctx, ownerID, ownerType)}
 }
 
@@ -286,7 +295,7 @@ type MockRepository_GetFilesByOwner_Call struct {
 //   - ctx context.Context
 //   - ownerID string
 //   - ownerType entities.OwnerType
-func (_e *MockRepository_Expecter) GetFilesByOwner(ctx interface{}, ownerID interface{}, ownerType interface{}) *MockRepository_GetFilesByOwner_Call {
+func (_e *MockRepository_Expecter) GetFilesByOwner(ctx any, ownerID any, ownerType any) *MockRepository_GetFilesByOwner_Call {
 	return &MockRepository_GetFilesByOwner_Call{Call: _e.mock.On("GetFilesByOwner", ctx, ownerID, ownerType)}
 }
 
@@ -357,7 +366,7 @@ type MockRepository_GetGroupByID_Call struct {
 // GetGroupByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - groupID string
-func (_e *MockRepository_Expecter) GetGroupByID(ctx interface{}, groupID interface{}) *MockRepository_GetGroupByID_Call {
+func (_e *MockRepository_Expecter) GetGroupByID(ctx any, groupID any) *MockRepository_GetGroupByID_Call {
 	return &MockRepository_GetGroupByID_Call{Call: _e.mock.On("GetGroupByID", ctx, groupID)}
 }
 
@@ -432,7 +441,7 @@ type MockRepository_GetGroups_Call struct {
 //   - ctx context.Context
 //   - filter entities.GroupFilter
 //   - pageScope entities.PageScope
-func (_e *MockRepository_Expecter) GetGroups(ctx interface{}, filter interface{}, pageScope interface{}) *MockRepository_GetGroups_Call {
+func (_e *MockRepository_Expecter) GetGroups(ctx any, filter any, pageScope any) *MockRepository_GetGroups_Call {
 	return &MockRepository_GetGroups_Call{Call: _e.mock.On("GetGroups", ctx, filter, pageScope)}
 }
 
@@ -504,7 +513,7 @@ type MockRepository_GetGroupsSimple_Call struct {
 
 // GetGroupsSimple is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockRepository_Expecter) GetGroupsSimple(ctx interface{}) *MockRepository_GetGroupsSimple_Call {
+func (_e *MockRepository_Expecter) GetGroupsSimple(ctx any) *MockRepository_GetGroupsSimple_Call {
 	return &MockRepository_GetGroupsSimple_Call{Call: _e.mock.On("GetGroupsSimple", ctx)}
 }
 
@@ -567,7 +576,7 @@ type MockRepository_GetRandomActiveGroups_Call struct {
 // GetRandomActiveGroups is a helper method to define mock.On call
 //   - ctx context.Context
 //   - limit int
-func (_e *MockRepository_Expecter) GetRandomActiveGroups(ctx interface{}, limit interface{}) *MockRepository_GetRandomActiveGroups_Call {
+func (_e *MockRepository_Expecter) GetRandomActiveGroups(ctx any, limit any) *MockRepository_GetRandomActiveGroups_Call {
 	return &MockRepository_GetRandomActiveGroups_Call{Call: _e.mock.On("GetRandomActiveGroups", ctx, limit)}
 }
 
@@ -624,7 +633,7 @@ type MockRepository_SaveFilesToDB_Call struct {
 // SaveFilesToDB is a helper method to define mock.On call
 //   - ctx context.Context
 //   - file []*entities.File
-func (_e *MockRepository_Expecter) SaveFilesToDB(ctx interface{}, file interface{}) *MockRepository_SaveFilesToDB_Call {
+func (_e *MockRepository_Expecter) SaveFilesToDB(ctx any, file any) *MockRepository_SaveFilesToDB_Call {
 	return &MockRepository_SaveFilesToDB_Call{Call: _e.mock.On("SaveFilesToDB", ctx, file)}
 }
 
@@ -692,7 +701,7 @@ type MockRepository_UpdateGroup_Call struct {
 // UpdateGroup is a helper method to define mock.On call
 //   - ctx context.Context
 //   - group entities.ExtensionGroup
-func (_e *MockRepository_Expecter) UpdateGroup(ctx interface{}, group interface{}) *MockRepository_UpdateGroup_Call {
+func (_e *MockRepository_Expecter) UpdateGroup(ctx any, group any) *MockRepository_UpdateGroup_Call {
 	return &MockRepository_UpdateGroup_Call{Call: _e.mock.On("UpdateGroup", ctx, group)}
 }
 

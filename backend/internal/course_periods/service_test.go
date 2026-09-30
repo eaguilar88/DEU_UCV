@@ -177,7 +177,7 @@ func TestCoursePeriodService_CreateCoursePeriod(t *testing.T) {
 	tests := []testCase{
 		{
 			name:   "success",
-			period: entities.CoursePeriod{Capacity: 30},
+			period: entities.CoursePeriod{Name: "Cohorte 2026-I", Capacity: 30},
 			prepare: func(ctx context.Context, repoMock *mocks.MockRepository) {
 				repoMock.EXPECT().GetCourse(ctx, mock.AnythingOfType("string")).Return(entities.Course{ID: "course-id"}, nil)
 				repoMock.EXPECT().GetActiveCoursePeriodByCourseID(ctx, mock.AnythingOfType("string")).
@@ -192,7 +192,7 @@ func TestCoursePeriodService_CreateCoursePeriod(t *testing.T) {
 		},
 		{
 			name:   "error creating new course period",
-			period: entities.CoursePeriod{Capacity: 30},
+			period: entities.CoursePeriod{Name: "Cohorte 2026-I", Capacity: 30},
 			prepare: func(ctx context.Context, repoMock *mocks.MockRepository) {
 				repoMock.EXPECT().GetCourse(ctx, mock.AnythingOfType("string")).Return(entities.Course{ID: "course-id"}, nil)
 				repoMock.EXPECT().GetActiveCoursePeriodByCourseID(ctx, mock.AnythingOfType("string")).
@@ -207,7 +207,7 @@ func TestCoursePeriodService_CreateCoursePeriod(t *testing.T) {
 		},
 		{
 			name:   "error course not found or not approved",
-			period: entities.CoursePeriod{Capacity: 30},
+			period: entities.CoursePeriod{Name: "Cohorte 2026-I", Capacity: 30},
 			prepare: func(ctx context.Context, repoMock *mocks.MockRepository) {
 				repoMock.EXPECT().GetCourse(ctx, mock.AnythingOfType("string")).
 					Return(entities.Course{}, courses.ErrCourseNotFound)
@@ -217,7 +217,7 @@ func TestCoursePeriodService_CreateCoursePeriod(t *testing.T) {
 		},
 		{
 			name:   "error a course period is already open",
-			period: entities.CoursePeriod{Capacity: 30},
+			period: entities.CoursePeriod{Name: "Cohorte 2026-I", Capacity: 30},
 			prepare: func(ctx context.Context, repoMock *mocks.MockRepository) {
 				repoMock.EXPECT().GetCourse(ctx, mock.AnythingOfType("string")).Return(entities.Course{ID: "course-id"}, nil)
 				repoMock.EXPECT().GetActiveCoursePeriodByCourseID(ctx, mock.AnythingOfType("string")).
@@ -228,7 +228,7 @@ func TestCoursePeriodService_CreateCoursePeriod(t *testing.T) {
 		},
 		{
 			name:   "error course has a pending closure request",
-			period: entities.CoursePeriod{Capacity: 30},
+			period: entities.CoursePeriod{Name: "Cohorte 2026-I", Capacity: 30},
 			prepare: func(ctx context.Context, repoMock *mocks.MockRepository) {
 				repoMock.EXPECT().GetCourse(ctx, mock.AnythingOfType("string")).
 					Return(entities.Course{ID: "course-id", ManagementStatus: entities.CourseManagementStatusClosureRequested}, nil)
@@ -241,6 +241,12 @@ func TestCoursePeriodService_CreateCoursePeriod(t *testing.T) {
 			period:  entities.CoursePeriod{Capacity: 0},
 			want:    int64(-1),
 			wantErr: ErrInvalidCapacity,
+		},
+		{
+			name:    "error missing cohort name",
+			period:  entities.CoursePeriod{Capacity: 30},
+			want:    int64(-1),
+			wantErr: ErrCohortNameRequired,
 		},
 	}
 	ctx := context.Background()
@@ -266,13 +272,15 @@ func TestCoursePeriodService_CreateCoursePeriod(t *testing.T) {
 func TestCoursePeriodService_UpdateCoursePeriod(t *testing.T) {
 	type testCase struct {
 		name    string
+		period  entities.CoursePeriod
 		prepare func(ctx context.Context, repoMock *mocks.MockRepository)
 		wantErr error
 	}
 
 	tests := []testCase{
 		{
-			name: "success",
+			name:   "success",
+			period: entities.CoursePeriod{Name: "Cohorte 2026-I"},
 			prepare: func(ctx context.Context, repoMock *mocks.MockRepository) {
 				repoMock.EXPECT().UpdateCoursePeriod(ctx, mock.AnythingOfType("string"), mock.AnythingOfType("entities.CoursePeriod")).RunAndReturn(
 					func(ctx context.Context, periodID string, period entities.CoursePeriod) error {
@@ -282,7 +290,8 @@ func TestCoursePeriodService_UpdateCoursePeriod(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "error updating course period",
+			name:   "error updating course period",
+			period: entities.CoursePeriod{Name: "Cohorte 2026-I"},
 			prepare: func(ctx context.Context, repoMock *mocks.MockRepository) {
 				repoMock.EXPECT().UpdateCoursePeriod(ctx, mock.AnythingOfType("string"), mock.AnythingOfType("entities.CoursePeriod")).RunAndReturn(
 					func(ctx context.Context, periodID string, period entities.CoursePeriod) error {
@@ -290,6 +299,11 @@ func TestCoursePeriodService_UpdateCoursePeriod(t *testing.T) {
 					})
 			},
 			wantErr: errors.New("error updating course period"),
+		},
+		{
+			name:    "error missing cohort name",
+			period:  entities.CoursePeriod{},
+			wantErr: ErrCohortNameRequired,
 		},
 	}
 	ctx := context.Background()
@@ -301,7 +315,7 @@ func TestCoursePeriodService_UpdateCoursePeriod(t *testing.T) {
 				tt.prepare(ctx, repoMock)
 			}
 			s := NewService(repoMock, loggerMock)
-			err := s.UpdateCoursePeriod(ctx, "1", entities.CoursePeriod{})
+			err := s.UpdateCoursePeriod(ctx, "1", tt.period)
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
 			} else {

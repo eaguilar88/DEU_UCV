@@ -46,11 +46,7 @@ Este documento compara ambos backends y documenta **en una sola dirección**: qu
 - **Node:** `publications` (`GET/POST /api/publications`) se indexan por `course_id` **y** `cohort_id` de forma independiente, y en el detalle de curso (`GET /api/courses/[id]`) solo se muestran las del cohorte más reciente.
 - **Go:** los anuncios (`Announcement`) cuelgan exclusivamente de `course_periods/:period_id/announcements` (`backend/internal/course_periods/endpoints.go:149-212`) — modelo equivalente en la práctica (un período ≈ un cohorte), solo difiere la forma de la clave. No requiere cambio funcional, se documenta como diferencia de modelado menor.
 
-### 2.5 Endpoint de inscripción/participantes (🔴 Alta)
-
-Ver el detalle completo en §5.1 — se incluye aquí como referencia cruzada porque también es, en esencia, una funcionalidad de "curso" (gestionar quién cursa un período).
-
-### 2.6 Facultad/coordinador de origen inmutable tras una redirección (🟡 Media)
+### 2.6 Facultad/coordinador de origen inmutable tras una redirección (🟡 Media) — ✅ Resuelto
 
 - **Node:** al crear el curso (`POST /api/courses`, `diplomados/src/app/api/courses/route.ts`) guarda dos pares de campos: `facultad`/`coordinador_id` (dueño **actual**, que cambia con `remit`) y `facultad_origen`/`coordinador_origen` (el "anfitrión inmutable"). Los usa de forma distinta según el trámite:
   - la revisión de la solicitud va a la facultad **actual** (`admin/courses/route.ts`: `isMyTurn = isUnderReview && facultadCurso === miFacultad`);
@@ -58,24 +54,39 @@ Ver el detalle completo en §5.1 — se incluye aquí como referencia cruzada po
   - la solicitud de cierre de cohorte se envía al coordinador de **origen** (`courses/[id]/closures/route.ts`: `coordinador_id: course.coordinador_origen || course.coordinador_id`).
 - **Go:** hay una sola columna `courses.faculty`. `PostgresRepository.RedirectCourseRequest` (`backend/internal/postgres_repository/postgres_course_requests_repository.go:210`) la **sobrescribe** con `queries.UpdateCourseFaculty`, sin conservar la original. `GET /admin/course-cycle-close-requests` filtra por `c.faculty` (`queries.GetCourseCycleCloseRequests`), es decir, por la facultad actual.
 - **Impacto:** después de redirigir un curso, sus solicitudes de cierre llegan a la facultad a la que se redirigió y no a la facultad anfitriona, al revés de lo que hace Node. Resolverlo requiere guardar la facultad de origen (columna nueva o tomarla del proveedor, ver §2.7) y usarla para dirigir los cierres.
+- **Resuelto:** nueva columna `courses.origin_faculty` (migración `000032`; las filas existentes se rellenan con `faculty`, así que un curso que ya se había redirigido queda con la facultad actual como origen). Se fija al crear el curso con la misma facultad heredada del proveedor (§2.7) y ninguna operación la modifica: `RedirectCourseRequest` sigue cambiando solo `faculty`. No se reutilizó `providers.faculty` porque se puede editar (`UpdateProvider`). Uso, igual que en Node:
+  - la bandeja de solicitudes de curso (`GET /admin/course-requests`) sigue filtrando por la facultad **actual** (`c.faculty`);
+  - la bandeja de cierres (`GET /admin/course-cycle-close-requests`) ahora filtra por la facultad de **origen** (`c.origin_faculty`).
 
-### 2.7 Facultad del curso enviada por el cliente en vez de heredada del proveedor (🟡 Media)
+  Se expone como `facultad_origen` en `GetCourseResponse`. `coordinador_origen` no se porta: Go dirige las bandejas por facultad, no por ID de coordinador.
+
+### 2.7 Facultad del curso enviada por el cliente en vez de heredada del proveedor (🟡 Media) — ✅ Resuelto
 
 - **Node:** `POST /api/courses` no acepta la facultad del cliente. La **hereda** del proveedor: busca el `provider` del usuario, toma su `coordinador_id` y de ahí la `facultad` del coordinador (`admin/courses/route.ts` hace lo mismo leyendo `provider.facultad` directamente).
 - **Go:** `POST /courses` (`backend/internal/courses/decoders.go:32` → `toCourseEntity`) exige un campo de formulario `facultad` y lo usa tal cual. `courses.service.CreateCourse` ya carga el proveedor (`GetProviderByUserID`) y `entities.Provider.Faculty` existe, pero solo se usa para `Owner.ID`.
 - **Impacto:** un proveedor puede enviar su solicitud a cualquier facultad eligiéndola en el formulario, y así saltarse la facultad a la que está adscrito. El arreglo es acotado: tomar `course.Faculty = provider.Faculty` en el servicio y dejar de exigir el campo.
+- **Resuelto:** `POST /courses` ya no lee `facultad`; si el cliente la envía, se ignora. `courses.service.CreateCourse` asigna `Faculty` y `OriginFaculty` desde `provider.Faculty`; si el proveedor no tiene facultad, usa `DEU` (el valor por defecto de la columna). `PUT /courses/:id` también dejó de aceptar `facultad`: Node no tiene ninguna ruta que cambie la facultad de un curso, y en Go la actualización la estaba poniendo en `NULL` porque el decoder no la mapeaba. Ahora la facultad solo cambia al crear el curso o al redirigir la solicitud.
 
-### 2.8 `GET /courses` sin filtros por dueño/estado ni visibilidad por rol (⚪ Baja)
+### 2.8 `GET /courses` sin filtros por dueño/estado ni visibilidad por rol (⚪ Baja) — ✅ Resuelto
 
 - **Node:** `GET /api/courses` acepta `usuario_id`, `codigo_proveedor` y `estado`. Si quien consulta no es admin/coordinador ni dueño, solo devuelve cursos en `abierto`/`cerrado`.
 - **Go:** `GET /courses` (`backend/internal/courses/endpoints.go:65`) es público, solo pagina, y devuelve todo curso con `is_active=true` (aprobado), tenga contrato o no, sin importar quién consulta.
 - **Mitigación existente:** el landing ya puede usar `GET /courses/public` (§2.3), y el proveedor ya puede ver lo suyo con `GET /course-requests` (§5.5). Lo que falta es solo el filtro por `estado`/proveedor sobre el listado general y, si importa, dejar de exponer públicamente cursos aprobados sin contrato por `GET /courses`.
+- **Resuelto:** `GET /courses` ahora tiene auth opcional (`OptionalJWTMiddleware`, igual que grupos y usuarios) y acepta los mismos filtros que Node:
+  - `usuario_id`: cursos del proveedor cuyo usuario es ese;
+  - `codigo_proveedor`: código del proveedor;
+  - `estado`: `abierto`, `cerrado` o `solicitud-cierre`. Un valor distinto devuelve 400.
 
-### 2.9 Cohorte sin nombre (⚪ Baja)
+  La visibilidad sigue la regla de Node. Si quien consulta no es admin (`root`, `deu_admin` o `faculty_admin`, el equivalente del "coordinador" de Node) ni pide sus propios cursos (`usuario_id` = su ID), solo ve cursos con `estado_gestion` en `abierto`/`cerrado`. La regla vive en `courses.service.GetCourses`, no en el handler. Diferencias con Node:
+  - se sigue devolviendo solo cursos aprobados (`is_active=true`); en Node la colección `courses` tampoco contiene solicitudes pendientes;
+  - la paginación se aplica siempre, también con `usuario_id`/`codigo_proveedor` (Node la omite en ese caso).
+
+### 2.9 Cohorte sin nombre (⚪ Baja) — ✅ Resuelto
 
 - **Node:** cada `course-cycles` tiene `nombre_cohorte` (viene de `cohortName` en `POST /api/courses/[id]/open`), y la solicitud de cierre lo repite en `payload.nombre_cohorte`.
 - **Go:** `entities.CoursePeriod` (`backend/internal/entities/course_period.go`) no tiene campo de nombre; un período se identifica solo por ID y fechas.
 - **Impacto:** cosmético/UX: la UI de `diplomados/` muestra el nombre de la cohorte en el detalle del curso y en la bandeja de cierres.
+- **Resuelto:** nueva columna `course_cycles.name` (migración `000033`; los períodos existentes quedan con nombre vacío). `POST` y `PUT /courses/:course_id/periods` exigen `nombre_cohorte`, como el formulario de Node (`gestion-cohorte-form.tsx`). Un nombre vacío o de solo espacios se rechaza con 400 (`ErrCohortNameRequired`, validado en el servicio igual que `capacidad`). Se expone como `nombre_cohorte` en los períodos y en `ultimo_periodo` del detalle del curso. La solicitud de cierre no repite el nombre (Node lo copia en `payload.nombre_cohorte`): en Go la solicitud ya referencia el período por `course_cycle_id`, y de ahí se obtiene el nombre.
 
 ---
 
@@ -205,8 +216,8 @@ Algunos ítems de este documento no se pueden resolver de forma aislada — depe
 
 **Estado al 2026-09-28:** las tres dependencias de arriba ya están saldadas. §5.2 se resolvió y con eso §2.3 se pudo implementar sobre `has_documentation`. `estado_gestion` se modeló (`0fc656c`/`c3788d0`) y con eso se cerraron §5.4 y el bloqueo pendiente de §2.2. Dependencias vigentes entre las brechas abiertas:
 
-- **§5.8 (bandeja de "aprobados sin contrato") depende de §2.6 (facultad de origen)** para la parte de coordinadores: Node asigna esa bandeja por facultad de origen. Para el admin DEU (sin facultad), §5.8 se puede hacer ya.
-- **§2.6 conviene resolverla junto con §2.7:** si la facultad del curso se hereda del proveedor (§2.7), la facultad del proveedor puede servir directamente como "facultad de origen", sin agregar una columna nueva en `courses`.
+- **§5.8 (bandeja de "aprobados sin contrato") dependía de §2.6 (facultad de origen)** para la parte de coordinadores: Node asigna esa bandeja por facultad de origen. §2.6 ya está resuelta, así que §5.8 puede filtrar por `courses.origin_faculty`.
+- **§2.6 y §2.7 se resolvieron juntas.** Al final sí se agregó la columna `courses.origin_faculty`, porque `providers.faculty` se puede editar y no sirve como origen inmutable.
 - **§3.1 depende de §5.3:** los campos restantes de `Course` (`clasificacion`, `calificacion`, evaluación) solo existen si se capturan al aprobar.
 
 ---
@@ -227,10 +238,10 @@ Algunos ítems de este documento no se pueden resolver de forma aislada — depe
 | 10  | Inconsistencia de nombres de campo entre alta y edición de usuario (`cedula`/`nombres` vs. `ci`/`primer_nombre`)               | §4.1             | ⚪ Baja    | Pendiente |
 | 11  | Campos de clasificación/evaluación/contrato ausentes en la entidad `Course`                                                    | §3.1             | ⚪ Baja    | Parcial — contrato y estado ya expuestos; clasificación/evaluación dependen de #5 |
 | 12  | Modelado de anuncios por período vs. curso+cohorte independientes                                                              | §2.4             | ⚪ Baja    | Pendiente |
-| 13  | Redirección sobrescribe la facultad del curso; no hay facultad/coordinador de origen para dirigir cierres                      | §2.6             | 🟡 Media   | Pendiente |
-| 14  | Facultad del curso la elige el cliente en vez de heredarse del proveedor                                                       | §2.7             | 🟡 Media   | Pendiente |
+| 13  | Redirección sobrescribe la facultad del curso; no hay facultad/coordinador de origen para dirigir cierres                      | §2.6             | 🟡 Media   | ✅ Resuelto (`courses.origin_faculty`; cierres por facultad de origen) |
+| 14  | Facultad del curso la elige el cliente en vez de heredarse del proveedor                                                       | §2.7             | 🟡 Media   | ✅ Resuelto (facultad heredada del proveedor) |
 | 15  | Bandejas admin sin filtro por estado ni listado de "aprobados sin contrato"                                                    | §5.8             | 🟡 Media   | Pendiente |
-| 16  | `GET /courses` sin filtros por dueño/estado ni visibilidad por rol                                                             | §2.8             | ⚪ Baja    | Pendiente (mitigado por `/courses/public` y `/course-requests`) |
-| 17  | Cohorte/período sin nombre (`nombre_cohorte`)                                                                                  | §2.9             | ⚪ Baja    | Pendiente |
+| 16  | `GET /courses` sin filtros por dueño/estado ni visibilidad por rol                                                             | §2.8             | ⚪ Baja    | ✅ Resuelto (filtros `usuario_id`/`codigo_proveedor`/`estado` + visibilidad por rol) |
+| 17  | Cohorte/período sin nombre (`nombre_cohorte`)                                                                                  | §2.9             | ⚪ Baja    | ✅ Resuelto (`nombre_cohorte`) |
 
 **Sin brechas:** redirección/remit de solicitudes (§5.6), autenticación básica (§4.2), solapamiento curso+grupo (§6).

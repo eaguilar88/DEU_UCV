@@ -86,6 +86,9 @@ func (s *service) CreateCoursePeriod(ctx context.Context, period entities.Course
 	if period.Capacity <= 0 {
 		return -1, ErrInvalidCapacity
 	}
+	if period.Name == "" {
+		return -1, ErrCohortNameRequired
+	}
 
 	course, err := s.repo.GetCourse(ctx, period.Course.ID)
 	if err != nil {
@@ -112,6 +115,9 @@ func (s *service) CreateCoursePeriod(ctx context.Context, period entities.Course
 }
 
 func (s *service) UpdateCoursePeriod(ctx context.Context, periodID string, period entities.CoursePeriod) error {
+	if period.Name == "" {
+		return ErrCohortNameRequired
+	}
 	return s.repo.UpdateCoursePeriod(ctx, periodID, period)
 }
 

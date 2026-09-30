@@ -18,10 +18,19 @@ func NewMockRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockRepository {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockRepository{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -75,7 +84,7 @@ type MockRepository_ClaimJob_Call struct {
 // ClaimJob is a helper method to define mock.On call
 //   - ctx context.Context
 //   - lease time.Duration
-func (_e *MockRepository_Expecter) ClaimJob(ctx interface{}, lease interface{}) *MockRepository_ClaimJob_Call {
+func (_e *MockRepository_Expecter) ClaimJob(ctx any, lease any) *MockRepository_ClaimJob_Call {
 	return &MockRepository_ClaimJob_Call{Call: _e.mock.On("ClaimJob", ctx, lease)}
 }
 
@@ -132,7 +141,7 @@ type MockRepository_CompleteJob_Call struct {
 // CompleteJob is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id int64
-func (_e *MockRepository_Expecter) CompleteJob(ctx interface{}, id interface{}) *MockRepository_CompleteJob_Call {
+func (_e *MockRepository_Expecter) CompleteJob(ctx any, id any) *MockRepository_CompleteJob_Call {
 	return &MockRepository_CompleteJob_Call{Call: _e.mock.On("CompleteJob", ctx, id)}
 }
 
@@ -190,7 +199,7 @@ type MockRepository_FailJob_Call struct {
 //   - ctx context.Context
 //   - id int64
 //   - lastError string
-func (_e *MockRepository_Expecter) FailJob(ctx interface{}, id interface{}, lastError interface{}) *MockRepository_FailJob_Call {
+func (_e *MockRepository_Expecter) FailJob(ctx any, id any, lastError any) *MockRepository_FailJob_Call {
 	return &MockRepository_FailJob_Call{Call: _e.mock.On("FailJob", ctx, id, lastError)}
 }
 
@@ -254,7 +263,7 @@ type MockRepository_RetryJobLater_Call struct {
 //   - id int64
 //   - lastError string
 //   - delay time.Duration
-func (_e *MockRepository_Expecter) RetryJobLater(ctx interface{}, id interface{}, lastError interface{}, delay interface{}) *MockRepository_RetryJobLater_Call {
+func (_e *MockRepository_Expecter) RetryJobLater(ctx any, id any, lastError any, delay any) *MockRepository_RetryJobLater_Call {
 	return &MockRepository_RetryJobLater_Call{Call: _e.mock.On("RetryJobLater", ctx, id, lastError, delay)}
 }
 

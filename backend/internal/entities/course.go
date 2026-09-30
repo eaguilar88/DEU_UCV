@@ -24,6 +24,23 @@ const (
 	CourseManagementStatusClosed           CourseManagementStatus = "cerrado"
 )
 
+func (s CourseManagementStatus) IsValid() bool {
+	switch s {
+	case CourseManagementStatusClosureRequested, CourseManagementStatusOpen, CourseManagementStatusClosed:
+		return true
+	}
+	return false
+}
+
+// CourseFilter narrows GET /courses. VisibleStatuses is set by the service, never by the
+// client: when non-empty, only courses in one of those management statuses are returned.
+type CourseFilter struct {
+	OwnerUserID      string
+	ProviderCode     string
+	ManagementStatus CourseManagementStatus
+	VisibleStatuses  []CourseManagementStatus
+}
+
 var (
 	ErrInvalidCourseType = errors.New("invalid course type")
 )

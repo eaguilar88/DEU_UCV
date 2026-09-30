@@ -17,10 +17,19 @@ func NewMockRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockRepository {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockRepository{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -72,7 +81,7 @@ type MockRepository_CreateCourse_Call struct {
 // CreateCourse is a helper method to define mock.On call
 //   - ctx context.Context
 //   - course entities.Course
-func (_e *MockRepository_Expecter) CreateCourse(ctx interface{}, course interface{}) *MockRepository_CreateCourse_Call {
+func (_e *MockRepository_Expecter) CreateCourse(ctx any, course any) *MockRepository_CreateCourse_Call {
 	return &MockRepository_CreateCourse_Call{Call: _e.mock.On("CreateCourse", ctx, course)}
 }
 
@@ -138,7 +147,7 @@ type MockRepository_CreateCourseRequest_Call struct {
 // CreateCourseRequest is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request entities.CourseRequest
-func (_e *MockRepository_Expecter) CreateCourseRequest(ctx interface{}, request interface{}) *MockRepository_CreateCourseRequest_Call {
+func (_e *MockRepository_Expecter) CreateCourseRequest(ctx any, request any) *MockRepository_CreateCourseRequest_Call {
 	return &MockRepository_CreateCourseRequest_Call{Call: _e.mock.On("CreateCourseRequest", ctx, request)}
 }
 
@@ -210,7 +219,7 @@ type MockRepository_CreateCourseWithRequest_Call struct {
 // CreateCourseWithRequest is a helper method to define mock.On call
 //   - ctx context.Context
 //   - course entities.Course
-func (_e *MockRepository_Expecter) CreateCourseWithRequest(ctx interface{}, course interface{}) *MockRepository_CreateCourseWithRequest_Call {
+func (_e *MockRepository_Expecter) CreateCourseWithRequest(ctx any, course any) *MockRepository_CreateCourseWithRequest_Call {
 	return &MockRepository_CreateCourseWithRequest_Call{Call: _e.mock.On("CreateCourseWithRequest", ctx, course)}
 }
 
@@ -267,7 +276,7 @@ type MockRepository_DeleteCourse_Call struct {
 // DeleteCourse is a helper method to define mock.On call
 //   - ctx context.Context
 //   - courseID string
-func (_e *MockRepository_Expecter) DeleteCourse(ctx interface{}, courseID interface{}) *MockRepository_DeleteCourse_Call {
+func (_e *MockRepository_Expecter) DeleteCourse(ctx any, courseID any) *MockRepository_DeleteCourse_Call {
 	return &MockRepository_DeleteCourse_Call{Call: _e.mock.On("DeleteCourse", ctx, courseID)}
 }
 
@@ -333,7 +342,7 @@ type MockRepository_GetCourse_Call struct {
 // GetCourse is a helper method to define mock.On call
 //   - ctx context.Context
 //   - courseID string
-func (_e *MockRepository_Expecter) GetCourse(ctx interface{}, courseID interface{}) *MockRepository_GetCourse_Call {
+func (_e *MockRepository_Expecter) GetCourse(ctx any, courseID any) *MockRepository_GetCourse_Call {
 	return &MockRepository_GetCourse_Call{Call: _e.mock.On("GetCourse", ctx, courseID)}
 }
 
@@ -366,8 +375,8 @@ func (_c *MockRepository_GetCourse_Call) RunAndReturn(run func(ctx context.Conte
 }
 
 // GetCourses provides a mock function for the type MockRepository
-func (_mock *MockRepository) GetCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error) {
-	ret := _mock.Called(ctx, pageScope)
+func (_mock *MockRepository) GetCourses(ctx context.Context, filter entities.CourseFilter, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error) {
+	ret := _mock.Called(ctx, filter, pageScope)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetCourses")
@@ -376,23 +385,23 @@ func (_mock *MockRepository) GetCourses(ctx context.Context, pageScope entities.
 	var r0 []entities.Course
 	var r1 entities.PageScope
 	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.PageScope) ([]entities.Course, entities.PageScope, error)); ok {
-		return returnFunc(ctx, pageScope)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.CourseFilter, entities.PageScope) ([]entities.Course, entities.PageScope, error)); ok {
+		return returnFunc(ctx, filter, pageScope)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.PageScope) []entities.Course); ok {
-		r0 = returnFunc(ctx, pageScope)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.CourseFilter, entities.PageScope) []entities.Course); ok {
+		r0 = returnFunc(ctx, filter, pageScope)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]entities.Course)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.PageScope) entities.PageScope); ok {
-		r1 = returnFunc(ctx, pageScope)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.CourseFilter, entities.PageScope) entities.PageScope); ok {
+		r1 = returnFunc(ctx, filter, pageScope)
 	} else {
 		r1 = ret.Get(1).(entities.PageScope)
 	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, entities.PageScope) error); ok {
-		r2 = returnFunc(ctx, pageScope)
+	if returnFunc, ok := ret.Get(2).(func(context.Context, entities.CourseFilter, entities.PageScope) error); ok {
+		r2 = returnFunc(ctx, filter, pageScope)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -406,24 +415,30 @@ type MockRepository_GetCourses_Call struct {
 
 // GetCourses is a helper method to define mock.On call
 //   - ctx context.Context
+//   - filter entities.CourseFilter
 //   - pageScope entities.PageScope
-func (_e *MockRepository_Expecter) GetCourses(ctx interface{}, pageScope interface{}) *MockRepository_GetCourses_Call {
-	return &MockRepository_GetCourses_Call{Call: _e.mock.On("GetCourses", ctx, pageScope)}
+func (_e *MockRepository_Expecter) GetCourses(ctx any, filter any, pageScope any) *MockRepository_GetCourses_Call {
+	return &MockRepository_GetCourses_Call{Call: _e.mock.On("GetCourses", ctx, filter, pageScope)}
 }
 
-func (_c *MockRepository_GetCourses_Call) Run(run func(ctx context.Context, pageScope entities.PageScope)) *MockRepository_GetCourses_Call {
+func (_c *MockRepository_GetCourses_Call) Run(run func(ctx context.Context, filter entities.CourseFilter, pageScope entities.PageScope)) *MockRepository_GetCourses_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 entities.PageScope
+		var arg1 entities.CourseFilter
 		if args[1] != nil {
-			arg1 = args[1].(entities.PageScope)
+			arg1 = args[1].(entities.CourseFilter)
+		}
+		var arg2 entities.PageScope
+		if args[2] != nil {
+			arg2 = args[2].(entities.PageScope)
 		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -434,7 +449,7 @@ func (_c *MockRepository_GetCourses_Call) Return(courses []entities.Course, page
 	return _c
 }
 
-func (_c *MockRepository_GetCourses_Call) RunAndReturn(run func(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error)) *MockRepository_GetCourses_Call {
+func (_c *MockRepository_GetCourses_Call) RunAndReturn(run func(ctx context.Context, filter entities.CourseFilter, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error)) *MockRepository_GetCourses_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -476,7 +491,7 @@ type MockRepository_GetFilesByOwner_Call struct {
 //   - ctx context.Context
 //   - ownerID string
 //   - ownerType entities.OwnerType
-func (_e *MockRepository_Expecter) GetFilesByOwner(ctx interface{}, ownerID interface{}, ownerType interface{}) *MockRepository_GetFilesByOwner_Call {
+func (_e *MockRepository_Expecter) GetFilesByOwner(ctx any, ownerID any, ownerType any) *MockRepository_GetFilesByOwner_Call {
 	return &MockRepository_GetFilesByOwner_Call{Call: _e.mock.On("GetFilesByOwner", ctx, ownerID, ownerType)}
 }
 
@@ -547,7 +562,7 @@ type MockRepository_GetLatestCoursePeriod_Call struct {
 // GetLatestCoursePeriod is a helper method to define mock.On call
 //   - ctx context.Context
 //   - courseID string
-func (_e *MockRepository_Expecter) GetLatestCoursePeriod(ctx interface{}, courseID interface{}) *MockRepository_GetLatestCoursePeriod_Call {
+func (_e *MockRepository_Expecter) GetLatestCoursePeriod(ctx any, courseID any) *MockRepository_GetLatestCoursePeriod_Call {
 	return &MockRepository_GetLatestCoursePeriod_Call{Call: _e.mock.On("GetLatestCoursePeriod", ctx, courseID)}
 }
 
@@ -613,7 +628,7 @@ type MockRepository_GetProviderByUserID_Call struct {
 // GetProviderByUserID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID string
-func (_e *MockRepository_Expecter) GetProviderByUserID(ctx interface{}, userID interface{}) *MockRepository_GetProviderByUserID_Call {
+func (_e *MockRepository_Expecter) GetProviderByUserID(ctx any, userID any) *MockRepository_GetProviderByUserID_Call {
 	return &MockRepository_GetProviderByUserID_Call{Call: _e.mock.On("GetProviderByUserID", ctx, userID)}
 }
 
@@ -687,7 +702,7 @@ type MockRepository_GetPublicCourses_Call struct {
 // GetPublicCourses is a helper method to define mock.On call
 //   - ctx context.Context
 //   - pageScope entities.PageScope
-func (_e *MockRepository_Expecter) GetPublicCourses(ctx interface{}, pageScope interface{}) *MockRepository_GetPublicCourses_Call {
+func (_e *MockRepository_Expecter) GetPublicCourses(ctx any, pageScope any) *MockRepository_GetPublicCourses_Call {
 	return &MockRepository_GetPublicCourses_Call{Call: _e.mock.On("GetPublicCourses", ctx, pageScope)}
 }
 
@@ -744,7 +759,7 @@ type MockRepository_SaveFilesToDB_Call struct {
 // SaveFilesToDB is a helper method to define mock.On call
 //   - ctx context.Context
 //   - file []*entities.File
-func (_e *MockRepository_Expecter) SaveFilesToDB(ctx interface{}, file interface{}) *MockRepository_SaveFilesToDB_Call {
+func (_e *MockRepository_Expecter) SaveFilesToDB(ctx any, file any) *MockRepository_SaveFilesToDB_Call {
 	return &MockRepository_SaveFilesToDB_Call{Call: _e.mock.On("SaveFilesToDB", ctx, file)}
 }
 
@@ -802,7 +817,7 @@ type MockRepository_UpdateCourse_Call struct {
 //   - ctx context.Context
 //   - courseID string
 //   - user entities.Course
-func (_e *MockRepository_Expecter) UpdateCourse(ctx interface{}, courseID interface{}, user interface{}) *MockRepository_UpdateCourse_Call {
+func (_e *MockRepository_Expecter) UpdateCourse(ctx any, courseID any, user any) *MockRepository_UpdateCourse_Call {
 	return &MockRepository_UpdateCourse_Call{Call: _e.mock.On("UpdateCourse", ctx, courseID, user)}
 }
 

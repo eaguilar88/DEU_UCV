@@ -17,10 +17,19 @@ func NewMockService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -63,7 +72,7 @@ type MockService_ApproveGroupRequest_Call struct {
 // ApproveGroupRequest is a helper method to define mock.On call
 //   - ctx context.Context
 //   - reqID string
-func (_e *MockService_Expecter) ApproveGroupRequest(ctx interface{}, reqID interface{}) *MockService_ApproveGroupRequest_Call {
+func (_e *MockService_Expecter) ApproveGroupRequest(ctx any, reqID any) *MockService_ApproveGroupRequest_Call {
 	return &MockService_ApproveGroupRequest_Call{Call: _e.mock.On("ApproveGroupRequest", ctx, reqID)}
 }
 
@@ -129,7 +138,7 @@ type MockService_GetGroupRequestByID_Call struct {
 // GetGroupRequestByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - reqID string
-func (_e *MockService_Expecter) GetGroupRequestByID(ctx interface{}, reqID interface{}) *MockService_GetGroupRequestByID_Call {
+func (_e *MockService_Expecter) GetGroupRequestByID(ctx any, reqID any) *MockService_GetGroupRequestByID_Call {
 	return &MockService_GetGroupRequestByID_Call{Call: _e.mock.On("GetGroupRequestByID", ctx, reqID)}
 }
 
@@ -211,7 +220,7 @@ type MockService_GetGroupRequestsByFaculty_Call struct {
 //   - faculty entities.Faculty
 //   - status string
 //   - pageScope entities.PageScope
-func (_e *MockService_Expecter) GetGroupRequestsByFaculty(ctx interface{}, faculty interface{}, status interface{}, pageScope interface{}) *MockService_GetGroupRequestsByFaculty_Call {
+func (_e *MockService_Expecter) GetGroupRequestsByFaculty(ctx any, faculty any, status any, pageScope any) *MockService_GetGroupRequestsByFaculty_Call {
 	return &MockService_GetGroupRequestsByFaculty_Call{Call: _e.mock.On("GetGroupRequestsByFaculty", ctx, faculty, status, pageScope)}
 }
 
@@ -289,7 +298,7 @@ type MockService_GetPendingGroupRequestsCounts_Call struct {
 // GetPendingGroupRequestsCounts is a helper method to define mock.On call
 //   - ctx context.Context
 //   - faculty entities.Faculty
-func (_e *MockService_Expecter) GetPendingGroupRequestsCounts(ctx interface{}, faculty interface{}) *MockService_GetPendingGroupRequestsCounts_Call {
+func (_e *MockService_Expecter) GetPendingGroupRequestsCounts(ctx any, faculty any) *MockService_GetPendingGroupRequestsCounts_Call {
 	return &MockService_GetPendingGroupRequestsCounts_Call{Call: _e.mock.On("GetPendingGroupRequestsCounts", ctx, faculty)}
 }
 
@@ -347,7 +356,7 @@ type MockService_RejectGroupRequest_Call struct {
 //   - ctx context.Context
 //   - reqID string
 //   - reason string
-func (_e *MockService_Expecter) RejectGroupRequest(ctx interface{}, reqID interface{}, reason interface{}) *MockService_RejectGroupRequest_Call {
+func (_e *MockService_Expecter) RejectGroupRequest(ctx any, reqID any, reason any) *MockService_RejectGroupRequest_Call {
 	return &MockService_RejectGroupRequest_Call{Call: _e.mock.On("RejectGroupRequest", ctx, reqID, reason)}
 }
 

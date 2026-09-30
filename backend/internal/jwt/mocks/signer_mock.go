@@ -15,10 +15,19 @@ func NewMockSigner(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockSigner {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockSigner{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -75,7 +84,7 @@ type MockSigner_GenerateJWT_Call struct {
 //   - groupName string
 //   - courseProviderID string
 //   - courseProviderName string
-func (_e *MockSigner_Expecter) GenerateJWT(userID interface{}, roles interface{}, providerCode interface{}, groupID interface{}, groupName interface{}, courseProviderID interface{}, courseProviderName interface{}) *MockSigner_GenerateJWT_Call {
+func (_e *MockSigner_Expecter) GenerateJWT(userID any, roles any, providerCode any, groupID any, groupName any, courseProviderID any, courseProviderName any) *MockSigner_GenerateJWT_Call {
 	return &MockSigner_GenerateJWT_Call{Call: _e.mock.On("GenerateJWT", userID, roles, providerCode, groupID, groupName, courseProviderID, courseProviderName)}
 }
 
@@ -167,7 +176,7 @@ type MockSigner_ValidateToken_Call struct {
 
 // ValidateToken is a helper method to define mock.On call
 //   - tokenString string
-func (_e *MockSigner_Expecter) ValidateToken(tokenString interface{}) *MockSigner_ValidateToken_Call {
+func (_e *MockSigner_Expecter) ValidateToken(tokenString any) *MockSigner_ValidateToken_Call {
 	return &MockSigner_ValidateToken_Call{Call: _e.mock.On("ValidateToken", tokenString)}
 }
 
@@ -184,8 +193,8 @@ func (_c *MockSigner_ValidateToken_Call) Run(run func(tokenString string)) *Mock
 	return _c
 }
 
-func (_c *MockSigner_ValidateToken_Call) Return(stringToV map[string]any, err error) *MockSigner_ValidateToken_Call {
-	_c.Call.Return(stringToV, err)
+func (_c *MockSigner_ValidateToken_Call) Return(stringToAnyMoqParam map[string]any, err error) *MockSigner_ValidateToken_Call {
+	_c.Call.Return(stringToAnyMoqParam, err)
 	return _c
 }
 

@@ -18,10 +18,19 @@ func NewMockService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -64,7 +73,7 @@ type MockService_GenerateForCloseRequest_Call struct {
 // GenerateForCloseRequest is a helper method to define mock.On call
 //   - ctx context.Context
 //   - payload []byte
-func (_e *MockService_Expecter) GenerateForCloseRequest(ctx interface{}, payload interface{}) *MockService_GenerateForCloseRequest_Call {
+func (_e *MockService_Expecter) GenerateForCloseRequest(ctx any, payload any) *MockService_GenerateForCloseRequest_Call {
 	return &MockService_GenerateForCloseRequest_Call{Call: _e.mock.On("GenerateForCloseRequest", ctx, payload)}
 }
 
@@ -132,7 +141,7 @@ type MockService_GetCertificatePDF_Call struct {
 // GetCertificatePDF is a helper method to define mock.On call
 //   - ctx context.Context
 //   - code string
-func (_e *MockService_Expecter) GetCertificatePDF(ctx interface{}, code interface{}) *MockService_GetCertificatePDF_Call {
+func (_e *MockService_Expecter) GetCertificatePDF(ctx any, code any) *MockService_GetCertificatePDF_Call {
 	return &MockService_GetCertificatePDF_Call{Call: _e.mock.On("GetCertificatePDF", ctx, code)}
 }
 
@@ -200,7 +209,7 @@ type MockService_GetCertificatesZip_Call struct {
 // GetCertificatesZip is a helper method to define mock.On call
 //   - ctx context.Context
 //   - token string
-func (_e *MockService_Expecter) GetCertificatesZip(ctx interface{}, token interface{}) *MockService_GetCertificatesZip_Call {
+func (_e *MockService_Expecter) GetCertificatesZip(ctx any, token any) *MockService_GetCertificatesZip_Call {
 	return &MockService_GetCertificatesZip_Call{Call: _e.mock.On("GetCertificatesZip", ctx, token)}
 }
 
@@ -257,7 +266,7 @@ type MockService_RetryCertificates_Call struct {
 // RetryCertificates is a helper method to define mock.On call
 //   - ctx context.Context
 //   - closeRequestID string
-func (_e *MockService_Expecter) RetryCertificates(ctx interface{}, closeRequestID interface{}) *MockService_RetryCertificates_Call {
+func (_e *MockService_Expecter) RetryCertificates(ctx any, closeRequestID any) *MockService_RetryCertificates_Call {
 	return &MockService_RetryCertificates_Call{Call: _e.mock.On("RetryCertificates", ctx, closeRequestID)}
 }
 
@@ -323,7 +332,7 @@ type MockService_VerifyCertificate_Call struct {
 // VerifyCertificate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - code string
-func (_e *MockService_Expecter) VerifyCertificate(ctx interface{}, code interface{}) *MockService_VerifyCertificate_Call {
+func (_e *MockService_Expecter) VerifyCertificate(ctx any, code any) *MockService_VerifyCertificate_Call {
 	return &MockService_VerifyCertificate_Call{Call: _e.mock.On("VerifyCertificate", ctx, code)}
 }
 

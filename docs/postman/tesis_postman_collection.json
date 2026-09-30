@@ -808,12 +808,31 @@
                                 {
                                     "key": "per_page",
                                     "value": "10"
+                                },
+                                {
+                                    "key": "usuario_id",
+                                    "value": "{{user_id}}",
+                                    "disabled": true,
+                                    "description": "Cursos del usuario proveedor. Si coincide con el usuario del token, se ven todos los estados."
+                                },
+                                {
+                                    "key": "codigo_proveedor",
+                                    "value": "ECP-abc123",
+                                    "disabled": true,
+                                    "description": "Filtra por código de proveedor."
+                                },
+                                {
+                                    "key": "estado",
+                                    "value": "abierto",
+                                    "disabled": true,
+                                    "description": "abierto | cerrado | solicitud-cierre. Sin ser admin ni dueño, solo se ven abierto/cerrado."
                                 }
                             ]
                         },
                         "auth": {
                             "type": "noauth"
-                        }
+                        },
+                        "description": "Auth opcional. Sin token, o si no eres admin (root/deu_admin/faculty_admin) ni pides tus propios cursos con usuario_id, solo se devuelven cursos en estado abierto o cerrado."
                     },
                     "response": []
                 },
@@ -1166,7 +1185,7 @@
                         },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"fecha_inicio\": \"2026-06-01\",\n    \"fecha_fin\": \"2026-08-01\",\n    \"fecha_inscripcion\": \"2026-05-15\"\n}",
+                            "raw": "{\n    \"nombre_cohorte\": \"Cohorte 2026-I\",\n    \"fecha_inicio\": \"2026-06-01\",\n    \"fecha_fin\": \"2026-08-01\",\n    \"fecha_inscripcion\": \"2026-05-15\",\n    \"capacidad\": 30\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
@@ -1210,7 +1229,7 @@
                         },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"curso_id\": \"{{course_id}}\",\n    \"fecha_inicio\": \"2026-06-01\",\n    \"fecha_fin\": \"2026-08-15\",\n    \"fecha_inscripcion\": \"2026-05-15\"\n}",
+                            "raw": "{\n    \"curso_id\": \"{{course_id}}\",\n    \"nombre_cohorte\": \"Cohorte 2026-I\",\n    \"fecha_inicio\": \"2026-06-01\",\n    \"fecha_fin\": \"2026-08-15\",\n    \"fecha_inscripcion\": \"2026-05-15\",\n    \"capacidad\": 30\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"

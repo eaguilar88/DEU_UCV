@@ -12,7 +12,7 @@ import (
 
 type Repository interface {
 	GetCourse(ctx context.Context, courseID string) (entities.Course, error)
-	GetCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error)
+	GetCourses(ctx context.Context, filter entities.CourseFilter, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error)
 	GetPublicCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error)
 	GetProviderByUserID(ctx context.Context, userID string) (entities.Provider, error)
 	GetLatestCoursePeriod(ctx context.Context, courseID string) (entities.CoursePeriod, error)
@@ -88,8 +88,19 @@ func (s *service) GetLatestCoursePeriod(ctx context.Context, courseID string) (e
 	return period, nil
 }
 
-func (s *service) GetCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error) {
-	courses, page, err := s.repo.GetCourses(ctx, pageScope)
+// GetCourses lists approved courses. Admins (root, deu_admin, faculty_admin) and a provider
+// listing their own courses (usuario_id = the caller) see every management status; anyone
+// else only sees open or closed courses.
+func (s *service) GetCourses(ctx context.Context, filter entities.CourseFilter, viewer entities.Viewer, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error) {
+	filter.VisibleStatuses = nil
+	if !canSeeAllCourseStatuses(filter, viewer) {
+		filter.VisibleStatuses = []entities.CourseManagementStatus{
+			entities.CourseManagementStatusOpen,
+			entities.CourseManagementStatusClosed,
+		}
+	}
+
+	courses, page, err := s.repo.GetCourses(ctx, filter, pageScope)
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
@@ -97,6 +108,13 @@ func (s *service) GetCourses(ctx context.Context, pageScope entities.PageScope) 
 	s.attachCoverURLs(ctx, courses)
 
 	return courses, page, nil
+}
+
+func canSeeAllCourseStatuses(filter entities.CourseFilter, viewer entities.Viewer) bool {
+	if viewer.IsGlobalAdmin() || viewer.IsFacultyAdmin() {
+		return true
+	}
+	return filter.OwnerUserID != "" && filter.OwnerUserID == viewer.UserID
 }
 
 func (s *service) GetPublicCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error) {

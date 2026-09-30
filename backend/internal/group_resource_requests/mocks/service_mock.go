@@ -18,10 +18,19 @@ func NewMockService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -64,7 +73,7 @@ type MockService_ApproveGroupResourceRequest_Call struct {
 // ApproveGroupResourceRequest is a helper method to define mock.On call
 //   - ctx context.Context
 //   - reqID string
-func (_e *MockService_Expecter) ApproveGroupResourceRequest(ctx interface{}, reqID interface{}) *MockService_ApproveGroupResourceRequest_Call {
+func (_e *MockService_Expecter) ApproveGroupResourceRequest(ctx any, reqID any) *MockService_ApproveGroupResourceRequest_Call {
 	return &MockService_ApproveGroupResourceRequest_Call{Call: _e.mock.On("ApproveGroupResourceRequest", ctx, reqID)}
 }
 
@@ -130,7 +139,7 @@ type MockService_CreateGroupResourceRequest_Call struct {
 // CreateGroupResourceRequest is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req entities.GroupResourceRequest
-func (_e *MockService_Expecter) CreateGroupResourceRequest(ctx interface{}, req interface{}) *MockService_CreateGroupResourceRequest_Call {
+func (_e *MockService_Expecter) CreateGroupResourceRequest(ctx any, req any) *MockService_CreateGroupResourceRequest_Call {
 	return &MockService_CreateGroupResourceRequest_Call{Call: _e.mock.On("CreateGroupResourceRequest", ctx, req)}
 }
 
@@ -196,7 +205,7 @@ type MockService_GetGroupResourceRequestByID_Call struct {
 // GetGroupResourceRequestByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - reqID string
-func (_e *MockService_Expecter) GetGroupResourceRequestByID(ctx interface{}, reqID interface{}) *MockService_GetGroupResourceRequestByID_Call {
+func (_e *MockService_Expecter) GetGroupResourceRequestByID(ctx any, reqID any) *MockService_GetGroupResourceRequestByID_Call {
 	return &MockService_GetGroupResourceRequestByID_Call{Call: _e.mock.On("GetGroupResourceRequestByID", ctx, reqID)}
 }
 
@@ -278,7 +287,7 @@ type MockService_GetGroupResourceRequestsByFaculty_Call struct {
 //   - faculty entities.Faculty
 //   - status string
 //   - pageScope entities.PageScope
-func (_e *MockService_Expecter) GetGroupResourceRequestsByFaculty(ctx interface{}, faculty interface{}, status interface{}, pageScope interface{}) *MockService_GetGroupResourceRequestsByFaculty_Call {
+func (_e *MockService_Expecter) GetGroupResourceRequestsByFaculty(ctx any, faculty any, status any, pageScope any) *MockService_GetGroupResourceRequestsByFaculty_Call {
 	return &MockService_GetGroupResourceRequestsByFaculty_Call{Call: _e.mock.On("GetGroupResourceRequestsByFaculty", ctx, faculty, status, pageScope)}
 }
 
@@ -364,7 +373,7 @@ type MockService_GetGroupResourceRequestsByGroupID_Call struct {
 //   - groupID string
 //   - status string
 //   - pageScope entities.PageScope
-func (_e *MockService_Expecter) GetGroupResourceRequestsByGroupID(ctx interface{}, groupID interface{}, status interface{}, pageScope interface{}) *MockService_GetGroupResourceRequestsByGroupID_Call {
+func (_e *MockService_Expecter) GetGroupResourceRequestsByGroupID(ctx any, groupID any, status any, pageScope any) *MockService_GetGroupResourceRequestsByGroupID_Call {
 	return &MockService_GetGroupResourceRequestsByGroupID_Call{Call: _e.mock.On("GetGroupResourceRequestsByGroupID", ctx, groupID, status, pageScope)}
 }
 
@@ -442,7 +451,7 @@ type MockService_GetPendingGroupResourceRequestsCountByFaculty_Call struct {
 // GetPendingGroupResourceRequestsCountByFaculty is a helper method to define mock.On call
 //   - ctx context.Context
 //   - faculty entities.Faculty
-func (_e *MockService_Expecter) GetPendingGroupResourceRequestsCountByFaculty(ctx interface{}, faculty interface{}) *MockService_GetPendingGroupResourceRequestsCountByFaculty_Call {
+func (_e *MockService_Expecter) GetPendingGroupResourceRequestsCountByFaculty(ctx any, faculty any) *MockService_GetPendingGroupResourceRequestsCountByFaculty_Call {
 	return &MockService_GetPendingGroupResourceRequestsCountByFaculty_Call{Call: _e.mock.On("GetPendingGroupResourceRequestsCountByFaculty", ctx, faculty)}
 }
 
@@ -500,7 +509,7 @@ type MockService_RejectGroupResourceRequest_Call struct {
 //   - ctx context.Context
 //   - reqID string
 //   - reason string
-func (_e *MockService_Expecter) RejectGroupResourceRequest(ctx interface{}, reqID interface{}, reason interface{}) *MockService_RejectGroupResourceRequest_Call {
+func (_e *MockService_Expecter) RejectGroupResourceRequest(ctx any, reqID any, reason any) *MockService_RejectGroupResourceRequest_Call {
 	return &MockService_RejectGroupResourceRequest_Call{Call: _e.mock.On("RejectGroupResourceRequest", ctx, reqID, reason)}
 }
 

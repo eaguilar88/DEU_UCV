@@ -16,10 +16,19 @@ func NewMockRenderer(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockRenderer {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockRenderer{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -73,7 +82,7 @@ type MockRenderer_Render_Call struct {
 // Render is a helper method to define mock.On call
 //   - ctx context.Context
 //   - html []byte
-func (_e *MockRenderer_Expecter) Render(ctx interface{}, html interface{}) *MockRenderer_Render_Call {
+func (_e *MockRenderer_Expecter) Render(ctx any, html any) *MockRenderer_Render_Call {
 	return &MockRenderer_Render_Call{Call: _e.mock.On("Render", ctx, html)}
 }
 

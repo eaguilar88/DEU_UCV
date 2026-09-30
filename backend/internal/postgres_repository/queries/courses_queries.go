@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/postgres_repository/models"
 )
 
@@ -50,12 +51,33 @@ func GetCourseByIDIncludingInactive(courseID string) sq.SelectBuilder {
 		Where(sq.Eq{"c.id": courseID})
 }
 
-func GetCourses(limit, offset int) sq.SelectBuilder {
-	return psql.Select(courseQuerySelectCommon...).
+func GetCourses(filter entities.CourseFilter, limit, offset int) sq.SelectBuilder {
+	q := psql.Select(courseQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS c", coursesTableName)).
 		Where(sq.Eq{"c.deleted_at": nil}).
-		Where(sq.Eq{"c.is_active": true}).
-		Limit(uint64(limit)).
+		Where(sq.Eq{"c.is_active": true})
+
+	if filter.OwnerUserID != "" || filter.ProviderCode != "" {
+		q = q.Join(fmt.Sprintf("%s AS p ON p.id = c.provider_id", providersTableName))
+	}
+	if filter.OwnerUserID != "" {
+		q = q.Where(sq.Eq{"p.user_id": filter.OwnerUserID})
+	}
+	if filter.ProviderCode != "" {
+		q = q.Where(sq.Eq{"p.code": filter.ProviderCode})
+	}
+	if filter.ManagementStatus != "" {
+		q = q.Where(sq.Eq{"c.estado_gestion": string(filter.ManagementStatus)})
+	}
+	if len(filter.VisibleStatuses) > 0 {
+		statuses := make([]string, 0, len(filter.VisibleStatuses))
+		for _, s := range filter.VisibleStatuses {
+			statuses = append(statuses, string(s))
+		}
+		q = q.Where(sq.Eq{"c.estado_gestion": statuses})
+	}
+
+	return q.Limit(uint64(limit)).
 		Offset(uint64(offset))
 }
 

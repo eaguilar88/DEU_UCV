@@ -17,10 +17,19 @@ func NewMockRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockRepository {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockRepository{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -68,7 +77,7 @@ type MockRepository_ApproveCourseCycleCloseRequest_Call struct {
 //   - certificatesToken string
 //   - certificatesJob entities.Job
 //   - notify func() error
-func (_e *MockRepository_Expecter) ApproveCourseCycleCloseRequest(ctx interface{}, id interface{}, reviewerID interface{}, cycleID interface{}, certificatesToken interface{}, certificatesJob interface{}, notify interface{}) *MockRepository_ApproveCourseCycleCloseRequest_Call {
+func (_e *MockRepository_Expecter) ApproveCourseCycleCloseRequest(ctx any, id any, reviewerID any, cycleID any, certificatesToken any, certificatesJob any, notify any) *MockRepository_ApproveCourseCycleCloseRequest_Call {
 	return &MockRepository_ApproveCourseCycleCloseRequest_Call{Call: _e.mock.On("ApproveCourseCycleCloseRequest", ctx, id, reviewerID, cycleID, certificatesToken, certificatesJob, notify)}
 }
 
@@ -161,7 +170,7 @@ type MockRepository_CreateCourseCycleCloseRequest_Call struct {
 //   - cycleID int64
 //   - submittedByID int64
 //   - certificates []entities.Certificate
-func (_e *MockRepository_Expecter) CreateCourseCycleCloseRequest(ctx interface{}, cycleID interface{}, submittedByID interface{}, certificates interface{}) *MockRepository_CreateCourseCycleCloseRequest_Call {
+func (_e *MockRepository_Expecter) CreateCourseCycleCloseRequest(ctx any, cycleID any, submittedByID any, certificates any) *MockRepository_CreateCourseCycleCloseRequest_Call {
 	return &MockRepository_CreateCourseCycleCloseRequest_Call{Call: _e.mock.On("CreateCourseCycleCloseRequest", ctx, cycleID, submittedByID, certificates)}
 }
 
@@ -237,7 +246,7 @@ type MockRepository_GetCourse_Call struct {
 // GetCourse is a helper method to define mock.On call
 //   - ctx context.Context
 //   - courseID string
-func (_e *MockRepository_Expecter) GetCourse(ctx interface{}, courseID interface{}) *MockRepository_GetCourse_Call {
+func (_e *MockRepository_Expecter) GetCourse(ctx any, courseID any) *MockRepository_GetCourse_Call {
 	return &MockRepository_GetCourse_Call{Call: _e.mock.On("GetCourse", ctx, courseID)}
 }
 
@@ -303,7 +312,7 @@ type MockRepository_GetCourseCycleCloseRequestByID_Call struct {
 // GetCourseCycleCloseRequestByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-func (_e *MockRepository_Expecter) GetCourseCycleCloseRequestByID(ctx interface{}, id interface{}) *MockRepository_GetCourseCycleCloseRequestByID_Call {
+func (_e *MockRepository_Expecter) GetCourseCycleCloseRequestByID(ctx any, id any) *MockRepository_GetCourseCycleCloseRequestByID_Call {
 	return &MockRepository_GetCourseCycleCloseRequestByID_Call{Call: _e.mock.On("GetCourseCycleCloseRequestByID", ctx, id)}
 }
 
@@ -378,7 +387,7 @@ type MockRepository_GetCourseCycleCloseRequests_Call struct {
 //   - ctx context.Context
 //   - faculty entities.Faculty
 //   - pageScope entities.PageScope
-func (_e *MockRepository_Expecter) GetCourseCycleCloseRequests(ctx interface{}, faculty interface{}, pageScope interface{}) *MockRepository_GetCourseCycleCloseRequests_Call {
+func (_e *MockRepository_Expecter) GetCourseCycleCloseRequests(ctx any, faculty any, pageScope any) *MockRepository_GetCourseCycleCloseRequests_Call {
 	return &MockRepository_GetCourseCycleCloseRequests_Call{Call: _e.mock.On("GetCourseCycleCloseRequests", ctx, faculty, pageScope)}
 }
 
@@ -449,7 +458,7 @@ type MockRepository_GetCoursePeriodByID_Call struct {
 // GetCoursePeriodByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - periodID string
-func (_e *MockRepository_Expecter) GetCoursePeriodByID(ctx interface{}, periodID interface{}) *MockRepository_GetCoursePeriodByID_Call {
+func (_e *MockRepository_Expecter) GetCoursePeriodByID(ctx any, periodID any) *MockRepository_GetCoursePeriodByID_Call {
 	return &MockRepository_GetCoursePeriodByID_Call{Call: _e.mock.On("GetCoursePeriodByID", ctx, periodID)}
 }
 
@@ -517,7 +526,7 @@ type MockRepository_GetUser_Call struct {
 // GetUser is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID string
-func (_e *MockRepository_Expecter) GetUser(ctx interface{}, userID interface{}) *MockRepository_GetUser_Call {
+func (_e *MockRepository_Expecter) GetUser(ctx any, userID any) *MockRepository_GetUser_Call {
 	return &MockRepository_GetUser_Call{Call: _e.mock.On("GetUser", ctx, userID)}
 }
 
@@ -583,7 +592,7 @@ type MockRepository_HasPendingCloseRequestForCycle_Call struct {
 // HasPendingCloseRequestForCycle is a helper method to define mock.On call
 //   - ctx context.Context
 //   - cycleID int64
-func (_e *MockRepository_Expecter) HasPendingCloseRequestForCycle(ctx interface{}, cycleID interface{}) *MockRepository_HasPendingCloseRequestForCycle_Call {
+func (_e *MockRepository_Expecter) HasPendingCloseRequestForCycle(ctx any, cycleID any) *MockRepository_HasPendingCloseRequestForCycle_Call {
 	return &MockRepository_HasPendingCloseRequestForCycle_Call{Call: _e.mock.On("HasPendingCloseRequestForCycle", ctx, cycleID)}
 }
 
@@ -644,7 +653,7 @@ type MockRepository_RejectCourseCycleCloseRequest_Call struct {
 //   - comments string
 //   - cycleID string
 //   - notify func() error
-func (_e *MockRepository_Expecter) RejectCourseCycleCloseRequest(ctx interface{}, id interface{}, reviewerID interface{}, comments interface{}, cycleID interface{}, notify interface{}) *MockRepository_RejectCourseCycleCloseRequest_Call {
+func (_e *MockRepository_Expecter) RejectCourseCycleCloseRequest(ctx any, id any, reviewerID any, comments any, cycleID any, notify any) *MockRepository_RejectCourseCycleCloseRequest_Call {
 	return &MockRepository_RejectCourseCycleCloseRequest_Call{Call: _e.mock.On("RejectCourseCycleCloseRequest", ctx, id, reviewerID, comments, cycleID, notify)}
 }
 
@@ -721,7 +730,7 @@ type MockRepository_SaveFilesToDB_Call struct {
 // SaveFilesToDB is a helper method to define mock.On call
 //   - ctx context.Context
 //   - files []*entities.File
-func (_e *MockRepository_Expecter) SaveFilesToDB(ctx interface{}, files interface{}) *MockRepository_SaveFilesToDB_Call {
+func (_e *MockRepository_Expecter) SaveFilesToDB(ctx any, files any) *MockRepository_SaveFilesToDB_Call {
 	return &MockRepository_SaveFilesToDB_Call{Call: _e.mock.On("SaveFilesToDB", ctx, files)}
 }
 

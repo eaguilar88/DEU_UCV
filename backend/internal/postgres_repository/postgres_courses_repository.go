@@ -54,8 +54,8 @@ func (r *PostgresRepository) GetCourseIncludingInactive(ctx context.Context, cou
 	return newCourseFromModel(course), nil
 }
 
-func (r *PostgresRepository) GetCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error) {
-	query, args, err := queries.GetCourses(pageScope.PerPage, pageScope.Offset()).ToSql()
+func (r *PostgresRepository) GetCourses(ctx context.Context, filter entities.CourseFilter, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error) {
+	query, args, err := queries.GetCourses(filter, pageScope.PerPage, pageScope.Offset()).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}

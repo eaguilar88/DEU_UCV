@@ -17,10 +17,19 @@ func NewMockRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockRepository {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockRepository{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -72,7 +81,7 @@ type MockRepository_CountActivities_Call struct {
 // CountActivities is a helper method to define mock.On call
 //   - ctx context.Context
 //   - filter entities.ActivityFilter
-func (_e *MockRepository_Expecter) CountActivities(ctx interface{}, filter interface{}) *MockRepository_CountActivities_Call {
+func (_e *MockRepository_Expecter) CountActivities(ctx any, filter any) *MockRepository_CountActivities_Call {
 	return &MockRepository_CountActivities_Call{Call: _e.mock.On("CountActivities", ctx, filter)}
 }
 
@@ -138,7 +147,7 @@ type MockRepository_CreateActivity_Call struct {
 // CreateActivity is a helper method to define mock.On call
 //   - ctx context.Context
 //   - activity entities.Activity
-func (_e *MockRepository_Expecter) CreateActivity(ctx interface{}, activity interface{}) *MockRepository_CreateActivity_Call {
+func (_e *MockRepository_Expecter) CreateActivity(ctx any, activity any) *MockRepository_CreateActivity_Call {
 	return &MockRepository_CreateActivity_Call{Call: _e.mock.On("CreateActivity", ctx, activity)}
 }
 
@@ -195,7 +204,7 @@ type MockRepository_DeleteActivity_Call struct {
 // DeleteActivity is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-func (_e *MockRepository_Expecter) DeleteActivity(ctx interface{}, id interface{}) *MockRepository_DeleteActivity_Call {
+func (_e *MockRepository_Expecter) DeleteActivity(ctx any, id any) *MockRepository_DeleteActivity_Call {
 	return &MockRepository_DeleteActivity_Call{Call: _e.mock.On("DeleteActivity", ctx, id)}
 }
 
@@ -270,7 +279,7 @@ type MockRepository_GetActivities_Call struct {
 //   - ctx context.Context
 //   - filter entities.ActivityFilter
 //   - pageScope entities.PageScope
-func (_e *MockRepository_Expecter) GetActivities(ctx interface{}, filter interface{}, pageScope interface{}) *MockRepository_GetActivities_Call {
+func (_e *MockRepository_Expecter) GetActivities(ctx any, filter any, pageScope any) *MockRepository_GetActivities_Call {
 	return &MockRepository_GetActivities_Call{Call: _e.mock.On("GetActivities", ctx, filter, pageScope)}
 }
 
@@ -341,7 +350,7 @@ type MockRepository_GetActivityByID_Call struct {
 // GetActivityByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-func (_e *MockRepository_Expecter) GetActivityByID(ctx interface{}, id interface{}) *MockRepository_GetActivityByID_Call {
+func (_e *MockRepository_Expecter) GetActivityByID(ctx any, id any) *MockRepository_GetActivityByID_Call {
 	return &MockRepository_GetActivityByID_Call{Call: _e.mock.On("GetActivityByID", ctx, id)}
 }
 
@@ -407,7 +416,7 @@ type MockRepository_GetActivityMetrics_Call struct {
 // GetActivityMetrics is a helper method to define mock.On call
 //   - ctx context.Context
 //   - groupID string
-func (_e *MockRepository_Expecter) GetActivityMetrics(ctx interface{}, groupID interface{}) *MockRepository_GetActivityMetrics_Call {
+func (_e *MockRepository_Expecter) GetActivityMetrics(ctx any, groupID any) *MockRepository_GetActivityMetrics_Call {
 	return &MockRepository_GetActivityMetrics_Call{Call: _e.mock.On("GetActivityMetrics", ctx, groupID)}
 }
 
@@ -476,7 +485,7 @@ type MockRepository_GetFilesByOwner_Call struct {
 //   - ctx context.Context
 //   - ownerID string
 //   - ownerType entities.OwnerType
-func (_e *MockRepository_Expecter) GetFilesByOwner(ctx interface{}, ownerID interface{}, ownerType interface{}) *MockRepository_GetFilesByOwner_Call {
+func (_e *MockRepository_Expecter) GetFilesByOwner(ctx any, ownerID any, ownerType any) *MockRepository_GetFilesByOwner_Call {
 	return &MockRepository_GetFilesByOwner_Call{Call: _e.mock.On("GetFilesByOwner", ctx, ownerID, ownerType)}
 }
 
@@ -547,7 +556,7 @@ type MockRepository_GetGroupByID_Call struct {
 // GetGroupByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - groupID string
-func (_e *MockRepository_Expecter) GetGroupByID(ctx interface{}, groupID interface{}) *MockRepository_GetGroupByID_Call {
+func (_e *MockRepository_Expecter) GetGroupByID(ctx any, groupID any) *MockRepository_GetGroupByID_Call {
 	return &MockRepository_GetGroupByID_Call{Call: _e.mock.On("GetGroupByID", ctx, groupID)}
 }
 
@@ -613,7 +622,7 @@ type MockRepository_GetGroupDashboardSummary_Call struct {
 // GetGroupDashboardSummary is a helper method to define mock.On call
 //   - ctx context.Context
 //   - groupID string
-func (_e *MockRepository_Expecter) GetGroupDashboardSummary(ctx interface{}, groupID interface{}) *MockRepository_GetGroupDashboardSummary_Call {
+func (_e *MockRepository_Expecter) GetGroupDashboardSummary(ctx any, groupID any) *MockRepository_GetGroupDashboardSummary_Call {
 	return &MockRepository_GetGroupDashboardSummary_Call{Call: _e.mock.On("GetGroupDashboardSummary", ctx, groupID)}
 }
 
@@ -670,7 +679,7 @@ type MockRepository_SaveFilesToDB_Call struct {
 // SaveFilesToDB is a helper method to define mock.On call
 //   - ctx context.Context
 //   - files []*entities.File
-func (_e *MockRepository_Expecter) SaveFilesToDB(ctx interface{}, files interface{}) *MockRepository_SaveFilesToDB_Call {
+func (_e *MockRepository_Expecter) SaveFilesToDB(ctx any, files any) *MockRepository_SaveFilesToDB_Call {
 	return &MockRepository_SaveFilesToDB_Call{Call: _e.mock.On("SaveFilesToDB", ctx, files)}
 }
 
@@ -727,7 +736,7 @@ type MockRepository_UpdateActivity_Call struct {
 // UpdateActivity is a helper method to define mock.On call
 //   - ctx context.Context
 //   - activity entities.Activity
-func (_e *MockRepository_Expecter) UpdateActivity(ctx interface{}, activity interface{}) *MockRepository_UpdateActivity_Call {
+func (_e *MockRepository_Expecter) UpdateActivity(ctx any, activity any) *MockRepository_UpdateActivity_Call {
 	return &MockRepository_UpdateActivity_Call{Call: _e.mock.On("UpdateActivity", ctx, activity)}
 }
 
@@ -785,7 +794,7 @@ type MockRepository_UpdateFeatureStatus_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - featured bool
-func (_e *MockRepository_Expecter) UpdateFeatureStatus(ctx interface{}, id interface{}, featured interface{}) *MockRepository_UpdateFeatureStatus_Call {
+func (_e *MockRepository_Expecter) UpdateFeatureStatus(ctx any, id any, featured any) *MockRepository_UpdateFeatureStatus_Call {
 	return &MockRepository_UpdateFeatureStatus_Call{Call: _e.mock.On("UpdateFeatureStatus", ctx, id, featured)}
 }
 
@@ -848,7 +857,7 @@ type MockRepository_UpdateReportCheckStatus_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - checked bool
-func (_e *MockRepository_Expecter) UpdateReportCheckStatus(ctx interface{}, id interface{}, checked interface{}) *MockRepository_UpdateReportCheckStatus_Call {
+func (_e *MockRepository_Expecter) UpdateReportCheckStatus(ctx any, id any, checked any) *MockRepository_UpdateReportCheckStatus_Call {
 	return &MockRepository_UpdateReportCheckStatus_Call{Call: _e.mock.On("UpdateReportCheckStatus", ctx, id, checked)}
 }
 

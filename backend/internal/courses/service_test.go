@@ -81,3 +81,95 @@ func TestService_CreateCourse(t *testing.T) {
 		})
 	}
 }
+
+func TestService_GetCourses(t *testing.T) {
+	openOrClosed := []entities.CourseManagementStatus{
+		entities.CourseManagementStatusOpen,
+		entities.CourseManagementStatusClosed,
+	}
+
+	type testCase struct {
+		name        string
+		filter      entities.CourseFilter
+		viewer      entities.Viewer
+		wantVisible []entities.CourseManagementStatus
+		wantRepoErr error
+		wantErr     bool
+	}
+
+	tests := []testCase{
+		{
+			name:        "anonymous only sees open or closed courses",
+			viewer:      entities.Viewer{},
+			wantVisible: openOrClosed,
+		},
+		{
+			name:        "anonymous asking for a user's courses is still restricted",
+			filter:      entities.CourseFilter{OwnerUserID: "7"},
+			viewer:      entities.Viewer{},
+			wantVisible: openOrClosed,
+		},
+		{
+			name:        "logged-in user asking for someone else's courses is restricted",
+			filter:      entities.CourseFilter{OwnerUserID: "7"},
+			viewer:      entities.Viewer{UserID: "8", Roles: []string{"provider"}},
+			wantVisible: openOrClosed,
+		},
+		{
+			name:        "provider filtering by code without usuario_id is restricted",
+			filter:      entities.CourseFilter{ProviderCode: "ECP-abc123"},
+			viewer:      entities.Viewer{UserID: "7", Roles: []string{"provider"}},
+			wantVisible: openOrClosed,
+		},
+		{
+			name:   "owner listing their own courses sees every status",
+			filter: entities.CourseFilter{OwnerUserID: "7"},
+			viewer: entities.Viewer{UserID: "7", Roles: []string{"provider"}},
+		},
+		{
+			name:   "deu_admin sees every status",
+			viewer: entities.Viewer{UserID: "1", Roles: []string{entities.RoleNameFromID(entities.RoleDeuAdmin)}},
+		},
+		{
+			name:   "root sees every status",
+			viewer: entities.Viewer{UserID: "1", Roles: []string{entities.RoleNameFromID(entities.RoleRoot)}},
+		},
+		{
+			name:   "faculty_admin sees every status",
+			viewer: entities.Viewer{UserID: "2", Roles: []string{entities.RoleNameFromID(entities.RoleFacultyAdmin)}, Faculty: entities.FacultyCiencias},
+		},
+		{
+			name:        "client-provided visible statuses are ignored",
+			filter:      entities.CourseFilter{VisibleStatuses: []entities.CourseManagementStatus{entities.CourseManagementStatusClosureRequested}},
+			viewer:      entities.Viewer{},
+			wantVisible: openOrClosed,
+		},
+		{
+			name:        "repository error",
+			viewer:      entities.Viewer{},
+			wantVisible: openOrClosed,
+			wantRepoErr: errors.New("db error"),
+			wantErr:     true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repoMock := mocks.NewMockRepository(t)
+			storageMock := mocks.NewMockStorageClient(t)
+
+			wantFilter := tt.filter
+			wantFilter.VisibleStatuses = tt.wantVisible
+			repoMock.EXPECT().GetCourses(mock.Anything, wantFilter, entities.PageScope{}).
+				Return([]entities.Course{}, entities.PageScope{}, tt.wantRepoErr)
+
+			s := NewService(repoMock, storageMock, zap.NewNop())
+			_, _, err := s.GetCourses(context.Background(), tt.filter, tt.viewer, entities.PageScope{})
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}

@@ -181,7 +181,7 @@ func main() {
 	addAuthRoutes(e, authEndpoints)
 	addUserRoutes(e, userEndpoints, optionalAuth, middlewares...)
 	addProviderRoutes(e, providerEndpoints, middlewares...)
-	addCourseRoutes(e, courseEndpoints, middlewares...)
+	addCourseRoutes(e, courseEndpoints, optionalAuth, middlewares...)
 	addCourseRequestRoutes(e, courseRequestEndpoints, middlewares...)
 	addCoursePeriodRoutes(e, cpEndpoints, middlewares...)
 	addGroupsRoutes(e, groupEndpoints, optionalAuth, middlewares...)
@@ -313,11 +313,13 @@ func addCourseRequestRoutes(e *echo.Echo, endpoints *course_requests.Handler, mi
 	endpoints.RegisterCourseRequestEndpoints(protectedGroup)
 }
 
-func addCourseRoutes(e *echo.Echo, endpoints *courses.Handler, middlewares ...echo.MiddlewareFunc) {
+// addCourseRoutes serves GET /courses with optional auth: anonymous and regular callers only
+// see open or closed courses; admins and a provider listing their own courses see them all.
+func addCourseRoutes(e *echo.Echo, endpoints *courses.Handler, optionalAuth echo.MiddlewareFunc, middlewares ...echo.MiddlewareFunc) {
 	publicGroup := e.Group("/courses")
 	publicGroup.GET("/public", endpoints.GetPublicCourses)
 	publicGroup.GET("/:id", endpoints.GetCourse)
-	publicGroup.GET("", endpoints.GetCourses)
+	publicGroup.GET("", endpoints.GetCourses, optionalAuth)
 	protectedGroup := e.Group("/courses", middlewares...)
 	protectedGroup.POST("", endpoints.CreateCourse)
 	protectedGroup.PUT("/:id", endpoints.UpdateCourse)

@@ -17,10 +17,19 @@ func NewMockService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -64,7 +73,7 @@ type MockService_ApproveProvider_Call struct {
 //   - ctx context.Context
 //   - providerID string
 //   - userID string
-func (_e *MockService_Expecter) ApproveProvider(ctx interface{}, providerID interface{}, userID interface{}) *MockService_ApproveProvider_Call {
+func (_e *MockService_Expecter) ApproveProvider(ctx any, providerID any, userID any) *MockService_ApproveProvider_Call {
 	return &MockService_ApproveProvider_Call{Call: _e.mock.On("ApproveProvider", ctx, providerID, userID)}
 }
 
@@ -135,7 +144,7 @@ type MockService_CreateProvider_Call struct {
 // CreateProvider is a helper method to define mock.On call
 //   - ctx context.Context
 //   - provider *entities.Provider
-func (_e *MockService_Expecter) CreateProvider(ctx interface{}, provider interface{}) *MockService_CreateProvider_Call {
+func (_e *MockService_Expecter) CreateProvider(ctx any, provider any) *MockService_CreateProvider_Call {
 	return &MockService_CreateProvider_Call{Call: _e.mock.On("CreateProvider", ctx, provider)}
 }
 
@@ -192,7 +201,7 @@ type MockService_DeleteProvider_Call struct {
 // DeleteProvider is a helper method to define mock.On call
 //   - ctx context.Context
 //   - providerID string
-func (_e *MockService_Expecter) DeleteProvider(ctx interface{}, providerID interface{}) *MockService_DeleteProvider_Call {
+func (_e *MockService_Expecter) DeleteProvider(ctx any, providerID any) *MockService_DeleteProvider_Call {
 	return &MockService_DeleteProvider_Call{Call: _e.mock.On("DeleteProvider", ctx, providerID)}
 }
 
@@ -259,7 +268,7 @@ type MockService_GetProvider_Call struct {
 //   - ctx context.Context
 //   - providerID string
 //   - viewer entities.Viewer
-func (_e *MockService_Expecter) GetProvider(ctx interface{}, providerID interface{}, viewer interface{}) *MockService_GetProvider_Call {
+func (_e *MockService_Expecter) GetProvider(ctx any, providerID any, viewer any) *MockService_GetProvider_Call {
 	return &MockService_GetProvider_Call{Call: _e.mock.On("GetProvider", ctx, providerID, viewer)}
 }
 
@@ -330,7 +339,7 @@ type MockService_GetProviderByCode_Call struct {
 // GetProviderByCode is a helper method to define mock.On call
 //   - ctx context.Context
 //   - providerCode string
-func (_e *MockService_Expecter) GetProviderByCode(ctx interface{}, providerCode interface{}) *MockService_GetProviderByCode_Call {
+func (_e *MockService_Expecter) GetProviderByCode(ctx any, providerCode any) *MockService_GetProviderByCode_Call {
 	return &MockService_GetProviderByCode_Call{Call: _e.mock.On("GetProviderByCode", ctx, providerCode)}
 }
 
@@ -405,7 +414,7 @@ type MockService_GetProviders_Call struct {
 //   - ctx context.Context
 //   - pageScope entities.PageScope
 //   - filters entities.ProviderFilters
-func (_e *MockService_Expecter) GetProviders(ctx interface{}, pageScope interface{}, filters interface{}) *MockService_GetProviders_Call {
+func (_e *MockService_Expecter) GetProviders(ctx any, pageScope any, filters any) *MockService_GetProviders_Call {
 	return &MockService_GetProviders_Call{Call: _e.mock.On("GetProviders", ctx, pageScope, filters)}
 }
 
@@ -467,7 +476,7 @@ type MockService_RejectProvider_Call struct {
 // RejectProvider is a helper method to define mock.On call
 //   - ctx context.Context
 //   - providerID string
-func (_e *MockService_Expecter) RejectProvider(ctx interface{}, providerID interface{}) *MockService_RejectProvider_Call {
+func (_e *MockService_Expecter) RejectProvider(ctx any, providerID any) *MockService_RejectProvider_Call {
 	return &MockService_RejectProvider_Call{Call: _e.mock.On("RejectProvider", ctx, providerID)}
 }
 
@@ -536,7 +545,7 @@ type MockService_SubmitProviderContract_Call struct {
 //   - intentionLetter *entities.File
 //   - commitmentLetter *entities.File
 //   - addendum *entities.File
-func (_e *MockService_Expecter) SubmitProviderContract(ctx interface{}, providerID interface{}, intentionLetter interface{}, commitmentLetter interface{}, addendum interface{}) *MockService_SubmitProviderContract_Call {
+func (_e *MockService_Expecter) SubmitProviderContract(ctx any, providerID any, intentionLetter any, commitmentLetter any, addendum any) *MockService_SubmitProviderContract_Call {
 	return &MockService_SubmitProviderContract_Call{Call: _e.mock.On("SubmitProviderContract", ctx, providerID, intentionLetter, commitmentLetter, addendum)}
 }
 
@@ -609,7 +618,7 @@ type MockService_UpdateProvider_Call struct {
 //   - ctx context.Context
 //   - providerID string
 //   - provider *entities.Provider
-func (_e *MockService_Expecter) UpdateProvider(ctx interface{}, providerID interface{}, provider interface{}) *MockService_UpdateProvider_Call {
+func (_e *MockService_Expecter) UpdateProvider(ctx any, providerID any, provider any) *MockService_UpdateProvider_Call {
 	return &MockService_UpdateProvider_Call{Call: _e.mock.On("UpdateProvider", ctx, providerID, provider)}
 }
 

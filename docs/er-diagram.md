@@ -128,6 +128,7 @@ erDiagram
     course_cycles {
         int id PK
         int course_id FK
+        varchar name
         date start_date
         date end_date
         date inscription_date

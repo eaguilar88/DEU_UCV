@@ -1,6 +1,8 @@
 package course_periods
 
 import (
+	"strings"
+
 	"github.com/eaguilar88/deu/internal/entities"
 )
 
@@ -17,6 +19,7 @@ type GetCoursePeriodsRequest struct {
 
 type CreateCoursePeriodRequest struct {
 	CourseID        string `param:"course_id"`
+	Name            string `json:"nombre_cohorte" validate:"required"`
 	StartDate       string `json:"fecha_inicio"`
 	EndDate         string `json:"fecha_fin"`
 	InscriptionDate string `json:"fecha_inscripcion"`
@@ -32,6 +35,7 @@ func toPeriodEntity(req CreateCoursePeriodRequest, userID string) entities.Cours
 				ID: userID,
 			},
 		},
+		Name:            strings.TrimSpace(req.Name),
 		StartDate:       req.StartDate,
 		EndDate:         req.EndDate,
 		InscriptionDate: req.InscriptionDate,
@@ -42,6 +46,7 @@ func toPeriodEntity(req CreateCoursePeriodRequest, userID string) entities.Cours
 type UpdateCoursePeriodRequest struct {
 	ID              string `param:"id"`
 	CourseID        string `json:"curso_id"`
+	Name            string `json:"nombre_cohorte" validate:"required"`
 	StartDate       string `json:"fecha_inicio"`
 	EndDate         string `json:"fecha_fin"`
 	InscriptionDate string `json:"fecha_inscripcion"`
@@ -58,6 +63,7 @@ func toPeriodUpdateEntity(req UpdateCoursePeriodRequest, userID string) entities
 				ID: userID,
 			},
 		},
+		Name:            strings.TrimSpace(req.Name),
 		StartDate:       req.StartDate,
 		EndDate:         req.EndDate,
 		InscriptionDate: req.InscriptionDate,

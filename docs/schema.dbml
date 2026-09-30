@@ -173,6 +173,7 @@ Table course_auth_requests {
 Table course_cycles {
   id integer [pk, increment]
   course_id integer [not null]
+  name varchar [not null, default: '', note: 'nombre de la cohorte']
   start_date date
   end_date date
   inscription_date date

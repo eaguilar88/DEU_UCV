@@ -209,7 +209,7 @@ func TestHandler_CreateCoursePeriod(t *testing.T) {
 					Return(int64(1), nil)
 			},
 			userID: &userID,
-			req:    CreateCoursePeriodRequest{Capacity: 30},
+			req:    CreateCoursePeriodRequest{Name: "Cohorte 2026-I", Capacity: 30},
 			resp: CreateCoursePeriodResponse{
 				ID: "1",
 			},
@@ -222,7 +222,7 @@ func TestHandler_CreateCoursePeriod(t *testing.T) {
 					Return(int64(-1), errors.New("internal error"))
 			},
 			userID:  &userID,
-			req:     CreateCoursePeriodRequest{Capacity: 30},
+			req:     CreateCoursePeriodRequest{Name: "Cohorte 2026-I", Capacity: 30},
 			wantErr: httperrors.NewInternal(errors.New("internal error")),
 		},
 		{
@@ -233,7 +233,7 @@ func TestHandler_CreateCoursePeriod(t *testing.T) {
 					Return(int64(-1), courses.ErrCourseNotFound)
 			},
 			userID:  &userID,
-			req:     CreateCoursePeriodRequest{Capacity: 30},
+			req:     CreateCoursePeriodRequest{Name: "Cohorte 2026-I", Capacity: 30},
 			wantErr: httperrors.NewNotFound("course not found"),
 		},
 		{
@@ -244,7 +244,7 @@ func TestHandler_CreateCoursePeriod(t *testing.T) {
 					Return(int64(-1), ErrCoursePeriodAlreadyOpen)
 			},
 			userID:  &userID,
-			req:     CreateCoursePeriodRequest{Capacity: 30},
+			req:     CreateCoursePeriodRequest{Name: "Cohorte 2026-I", Capacity: 30},
 			wantErr: httperrors.NewConflict(ErrCoursePeriodAlreadyOpen.Error()),
 		},
 		{
@@ -255,13 +255,13 @@ func TestHandler_CreateCoursePeriod(t *testing.T) {
 					Return(int64(-1), courses.ErrCourseClosureRequestPending)
 			},
 			userID:  &userID,
-			req:     CreateCoursePeriodRequest{Capacity: 30},
+			req:     CreateCoursePeriodRequest{Name: "Cohorte 2026-I", Capacity: 30},
 			wantErr: httperrors.NewConflict(courses.ErrCourseClosureRequestPending.Error()),
 		},
 		{
 			name:    "error cannot find userID in context",
 			svc:     &mocks.MockService{},
-			req:     CreateCoursePeriodRequest{Capacity: 30},
+			req:     CreateCoursePeriodRequest{Name: "Cohorte 2026-I", Capacity: 30},
 			wantErr: httperrors.NewUnauthorized("authentication required"),
 		},
 		{
@@ -272,8 +272,19 @@ func TestHandler_CreateCoursePeriod(t *testing.T) {
 					Return(int64(-1), ErrInvalidCapacity)
 			},
 			userID:  &userID,
-			req:     CreateCoursePeriodRequest{Capacity: 30},
+			req:     CreateCoursePeriodRequest{Name: "Cohorte 2026-I", Capacity: 30},
 			wantErr: httperrors.NewBadRequest(ErrInvalidCapacity.Error()),
+		},
+		{
+			name: "error missing cohort name",
+			svc:  &mocks.MockService{},
+			prepare: func(ctx echo.Context, tc *testCase) {
+				tc.svc.On("CreateCoursePeriod", ctx.Request().Context(), mock.AnythingOfType("entities.CoursePeriod")).
+					Return(int64(-1), ErrCohortNameRequired)
+			},
+			userID:  &userID,
+			req:     CreateCoursePeriodRequest{Name: "   ", Capacity: 30},
+			wantErr: httperrors.NewBadRequest(ErrCohortNameRequired.Error()),
 		},
 		{
 			name:    "error cannot bind",
@@ -334,7 +345,7 @@ func TestHandler_UpdateCoursePeriod(t *testing.T) {
 					Return(nil)
 			},
 			userID: &userID,
-			req:    UpdateCoursePeriodRequest{Capacity: 30},
+			req:    UpdateCoursePeriodRequest{Name: "Cohorte 2026-I", Capacity: 30},
 			resp:   UpdateCoursePeriodResponse{},
 		},
 		{
@@ -345,13 +356,24 @@ func TestHandler_UpdateCoursePeriod(t *testing.T) {
 					Return(errors.New("cannot update course period"))
 			},
 			userID:  &userID,
-			req:     UpdateCoursePeriodRequest{Capacity: 30},
+			req:     UpdateCoursePeriodRequest{Name: "Cohorte 2026-I", Capacity: 30},
 			wantErr: httperrors.NewInternal(errors.New("cannot update course period")),
+		},
+		{
+			name: "error missing cohort name",
+			svc:  &mocks.MockService{},
+			prepare: func(ctx echo.Context, tc *testCase) {
+				tc.svc.On("UpdateCoursePeriod", ctx.Request().Context(), mock.AnythingOfType("string"), mock.AnythingOfType("entities.CoursePeriod")).
+					Return(ErrCohortNameRequired)
+			},
+			userID:  &userID,
+			req:     UpdateCoursePeriodRequest{Name: "   ", Capacity: 30},
+			wantErr: httperrors.NewBadRequest(ErrCohortNameRequired.Error()),
 		},
 		{
 			name:    "error cannot find userID in context",
 			svc:     &mocks.MockService{},
-			req:     UpdateCoursePeriodRequest{Capacity: 30},
+			req:     UpdateCoursePeriodRequest{Name: "Cohorte 2026-I", Capacity: 30},
 			wantErr: httperrors.NewUnauthorized("authentication required"),
 		},
 		{

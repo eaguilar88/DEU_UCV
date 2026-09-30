@@ -17,10 +17,19 @@ func NewMockService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -74,7 +83,7 @@ type MockService_GetAnalytics_Call struct {
 // GetAnalytics is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req group_analytics.AnalyticsFilterRequest
-func (_e *MockService_Expecter) GetAnalytics(ctx interface{}, req interface{}) *MockService_GetAnalytics_Call {
+func (_e *MockService_Expecter) GetAnalytics(ctx any, req any) *MockService_GetAnalytics_Call {
 	return &MockService_GetAnalytics_Call{Call: _e.mock.On("GetAnalytics", ctx, req)}
 }
 

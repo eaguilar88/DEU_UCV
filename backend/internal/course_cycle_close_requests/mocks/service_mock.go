@@ -17,10 +17,19 @@ func NewMockService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -64,7 +73,7 @@ type MockService_ApproveCloseRequest_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - reviewerID string
-func (_e *MockService_Expecter) ApproveCloseRequest(ctx interface{}, id interface{}, reviewerID interface{}) *MockService_ApproveCloseRequest_Call {
+func (_e *MockService_Expecter) ApproveCloseRequest(ctx any, id any, reviewerID any) *MockService_ApproveCloseRequest_Call {
 	return &MockService_ApproveCloseRequest_Call{Call: _e.mock.On("ApproveCloseRequest", ctx, id, reviewerID)}
 }
 
@@ -135,7 +144,7 @@ type MockService_GetCloseRequestByID_Call struct {
 // GetCloseRequestByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-func (_e *MockService_Expecter) GetCloseRequestByID(ctx interface{}, id interface{}) *MockService_GetCloseRequestByID_Call {
+func (_e *MockService_Expecter) GetCloseRequestByID(ctx any, id any) *MockService_GetCloseRequestByID_Call {
 	return &MockService_GetCloseRequestByID_Call{Call: _e.mock.On("GetCloseRequestByID", ctx, id)}
 }
 
@@ -210,7 +219,7 @@ type MockService_GetCloseRequests_Call struct {
 //   - ctx context.Context
 //   - faculty entities.Faculty
 //   - pageScope entities.PageScope
-func (_e *MockService_Expecter) GetCloseRequests(ctx interface{}, faculty interface{}, pageScope interface{}) *MockService_GetCloseRequests_Call {
+func (_e *MockService_Expecter) GetCloseRequests(ctx any, faculty any, pageScope any) *MockService_GetCloseRequests_Call {
 	return &MockService_GetCloseRequests_Call{Call: _e.mock.On("GetCloseRequests", ctx, faculty, pageScope)}
 }
 
@@ -282,7 +291,7 @@ type MockService_ParticipantsTemplate_Call struct {
 
 // ParticipantsTemplate is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockService_Expecter) ParticipantsTemplate(ctx interface{}) *MockService_ParticipantsTemplate_Call {
+func (_e *MockService_Expecter) ParticipantsTemplate(ctx any) *MockService_ParticipantsTemplate_Call {
 	return &MockService_ParticipantsTemplate_Call{Call: _e.mock.On("ParticipantsTemplate", ctx)}
 }
 
@@ -336,7 +345,7 @@ type MockService_RejectCloseRequest_Call struct {
 //   - id string
 //   - reviewerID string
 //   - comments string
-func (_e *MockService_Expecter) RejectCloseRequest(ctx interface{}, id interface{}, reviewerID interface{}, comments interface{}) *MockService_RejectCloseRequest_Call {
+func (_e *MockService_Expecter) RejectCloseRequest(ctx any, id any, reviewerID any, comments any) *MockService_RejectCloseRequest_Call {
 	return &MockService_RejectCloseRequest_Call{Call: _e.mock.On("RejectCloseRequest", ctx, id, reviewerID, comments)}
 }
 
@@ -413,7 +422,7 @@ type MockService_SubmitCloseRequest_Call struct {
 //   - ctx context.Context
 //   - request entities.CourseCycleCloseRequest
 //   - submittedByID string
-func (_e *MockService_Expecter) SubmitCloseRequest(ctx interface{}, request interface{}, submittedByID interface{}) *MockService_SubmitCloseRequest_Call {
+func (_e *MockService_Expecter) SubmitCloseRequest(ctx any, request any, submittedByID any) *MockService_SubmitCloseRequest_Call {
 	return &MockService_SubmitCloseRequest_Call{Call: _e.mock.On("SubmitCloseRequest", ctx, request, submittedByID)}
 }
 

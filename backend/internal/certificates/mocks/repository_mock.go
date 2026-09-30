@@ -17,10 +17,19 @@ func NewMockRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockRepository {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockRepository{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -72,7 +81,7 @@ type MockRepository_GetCertificateByVerificationCode_Call struct {
 // GetCertificateByVerificationCode is a helper method to define mock.On call
 //   - ctx context.Context
 //   - code string
-func (_e *MockRepository_Expecter) GetCertificateByVerificationCode(ctx interface{}, code interface{}) *MockRepository_GetCertificateByVerificationCode_Call {
+func (_e *MockRepository_Expecter) GetCertificateByVerificationCode(ctx any, code any) *MockRepository_GetCertificateByVerificationCode_Call {
 	return &MockRepository_GetCertificateByVerificationCode_Call{Call: _e.mock.On("GetCertificateByVerificationCode", ctx, code)}
 }
 
@@ -140,7 +149,7 @@ type MockRepository_GetCertificatesByCloseRequestID_Call struct {
 // GetCertificatesByCloseRequestID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - closeRequestID int64
-func (_e *MockRepository_Expecter) GetCertificatesByCloseRequestID(ctx interface{}, closeRequestID interface{}) *MockRepository_GetCertificatesByCloseRequestID_Call {
+func (_e *MockRepository_Expecter) GetCertificatesByCloseRequestID(ctx any, closeRequestID any) *MockRepository_GetCertificatesByCloseRequestID_Call {
 	return &MockRepository_GetCertificatesByCloseRequestID_Call{Call: _e.mock.On("GetCertificatesByCloseRequestID", ctx, closeRequestID)}
 }
 
@@ -206,7 +215,7 @@ type MockRepository_GetCourseCycleCloseRequestByCertificatesToken_Call struct {
 // GetCourseCycleCloseRequestByCertificatesToken is a helper method to define mock.On call
 //   - ctx context.Context
 //   - token string
-func (_e *MockRepository_Expecter) GetCourseCycleCloseRequestByCertificatesToken(ctx interface{}, token interface{}) *MockRepository_GetCourseCycleCloseRequestByCertificatesToken_Call {
+func (_e *MockRepository_Expecter) GetCourseCycleCloseRequestByCertificatesToken(ctx any, token any) *MockRepository_GetCourseCycleCloseRequestByCertificatesToken_Call {
 	return &MockRepository_GetCourseCycleCloseRequestByCertificatesToken_Call{Call: _e.mock.On("GetCourseCycleCloseRequestByCertificatesToken", ctx, token)}
 }
 
@@ -272,7 +281,7 @@ type MockRepository_GetCourseCycleCloseRequestByID_Call struct {
 // GetCourseCycleCloseRequestByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-func (_e *MockRepository_Expecter) GetCourseCycleCloseRequestByID(ctx interface{}, id interface{}) *MockRepository_GetCourseCycleCloseRequestByID_Call {
+func (_e *MockRepository_Expecter) GetCourseCycleCloseRequestByID(ctx any, id any) *MockRepository_GetCourseCycleCloseRequestByID_Call {
 	return &MockRepository_GetCourseCycleCloseRequestByID_Call{Call: _e.mock.On("GetCourseCycleCloseRequestByID", ctx, id)}
 }
 
@@ -338,7 +347,7 @@ type MockRepository_GetCourseIncludingInactive_Call struct {
 // GetCourseIncludingInactive is a helper method to define mock.On call
 //   - ctx context.Context
 //   - courseID string
-func (_e *MockRepository_Expecter) GetCourseIncludingInactive(ctx interface{}, courseID interface{}) *MockRepository_GetCourseIncludingInactive_Call {
+func (_e *MockRepository_Expecter) GetCourseIncludingInactive(ctx any, courseID any) *MockRepository_GetCourseIncludingInactive_Call {
 	return &MockRepository_GetCourseIncludingInactive_Call{Call: _e.mock.On("GetCourseIncludingInactive", ctx, courseID)}
 }
 
@@ -404,7 +413,7 @@ type MockRepository_GetCoursePeriodByIDIncludingInactive_Call struct {
 // GetCoursePeriodByIDIncludingInactive is a helper method to define mock.On call
 //   - ctx context.Context
 //   - periodID string
-func (_e *MockRepository_Expecter) GetCoursePeriodByIDIncludingInactive(ctx interface{}, periodID interface{}) *MockRepository_GetCoursePeriodByIDIncludingInactive_Call {
+func (_e *MockRepository_Expecter) GetCoursePeriodByIDIncludingInactive(ctx any, periodID any) *MockRepository_GetCoursePeriodByIDIncludingInactive_Call {
 	return &MockRepository_GetCoursePeriodByIDIncludingInactive_Call{Call: _e.mock.On("GetCoursePeriodByIDIncludingInactive", ctx, periodID)}
 }
 
@@ -472,7 +481,7 @@ type MockRepository_GetUser_Call struct {
 // GetUser is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID string
-func (_e *MockRepository_Expecter) GetUser(ctx interface{}, userID interface{}) *MockRepository_GetUser_Call {
+func (_e *MockRepository_Expecter) GetUser(ctx any, userID any) *MockRepository_GetUser_Call {
 	return &MockRepository_GetUser_Call{Call: _e.mock.On("GetUser", ctx, userID)}
 }
 
@@ -530,7 +539,7 @@ type MockRepository_MarkCertificateIssued_Call struct {
 //   - ctx context.Context
 //   - id int64
 //   - storageKey string
-func (_e *MockRepository_Expecter) MarkCertificateIssued(ctx interface{}, id interface{}, storageKey interface{}) *MockRepository_MarkCertificateIssued_Call {
+func (_e *MockRepository_Expecter) MarkCertificateIssued(ctx any, id any, storageKey any) *MockRepository_MarkCertificateIssued_Call {
 	return &MockRepository_MarkCertificateIssued_Call{Call: _e.mock.On("MarkCertificateIssued", ctx, id, storageKey)}
 }
 
@@ -592,7 +601,7 @@ type MockRepository_ResetFailedCertificatesJob_Call struct {
 // ResetFailedCertificatesJob is a helper method to define mock.On call
 //   - ctx context.Context
 //   - closeRequestID int64
-func (_e *MockRepository_Expecter) ResetFailedCertificatesJob(ctx interface{}, closeRequestID interface{}) *MockRepository_ResetFailedCertificatesJob_Call {
+func (_e *MockRepository_Expecter) ResetFailedCertificatesJob(ctx any, closeRequestID any) *MockRepository_ResetFailedCertificatesJob_Call {
 	return &MockRepository_ResetFailedCertificatesJob_Call{Call: _e.mock.On("ResetFailedCertificatesJob", ctx, closeRequestID)}
 }
 

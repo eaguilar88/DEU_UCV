@@ -117,7 +117,7 @@ func (r *PostgresRepository) GetLatestCoursePeriod(ctx context.Context, courseID
 
 	var period entities.CoursePeriod
 	row := stmt.QueryRowContext(ctx, args...)
-	err = row.Scan(&period.ID, &period.StartDate, &period.EndDate, &period.InscriptionDate)
+	err = row.Scan(&period.ID, &period.Name, &period.StartDate, &period.EndDate, &period.InscriptionDate)
 	if err != nil {
 		// If no period found, return empty period without error
 		if err.Error() == "sql: no rows in result set" {
@@ -133,6 +133,7 @@ func (r *PostgresRepository) CreateCoursePeriod(ctx context.Context, coursePerio
 	cpModel := models.CoursePeriod{
 		ID:              coursePeriod.ID,
 		CourseID:        coursePeriod.Course.ID,
+		Name:            coursePeriod.Name,
 		StartDate:       coursePeriod.StartDate,
 		EndDate:         coursePeriod.EndDate,
 		InscriptionDate: coursePeriod.InscriptionDate,
@@ -370,6 +371,7 @@ func scanCoursePeriod(row scannable) (models.CoursePeriod, error) {
 	err := row.Scan(
 		&coursePeriod.ID,
 		&coursePeriod.CourseID,
+		&coursePeriod.Name,
 		&coursePeriod.StartDate,
 		&coursePeriod.EndDate,
 		&coursePeriod.IsActive,
@@ -395,7 +397,8 @@ func newCoursePeriodFromModel(coursePeriod models.CoursePeriod) entities.CourseP
 	}
 
 	return entities.CoursePeriod{
-		ID: coursePeriod.ID,
+		ID:   coursePeriod.ID,
+		Name: coursePeriod.Name,
 		Course: entities.Course{
 			ID: coursePeriod.CourseID,
 		},
@@ -415,6 +418,7 @@ func newCoursePeriodModelFromEntities(cp entities.CoursePeriod) models.CoursePer
 	return models.CoursePeriod{
 		ID:              cp.ID,
 		CourseID:        cp.Course.ID,
+		Name:            cp.Name,
 		StartDate:       cp.StartDate,
 		EndDate:         cp.EndDate,
 		IsActive:        cp.IsActive,

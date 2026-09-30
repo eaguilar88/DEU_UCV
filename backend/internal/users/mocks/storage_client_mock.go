@@ -17,10 +17,19 @@ func NewMockStorageClient(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockStorageClient {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockStorageClient{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -72,7 +81,7 @@ type MockStorageClient_GetFileURL_Call struct {
 // GetFileURL is a helper method to define mock.On call
 //   - ctx context.Context
 //   - objectKey string
-func (_e *MockStorageClient_Expecter) GetFileURL(ctx interface{}, objectKey interface{}) *MockStorageClient_GetFileURL_Call {
+func (_e *MockStorageClient_Expecter) GetFileURL(ctx any, objectKey any) *MockStorageClient_GetFileURL_Call {
 	return &MockStorageClient_GetFileURL_Call{Call: _e.mock.On("GetFileURL", ctx, objectKey)}
 }
 
@@ -138,7 +147,7 @@ type MockStorageClient_GetPresignedFileURL_Call struct {
 // GetPresignedFileURL is a helper method to define mock.On call
 //   - ctx context.Context
 //   - objectKey string
-func (_e *MockStorageClient_Expecter) GetPresignedFileURL(ctx interface{}, objectKey interface{}) *MockStorageClient_GetPresignedFileURL_Call {
+func (_e *MockStorageClient_Expecter) GetPresignedFileURL(ctx any, objectKey any) *MockStorageClient_GetPresignedFileURL_Call {
 	return &MockStorageClient_GetPresignedFileURL_Call{Call: _e.mock.On("GetPresignedFileURL", ctx, objectKey)}
 }
 
@@ -195,7 +204,7 @@ type MockStorageClient_UploadFile_Call struct {
 // UploadFile is a helper method to define mock.On call
 //   - ctx context.Context
 //   - files []*entities.File
-func (_e *MockStorageClient_Expecter) UploadFile(ctx interface{}, files interface{}) *MockStorageClient_UploadFile_Call {
+func (_e *MockStorageClient_Expecter) UploadFile(ctx any, files any) *MockStorageClient_UploadFile_Call {
 	return &MockStorageClient_UploadFile_Call{Call: _e.mock.On("UploadFile", ctx, files)}
 }
 

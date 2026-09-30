@@ -14,10 +14,19 @@ func newMockscannable(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *mockscannable {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &mockscannable{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -65,9 +74,9 @@ type mockscannable_Scan_Call struct {
 
 // Scan is a helper method to define mock.On call
 //   - dest ...interface{}
-func (_e *mockscannable_Expecter) Scan(dest ...interface{}) *mockscannable_Scan_Call {
+func (_e *mockscannable_Expecter) Scan(dest ...any) *mockscannable_Scan_Call {
 	return &mockscannable_Scan_Call{Call: _e.mock.On("Scan",
-		append([]interface{}{}, dest...)...)}
+		append([]any{}, dest...)...)}
 }
 
 func (_c *mockscannable_Scan_Call) Run(run func(dest ...interface{})) *mockscannable_Scan_Call {

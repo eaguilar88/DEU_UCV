@@ -5,6 +5,7 @@ import "database/sql"
 type CoursePeriod struct {
 	ID              string
 	CourseID        string
+	Name            string
 	StartDate       string
 	EndDate         string
 	InscriptionDate string

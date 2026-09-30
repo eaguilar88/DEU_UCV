@@ -17,10 +17,19 @@ func NewMockRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockRepository {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockRepository{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -65,7 +74,7 @@ type MockRepository_ApproveProviderRequest_Call struct {
 //   - id string
 //   - reviewerID string
 //   - providerID int64
-func (_e *MockRepository_Expecter) ApproveProviderRequest(ctx interface{}, id interface{}, reviewerID interface{}, providerID interface{}) *MockRepository_ApproveProviderRequest_Call {
+func (_e *MockRepository_Expecter) ApproveProviderRequest(ctx any, id any, reviewerID any, providerID any) *MockRepository_ApproveProviderRequest_Call {
 	return &MockRepository_ApproveProviderRequest_Call{Call: _e.mock.On("ApproveProviderRequest", ctx, id, reviewerID, providerID)}
 }
 
@@ -141,7 +150,7 @@ type MockRepository_GetProvider_Call struct {
 // GetProvider is a helper method to define mock.On call
 //   - ctx context.Context
 //   - providerID string
-func (_e *MockRepository_Expecter) GetProvider(ctx interface{}, providerID interface{}) *MockRepository_GetProvider_Call {
+func (_e *MockRepository_Expecter) GetProvider(ctx any, providerID any) *MockRepository_GetProvider_Call {
 	return &MockRepository_GetProvider_Call{Call: _e.mock.On("GetProvider", ctx, providerID)}
 }
 
@@ -207,7 +216,7 @@ type MockRepository_GetProviderRequestByID_Call struct {
 // GetProviderRequestByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-func (_e *MockRepository_Expecter) GetProviderRequestByID(ctx interface{}, id interface{}) *MockRepository_GetProviderRequestByID_Call {
+func (_e *MockRepository_Expecter) GetProviderRequestByID(ctx any, id any) *MockRepository_GetProviderRequestByID_Call {
 	return &MockRepository_GetProviderRequestByID_Call{Call: _e.mock.On("GetProviderRequestByID", ctx, id)}
 }
 
@@ -282,7 +291,7 @@ type MockRepository_GetProviderRequests_Call struct {
 //   - ctx context.Context
 //   - faculty entities.Faculty
 //   - pageScope entities.PageScope
-func (_e *MockRepository_Expecter) GetProviderRequests(ctx interface{}, faculty interface{}, pageScope interface{}) *MockRepository_GetProviderRequests_Call {
+func (_e *MockRepository_Expecter) GetProviderRequests(ctx any, faculty any, pageScope any) *MockRepository_GetProviderRequests_Call {
 	return &MockRepository_GetProviderRequests_Call{Call: _e.mock.On("GetProviderRequests", ctx, faculty, pageScope)}
 }
 
@@ -346,7 +355,7 @@ type MockRepository_RejectProviderRequest_Call struct {
 //   - id string
 //   - reviewerID string
 //   - comments string
-func (_e *MockRepository_Expecter) RejectProviderRequest(ctx interface{}, id interface{}, reviewerID interface{}, comments interface{}) *MockRepository_RejectProviderRequest_Call {
+func (_e *MockRepository_Expecter) RejectProviderRequest(ctx any, id any, reviewerID any, comments any) *MockRepository_RejectProviderRequest_Call {
 	return &MockRepository_RejectProviderRequest_Call{Call: _e.mock.On("RejectProviderRequest", ctx, id, reviewerID, comments)}
 }
 

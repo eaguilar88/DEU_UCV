@@ -17,10 +17,19 @@ func NewMockService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -73,7 +82,7 @@ type MockService_CreateUser_Call struct {
 //   - ctx context.Context
 //   - user entities.User
 //   - profilePic *entities.File
-func (_e *MockService_Expecter) CreateUser(ctx interface{}, user interface{}, profilePic interface{}) *MockService_CreateUser_Call {
+func (_e *MockService_Expecter) CreateUser(ctx any, user any, profilePic any) *MockService_CreateUser_Call {
 	return &MockService_CreateUser_Call{Call: _e.mock.On("CreateUser", ctx, user, profilePic)}
 }
 
@@ -135,7 +144,7 @@ type MockService_DeleteUser_Call struct {
 // DeleteUser is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID string
-func (_e *MockService_Expecter) DeleteUser(ctx interface{}, userID interface{}) *MockService_DeleteUser_Call {
+func (_e *MockService_Expecter) DeleteUser(ctx any, userID any) *MockService_DeleteUser_Call {
 	return &MockService_DeleteUser_Call{Call: _e.mock.On("DeleteUser", ctx, userID)}
 }
 
@@ -202,7 +211,7 @@ type MockService_GetUser_Call struct {
 //   - ctx context.Context
 //   - userID string
 //   - viewer entities.Viewer
-func (_e *MockService_Expecter) GetUser(ctx interface{}, userID interface{}, viewer interface{}) *MockService_GetUser_Call {
+func (_e *MockService_Expecter) GetUser(ctx any, userID any, viewer any) *MockService_GetUser_Call {
 	return &MockService_GetUser_Call{Call: _e.mock.On("GetUser", ctx, userID, viewer)}
 }
 
@@ -281,7 +290,7 @@ type MockService_GetUsers_Call struct {
 // GetUsers is a helper method to define mock.On call
 //   - ctx context.Context
 //   - pageScope entities.PageScope
-func (_e *MockService_Expecter) GetUsers(ctx interface{}, pageScope interface{}) *MockService_GetUsers_Call {
+func (_e *MockService_Expecter) GetUsers(ctx any, pageScope any) *MockService_GetUsers_Call {
 	return &MockService_GetUsers_Call{Call: _e.mock.On("GetUsers", ctx, pageScope)}
 }
 
@@ -339,7 +348,7 @@ type MockService_UpdateUser_Call struct {
 //   - ctx context.Context
 //   - userID string
 //   - user entities.User
-func (_e *MockService_Expecter) UpdateUser(ctx interface{}, userID interface{}, user interface{}) *MockService_UpdateUser_Call {
+func (_e *MockService_Expecter) UpdateUser(ctx any, userID any, user any) *MockService_UpdateUser_Call {
 	return &MockService_UpdateUser_Call{Call: _e.mock.On("UpdateUser", ctx, userID, user)}
 }
 

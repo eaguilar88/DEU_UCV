@@ -17,10 +17,19 @@ func NewMockService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -81,7 +90,7 @@ type MockService_Login_Call struct {
 //   - ctx context.Context
 //   - username string
 //   - password string
-func (_e *MockService_Expecter) Login(ctx interface{}, username interface{}, password interface{}) *MockService_Login_Call {
+func (_e *MockService_Expecter) Login(ctx any, username any, password any) *MockService_Login_Call {
 	return &MockService_Login_Call{Call: _e.mock.On("Login", ctx, username, password)}
 }
 

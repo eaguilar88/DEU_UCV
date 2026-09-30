@@ -17,10 +17,19 @@ func NewMockService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -64,7 +73,7 @@ type MockService_ApproveCourseRequest_Call struct {
 //   - ctx context.Context
 //   - cr entities.CourseRequest
 //   - courseType entities.CourseType
-func (_e *MockService_Expecter) ApproveCourseRequest(ctx interface{}, cr interface{}, courseType interface{}) *MockService_ApproveCourseRequest_Call {
+func (_e *MockService_Expecter) ApproveCourseRequest(ctx any, cr any, courseType any) *MockService_ApproveCourseRequest_Call {
 	return &MockService_ApproveCourseRequest_Call{Call: _e.mock.On("ApproveCourseRequest", ctx, cr, courseType)}
 }
 
@@ -135,7 +144,7 @@ type MockService_GetCourseRequestByID_Call struct {
 // GetCourseRequestByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - reqID string
-func (_e *MockService_Expecter) GetCourseRequestByID(ctx interface{}, reqID interface{}) *MockService_GetCourseRequestByID_Call {
+func (_e *MockService_Expecter) GetCourseRequestByID(ctx any, reqID any) *MockService_GetCourseRequestByID_Call {
 	return &MockService_GetCourseRequestByID_Call{Call: _e.mock.On("GetCourseRequestByID", ctx, reqID)}
 }
 
@@ -210,7 +219,7 @@ type MockService_GetCourseRequestsByFaculty_Call struct {
 //   - ctx context.Context
 //   - faculty entities.Faculty
 //   - pageScope entities.PageScope
-func (_e *MockService_Expecter) GetCourseRequestsByFaculty(ctx interface{}, faculty interface{}, pageScope interface{}) *MockService_GetCourseRequestsByFaculty_Call {
+func (_e *MockService_Expecter) GetCourseRequestsByFaculty(ctx any, faculty any, pageScope any) *MockService_GetCourseRequestsByFaculty_Call {
 	return &MockService_GetCourseRequestsByFaculty_Call{Call: _e.mock.On("GetCourseRequestsByFaculty", ctx, faculty, pageScope)}
 }
 
@@ -290,7 +299,7 @@ type MockService_GetMyCourseRequests_Call struct {
 //   - ctx context.Context
 //   - userID string
 //   - pageScope entities.PageScope
-func (_e *MockService_Expecter) GetMyCourseRequests(ctx interface{}, userID interface{}, pageScope interface{}) *MockService_GetMyCourseRequests_Call {
+func (_e *MockService_Expecter) GetMyCourseRequests(ctx any, userID any, pageScope any) *MockService_GetMyCourseRequests_Call {
 	return &MockService_GetMyCourseRequests_Call{Call: _e.mock.On("GetMyCourseRequests", ctx, userID, pageScope)}
 }
 
@@ -355,7 +364,7 @@ type MockService_RedirectCourseRequest_Call struct {
 //   - reviewerID string
 //   - faculty entities.Faculty
 //   - reason string
-func (_e *MockService_Expecter) RedirectCourseRequest(ctx interface{}, reqID interface{}, reviewerID interface{}, faculty interface{}, reason interface{}) *MockService_RedirectCourseRequest_Call {
+func (_e *MockService_Expecter) RedirectCourseRequest(ctx any, reqID any, reviewerID any, faculty any, reason any) *MockService_RedirectCourseRequest_Call {
 	return &MockService_RedirectCourseRequest_Call{Call: _e.mock.On("RedirectCourseRequest", ctx, reqID, reviewerID, faculty, reason)}
 }
 
@@ -429,7 +438,7 @@ type MockService_RejectCourseRequest_Call struct {
 //   - reqID string
 //   - reviewerID string
 //   - comments string
-func (_e *MockService_Expecter) RejectCourseRequest(ctx interface{}, reqID interface{}, reviewerID interface{}, comments interface{}) *MockService_RejectCourseRequest_Call {
+func (_e *MockService_Expecter) RejectCourseRequest(ctx any, reqID any, reviewerID any, comments any) *MockService_RejectCourseRequest_Call {
 	return &MockService_RejectCourseRequest_Call{Call: _e.mock.On("RejectCourseRequest", ctx, reqID, reviewerID, comments)}
 }
 

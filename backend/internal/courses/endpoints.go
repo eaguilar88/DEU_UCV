@@ -8,13 +8,14 @@ import (
 
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/httperrors"
+	"github.com/eaguilar88/deu/internal/jwt"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
 
 type Service interface {
 	GetCourse(ctx context.Context, courseID string) (entities.Course, error)
-	GetCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error)
+	GetCourses(ctx context.Context, filter entities.CourseFilter, viewer entities.Viewer, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error)
 	GetPublicCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error)
 	GetLatestCoursePeriod(ctx context.Context, courseID string) (entities.CoursePeriod, error)
 	CreateCourse(ctx context.Context, userID string, course entities.Course) (int64, error)
@@ -54,6 +55,7 @@ func (h *Handler) GetCourse(c echo.Context) error {
 	} else if latestPeriod.ID != "" {
 		response.LatestPeriod = &LatestCoursePeriodInfo{
 			ID:              latestPeriod.ID,
+			Name:            latestPeriod.Name,
 			StartDate:       latestPeriod.StartDate,
 			EndDate:         latestPeriod.EndDate,
 			InscriptionDate: latestPeriod.InscriptionDate,
@@ -71,10 +73,18 @@ func (h *Handler) GetCourses(c echo.Context) error {
 	scope.GetPageFromVars(c.QueryParam("page"))
 	//nolint:errcheck
 	scope.GetPerPageFromVars(c.QueryParam("per_page"))
+	filter := entities.CourseFilter{
+		OwnerUserID:      c.QueryParam("usuario_id"),
+		ProviderCode:     c.QueryParam("codigo_proveedor"),
+		ManagementStatus: entities.CourseManagementStatus(c.QueryParam("estado")),
+	}
+	if filter.ManagementStatus != "" && !filter.ManagementStatus.IsValid() {
+		return httperrors.NewBadRequest(fmt.Sprintf("invalid estado: %s", filter.ManagementStatus))
+	}
 	req := GetCoursesRequest{
 		PageScope: scope,
 	}
-	courses, pages, err := h.svc.GetCourses(ctx, req.PageScope)
+	courses, pages, err := h.svc.GetCourses(ctx, filter, jwt.ViewerFromContext(c), req.PageScope)
 	if err != nil {
 		return httperrors.NewInternal(err)
 	}

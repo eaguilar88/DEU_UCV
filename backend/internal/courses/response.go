@@ -6,6 +6,7 @@ import (
 
 type LatestCoursePeriodInfo struct {
 	ID              string `json:"id,omitempty"`
+	Name            string `json:"nombre_cohorte,omitempty"`
 	StartDate       string `json:"fecha_inicio,omitempty"`
 	EndDate         string `json:"fecha_fin,omitempty"`
 	InscriptionDate string `json:"fecha_inscripcion,omitempty"`

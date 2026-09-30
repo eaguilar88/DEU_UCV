@@ -17,10 +17,19 @@ func NewMockMailClient(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockMailClient {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockMailClient{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -66,7 +75,7 @@ type MockMailClient_SendTemplateWithAttachments_Call struct {
 //   - tmpl email.Template
 //   - data any
 //   - attachments []email.Attachment
-func (_e *MockMailClient_Expecter) SendTemplateWithAttachments(ctx interface{}, to interface{}, tmpl interface{}, data interface{}, attachments interface{}) *MockMailClient_SendTemplateWithAttachments_Call {
+func (_e *MockMailClient_Expecter) SendTemplateWithAttachments(ctx any, to any, tmpl any, data any, attachments any) *MockMailClient_SendTemplateWithAttachments_Call {
 	return &MockMailClient_SendTemplateWithAttachments_Call{Call: _e.mock.On("SendTemplateWithAttachments", ctx, to, tmpl, data, attachments)}
 }
 
