@@ -44,6 +44,7 @@ var courseRequestWithCourseSelect = []string{
 	"c.content",
 	"c.type",
 	"c.faculty",
+	"c.origin_faculty",
 	"c.cost",
 	"c.location",
 	"c.is_active",

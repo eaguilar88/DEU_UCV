@@ -91,7 +91,7 @@ func (h *Handler) ApproveCourseRequest(c echo.Context) error {
 		return httperrors.NewInternal(err)
 	}
 
-	return c.NoContent(http.StatusAccepted)
+	return c.NoContent(http.StatusNoContent)
 }
 
 func (h *Handler) RejectCourseRequest(c echo.Context) error {
@@ -118,7 +118,7 @@ func (h *Handler) RejectCourseRequest(c echo.Context) error {
 		return httperrors.NewInternal(err)
 	}
 
-	return c.NoContent(http.StatusAccepted)
+	return c.NoContent(http.StatusNoContent)
 }
 
 func (h *Handler) RedirectCourseRequest(c echo.Context) error {
@@ -154,7 +154,7 @@ func (h *Handler) RedirectCourseRequest(c echo.Context) error {
 		return httperrors.NewInternal(err)
 	}
 
-	return c.NoContent(http.StatusAccepted)
+	return c.NoContent(http.StatusNoContent)
 }
 
 func (h *Handler) GetCourseRequestsByFaculty(c echo.Context) error {

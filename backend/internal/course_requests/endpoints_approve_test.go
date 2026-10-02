@@ -54,7 +54,7 @@ func TestHandler_ApproveCourseRequest_Multipart(t *testing.T) {
 	err = NewHandler(svc, zap.NewNop()).ApproveCourseRequest(ctx)
 
 	require.NoError(t, err)
-	assert.Equal(t, http.StatusAccepted, rec.Code)
+	assert.Equal(t, http.StatusNoContent, rec.Code)
 }
 
 func TestHandler_ApproveCourseRequest_JSON(t *testing.T) {
@@ -71,7 +71,7 @@ func TestHandler_ApproveCourseRequest_JSON(t *testing.T) {
 	err := NewHandler(svc, zap.NewNop()).ApproveCourseRequest(ctx)
 
 	require.NoError(t, err)
-	assert.Equal(t, http.StatusAccepted, rec.Code)
+	assert.Equal(t, http.StatusNoContent, rec.Code)
 }
 
 func TestHandler_ApproveCourseRequest_InvalidScore(t *testing.T) {

@@ -1826,7 +1826,7 @@ paths:
             schema:
               $ref: "#/components/schemas/ApproveCourseRequestBody"
       responses:
-        "200":
+        "204":
           description: Approved
         "404":
           description: Request not found
@@ -1849,7 +1849,7 @@ paths:
             schema:
               $ref: "#/components/schemas/RejectRequestBody"
       responses:
-        "200":
+        "204":
           description: Rejected
         "404":
           description: Request not found
@@ -1873,7 +1873,7 @@ paths:
             schema:
               $ref: "#/components/schemas/RedirectCourseRequestBody"
       responses:
-        "200":
+        "204":
           description: Redirected
         "400":
           description: Missing required fields

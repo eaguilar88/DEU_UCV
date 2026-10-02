@@ -378,6 +378,7 @@ func scanCourseRequestWithCourse(row scannable) (models.CourseRequest, error) {
 		&course.Content,
 		&course.Type,
 		&course.Faculty,
+		&course.OriginFaculty,
 		&course.Cost,
 		&course.Location,
 		&course.IsActive,
