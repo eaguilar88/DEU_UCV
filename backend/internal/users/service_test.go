@@ -51,8 +51,13 @@ func TestService_GetUser(t *testing.T) {
 					RunAndReturn(func(_ context.Context, _ string, _ entities.OwnerType) (entities.GroupedFiles, error) {
 						return entities.GroupedFiles{}, nil
 					})
+				repo.EXPECT().GetUserRoles(mock.Anything, "user-1").Return([]entities.UserRole{{Name: "visitante"}}, nil)
 			},
-			want:    *newTestUser(),
+			want: func() entities.User {
+				u := *newTestUser()
+				u.Roles = []string{"visitante"}
+				return u
+			}(),
 			wantErr: false,
 		},
 		{
@@ -73,13 +78,25 @@ func TestService_GetUser(t *testing.T) {
 					RunAndReturn(func(_ context.Context, _ string) (string, error) {
 						return "https://cdn.example.com/users/1/profile_picture.jpg", nil
 					})
+				repo.EXPECT().GetUserRoles(mock.Anything, "user-1").Return([]entities.UserRole{{Name: "visitante"}}, nil)
 			},
 			want: func() entities.User {
 				u := *newTestUser()
 				u.ProfilePictureURL = "https://cdn.example.com/users/1/profile_picture.jpg"
+				u.Roles = []string{"visitante"}
 				return u
 			}(),
 			wantErr: false,
+		},
+		{
+			name:   "error getting roles",
+			userID: "user-1",
+			prepare: func(repo *mocks.MockRepository, _ *mocks.MockStorageClient) {
+				repo.EXPECT().GetUser(mock.Anything, "user-1").Return(newTestUser(), nil)
+				repo.EXPECT().GetFilesByOwner(mock.Anything, "user-1", entities.OwnerTypeUser).Return(entities.GroupedFiles{}, nil)
+				repo.EXPECT().GetUserRoles(mock.Anything, "user-1").Return(nil, errors.New("db error"))
+			},
+			wantErr: true,
 		},
 		{
 			name:   "user not found",
@@ -458,13 +475,19 @@ func TestService_GetUser_Visibility(t *testing.T) {
 			userCopy := *fullUser
 			repo.EXPECT().GetUser(mock.Anything, "1").Return(&userCopy, nil)
 			repo.EXPECT().GetFilesByOwner(mock.Anything, "1", entities.OwnerTypeUser).Return(entities.GroupedFiles{}, nil)
+			if tt.wantFull {
+				// Only the full profile carries the user's roles.
+				repo.EXPECT().GetUserRoles(mock.Anything, "1").Return([]entities.UserRole{{Name: "course_admin"}}, nil)
+			}
 
 			got, err := NewService(repo, mocks.NewMockMailClient(t), storage, zap.NewNop()).
 				GetUser(context.Background(), "1", tt.viewer)
 
 			assert.NoError(t, err)
 			if tt.wantFull {
-				assert.Equal(t, *fullUser, got)
+				want := *fullUser
+				want.Roles = []string{"course_admin"}
+				assert.Equal(t, want, got)
 				return
 			}
 			assert.Equal(t, entities.User{ID: "1", FirstName: "Ana", LastName: "Pérez"}, got)

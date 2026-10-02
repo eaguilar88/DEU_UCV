@@ -31,8 +31,9 @@ func NewClient(baseURL string) *Client {
 	}
 }
 
-// Render converts a self-contained HTML document (styles and images inlined) into a landscape
-// letter-size PDF with no margins, so the document's own layout fills the page.
+// Render converts a self-contained HTML document (styles and images inlined) into a PDF with no
+// margins, so the document's own layout fills the page. The page size is the document's CSS
+// @page size, or landscape letter when it sets none.
 func (c *Client) Render(ctx context.Context, html []byte) ([]byte, error) {
 	var body bytes.Buffer
 	form := multipart.NewWriter(&body)
@@ -52,6 +53,8 @@ func (c *Client) Render(ctx context.Context, html []byte) ([]byte, error) {
 		"marginLeft":      "0",
 		"marginRight":     "0",
 		"printBackground": "true",
+		// The certificate designs are not letter-sized: their template sets the page size.
+		"preferCssPageSize": "true",
 	}
 	for name, value := range fields {
 		if err := form.WriteField(name, value); err != nil {

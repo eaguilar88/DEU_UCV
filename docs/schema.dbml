@@ -153,6 +153,8 @@ Table courses {
   location course_location_enum
   is_active boolean [default: false]
   has_documentation boolean [default: false]
+  competencies text [note: 'course modules with their contents and competencies']
+  bibliography text
   created_at timestamp [default: `now()`]
   updated_at timestamp [default: `now()`]
   deleted_at timestamp
@@ -164,6 +166,8 @@ Table course_auth_requests {
   status request_status_enum [not null, default: 'under_review']
   reviewer_id integer [not null]
   comments text
+  score "numeric(5,2)" [note: 'evaluation score recorded on approval']
+  classification text [note: 'evaluation classification recorded on approval']
   reviewed_at timestamp
   created_at timestamp [default: `now()`]
   updated_at timestamp [default: `now()`]

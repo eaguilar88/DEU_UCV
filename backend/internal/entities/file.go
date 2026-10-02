@@ -14,6 +14,7 @@ const (
 	OwnerTypeGroupMember             OwnerType = "group_member"
 	OwnerTypeCourseCycleCloseRequest OwnerType = "course_cycle_close_request"
 	OwnerTypeProviderContract        OwnerType = "provider_contract"
+	OwnerTypeCourseRequest           OwnerType = "course_request"
 )
 
 func (ot OwnerType) String() string {

@@ -36,8 +36,20 @@ type GetCourseResponse struct {
 	CreatedAt         string                  `json:"creado_en,omitempty"`
 	UpdatedAt         string                  `json:"actualizado_en,omitempty"`
 	LatestPeriod      *LatestCoursePeriodInfo `json:"ultimo_periodo,omitempty"`
-	HasDocumentation  bool                    `json:"tiene_documentacion_legal"`
-	ManagementStatus  string                  `json:"estado_gestion,omitempty"`
+	// OwnerUserID is the user account of the course's provider (only on the course detail).
+	OwnerUserID      string              `json:"usuario_id,omitempty"`
+	IsActive         bool                `json:"activo"`
+	HasDocumentation bool                `json:"tiene_documentacion_legal"`
+	ManagementStatus string              `json:"estado_gestion,omitempty"`
+	Competencies     string              `json:"contenido_competencias,omitempty"`
+	Bibliography     string              `json:"bibliografia,omitempty"`
+	FacilitatorCV    string              `json:"cv_facilitador_url,omitempty"`
+	Provider         *CourseProviderInfo `json:"proveedor,omitempty"`
+}
+
+type CourseProviderInfo struct {
+	Name    string `json:"nombre,omitempty"`
+	LogoURL string `json:"logo_url,omitempty"`
 }
 
 type GetCoursesResponse struct {

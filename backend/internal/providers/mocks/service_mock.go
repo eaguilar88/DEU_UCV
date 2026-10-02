@@ -48,16 +48,16 @@ func (_m *MockService) EXPECT() *MockService_Expecter {
 }
 
 // ApproveProvider provides a mock function for the type MockService
-func (_mock *MockService) ApproveProvider(ctx context.Context, providerID string, userID string) error {
-	ret := _mock.Called(ctx, providerID, userID)
+func (_mock *MockService) ApproveProvider(ctx context.Context, providerID string) error {
+	ret := _mock.Called(ctx, providerID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ApproveProvider")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
-		r0 = returnFunc(ctx, providerID, userID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, providerID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -72,12 +72,11 @@ type MockService_ApproveProvider_Call struct {
 // ApproveProvider is a helper method to define mock.On call
 //   - ctx context.Context
 //   - providerID string
-//   - userID string
-func (_e *MockService_Expecter) ApproveProvider(ctx any, providerID any, userID any) *MockService_ApproveProvider_Call {
-	return &MockService_ApproveProvider_Call{Call: _e.mock.On("ApproveProvider", ctx, providerID, userID)}
+func (_e *MockService_Expecter) ApproveProvider(ctx any, providerID any) *MockService_ApproveProvider_Call {
+	return &MockService_ApproveProvider_Call{Call: _e.mock.On("ApproveProvider", ctx, providerID)}
 }
 
-func (_c *MockService_ApproveProvider_Call) Run(run func(ctx context.Context, providerID string, userID string)) *MockService_ApproveProvider_Call {
+func (_c *MockService_ApproveProvider_Call) Run(run func(ctx context.Context, providerID string)) *MockService_ApproveProvider_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -87,14 +86,9 @@ func (_c *MockService_ApproveProvider_Call) Run(run func(ctx context.Context, pr
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
 		run(
 			arg0,
 			arg1,
-			arg2,
 		)
 	})
 	return _c
@@ -105,7 +99,7 @@ func (_c *MockService_ApproveProvider_Call) Return(err error) *MockService_Appro
 	return _c
 }
 
-func (_c *MockService_ApproveProvider_Call) RunAndReturn(run func(ctx context.Context, providerID string, userID string) error) *MockService_ApproveProvider_Call {
+func (_c *MockService_ApproveProvider_Call) RunAndReturn(run func(ctx context.Context, providerID string) error) *MockService_ApproveProvider_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -452,16 +446,16 @@ func (_c *MockService_GetProviders_Call) RunAndReturn(run func(ctx context.Conte
 }
 
 // RejectProvider provides a mock function for the type MockService
-func (_mock *MockService) RejectProvider(ctx context.Context, providerID string) error {
-	ret := _mock.Called(ctx, providerID)
+func (_mock *MockService) RejectProvider(ctx context.Context, providerID string, reason string) error {
+	ret := _mock.Called(ctx, providerID, reason)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RejectProvider")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, providerID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = returnFunc(ctx, providerID, reason)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -476,11 +470,12 @@ type MockService_RejectProvider_Call struct {
 // RejectProvider is a helper method to define mock.On call
 //   - ctx context.Context
 //   - providerID string
-func (_e *MockService_Expecter) RejectProvider(ctx any, providerID any) *MockService_RejectProvider_Call {
-	return &MockService_RejectProvider_Call{Call: _e.mock.On("RejectProvider", ctx, providerID)}
+//   - reason string
+func (_e *MockService_Expecter) RejectProvider(ctx any, providerID any, reason any) *MockService_RejectProvider_Call {
+	return &MockService_RejectProvider_Call{Call: _e.mock.On("RejectProvider", ctx, providerID, reason)}
 }
 
-func (_c *MockService_RejectProvider_Call) Run(run func(ctx context.Context, providerID string)) *MockService_RejectProvider_Call {
+func (_c *MockService_RejectProvider_Call) Run(run func(ctx context.Context, providerID string, reason string)) *MockService_RejectProvider_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -490,9 +485,14 @@ func (_c *MockService_RejectProvider_Call) Run(run func(ctx context.Context, pro
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -503,7 +503,7 @@ func (_c *MockService_RejectProvider_Call) Return(err error) *MockService_Reject
 	return _c
 }
 
-func (_c *MockService_RejectProvider_Call) RunAndReturn(run func(ctx context.Context, providerID string) error) *MockService_RejectProvider_Call {
+func (_c *MockService_RejectProvider_Call) RunAndReturn(run func(ctx context.Context, providerID string, reason string) error) *MockService_RejectProvider_Call {
 	_c.Call.Return(run)
 	return _c
 }

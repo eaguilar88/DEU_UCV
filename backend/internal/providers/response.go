@@ -77,6 +77,10 @@ func providerToResponse(entity entities.Provider) GetProviderResponse {
 		Faculty:    string(entity.Faculty),
 	}
 
+	if entity.Files.Logo != nil {
+		response.Logo = entity.Files.Logo.URL
+	}
+
 	files := ProviderFiles{}
 	if entity.Files.CI != nil {
 		files.CI = entity.Files.CI.URL

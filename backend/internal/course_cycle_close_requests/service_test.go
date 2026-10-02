@@ -378,10 +378,41 @@ func TestCourseCycleCloseRequestService_GetCloseRequests(t *testing.T) {
 func TestCourseCycleCloseRequestService_GetCloseRequestByID(t *testing.T) {
 	ctx := context.Background()
 	repoMock := mocks.NewMockRepository(t)
+	storageMock := mocks.NewMockStorageClient(t)
 	repoMock.EXPECT().GetCourseCycleCloseRequestByID(mock.Anything, "1").
-		Return(entities.CourseCycleCloseRequest{ID: 1}, nil)
-	s := NewService(repoMock, mocks.NewMockStorageClient(t), mocks.NewMockMailClient(t), zap.NewNop())
+		Return(entities.CourseCycleCloseRequest{ID: 1, CourseName: "Fotografía", CohortName: "Cohorte 1"}, nil)
+	// The vouchers file is missing: it is left nil instead of failing the request.
+	repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1", entities.OwnerTypeCourseCycleCloseRequest).
+		Return(entities.GroupedFiles{
+			entities.CloseRequestFileTypeParticipants: {{Key: "p-key"}},
+			entities.CloseRequestFileTypeSurvey:       {{Key: "s-key"}},
+		}, nil)
+	storageMock.EXPECT().GetPresignedFileURL(mock.Anything, "p-key").Return("https://b2/p", nil)
+	storageMock.EXPECT().GetPresignedFileURL(mock.Anything, "s-key").Return("https://b2/s", nil)
+
+	s := NewService(repoMock, storageMock, mocks.NewMockMailClient(t), zap.NewNop())
 	got, err := s.GetCloseRequestByID(ctx, "1")
+
 	assert.NoError(t, err)
-	assert.Equal(t, entities.CourseCycleCloseRequest{ID: 1}, got)
+	assert.Equal(t, "Fotografía", got.CourseName)
+	assert.Equal(t, "Cohorte 1", got.CohortName)
+	if assert.NotNil(t, got.ParticipantsFile) && assert.NotNil(t, got.SurveyFile) {
+		assert.Equal(t, "https://b2/p", got.ParticipantsFile.URL)
+		assert.Equal(t, "https://b2/s", got.SurveyFile.URL)
+	}
+	assert.Nil(t, got.VouchersFile)
+}
+
+func TestCourseCycleCloseRequestService_GetCloseRequestByID_FileURLError(t *testing.T) {
+	repoMock := mocks.NewMockRepository(t)
+	storageMock := mocks.NewMockStorageClient(t)
+	repoMock.EXPECT().GetCourseCycleCloseRequestByID(mock.Anything, "1").Return(entities.CourseCycleCloseRequest{ID: 1}, nil)
+	repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1", entities.OwnerTypeCourseCycleCloseRequest).
+		Return(entities.GroupedFiles{entities.CloseRequestFileTypeSurvey: {{Key: "s-key"}}}, nil)
+	storageMock.EXPECT().GetPresignedFileURL(mock.Anything, "s-key").Return("", errors.New("b2 down"))
+
+	s := NewService(repoMock, storageMock, mocks.NewMockMailClient(t), zap.NewNop())
+	_, err := s.GetCloseRequestByID(context.Background(), "1")
+
+	assert.EqualError(t, err, "b2 down")
 }

@@ -71,6 +71,17 @@ func (s *service) GetUser(ctx context.Context, userID string, viewer entities.Vi
 	if !canViewFullUser(userID, viewer) {
 		return publicProfile(*user), nil
 	}
+
+	// The full profile carries the user's roles, which the frontends use to decide what to show.
+	roles, err := s.repo.GetUserRoles(ctx, userID)
+	if err != nil {
+		s.log.Error("failed to get user roles", zap.Error(err), zap.String("user_id", userID))
+		return entities.User{}, err
+	}
+	user.Roles = make([]string, 0, len(roles))
+	for _, role := range roles {
+		user.Roles = append(user.Roles, role.Name)
+	}
 	return *user, nil
 }
 

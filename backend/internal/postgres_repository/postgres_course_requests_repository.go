@@ -61,7 +61,7 @@ func (r *PostgresRepository) GetCourseRequestsByFaculty(ctx context.Context, fac
 	defer rows.Close()
 	var requests []entities.CourseRequest
 	for rows.Next() {
-		model, err := scanCourseRequest(rows)
+		model, err := scanCourseRequestWithCourse(rows)
 		if err != nil {
 			return nil, entities.PageScope{}, err
 		}
@@ -96,7 +96,7 @@ func (r *PostgresRepository) GetCourseRequestsByProvider(ctx context.Context, pr
 	defer rows.Close()
 	var requests []entities.CourseRequest
 	for rows.Next() {
-		model, err := scanCourseRequest(rows)
+		model, err := scanCourseRequestWithCourse(rows)
 		if err != nil {
 			return nil, entities.PageScope{}, err
 		}
@@ -114,7 +114,12 @@ func (r *PostgresRepository) GetCourseRequestsByProvider(ctx context.Context, pr
 	return requests, scope, nil
 }
 
-func (r *PostgresRepository) ApproveCourseRequest(ctx context.Context, reqID, reviewerID, courseType, comments string, notify func() error) error {
+// ApproveCourseRequest approves request, activating its course with courseType. The evaluation
+// (score, classification and the already uploaded evaluation file) is stored in the same
+// transaction.
+func (r *PostgresRepository) ApproveCourseRequest(ctx context.Context, request entities.CourseRequest, courseType string, notify func() error) error {
+	reqID, reviewerID, comments := request.ID, request.Reviewer.ID, request.Comments
+
 	// Start transaction
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -149,7 +154,12 @@ func (r *PostgresRepository) ApproveCourseRequest(ctx context.Context, reqID, re
 	}
 
 	// Approve request
-	approveSQL, approveArgs, err := queries.ApproveCourseRequest(reqID, reviewerID, comments).ToSql()
+	var score sql.NullFloat64
+	if request.Score != nil {
+		score = sql.NullFloat64{Float64: *request.Score, Valid: true}
+	}
+	classification := sql.NullString{String: request.Classification, Valid: request.Classification != ""}
+	approveSQL, approveArgs, err := queries.ApproveCourseRequest(reqID, reviewerID, comments, score, classification).ToSql()
 	if err != nil {
 		r.logger.Error("failed to build approve query", zap.Error(err))
 		return err
@@ -168,6 +178,19 @@ func (r *PostgresRepository) ApproveCourseRequest(ctx context.Context, reqID, re
 		r.logger.Error("no rows affected when approving course request")
 		err = fmt.Errorf("%w", course_requests.ErrCourseRequestNotFound)
 		return err
+	}
+
+	if request.EvaluationFile != nil {
+		fileSQL, fileArgs, buildErr := queries.InsertFile([]models.File{newFileFromEntity(*request.EvaluationFile)}).ToSql()
+		if buildErr != nil {
+			err = buildErr
+			r.logger.Error("failed to build insert evaluation file query", zap.Error(err))
+			return err
+		}
+		if _, err = tx.ExecContext(ctx, fileSQL, fileArgs...); err != nil {
+			r.logger.Error("failed to save evaluation file metadata", zap.Error(err))
+			return err
+		}
 	}
 
 	if err = notify(); err != nil {
@@ -329,23 +352,6 @@ func (r *PostgresRepository) CreateCourseRequest(ctx context.Context, request en
 	return lastInsertedID, nil
 }
 
-func scanCourseRequest(row scannable) (models.CourseRequest, error) {
-	result := models.CourseRequest{}
-	err := row.Scan(
-		&result.ID,
-		&result.CourseID,
-		&result.Status,
-		&result.ReviewerID,
-		&result.Comments,
-		&result.ReviewedAt,
-		&result.CreatedAt,
-		&result.UpdatedAt,
-		&result.DeletedAt,
-	)
-
-	return result, err
-}
-
 func scanCourseRequestWithCourse(row scannable) (models.CourseRequest, error) {
 	result := models.CourseRequest{}
 	course := models.Course{}
@@ -360,6 +366,8 @@ func scanCourseRequestWithCourse(row scannable) (models.CourseRequest, error) {
 		&result.CreatedAt,
 		&result.UpdatedAt,
 		&result.DeletedAt,
+		&result.Score,
+		&result.Classification,
 		// Course fields (excluding deleted_at)
 		&course.ID,
 		&course.Name,
@@ -375,6 +383,8 @@ func scanCourseRequestWithCourse(row scannable) (models.CourseRequest, error) {
 		&course.IsActive,
 		&course.CreatedAt,
 		&course.UpdatedAt,
+		&course.HasDocumentation,
+		&result.OwnerUserID,
 	)
 
 	if err != nil {
@@ -403,6 +413,19 @@ func newCourseRequestFromModel(request models.CourseRequest) entities.CourseRequ
 
 	if request.ReviewedAt.Valid {
 		result.ReviewedAt = request.ReviewedAt.String
+	}
+
+	if request.Score.Valid {
+		score := request.Score.Float64
+		result.Score = &score
+	}
+
+	if request.Classification.Valid {
+		result.Classification = request.Classification.String
+	}
+
+	if request.OwnerUserID.Valid {
+		result.User.ID = request.OwnerUserID.String
 	}
 
 	// Map course if present

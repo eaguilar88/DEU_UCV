@@ -70,7 +70,7 @@ func TestHandler_GetCourse(t *testing.T) {
 			name: "success with latest period",
 			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
-				tc.svc.On("GetCourse", ctx.Request().Context(), mock.AnythingOfType("string")).
+				tc.svc.On("GetCourse", ctx.Request().Context(), mock.AnythingOfType("string"), entities.Viewer{}).
 					Return(entities.Course{ID: "1", Name: "Test Course"}, nil)
 				tc.svc.On("GetLatestCoursePeriod", ctx.Request().Context(), mock.AnythingOfType("string")).
 					Return(entities.CoursePeriod{ID: "period-1", StartDate: "2026-01-01"}, nil)
@@ -88,7 +88,7 @@ func TestHandler_GetCourse(t *testing.T) {
 			name: "success with no latest period",
 			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
-				tc.svc.On("GetCourse", ctx.Request().Context(), mock.AnythingOfType("string")).
+				tc.svc.On("GetCourse", ctx.Request().Context(), mock.AnythingOfType("string"), entities.Viewer{}).
 					Return(entities.Course{ID: "1", Name: "Test Course"}, nil)
 				tc.svc.On("GetLatestCoursePeriod", ctx.Request().Context(), mock.AnythingOfType("string")).
 					Return(entities.CoursePeriod{}, errors.New("not found"))
@@ -102,7 +102,7 @@ func TestHandler_GetCourse(t *testing.T) {
 			name: "error getting course",
 			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
-				tc.svc.On("GetCourse", ctx.Request().Context(), mock.AnythingOfType("string")).
+				tc.svc.On("GetCourse", ctx.Request().Context(), mock.AnythingOfType("string"), entities.Viewer{}).
 					Return(entities.Course{}, errors.New("db error"))
 			},
 			wantErr: httperrors.NewInternal(errors.New("db error")),

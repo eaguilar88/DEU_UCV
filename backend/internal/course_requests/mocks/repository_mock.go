@@ -48,16 +48,16 @@ func (_m *MockRepository) EXPECT() *MockRepository_Expecter {
 }
 
 // ApproveCourseRequest provides a mock function for the type MockRepository
-func (_mock *MockRepository) ApproveCourseRequest(ctx context.Context, reqID string, reviewerID string, courseType string, comments string, notify func() error) error {
-	ret := _mock.Called(ctx, reqID, reviewerID, courseType, comments, notify)
+func (_mock *MockRepository) ApproveCourseRequest(ctx context.Context, request entities.CourseRequest, courseType string, notify func() error) error {
+	ret := _mock.Called(ctx, request, courseType, notify)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ApproveCourseRequest")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string, func() error) error); ok {
-		r0 = returnFunc(ctx, reqID, reviewerID, courseType, comments, notify)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.CourseRequest, string, func() error) error); ok {
+		r0 = returnFunc(ctx, request, courseType, notify)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -71,48 +71,36 @@ type MockRepository_ApproveCourseRequest_Call struct {
 
 // ApproveCourseRequest is a helper method to define mock.On call
 //   - ctx context.Context
-//   - reqID string
-//   - reviewerID string
+//   - request entities.CourseRequest
 //   - courseType string
-//   - comments string
 //   - notify func() error
-func (_e *MockRepository_Expecter) ApproveCourseRequest(ctx any, reqID any, reviewerID any, courseType any, comments any, notify any) *MockRepository_ApproveCourseRequest_Call {
-	return &MockRepository_ApproveCourseRequest_Call{Call: _e.mock.On("ApproveCourseRequest", ctx, reqID, reviewerID, courseType, comments, notify)}
+func (_e *MockRepository_Expecter) ApproveCourseRequest(ctx any, request any, courseType any, notify any) *MockRepository_ApproveCourseRequest_Call {
+	return &MockRepository_ApproveCourseRequest_Call{Call: _e.mock.On("ApproveCourseRequest", ctx, request, courseType, notify)}
 }
 
-func (_c *MockRepository_ApproveCourseRequest_Call) Run(run func(ctx context.Context, reqID string, reviewerID string, courseType string, comments string, notify func() error)) *MockRepository_ApproveCourseRequest_Call {
+func (_c *MockRepository_ApproveCourseRequest_Call) Run(run func(ctx context.Context, request entities.CourseRequest, courseType string, notify func() error)) *MockRepository_ApproveCourseRequest_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 string
+		var arg1 entities.CourseRequest
 		if args[1] != nil {
-			arg1 = args[1].(string)
+			arg1 = args[1].(entities.CourseRequest)
 		}
 		var arg2 string
 		if args[2] != nil {
 			arg2 = args[2].(string)
 		}
-		var arg3 string
+		var arg3 func() error
 		if args[3] != nil {
-			arg3 = args[3].(string)
-		}
-		var arg4 string
-		if args[4] != nil {
-			arg4 = args[4].(string)
-		}
-		var arg5 func() error
-		if args[5] != nil {
-			arg5 = args[5].(func() error)
+			arg3 = args[3].(func() error)
 		}
 		run(
 			arg0,
 			arg1,
 			arg2,
 			arg3,
-			arg4,
-			arg5,
 		)
 	})
 	return _c
@@ -123,7 +111,73 @@ func (_c *MockRepository_ApproveCourseRequest_Call) Return(err error) *MockRepos
 	return _c
 }
 
-func (_c *MockRepository_ApproveCourseRequest_Call) RunAndReturn(run func(ctx context.Context, reqID string, reviewerID string, courseType string, comments string, notify func() error) error) *MockRepository_ApproveCourseRequest_Call {
+func (_c *MockRepository_ApproveCourseRequest_Call) RunAndReturn(run func(ctx context.Context, request entities.CourseRequest, courseType string, notify func() error) error) *MockRepository_ApproveCourseRequest_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetCourseIncludingInactive provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetCourseIncludingInactive(ctx context.Context, courseID string) (entities.Course, error) {
+	ret := _mock.Called(ctx, courseID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCourseIncludingInactive")
+	}
+
+	var r0 entities.Course
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (entities.Course, error)); ok {
+		return returnFunc(ctx, courseID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) entities.Course); ok {
+		r0 = returnFunc(ctx, courseID)
+	} else {
+		r0 = ret.Get(0).(entities.Course)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, courseID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetCourseIncludingInactive_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCourseIncludingInactive'
+type MockRepository_GetCourseIncludingInactive_Call struct {
+	*mock.Call
+}
+
+// GetCourseIncludingInactive is a helper method to define mock.On call
+//   - ctx context.Context
+//   - courseID string
+func (_e *MockRepository_Expecter) GetCourseIncludingInactive(ctx any, courseID any) *MockRepository_GetCourseIncludingInactive_Call {
+	return &MockRepository_GetCourseIncludingInactive_Call{Call: _e.mock.On("GetCourseIncludingInactive", ctx, courseID)}
+}
+
+func (_c *MockRepository_GetCourseIncludingInactive_Call) Run(run func(ctx context.Context, courseID string)) *MockRepository_GetCourseIncludingInactive_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetCourseIncludingInactive_Call) Return(course entities.Course, err error) *MockRepository_GetCourseIncludingInactive_Call {
+	_c.Call.Return(course, err)
+	return _c
+}
+
+func (_c *MockRepository_GetCourseIncludingInactive_Call) RunAndReturn(run func(ctx context.Context, courseID string) (entities.Course, error)) *MockRepository_GetCourseIncludingInactive_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -350,6 +404,80 @@ func (_c *MockRepository_GetCourseRequestsByProvider_Call) Return(courseRequests
 }
 
 func (_c *MockRepository_GetCourseRequestsByProvider_Call) RunAndReturn(run func(ctx context.Context, providerID string, pageScope entities.PageScope) ([]entities.CourseRequest, entities.PageScope, error)) *MockRepository_GetCourseRequestsByProvider_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetFilesByOwner provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetFilesByOwner(ctx context.Context, ownerID string, ownerType entities.OwnerType) (entities.GroupedFiles, error) {
+	ret := _mock.Called(ctx, ownerID, ownerType)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetFilesByOwner")
+	}
+
+	var r0 entities.GroupedFiles
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, entities.OwnerType) (entities.GroupedFiles, error)); ok {
+		return returnFunc(ctx, ownerID, ownerType)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, entities.OwnerType) entities.GroupedFiles); ok {
+		r0 = returnFunc(ctx, ownerID, ownerType)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(entities.GroupedFiles)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, entities.OwnerType) error); ok {
+		r1 = returnFunc(ctx, ownerID, ownerType)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetFilesByOwner_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetFilesByOwner'
+type MockRepository_GetFilesByOwner_Call struct {
+	*mock.Call
+}
+
+// GetFilesByOwner is a helper method to define mock.On call
+//   - ctx context.Context
+//   - ownerID string
+//   - ownerType entities.OwnerType
+func (_e *MockRepository_Expecter) GetFilesByOwner(ctx any, ownerID any, ownerType any) *MockRepository_GetFilesByOwner_Call {
+	return &MockRepository_GetFilesByOwner_Call{Call: _e.mock.On("GetFilesByOwner", ctx, ownerID, ownerType)}
+}
+
+func (_c *MockRepository_GetFilesByOwner_Call) Run(run func(ctx context.Context, ownerID string, ownerType entities.OwnerType)) *MockRepository_GetFilesByOwner_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 entities.OwnerType
+		if args[2] != nil {
+			arg2 = args[2].(entities.OwnerType)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetFilesByOwner_Call) Return(groupedFiles entities.GroupedFiles, err error) *MockRepository_GetFilesByOwner_Call {
+	_c.Call.Return(groupedFiles, err)
+	return _c
+}
+
+func (_c *MockRepository_GetFilesByOwner_Call) RunAndReturn(run func(ctx context.Context, ownerID string, ownerType entities.OwnerType) (entities.GroupedFiles, error)) *MockRepository_GetFilesByOwner_Call {
 	_c.Call.Return(run)
 	return _c
 }

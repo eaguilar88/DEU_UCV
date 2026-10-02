@@ -1,0 +1,6 @@
+{{define "subject"}}Solicitud de proveedor rechazada{{end}}
+
+{{define "content"}}
+<p>Tu solicitud para registrarte como proveedor <strong>{{.ProviderName}}</strong> ha sido rechazada.</p>
+{{if .Reason}}<p>Motivo: {{.Reason}}</p>{{end}}
+{{end}}

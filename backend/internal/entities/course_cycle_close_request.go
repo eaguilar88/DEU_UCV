@@ -22,4 +22,9 @@ type CourseCycleCloseRequest struct {
 
 	// CertificatesToken is the random token of the ZIP download link, set on approval.
 	CertificatesToken string
+
+	// The closed cycle's course and cohort name, read-only.
+	CourseID   string
+	CourseName string
+	CohortName string
 }

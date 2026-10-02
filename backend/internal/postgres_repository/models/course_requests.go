@@ -12,5 +12,9 @@ type CourseRequest struct {
 	CreatedAt  string
 	UpdatedAt  string
 	DeletedAt  sql.NullString
-	Course     *Course // Associated course information
+	// Evaluation recorded on approval.
+	Score          sql.NullFloat64
+	Classification sql.NullString
+	Course         *Course // Associated course information
+	OwnerUserID    sql.NullString
 }

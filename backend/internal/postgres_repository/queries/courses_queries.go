@@ -30,6 +30,8 @@ var courseQuerySelectCommon = []string{
 	"c.has_documentation",
 	"c.estado_gestion",
 	"c.origin_faculty",
+	"c.competencies",
+	"c.bibliography",
 	"c.created_at",
 	"c.updated_at",
 	"c.deleted_at",
@@ -114,6 +116,8 @@ func InsertCourse(course models.Course) sq.InsertBuilder {
 			"faculty",
 			"origin_faculty",
 			"location",
+			"competencies",
+			"bibliography",
 		).
 		Values(
 			course.Name,
@@ -133,6 +137,8 @@ func InsertCourse(course models.Course) sq.InsertBuilder {
 			course.Faculty,
 			course.OriginFaculty,
 			course.Location,
+			course.Competencies,
+			course.Bibliography,
 		).Suffix("RETURNING id")
 }
 
@@ -152,6 +158,8 @@ func UpdateCourse(courseID string, course models.Course) sq.UpdateBuilder {
 		Set("schedule", course.Schedule).
 		Set("type", course.Type).
 		Set("location", course.Location).
+		Set("competencies", course.Competencies).
+		Set("bibliography", course.Bibliography).
 		Where(sq.Eq{"id": courseID})
 }
 

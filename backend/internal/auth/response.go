@@ -16,7 +16,10 @@ type RegisterResponse struct {
 }
 
 type LoginUserResponse struct {
-	ID    string   `json:"id"`
-	Name  string   `json:"nombre"`
+	ID   string `json:"id"`
+	Name string `json:"nombre"`
+	// Roles keeps the backend role names (grupos depends on them); Rol is the main role in the
+	// UI vocabulary (e.g. "proveedor").
 	Roles []string `json:"roles"`
+	Rol   string   `json:"rol"`
 }

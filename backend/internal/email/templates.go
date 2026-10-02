@@ -18,20 +18,25 @@ const layoutFile = "templates/layout.html"
 type Template string
 
 const (
-	TemplateUserWelcome                  Template = "user_welcome"
-	TemplateProviderRegistrationReceived Template = "provider_registration_received"
-	TemplateProviderRequestApproved      Template = "provider_request_approved"
-	TemplateGroupAdminCredentials        Template = "group_admin_credentials"
-	TemplateGroupRequestRejected         Template = "group_request_rejected"
-	TemplateGroupRequestApproved         Template = "group_request_approved"
-	TemplateGroupResourceRequestApproved Template = "group_resource_request_approved"
-	TemplateGroupResourceRequestRejected Template = "group_resource_request_rejected"
-	TemplateCourseRequestApproved        Template = "course_request_approved"
-	TemplateCourseRequestRejected        Template = "course_request_rejected"
-	TemplateCourseRequestRedirected      Template = "course_request_redirected"
-	TemplateCourseCycleCloseApproved     Template = "course_cycle_close_approved"
-	TemplateCourseCycleCloseRejected     Template = "course_cycle_close_rejected"
-	TemplateCourseCycleCertificatesReady Template = "course_cycle_certificates_ready"
+	TemplateUserWelcome                   Template = "user_welcome"
+	TemplateProviderRegistrationReceived  Template = "provider_registration_received"
+	TemplateProviderRequestApproved       Template = "provider_request_approved"
+	TemplateProviderApproved              Template = "provider_approved"
+	TemplateProviderRejected              Template = "provider_rejected"
+	TemplateProviderRegistrationSubmitted Template = "provider_registration_submitted"
+	TemplateCourseRequestSubmittedFaculty Template = "course_request_submitted_faculty"
+	TemplateCourseRequestSubmittedDEU     Template = "course_request_submitted_deu"
+	TemplateGroupAdminCredentials         Template = "group_admin_credentials"
+	TemplateGroupRequestRejected          Template = "group_request_rejected"
+	TemplateGroupRequestApproved          Template = "group_request_approved"
+	TemplateGroupResourceRequestApproved  Template = "group_resource_request_approved"
+	TemplateGroupResourceRequestRejected  Template = "group_resource_request_rejected"
+	TemplateCourseRequestApproved         Template = "course_request_approved"
+	TemplateCourseRequestRejected         Template = "course_request_rejected"
+	TemplateCourseRequestRedirected       Template = "course_request_redirected"
+	TemplateCourseCycleCloseApproved      Template = "course_cycle_close_approved"
+	TemplateCourseCycleCloseRejected      Template = "course_cycle_close_rejected"
+	TemplateCourseCycleCertificatesReady  Template = "course_cycle_certificates_ready"
 )
 
 // allTemplates lists every template parsed at startup. A template missing from this list cannot be sent.
@@ -39,6 +44,11 @@ var allTemplates = []Template{
 	TemplateUserWelcome,
 	TemplateProviderRegistrationReceived,
 	TemplateProviderRequestApproved,
+	TemplateProviderApproved,
+	TemplateProviderRejected,
+	TemplateProviderRegistrationSubmitted,
+	TemplateCourseRequestSubmittedFaculty,
+	TemplateCourseRequestSubmittedDEU,
 	TemplateGroupAdminCredentials,
 	TemplateGroupRequestApproved,
 	TemplateGroupRequestRejected,
@@ -59,6 +69,27 @@ type GroupAdminCredentialsData struct {
 	GroupName string
 	Username  string
 	Password  string
+}
+
+type ProviderApprovedData struct {
+	ProviderName string
+}
+
+type ProviderRejectedData struct {
+	ProviderName string
+	Reason       string
+}
+
+type ProviderRegistrationSubmittedData struct {
+	ProviderName string
+	ProviderType string
+	Faculty      string
+}
+
+type CourseRequestSubmittedData struct {
+	CourseName   string
+	ProviderName string
+	Faculty      string
 }
 
 type CourseRequestApprovedData struct {

@@ -110,7 +110,7 @@ func main() {
 	providerService := providers.NewService(repository, bbClient, mailClient, logger)
 	providerEndpoints := providers.NewHandler(providerService, logger)
 
-	courseSvc := courses.NewService(repository, bbClient, logger)
+	courseSvc := courses.NewService(repository, bbClient, mailClient, logger)
 	courseEndpoints := courses.NewHandler(courseSvc, logger)
 
 	cpService := course_periods.NewService(repository, logger)
@@ -128,7 +128,7 @@ func main() {
 	groupResourceRequestService := group_resource_requests.NewService(repository, mailClient, logger)
 	groupResourceRequestEndpoints := group_resource_requests.NewHandler(groupResourceRequestService, logger)
 
-	courseRequestService := course_requests.NewService(repository, mailClient, logger)
+	courseRequestService := course_requests.NewService(repository, bbClient, mailClient, logger)
 	courseRequestEndpoints := course_requests.NewHandler(courseRequestService, logger)
 
 	providerRequestService := provider_requests.NewService(repository, mailClient, logger)
@@ -315,10 +315,12 @@ func addCourseRequestRoutes(e *echo.Echo, endpoints *course_requests.Handler, mi
 
 // addCourseRoutes serves GET /courses with optional auth: anonymous and regular callers only
 // see open or closed courses; admins and a provider listing their own courses see them all.
+// GET /courses/:id also takes optional auth, so a provider and its reviewers can open a course
+// that is not approved yet.
 func addCourseRoutes(e *echo.Echo, endpoints *courses.Handler, optionalAuth echo.MiddlewareFunc, middlewares ...echo.MiddlewareFunc) {
 	publicGroup := e.Group("/courses")
 	publicGroup.GET("/public", endpoints.GetPublicCourses)
-	publicGroup.GET("/:id", endpoints.GetCourse)
+	publicGroup.GET("/:id", endpoints.GetCourse, optionalAuth)
 	publicGroup.GET("", endpoints.GetCourses, optionalAuth)
 	protectedGroup := e.Group("/courses", middlewares...)
 	protectedGroup.POST("", endpoints.CreateCourse)

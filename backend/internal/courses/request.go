@@ -25,6 +25,8 @@ type CreateCourseRequest struct {
 	Schedule          string `json:"cronograma"`
 	Type              string `json:"tipo"`
 	Location          string `json:"ubicacion"`
+	Competencies      string `json:"contenido_competencias"`
+	Bibliography      string `json:"bibliografia"`
 }
 
 type DeleteCourseRequest struct {
@@ -47,4 +49,6 @@ type UpdateCourseRequest struct {
 	Schedule          string `json:"cronograma"`
 	Type              string `json:"tipo"`
 	Location          string `json:"ubicacion"`
+	Competencies      string `json:"contenido_competencias"`
+	Bibliography      string `json:"bibliografia"`
 }

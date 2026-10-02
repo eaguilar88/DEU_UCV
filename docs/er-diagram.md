@@ -108,6 +108,8 @@ erDiagram
         course_location_enum location
         bool is_active
         bool has_documentation
+        text competencies
+        text bibliography
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
@@ -119,6 +121,8 @@ erDiagram
         request_status_enum status
         int reviewer_id FK
         text comments
+        numeric score
+        text classification
         timestamp reviewed_at
         timestamp created_at
         timestamp updated_at

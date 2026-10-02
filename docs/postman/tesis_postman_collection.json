@@ -124,7 +124,7 @@
                                 }
                             }
                         },
-                        "description": "Obtiene un JWT. El script de test guarda `jwt` y `user_id` en el environment."
+                        "description": "La respuesta incluye usuario.roles con los nombres del backend (p. ej. course_admin) y usuario.rol con el rol principal en el vocabulario de la UI de diplomados (admin, coordinador, proveedor, visitante). El token lleva rol/roles de la UI en el nivel superior y los roles del backend en v1.roles."
                     },
                     "response": []
                 }
@@ -978,9 +978,25 @@
                                     "type": "text"
                                 },
                                 {
+                                    "key": "contenido_competencias",
+                                    "value": "Módulo 1: Fundamentos\nContenido: Conceptos básicos\nCompetencia: Reconoce los conceptos",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "bibliografia",
+                                    "value": "Autor Ficticio (2026). Manual de ejemplo.",
+                                    "type": "text"
+                                },
+                                {
                                     "key": "portada",
                                     "type": "file",
                                     "src": []
+                                },
+                                {
+                                    "key": "cv_facilitador",
+                                    "type": "file",
+                                    "src": [],
+                                    "description": "Opcional. CV del facilitador (privado)."
                                 }
                             ]
                         },
@@ -2514,6 +2530,15 @@
                                         "{{provider_id}}",
                                         "reject"
                                     ]
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"observaciones\": \"Falta el RIF vigente.\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
                                 }
                             },
                             "response": []
@@ -2705,6 +2730,57 @@
                                             "language": "json"
                                         }
                                     }
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Aprobar Solicitud con Evaluación",
+                            "request": {
+                                "method": "POST",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{base_url}}/admin/course-requests/{{course_requests_id}}/approve",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "admin",
+                                        "course-requests",
+                                        "{{course_requests_id}}",
+                                        "approve"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "formdata",
+                                    "formdata": [
+                                        {
+                                            "key": "tipo_curso",
+                                            "value": "skill_development",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "observaciones",
+                                            "value": "Aprobado",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "calificacion",
+                                            "value": "18.5",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "clasificacion",
+                                            "value": "Formación para el trabajo",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "archivo_evaluacion",
+                                            "type": "file",
+                                            "src": [],
+                                            "description": "Opcional. Documento de evaluación (privado)."
+                                        }
+                                    ]
                                 }
                             },
                             "response": []

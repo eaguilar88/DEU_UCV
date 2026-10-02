@@ -24,6 +24,14 @@ func sampleData(name Template, value string) any {
 		return GroupResourceRequestApprovedData{GroupName: value, ResourceType: value}
 	case TemplateGroupResourceRequestRejected:
 		return GroupResourceRequestRejectedData{GroupName: value, ResourceType: value, Reason: value}
+	case TemplateProviderApproved:
+		return ProviderApprovedData{ProviderName: value}
+	case TemplateProviderRejected:
+		return ProviderRejectedData{ProviderName: value, Reason: value}
+	case TemplateProviderRegistrationSubmitted:
+		return ProviderRegistrationSubmittedData{ProviderName: value, ProviderType: value, Faculty: value}
+	case TemplateCourseRequestSubmittedFaculty, TemplateCourseRequestSubmittedDEU:
+		return CourseRequestSubmittedData{CourseName: value, ProviderName: value, Faculty: value}
 	case TemplateCourseRequestApproved:
 		return CourseRequestApprovedData{CourseName: value, Comments: value}
 	case TemplateCourseRequestRejected:

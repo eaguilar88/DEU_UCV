@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"html"
 	"io"
 	"strings"
 	"testing"
@@ -68,7 +69,7 @@ func expectCourseLookups(repo *mocks.MockRepository) {
 	repo.EXPECT().GetCoursePeriodByIDIncludingInactive(mock.Anything, "2").
 		Return(entities.CoursePeriod{ID: "2", Course: entities.Course{ID: "3"}, StartDate: "2026-06-01T00:00:00Z", EndDate: "2026-07-15T00:00:00Z"}, nil)
 	repo.EXPECT().GetCourseIncludingInactive(mock.Anything, "3").
-		Return(entities.Course{ID: "3", Name: "Fotografía Digital", Duration: "40 horas", Faculty: entities.FacultyArquitecturaUrbanismo}, nil)
+		Return(entities.Course{ID: "3", Name: "Fotografía Digital", Duration: "40", Location: "online", Faculty: entities.FacultyArquitecturaUrbanismo}, nil)
 }
 
 func TestService_GenerateForCloseRequest(t *testing.T) {
@@ -113,14 +114,15 @@ func TestService_GenerateForCloseRequest(t *testing.T) {
 	err := svc.GenerateForCloseRequest(context.Background(), []byte(`{"close_request_id":1}`))
 	require.NoError(t, err)
 
-	// Certificate HTML carries the participant, course and QR code.
+	// Certificate HTML carries the participant, course, faculty design and QR code.
 	assert.Contains(t, renderedHTML, "Ana María Pérez Gómez")
 	assert.Contains(t, renderedHTML, "V-12345678")
 	assert.Contains(t, renderedHTML, "Fotografía Digital")
-	assert.Contains(t, renderedHTML, "40 horas")
-	assert.Contains(t, renderedHTML, "Facultad de Arquitectura y Urbanismo")
-	assert.Contains(t, renderedHTML, "01/06/2026")
-	assert.Contains(t, renderedHTML, "15/07/2026")
+	assert.Contains(t, renderedHTML, "con una duración de 40 horas académicas")
+	assert.Contains(t, renderedHTML, "finalizado en el mes de julio de 2026")
+	assert.Contains(t, renderedHTML, "en modalidad en línea")
+	assert.Contains(t, renderedHTML, "la Facultad de Arquitectura y Urbanismo y la Dirección de Extensión Universitaria")
+	assert.Contains(t, renderedHTML, `src="data:image/jpeg;base64,`)
 	assert.Contains(t, renderedHTML, codeAna)
 	assert.Contains(t, renderedHTML, `src="data:image/png;base64,`)
 	assert.Contains(t, renderedHTML, "extension.example.com")
@@ -158,6 +160,74 @@ func TestService_GenerateForCloseRequest(t *testing.T) {
 		{"Ana María", "Pérez Gómez", "V-12345678", testBaseURL + "/certificados/" + codeAna},
 		{"Luis", "Rodríguez", "E-81234567", testBaseURL + "/certificados/" + codeLuis},
 	}, rows)
+}
+
+// The certificate uses the design of the faculty that approved the course request (course.Faculty),
+// even when the close request goes to the faculty that first received it (course.OriginFaculty).
+func TestService_IssueUsesApprovingFacultyLayout(t *testing.T) {
+	period := entities.CoursePeriod{ID: "2", EndDate: "2026-07-15"}
+	tests := map[string]struct {
+		course         entities.Course
+		wantBackground string
+		wantText       []string
+		notWantText    []string
+	}{
+		"redirected from Medicina and approved by Farmacia": {
+			course:         entities.Course{Name: "Farmacología", Faculty: entities.FacultyFarmacia, OriginFaculty: entities.FacultyMedicina},
+			wantBackground: "diploma_farmacia.jpeg",
+			wantText:       []string{"Otorgado a:", "Por tu participación en", "Mercy Ospina", "Facultad de Farmacia"},
+			notWantText:    []string{"Medicina"},
+		},
+		"approved by the DEU": {
+			course:         entities.Course{Name: "Oratoria", Faculty: entities.FacultyDEU, OriginFaculty: entities.FacultyDEU},
+			wantBackground: "certificado_deu.svg",
+			wantText:       []string{"la Dirección de Extensión Universitaria, como parte"},
+			// The DEU design already prints these.
+			notWantText: []string{"Otorgado a:", "Por tu participación en", "Mercy Ospina", "Facultad de"},
+		},
+		"unknown faculty falls back to the DEU": {
+			course:         entities.Course{Name: "Oratoria"},
+			wantBackground: "certificado_deu.svg",
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			svc, m := newTestService(t)
+			var renderedHTML string
+			m.renderer.EXPECT().Render(mock.Anything, mock.Anything).RunAndReturn(func(_ context.Context, html []byte) ([]byte, error) {
+				renderedHTML = string(html)
+				return []byte("%PDF"), nil
+			}).Once()
+			m.storage.EXPECT().PutObject(mock.Anything, mock.Anything, pdfContentType, mock.Anything).Return(nil).Once()
+			m.repo.EXPECT().MarkCertificateIssued(mock.Anything, int64(10), mock.Anything).Return(nil).Once()
+
+			cert := entities.Certificate{ID: 10, CourseCycleID: 2, FirstName: "Ana", LastName: "Pérez", Document: "V-1234567", VerificationCode: codeAna}
+			require.NoError(t, svc.(*service).issue(context.Background(), &cert, tc.course, period))
+
+			background, err := backgroundDataURI(tc.wantBackground)
+			require.NoError(t, err)
+			// html/template escapes "+" in attributes as "&#43;".
+			assert.Contains(t, html.UnescapeString(renderedHTML), `src="`+string(background)+`"`)
+			for _, text := range tc.wantText {
+				assert.Contains(t, renderedHTML, text)
+			}
+			for _, text := range tc.notWantText {
+				assert.NotContains(t, renderedHTML, text)
+			}
+		})
+	}
+}
+
+func TestLayoutsCoverAllFaculties(t *testing.T) {
+	for faculty := range entities.ValidFaculties {
+		layout, ok := layouts[faculty]
+		if assert.True(t, ok, "no certificate layout for %s", faculty) {
+			_, err := backgroundDataURI(layout.background)
+			assert.NoError(t, err, faculty)
+		}
+	}
+	assert.Equal(t, deuLayout, layoutFor(""))
+	assert.Equal(t, deuLayout, layoutFor("Desconocida"))
 }
 
 func TestService_GenerateForCloseRequest_Errors(t *testing.T) {
@@ -312,6 +382,25 @@ func TestFormatting(t *testing.T) {
 	assert.Equal(t, "Dirección de Extensión Universitaria", facultyLabel(entities.FacultyDEU))
 	assert.Equal(t, "Facultad de Ingeniería", facultyLabel(entities.FacultyIngenieria))
 	assert.Equal(t, "", facultyLabel(""))
+
+	month, year := cycleMonthYear("2026-07-15T00:00:00Z")
+	assert.Equal(t, "julio", month)
+	assert.Equal(t, "2026", year)
+	month, year = cycleMonthYear("")
+	assert.Empty(t, month)
+	assert.Empty(t, year)
+
+	assert.Equal(t, "la Dirección de Extensión Universitaria", endorsement(entities.FacultyDEU))
+	assert.Equal(t, "la Facultad de Medicina y la Dirección de Extensión Universitaria", endorsement(entities.FacultyMedicina))
+
+	assert.Equal(t, "en línea", modalityLabel("online"))
+	assert.Equal(t, "presencial", modalityLabel("in_site"))
+	assert.Equal(t, "mixta", modalityLabel("mixed"))
+	assert.Equal(t, "", modalityLabel(""))
+
+	assert.Equal(t, "40 horas académicas", durationLabel(" 40 "))
+	assert.Equal(t, "3 semanas", durationLabel("3 semanas"))
+	assert.Equal(t, "", durationLabel(""))
 
 	assert.Equal(t, "Rojas_Díaz, Ana - V-1234567.pdf",
 		zipEntryName(entities.Certificate{FirstName: "Ana", LastName: "Rojas/Díaz", Document: "V-1234567"}))

@@ -14,4 +14,8 @@ type CourseCycleCloseRequest struct {
 	UpdatedAt     string
 
 	CertificatesToken sql.NullString
+
+	CourseID   string
+	CourseName sql.NullString
+	CohortName sql.NullString
 }

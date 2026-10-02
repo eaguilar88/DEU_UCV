@@ -11,7 +11,8 @@ const (
 	CourseType_TechnicalTraining CourseType = "technical_training"
 
 	//Files
-	CourseFileTypeCover = "portada"
+	CourseFileTypeCover         = "portada"
+	CourseFileTypeFacilitatorCV = "cv_facilitador"
 )
 
 // CourseManagementStatus reflects course-level lifecycle state that isn't captured by CourseType.
@@ -45,6 +46,14 @@ var (
 	ErrInvalidCourseType = errors.New("invalid course type")
 )
 
+// CourseProviderSummary is what a course page shows publicly about its provider.
+type CourseProviderSummary struct {
+	// UserID is the provider's user account, i.e. the course owner.
+	UserID  string
+	Name    string
+	LogoURL string
+}
+
 type Course struct {
 	ID                string
 	Name              string
@@ -67,10 +76,18 @@ type Course struct {
 	Owner             User
 	Periods           []CoursePeriod
 	Type              CourseType
-	HasDocumentation  bool
-	ManagementStatus  CourseManagementStatus
-	CreatedAt         string
-	UpdatedAt         string
+	// IsActive is true once the course request is approved.
+	IsActive         bool
+	HasDocumentation bool
+	ManagementStatus CourseManagementStatus
+	// Competencies lists the course modules with their contents and competencies.
+	Competencies  string
+	Bibliography  string
+	FacilitatorCV *File
+	// Provider is the public profile of the course owner, loaded only on the course detail.
+	Provider  *CourseProviderSummary
+	CreatedAt string
+	UpdatedAt string
 }
 
 func (ct CourseType) IsValid() bool {

@@ -36,11 +36,13 @@ type Repository interface {
 
 	// Files
 	SaveFilesToDB(ctx context.Context, files []*entities.File) error
+	GetFilesByOwner(ctx context.Context, ownerID string, ownerType entities.OwnerType) (entities.GroupedFiles, error)
 }
 
 // StorageClient defines the file storage operations required by the course_cycle_close_requests service.
 type StorageClient interface {
 	UploadFile(ctx context.Context, files []*entities.File) error
+	GetPresignedFileURL(ctx context.Context, objectKey string) (string, error)
 }
 
 // MailClient defines the email sending operations required by the course_cycle_close_requests service.
@@ -243,8 +245,37 @@ func (s *service) GetCloseRequests(ctx context.Context, faculty entities.Faculty
 	return requests, ps, nil
 }
 
+// GetCloseRequestByID returns the request with pre-signed URLs of its evidence files.
 func (s *service) GetCloseRequestByID(ctx context.Context, id string) (entities.CourseCycleCloseRequest, error) {
-	return s.repo.GetCourseCycleCloseRequestByID(ctx, id)
+	request, err := s.repo.GetCourseCycleCloseRequestByID(ctx, id)
+	if err != nil {
+		return entities.CourseCycleCloseRequest{}, err
+	}
+
+	files, err := s.repo.GetFilesByOwner(ctx, id, entities.OwnerTypeCourseCycleCloseRequest)
+	if err != nil {
+		s.logger.Error("failed to get close request files", zap.Error(err), zap.String("close_request_id", id))
+		return entities.CourseCycleCloseRequest{}, err
+	}
+	for purpose, dst := range map[string]**entities.File{
+		entities.CloseRequestFileTypeParticipants: &request.ParticipantsFile,
+		entities.CloseRequestFileTypeVouchers:     &request.VouchersFile,
+		entities.CloseRequestFileTypeSurvey:       &request.SurveyFile,
+	} {
+		f := files.GetSingleFile(purpose)
+		if f == nil {
+			continue
+		}
+		url, err := s.storage.GetPresignedFileURL(ctx, f.Key)
+		if err != nil {
+			s.logger.Error("failed to get close request file URL", zap.Error(err), zap.String("close_request_id", id), zap.String("purpose", purpose))
+			return entities.CourseCycleCloseRequest{}, err
+		}
+		f.URL = url
+		*dst = f
+	}
+
+	return request, nil
 }
 
 // readParticipants parses the participants file and rewinds its body, so it can still be uploaded.

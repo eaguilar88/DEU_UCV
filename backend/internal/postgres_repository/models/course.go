@@ -24,6 +24,8 @@ type Course struct {
 	IsActive          bool
 	HasDocumentation  bool
 	ManagementStatus  sql.NullString
+	Competencies      sql.NullString
+	Bibliography      sql.NullString
 	CreatedAt         string
 	UpdatedAt         string
 	DeletedAt         sql.NullString

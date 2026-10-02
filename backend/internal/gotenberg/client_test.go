@@ -12,7 +12,7 @@ import (
 )
 
 func TestClient_Render(t *testing.T) {
-	var gotHTML, gotWidth string
+	var gotHTML, gotWidth, gotPreferCSS string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, convertHTMLPath, r.URL.Path)
 		file, header, err := r.FormFile("files")
@@ -21,6 +21,7 @@ func TestClient_Render(t *testing.T) {
 		data, _ := io.ReadAll(file)
 		gotHTML = string(data)
 		gotWidth = r.FormValue("paperWidth")
+		gotPreferCSS = r.FormValue("preferCssPageSize")
 		_, _ = w.Write([]byte("%PDF-1.7"))
 	}))
 	defer server.Close()
@@ -31,6 +32,7 @@ func TestClient_Render(t *testing.T) {
 	assert.Equal(t, "%PDF-1.7", string(pdf))
 	assert.Equal(t, "<html>hola</html>", gotHTML)
 	assert.Equal(t, "11", gotWidth)
+	assert.Equal(t, "true", gotPreferCSS)
 }
 
 func TestClient_Render_ErrorStatus(t *testing.T) {

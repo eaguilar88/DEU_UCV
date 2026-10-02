@@ -271,6 +271,8 @@ func scanCourse(row scannable) (models.Course, error) {
 		&course.HasDocumentation,
 		&course.ManagementStatus,
 		&course.OriginFaculty,
+		&course.Competencies,
+		&course.Bibliography,
 		&course.CreatedAt,
 		&course.UpdatedAt,
 		&course.DeletedAt,
@@ -284,6 +286,7 @@ func newCourseFromModel(course models.Course) entities.Course {
 		ID:               course.ID,
 		Name:             course.Name,
 		Owner:            entities.User{ID: course.OwnerID},
+		IsActive:         course.IsActive,
 		HasDocumentation: course.HasDocumentation,
 		CreatedAt:        course.CreatedAt,
 		UpdatedAt:        course.UpdatedAt,
@@ -359,6 +362,14 @@ func newCourseFromModel(course models.Course) entities.Course {
 		c.ManagementStatus = entities.CourseManagementStatus(course.ManagementStatus.String)
 	}
 
+	if course.Competencies.Valid {
+		c.Competencies = course.Competencies.String
+	}
+
+	if course.Bibliography.Valid {
+		c.Bibliography = course.Bibliography.String
+	}
+
 	return c
 }
 
@@ -432,6 +443,14 @@ func newCourseModelFromEntities(course entities.Course) models.Course {
 		ManagementStatus: sql.NullString{
 			String: string(course.ManagementStatus),
 			Valid:  course.ManagementStatus != "",
+		},
+		Competencies: sql.NullString{
+			String: course.Competencies,
+			Valid:  course.Competencies != "",
+		},
+		Bibliography: sql.NullString{
+			String: course.Bibliography,
+			Valid:  course.Bibliography != "",
 		},
 		CreatedAt: course.CreatedAt,
 		UpdatedAt: course.UpdatedAt,

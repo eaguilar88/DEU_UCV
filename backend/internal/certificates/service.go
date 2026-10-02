@@ -172,14 +172,29 @@ func (s *service) issue(ctx context.Context, c *entities.Certificate, course ent
 		return err
 	}
 
+	layout := layoutFor(course.Faculty)
+	background, err := backgroundDataURI(layout.background)
+	if err != nil {
+		return err
+	}
+	var facultyName string
+	if !layout.staticText {
+		facultyName = course.Faculty.String()
+	}
+	endMonth, endYear := cycleMonthYear(period.EndDate)
+
 	html, err := renderCertificate(certificateData{
+		Background:       background,
+		StaticText:       layout.staticText,
 		FullName:         c.FullName(),
 		Document:         c.Document,
 		CourseName:       course.Name,
-		Duration:         course.Duration,
-		Faculty:          facultyLabel(course.Faculty),
-		StartDate:        cycleDate(period.StartDate),
-		EndDate:          cycleDate(period.EndDate),
+		Duration:         durationLabel(course.Duration),
+		Modality:         modalityLabel(course.Location),
+		EndMonth:         endMonth,
+		EndYear:          endYear,
+		Endorsement:      endorsement(course.Faculty),
+		FacultyName:      facultyName,
 		IssueDate:        spanishDate(issuedAt),
 		VerificationCode: c.VerificationCode,
 		VerifyHost:       hostOf(s.publicBaseURL),

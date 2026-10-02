@@ -3,11 +3,13 @@ package providers
 import (
 	"context"
 	"errors"
+	"slices"
 	"testing"
 
 	"github.com/eaguilar88/deu/internal/email"
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/providers/mocks"
+	"github.com/eaguilar88/deu/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
@@ -781,9 +783,9 @@ func TestService_getFilesForProvider(t *testing.T) {
 						return "https://extension.ucv.ve/files/logo-key", nil
 					})
 			},
-			// The GetFileURL expectation asserts the public branch; ProviderFiles.Logo is not
-			// populated by getFilesForProvider, so the result itself stays empty.
-			want:    entities.ProviderFiles{},
+			want: entities.ProviderFiles{Logo: &entities.File{
+				Key: "logo-key", Name: "logo.png", Public: true, URL: "https://extension.ucv.ve/files/logo-key",
+			}},
 			wantErr: false,
 		},
 		{
@@ -859,6 +861,8 @@ func Test_prepareFilesSlice(t *testing.T) {
 		provider *entities.Provider
 		wantLen  int
 		wantKeys []string
+		// wantPublic lists the keys uploaded as public; every other file is private.
+		wantPublic []string
 	}{
 		{
 			name: "three required files",
@@ -884,6 +888,21 @@ func Test_prepareFilesSlice(t *testing.T) {
 			wantLen:  5,
 			wantKeys: []string{"files/providers/42/ci.pdf", "files/providers/42/rif.pdf", "files/providers/42/islr.pdf", "files/providers/42/resume.pdf", "files/providers/42/other.pdf"},
 		},
+		{
+			name: "logo is uploaded as public",
+			provider: &entities.Provider{
+				User: entities.User{ID: "user-1"},
+				Files: entities.ProviderFiles{
+					CI:   &entities.File{Name: "ci.pdf"},
+					RIF:  &entities.File{Name: "rif.pdf"},
+					ISLR: &entities.File{Name: "islr.pdf"},
+					Logo: &entities.File{Name: "logo.jpg", Purpose: entities.ProviderFileTypeLogo},
+				},
+			},
+			wantLen:    4,
+			wantKeys:   []string{"files/providers/42/ci.pdf", "files/providers/42/rif.pdf", "files/providers/42/islr.pdf", "files/providers/42/logo.jpg"},
+			wantPublic: []string{"files/providers/42/logo.jpg"},
+		},
 	}
 
 	for _, tt := range tests {
@@ -895,7 +914,7 @@ func Test_prepareFilesSlice(t *testing.T) {
 				assert.Equal(t, "42", f.OwnerID)
 				assert.Equal(t, entities.OwnerTypeProvider, f.OwnerType)
 				assert.Equal(t, tt.wantKeys[i], f.Key)
-				assert.False(t, f.Public)
+				assert.Equal(t, slices.Contains(tt.wantPublic, f.Key), f.Public, f.Key)
 				assert.Equal(t, metadata, f.MetaData)
 				assert.Equal(t, "user-1", f.UploadedBy)
 				assert.NotEmpty(t, f.CreatedAt)
@@ -1141,4 +1160,194 @@ func TestService_GetProvider_Access(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestService_ApproveProvider(t *testing.T) {
+	visitante := entities.RoleNameFromID(entities.RoleVisitante)
+	courseAdmin := entities.RoleNameFromID(entities.RoleCourseAdmin)
+	pending := entities.Provider{
+		ID: "7", Name: "Academia Ficticia", Status: entities.ProviderStatusUnderReview,
+		User: entities.User{ID: "15", Email: "proveedor@example.test"},
+	}
+	approvedEmail := email.ProviderApprovedData{ProviderName: "Academia Ficticia"}
+
+	t.Run("promotes the provider's user and emails them in the transaction", func(t *testing.T) {
+		repoMock := mocks.NewMockRepository(t)
+		mailMock := mocks.NewMockMailClient(t)
+		repoMock.EXPECT().GetProvider(mock.Anything, "7").Return(pending, nil)
+		repoMock.EXPECT().ApproveProvider(mock.Anything, "7", "15", visitante, courseAdmin, mock.Anything).
+			RunAndReturn(func(_ context.Context, _, _, _, _ string, notify func() error) error { return notify() })
+		mailMock.EXPECT().SendTemplate(mock.Anything, "proveedor@example.test", email.TemplateProviderApproved, approvedEmail).Return(nil)
+
+		s := &service{repo: repoMock, emailClient: mailMock, logger: zap.NewNop()}
+		assert.NoError(t, s.ApproveProvider(context.Background(), "7"))
+	})
+
+	t.Run("a failed email fails the approval", func(t *testing.T) {
+		repoMock := mocks.NewMockRepository(t)
+		mailMock := mocks.NewMockMailClient(t)
+		repoMock.EXPECT().GetProvider(mock.Anything, "7").Return(pending, nil)
+		repoMock.EXPECT().ApproveProvider(mock.Anything, "7", "15", visitante, courseAdmin, mock.Anything).
+			RunAndReturn(func(_ context.Context, _, _, _, _ string, notify func() error) error { return notify() })
+		mailMock.EXPECT().SendTemplate(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("smtp down"))
+
+		s := &service{repo: repoMock, emailClient: mailMock, logger: zap.NewNop()}
+		assert.EqualError(t, s.ApproveProvider(context.Background(), "7"), "error sending provider notification email: smtp down")
+	})
+
+	t.Run("a role that was not updated is reported", func(t *testing.T) {
+		repoMock := mocks.NewMockRepository(t)
+		repoMock.EXPECT().GetProvider(mock.Anything, "7").Return(pending, nil)
+		// The repository rolls back the approval when the role is not updated.
+		repoMock.EXPECT().ApproveProvider(mock.Anything, "7", "15", visitante, courseAdmin, mock.Anything).Return(users.ErrUserRoleNotFound)
+
+		s := &service{repo: repoMock, emailClient: mocks.NewMockMailClient(t), logger: zap.NewNop()}
+		assert.ErrorIs(t, s.ApproveProvider(context.Background(), "7"), users.ErrUserRoleNotFound)
+	})
+
+	t.Run("unknown provider is not approved", func(t *testing.T) {
+		repoMock := mocks.NewMockRepository(t)
+		repoMock.EXPECT().GetProvider(mock.Anything, "7").Return(entities.Provider{}, ErrProviderNotFound)
+
+		s := &service{repo: repoMock, emailClient: mocks.NewMockMailClient(t), logger: zap.NewNop()}
+		assert.ErrorIs(t, s.ApproveProvider(context.Background(), "7"), ErrProviderNotFound)
+	})
+
+	t.Run("an already reviewed provider is not approved again", func(t *testing.T) {
+		repoMock := mocks.NewMockRepository(t)
+		active := pending
+		active.Status = entities.ProviderStatusActive
+		repoMock.EXPECT().GetProvider(mock.Anything, "7").Return(active, nil)
+
+		s := &service{repo: repoMock, emailClient: mocks.NewMockMailClient(t), logger: zap.NewNop()}
+		assert.ErrorIs(t, s.ApproveProvider(context.Background(), "7"), ErrProviderAlreadyProcessed)
+	})
+}
+
+func TestService_RejectProvider(t *testing.T) {
+	pending := entities.Provider{
+		ID: "7", Status: entities.ProviderStatusUnderReview,
+		// Without a provider name, the email uses the user's full name.
+		User: entities.User{ID: "15", Email: "proveedor@example.test", FirstName: "Ana", LastName: "Pérez"},
+	}
+
+	t.Run("rejects and emails the reason in the transaction", func(t *testing.T) {
+		repoMock := mocks.NewMockRepository(t)
+		mailMock := mocks.NewMockMailClient(t)
+		repoMock.EXPECT().GetProvider(mock.Anything, "7").Return(pending, nil)
+		repoMock.EXPECT().RejectProvider(mock.Anything, "7", mock.Anything).
+			RunAndReturn(func(_ context.Context, _ string, notify func() error) error { return notify() })
+		mailMock.EXPECT().SendTemplate(mock.Anything, "proveedor@example.test", email.TemplateProviderRejected,
+			email.ProviderRejectedData{ProviderName: "Ana Pérez", Reason: "Falta el RIF vigente"}).Return(nil)
+
+		s := &service{repo: repoMock, emailClient: mailMock, logger: zap.NewNop()}
+		assert.NoError(t, s.RejectProvider(context.Background(), "7", "Falta el RIF vigente"))
+	})
+
+	t.Run("repository errors are returned", func(t *testing.T) {
+		repoMock := mocks.NewMockRepository(t)
+		repoMock.EXPECT().GetProvider(mock.Anything, "7").Return(pending, nil)
+		repoMock.EXPECT().RejectProvider(mock.Anything, "7", mock.Anything).Return(errors.New("db error"))
+
+		s := &service{repo: repoMock, emailClient: mocks.NewMockMailClient(t), logger: zap.NewNop()}
+		assert.EqualError(t, s.RejectProvider(context.Background(), "7", ""), "db error")
+	})
+
+	t.Run("an already reviewed provider is not rejected again", func(t *testing.T) {
+		repoMock := mocks.NewMockRepository(t)
+		rejected := pending
+		rejected.Status = entities.ProviderStatusRejected
+		repoMock.EXPECT().GetProvider(mock.Anything, "7").Return(rejected, nil)
+
+		s := &service{repo: repoMock, emailClient: mocks.NewMockMailClient(t), logger: zap.NewNop()}
+		assert.ErrorIs(t, s.RejectProvider(context.Background(), "7", ""), ErrProviderAlreadyProcessed)
+	})
+}
+
+func TestService_CreateProvider_NotifiesCoordinators(t *testing.T) {
+	newProvider := func() *entities.Provider {
+		provider := newTestProvider()
+		provider.Name = "ACME"
+		provider.Faculty = entities.FacultyCiencias
+		return provider
+	}
+	prepareCreated := func(repoMock *mocks.MockRepository, storageMock *mocks.MockStorageClient, mailMock *mocks.MockMailClient) {
+		repoMock.EXPECT().CreateProvider(mock.Anything, mock.Anything).Return(int64(7), nil)
+		storageMock.EXPECT().UploadFile(mock.Anything, mock.Anything).Return(nil)
+		repoMock.EXPECT().SaveFilesToDB(mock.Anything, mock.Anything).Return(nil)
+		repoMock.EXPECT().GetProviderContactInfo(mock.Anything, "7").Return(entities.User{Email: "user@test.com"}, nil)
+		mailMock.EXPECT().SendTemplate(mock.Anything, "user@test.com", email.TemplateProviderRegistrationReceived, nil).Return(nil)
+	}
+
+	tests := []struct {
+		name    string
+		prepare func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient)
+	}{
+		{
+			name: "sends one email per coordinator of the provider's faculty",
+			prepare: func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient) {
+				repoMock.EXPECT().GetFacultyCoordinatorEmails(mock.Anything, entities.FacultyCiencias).
+					Return([]string{"coord1@test.com", "coord2@test.com"}, nil)
+				data := email.ProviderRegistrationSubmittedData{
+					ProviderName: "ACME",
+					ProviderType: string(entities.CourseProviderType),
+					Faculty:      string(entities.FacultyCiencias),
+				}
+				mailMock.EXPECT().SendTemplate(mock.Anything, "coord1@test.com", email.TemplateProviderRegistrationSubmitted, data).Return(nil)
+				mailMock.EXPECT().SendTemplate(mock.Anything, "coord2@test.com", email.TemplateProviderRegistrationSubmitted, data).Return(nil)
+			},
+		},
+		{
+			name: "a failing coordinator email does not fail the registration",
+			prepare: func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient) {
+				repoMock.EXPECT().GetFacultyCoordinatorEmails(mock.Anything, mock.Anything).Return([]string{"coord@test.com"}, nil)
+				mailMock.EXPECT().SendTemplate(mock.Anything, "coord@test.com", email.TemplateProviderRegistrationSubmitted, mock.Anything).
+					Return(errors.New("smtp down"))
+			},
+		},
+		{
+			name: "a coordinator lookup error does not fail the registration",
+			prepare: func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient) {
+				repoMock.EXPECT().GetFacultyCoordinatorEmails(mock.Anything, mock.Anything).Return(nil, errors.New("db error"))
+			},
+		},
+		{
+			name: "no coordinators sends nothing",
+			prepare: func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient) {
+				repoMock.EXPECT().GetFacultyCoordinatorEmails(mock.Anything, mock.Anything).Return(nil, nil)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repoMock := mocks.NewMockRepository(t)
+			storageMock := mocks.NewMockStorageClient(t)
+			mailMock := mocks.NewMockMailClient(t)
+			prepareCreated(repoMock, storageMock, mailMock)
+			tt.prepare(repoMock, mailMock)
+
+			s := NewService(repoMock, storageMock, mailMock, zap.NewNop())
+			gotID, err := s.CreateProvider(context.Background(), newProvider())
+
+			assert.NoError(t, err)
+			assert.Equal(t, int64(7), gotID)
+		})
+	}
+}
+
+func TestService_CreateProvider_WithoutFacultySkipsCoordinators(t *testing.T) {
+	repoMock := mocks.NewMockRepository(t)
+	storageMock := mocks.NewMockStorageClient(t)
+	mailMock := mocks.NewMockMailClient(t)
+	repoMock.EXPECT().CreateProvider(mock.Anything, mock.Anything).Return(int64(7), nil)
+	storageMock.EXPECT().UploadFile(mock.Anything, mock.Anything).Return(nil)
+	repoMock.EXPECT().SaveFilesToDB(mock.Anything, mock.Anything).Return(nil)
+	repoMock.EXPECT().GetProviderContactInfo(mock.Anything, "7").Return(entities.User{Email: "user@test.com"}, nil)
+	mailMock.EXPECT().SendTemplate(mock.Anything, "user@test.com", email.TemplateProviderRegistrationReceived, nil).Return(nil)
+
+	s := NewService(repoMock, storageMock, mailMock, zap.NewNop())
+	_, err := s.CreateProvider(context.Background(), newTestProvider())
+
+	assert.NoError(t, err)
 }

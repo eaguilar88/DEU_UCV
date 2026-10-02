@@ -202,51 +202,99 @@ func (r *PostgresRepository) DeleteProvider(ctx context.Context, providerID stri
 	return nil
 }
 
-func (r *PostgresRepository) ApproveProvider(ctx context.Context, providerID string) error {
+// ApproveProvider approves the provider and, in the same transaction, changes its user's role
+// from fromRole to toRole and runs notify. If any step fails, nothing is applied.
+func (r *PostgresRepository) ApproveProvider(ctx context.Context, providerID, userID, fromRole, toRole string, notify func() error) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		r.logger.Error("failed to begin transaction", zap.Error(err))
+		return err
+	}
+	defer func() {
+		if err != nil {
+			if rbErr := tx.Rollback(); rbErr != nil {
+				r.logger.Error("failed to rollback transaction", zap.Error(rbErr))
+			}
+		}
+	}()
+
 	query, args, err := queries.SetProviderApproved(providerID).ToSql()
 	if err != nil {
 		return httperrors.NewBadQueryError(err)
 	}
 
-	stmt, err := r.db.PrepareContext(ctx, query)
-	if err != nil {
-		return httperrors.NewBadQueryError(err)
-	}
-	defer stmt.Close()
-
-	result, err := stmt.ExecContext(ctx, args...)
+	result, err := tx.ExecContext(ctx, query, args...)
 	if err != nil {
 		return err
 	}
 
-	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
-		return fmt.Errorf("%w: %w", providers.ErrProviderNotFound, err)
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		err = providers.ErrProviderNotFound
+		return err
 	}
 
+	if err = updateUserRole(ctx, tx, userID, fromRole, toRole); err != nil {
+		return err
+	}
+
+	if err = notify(); err != nil {
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+		r.logger.Error("failed to commit transaction", zap.Error(err))
+		return err
+	}
 	return nil
 }
 
-func (r *PostgresRepository) RejectProvider(ctx context.Context, providerID string) error {
+// RejectProvider rejects the provider and runs notify in the same transaction, so a failed email
+// leaves the provider unchanged.
+func (r *PostgresRepository) RejectProvider(ctx context.Context, providerID string, notify func() error) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		r.logger.Error("failed to begin transaction", zap.Error(err))
+		return err
+	}
+	defer func() {
+		if err != nil {
+			if rbErr := tx.Rollback(); rbErr != nil {
+				r.logger.Error("failed to rollback transaction", zap.Error(rbErr))
+			}
+		}
+	}()
+
 	query, args, err := queries.SetProviderRejected(providerID).ToSql()
 	if err != nil {
 		return httperrors.NewBadQueryError(err)
 	}
 
-	stmt, err := r.db.PrepareContext(ctx, query)
-	if err != nil {
-		return httperrors.NewBadQueryError(err)
-	}
-	defer stmt.Close()
-
-	result, err := stmt.ExecContext(ctx, args...)
+	result, err := tx.ExecContext(ctx, query, args...)
 	if err != nil {
 		return err
 	}
 
-	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
-		return fmt.Errorf("%w: %w", providers.ErrProviderNotFound, err)
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		err = providers.ErrProviderNotFound
+		return err
 	}
 
+	if err = notify(); err != nil {
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+		r.logger.Error("failed to commit transaction", zap.Error(err))
+		return err
+	}
 	return nil
 }
 

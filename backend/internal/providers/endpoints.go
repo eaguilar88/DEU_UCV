@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
+	"strings"
 
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/httperrors"
@@ -24,8 +25,8 @@ type Service interface {
 	UpdateProvider(ctx context.Context, providerID string, provider *entities.Provider) error
 	DeleteProvider(ctx context.Context, providerID string) error
 	SubmitProviderContract(ctx context.Context, providerID string, intentionLetter, commitmentLetter, addendum *entities.File) (entities.ProviderContract, error)
-	ApproveProvider(ctx context.Context, providerID, userID string) error
-	RejectProvider(ctx context.Context, providerID string) error
+	ApproveProvider(ctx context.Context, providerID string) error
+	RejectProvider(ctx context.Context, providerID, reason string) error
 }
 
 // Handler holds the HTTP handler dependencies for the providers domain.
@@ -52,22 +53,34 @@ func (h *Handler) RegisterProviderAdminEndpoints(g *echo.Group) {
 
 func (h *Handler) ApproveProvider(c echo.Context) error {
 	ctx := c.Request().Context()
-	userID, ok := c.Get("userID").(string)
-	if !ok {
-		return httperrors.NewUnauthorized("authentication required")
-	}
-	if err := h.svc.ApproveProvider(ctx, c.Param("id"), userID); err != nil {
-		return httperrors.NewInternal(err)
+	if err := h.svc.ApproveProvider(ctx, c.Param("id")); err != nil {
+		return reviewProviderError(err)
 	}
 	return c.JSON(http.StatusAccepted, nil)
 }
 
 func (h *Handler) RejectProvider(c echo.Context) error {
 	ctx := c.Request().Context()
-	if err := h.svc.RejectProvider(ctx, c.Param("id")); err != nil {
-		return httperrors.NewInternal(err)
+	var req RejectProviderRequest
+	if err := c.Bind(&req); err != nil {
+		return httperrors.NewBadRequest("invalid request body")
+	}
+	if err := h.svc.RejectProvider(ctx, c.Param("id"), strings.TrimSpace(req.Reason)); err != nil {
+		return reviewProviderError(err)
 	}
 	return c.JSON(http.StatusAccepted, nil)
+}
+
+// reviewProviderError maps the errors of approving or rejecting a provider to HTTP errors.
+func reviewProviderError(err error) error {
+	switch {
+	case errors.Is(err, ErrProviderNotFound):
+		return httperrors.NewNotFound("provider not found")
+	case errors.Is(err, ErrProviderAlreadyProcessed):
+		return httperrors.NewConflict(ErrProviderAlreadyProcessed.Error())
+	default:
+		return httperrors.NewInternal(err)
+	}
 }
 
 func (h *Handler) GetProvider(c echo.Context) error {

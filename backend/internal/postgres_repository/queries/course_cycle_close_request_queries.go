@@ -17,6 +17,18 @@ var cycleCloseRequestSelectCommon = []string{
 	"ccr.created_at",
 	"ccr.updated_at",
 	"ccr.certificates_token",
+	// The cycle's course and cohort, to show the request without extra lookups.
+	"c.id",
+	"c.name",
+	"pd.name",
+}
+
+// selectCloseRequests selects close requests joined with their cycle (pd) and course (c).
+func selectCloseRequests() sq.SelectBuilder {
+	return psql.Select(cycleCloseRequestSelectCommon...).
+		From(fmt.Sprintf("%s AS ccr", cycleCloseRequestsTableName)).
+		Join(fmt.Sprintf("%s AS pd ON pd.id = ccr.course_cycle_id", periodsTableName)).
+		Join(fmt.Sprintf("%s AS c ON c.id = pd.course_id", coursesTableName))
 }
 
 func InsertCourseCycleCloseRequest(cycleID, submittedBy int64) sq.InsertBuilder {
@@ -35,28 +47,23 @@ func CountPendingCloseRequestsForCycle(cycleID int64) sq.SelectBuilder {
 }
 
 func GetCourseCycleCloseRequestByID(id string) sq.SelectBuilder {
-	return psql.Select(cycleCloseRequestSelectCommon...).
-		From(fmt.Sprintf("%s AS ccr", cycleCloseRequestsTableName)).
+	return selectCloseRequests().
 		Where(sq.Eq{"ccr.id": id}).
 		Where(sq.Eq{"ccr.deleted_at": nil})
 }
 
 func GetCourseCycleCloseRequestByCertificatesToken(token string) sq.SelectBuilder {
-	return psql.Select(cycleCloseRequestSelectCommon...).
-		From(fmt.Sprintf("%s AS ccr", cycleCloseRequestsTableName)).
+	return selectCloseRequests().
 		Where(sq.Eq{"ccr.certificates_token": token}).
 		Where(sq.Eq{"ccr.deleted_at": nil})
 }
 
 func GetCourseCycleCloseRequests(faculty string, perPage, offset uint64) sq.SelectBuilder {
-	q := psql.Select(cycleCloseRequestSelectCommon...).
-		From(fmt.Sprintf("%s AS ccr", cycleCloseRequestsTableName)).
+	q := selectCloseRequests().
 		Where(sq.Eq{"ccr.deleted_at": nil})
 
 	if faculty != "" {
-		q = q.Join(fmt.Sprintf("%s AS pd ON pd.id = ccr.course_cycle_id", periodsTableName)).
-			Join(fmt.Sprintf("%s AS c ON c.id = pd.course_id", coursesTableName)).
-			Where(sq.Eq{"c.origin_faculty": faculty})
+		q = q.Where(sq.Eq{"c.origin_faculty": faculty})
 	}
 
 	return q.OrderBy("ccr.created_at DESC").

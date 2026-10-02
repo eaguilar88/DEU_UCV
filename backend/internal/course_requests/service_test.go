@@ -68,7 +68,7 @@ func TestCourseRequestService_GetMyCourseRequests(t *testing.T) {
 			if tt.prepare != nil {
 				tt.prepare(repoMock)
 			}
-			s := NewService(repoMock, mocks.NewMockMailClient(t), zap.NewNop())
+			s := NewService(repoMock, mocks.NewMockStorageClient(t), mocks.NewMockMailClient(t), zap.NewNop())
 			got, _, err := s.GetMyCourseRequests(ctx, "user-1", entities.PageScope{})
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
@@ -111,8 +111,11 @@ func courseReviewActions() []reviewAction {
 			template: email.TemplateCourseRequestApproved,
 			data:     email.CourseRequestApprovedData{CourseName: "Curso de prueba", Comments: "buen curso"},
 			expectWrite: func(repoMock *mocks.MockRepository) *mock.Call {
-				return repoMock.EXPECT().ApproveCourseRequest(mock.Anything, "1", "reviewer-1", entities.CourseType_SkillDevelopment.String(), "buen curso", mock.Anything).
-					RunAndReturn(func(_ context.Context, _, _, _, _ string, notify func() error) error { return notify() }).Call
+				req := entities.CourseRequest{ID: "1", Reviewer: entities.User{ID: "reviewer-1"}, Comments: "buen curso"}
+				return repoMock.EXPECT().ApproveCourseRequest(mock.Anything, req, entities.CourseType_SkillDevelopment.String(), mock.Anything).
+					RunAndReturn(func(_ context.Context, _ entities.CourseRequest, _ string, notify func() error) error {
+						return notify()
+					}).Call
 			},
 			run: func(s Service) error {
 				req := entities.CourseRequest{ID: "1", Reviewer: entities.User{ID: "reviewer-1"}, Comments: "buen curso"}
@@ -216,7 +219,7 @@ func TestCourseRequestService_ReviewNotifications(t *testing.T) {
 				mailMock := mocks.NewMockMailClient(t)
 				tt.prepare(action, repoMock, mailMock)
 
-				s := NewService(repoMock, mailMock, zap.NewNop())
+				s := NewService(repoMock, mocks.NewMockStorageClient(t), mailMock, zap.NewNop())
 				err := action.run(s)
 				if tt.wantErr != nil {
 					assert.EqualError(t, err, tt.wantErr.Error())
@@ -226,4 +229,119 @@ func TestCourseRequestService_ReviewNotifications(t *testing.T) {
 			})
 		}
 	}
+}
+
+func TestCourseRequestService_ApproveWithEvaluation(t *testing.T) {
+	score := 18.5
+	newRequest := func() entities.CourseRequest {
+		return entities.CourseRequest{
+			ID:             "1",
+			Reviewer:       entities.User{ID: "reviewer-1"},
+			Score:          &score,
+			Classification: "Formación para el trabajo",
+			EvaluationFile: &entities.File{Name: "archivo_evaluacion.pdf"},
+		}
+	}
+	evaluationKey := "files/course-requests/1/archivo_evaluacion.pdf"
+
+	t.Run("uploads the private evaluation file before approving", func(t *testing.T) {
+		repoMock := mocks.NewMockRepository(t)
+		storageMock := mocks.NewMockStorageClient(t)
+		mailMock := mocks.NewMockMailClient(t)
+		repoMock.EXPECT().GetCourseRequestByID(mock.Anything, "1").Return(pendingCourseRequest(), nil)
+		expectProviderLookup(repoMock)
+		storageMock.EXPECT().UploadFile(mock.Anything, mock.MatchedBy(func(files []*entities.File) bool {
+			f := files[0]
+			return len(files) == 1 && f.Key == evaluationKey && !f.Public &&
+				f.OwnerType == entities.OwnerTypeCourseRequest && f.OwnerID == "1" &&
+				f.Purpose == entities.CourseRequestFileTypeEvaluation && f.UploadedBy == "reviewer-1"
+		})).Return(nil)
+		repoMock.EXPECT().ApproveCourseRequest(mock.Anything, mock.MatchedBy(func(r entities.CourseRequest) bool {
+			return *r.Score == score && r.Classification == "Formación para el trabajo" && r.EvaluationFile.Key == evaluationKey
+		}), entities.CourseType_LifeSkills.String(), mock.Anything).Return(nil)
+
+		s := NewService(repoMock, storageMock, mailMock, zap.NewNop())
+		err := s.ApproveCourseRequest(context.Background(), newRequest(), entities.CourseType_LifeSkills)
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("failed approval removes the uploaded file", func(t *testing.T) {
+		repoMock := mocks.NewMockRepository(t)
+		storageMock := mocks.NewMockStorageClient(t)
+		repoMock.EXPECT().GetCourseRequestByID(mock.Anything, "1").Return(pendingCourseRequest(), nil)
+		expectProviderLookup(repoMock)
+		storageMock.EXPECT().UploadFile(mock.Anything, mock.Anything).Return(nil)
+		repoMock.EXPECT().ApproveCourseRequest(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("db error"))
+		storageMock.EXPECT().DeleteFile(mock.Anything, evaluationKey).Return(nil)
+
+		s := NewService(repoMock, storageMock, mocks.NewMockMailClient(t), zap.NewNop())
+		err := s.ApproveCourseRequest(context.Background(), newRequest(), entities.CourseType_LifeSkills)
+
+		assert.EqualError(t, err, "db error")
+	})
+
+	t.Run("upload failure does not approve", func(t *testing.T) {
+		repoMock := mocks.NewMockRepository(t)
+		storageMock := mocks.NewMockStorageClient(t)
+		repoMock.EXPECT().GetCourseRequestByID(mock.Anything, "1").Return(pendingCourseRequest(), nil)
+		expectProviderLookup(repoMock)
+		storageMock.EXPECT().UploadFile(mock.Anything, mock.Anything).Return(errors.New("b2 down"))
+
+		s := NewService(repoMock, storageMock, mocks.NewMockMailClient(t), zap.NewNop())
+		err := s.ApproveCourseRequest(context.Background(), newRequest(), entities.CourseType_LifeSkills)
+
+		assert.EqualError(t, err, "b2 down")
+	})
+}
+
+func TestCourseRequestService_GetCourseRequestByID(t *testing.T) {
+	repoMock := mocks.NewMockRepository(t)
+	storageMock := mocks.NewMockStorageClient(t)
+	repoMock.EXPECT().GetCourseRequestByID(mock.Anything, "1").Return(pendingCourseRequest(), nil)
+	// The course under review is inactive, so it is loaded including inactive ones.
+	repoMock.EXPECT().GetCourseIncludingInactive(mock.Anything, "3").
+		Return(entities.Course{ID: "3", Name: "Curso de prueba", Bibliography: "Libro"}, nil)
+	repoMock.EXPECT().GetFilesByOwner(mock.Anything, "3", entities.OwnerTypeCourse).
+		Return(entities.GroupedFiles{
+			entities.CourseFileTypeCover:         {{Key: "cover-key", Public: true}},
+			entities.CourseFileTypeFacilitatorCV: {{Key: "cv-key"}},
+		}, nil)
+	storageMock.EXPECT().GetFileURL(mock.Anything, "cover-key").Return("https://extension.ucv.ve/files/cover-key", nil)
+	storageMock.EXPECT().GetPresignedFileURL(mock.Anything, "cv-key").Return("https://b2/cv", nil)
+	repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1", entities.OwnerTypeCourseRequest).
+		Return(entities.GroupedFiles{entities.CourseRequestFileTypeEvaluation: {{Key: "eval-key"}}}, nil)
+	storageMock.EXPECT().GetPresignedFileURL(mock.Anything, "eval-key").Return("https://b2/eval", nil)
+
+	s := NewService(repoMock, storageMock, mocks.NewMockMailClient(t), zap.NewNop())
+	got, err := s.GetCourseRequestByID(context.Background(), "1")
+
+	assert.NoError(t, err)
+	assert.Equal(t, "Libro", got.Course.Bibliography)
+	assert.Equal(t, "https://extension.ucv.ve/files/cover-key", got.Course.Cover.URL)
+	assert.Equal(t, "https://b2/cv", got.Course.FacilitatorCV.URL)
+	assert.Equal(t, "https://b2/eval", got.EvaluationFile.URL)
+}
+
+func TestCourseRequestService_GetMyCourseRequests_AttachesCovers(t *testing.T) {
+	repoMock := mocks.NewMockRepository(t)
+	storageMock := mocks.NewMockStorageClient(t)
+	repoMock.EXPECT().GetProviderByUserID(mock.Anything, "user-1").Return(entities.Provider{ID: "provider-1"}, nil)
+	repoMock.EXPECT().GetCourseRequestsByProvider(mock.Anything, "provider-1", mock.Anything).
+		Return([]entities.CourseRequest{
+			{ID: "1", Course: &entities.Course{ID: "3"}},
+			{ID: "2", Course: &entities.Course{ID: "4"}},
+		}, entities.PageScope{}, nil)
+	repoMock.EXPECT().GetFilesByOwner(mock.Anything, "3", entities.OwnerTypeCourse).
+		Return(entities.GroupedFiles{entities.CourseFileTypeCover: {{Key: "cover-3", Public: true}}}, nil)
+	// A failing lookup leaves that course without a cover instead of failing the list.
+	repoMock.EXPECT().GetFilesByOwner(mock.Anything, "4", entities.OwnerTypeCourse).Return(nil, errors.New("db error"))
+	storageMock.EXPECT().GetFileURL(mock.Anything, "cover-3").Return("https://extension.ucv.ve/files/cover-3", nil)
+
+	s := NewService(repoMock, storageMock, mocks.NewMockMailClient(t), zap.NewNop())
+	got, _, err := s.GetMyCourseRequests(context.Background(), "user-1", entities.PageScope{})
+
+	assert.NoError(t, err)
+	assert.Equal(t, "https://extension.ucv.ve/files/cover-3", got[0].Course.Cover.URL)
+	assert.Nil(t, got[1].Course.Cover)
 }

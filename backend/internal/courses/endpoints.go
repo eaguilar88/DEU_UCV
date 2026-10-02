@@ -14,7 +14,7 @@ import (
 )
 
 type Service interface {
-	GetCourse(ctx context.Context, courseID string) (entities.Course, error)
+	GetCourse(ctx context.Context, courseID string, viewer entities.Viewer) (entities.Course, error)
 	GetCourses(ctx context.Context, filter entities.CourseFilter, viewer entities.Viewer, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error)
 	GetPublicCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error)
 	GetLatestCoursePeriod(ctx context.Context, courseID string) (entities.CoursePeriod, error)
@@ -38,7 +38,7 @@ func NewHandler(svc Service, log *zap.Logger) *Handler {
 func (h *Handler) GetCourse(c echo.Context) error {
 	ctx := c.Request().Context()
 	req := GetCourseRequest{ID: c.Param("id")}
-	course, err := h.svc.GetCourse(ctx, req.ID)
+	course, err := h.svc.GetCourse(ctx, req.ID, jwt.ViewerFromContext(c))
 	if err != nil {
 		if errors.Is(err, ErrCourseNotFound) {
 			return httperrors.NewNotFound("course not found")

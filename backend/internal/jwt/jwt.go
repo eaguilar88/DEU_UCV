@@ -83,6 +83,10 @@ func (s *JWTSigner) GenerateJWT(userID string, roles []entities.UserRole, provid
 			Unix(),
 		// Set expiration using s.TTL
 		"iat": time.Now().Unix(),
+		// The role names the diplomados UI compares against (e.g. "proveedor"). Authorization
+		// only reads v1.roles.
+		"rol":   entities.UIRole(roleNames),
+		"roles": entities.UIRoles(roleNames),
 		"v1": map[string]interface{}{
 			"roles":        roleNames,
 			"userID":       userID,

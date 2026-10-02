@@ -116,8 +116,10 @@ func (r *PostgresRepository) GetLatestCoursePeriod(ctx context.Context, courseID
 	defer stmt.Close()
 
 	var period entities.CoursePeriod
+	var startDate, endDate, inscriptionDate sql.NullString
 	row := stmt.QueryRowContext(ctx, args...)
-	err = row.Scan(&period.ID, &period.Name, &period.StartDate, &period.EndDate, &period.InscriptionDate)
+	err = row.Scan(&period.ID, &period.Name, &startDate, &endDate, &inscriptionDate)
+	period.StartDate, period.EndDate, period.InscriptionDate = startDate.String, endDate.String, inscriptionDate.String
 	if err != nil {
 		// If no period found, return empty period without error
 		if err.Error() == "sql: no rows in result set" {
@@ -134,9 +136,9 @@ func (r *PostgresRepository) CreateCoursePeriod(ctx context.Context, coursePerio
 		ID:              coursePeriod.ID,
 		CourseID:        coursePeriod.Course.ID,
 		Name:            coursePeriod.Name,
-		StartDate:       coursePeriod.StartDate,
-		EndDate:         coursePeriod.EndDate,
-		InscriptionDate: coursePeriod.InscriptionDate,
+		StartDate:       nullableDate(coursePeriod.StartDate),
+		EndDate:         nullableDate(coursePeriod.EndDate),
+		InscriptionDate: nullableDate(coursePeriod.InscriptionDate),
 		Capacity:        coursePeriod.Capacity,
 	}
 
@@ -402,9 +404,9 @@ func newCoursePeriodFromModel(coursePeriod models.CoursePeriod) entities.CourseP
 		Course: entities.Course{
 			ID: coursePeriod.CourseID,
 		},
-		StartDate:       coursePeriod.StartDate,
-		EndDate:         coursePeriod.EndDate,
-		InscriptionDate: coursePeriod.InscriptionDate,
+		StartDate:       coursePeriod.StartDate.String,
+		EndDate:         coursePeriod.EndDate.String,
+		InscriptionDate: coursePeriod.InscriptionDate.String,
 		Capacity:        coursePeriod.Capacity,
 		IsActive:        coursePeriod.IsActive,
 		ClosedAt:        closedAt,
@@ -419,10 +421,15 @@ func newCoursePeriodModelFromEntities(cp entities.CoursePeriod) models.CoursePer
 		ID:              cp.ID,
 		CourseID:        cp.Course.ID,
 		Name:            cp.Name,
-		StartDate:       cp.StartDate,
-		EndDate:         cp.EndDate,
+		StartDate:       nullableDate(cp.StartDate),
+		EndDate:         nullableDate(cp.EndDate),
 		IsActive:        cp.IsActive,
-		InscriptionDate: cp.InscriptionDate,
+		InscriptionDate: nullableDate(cp.InscriptionDate),
 		Capacity:        cp.Capacity,
 	}
+}
+
+// nullableDate stores an empty date as NULL: a DATE column rejects "".
+func nullableDate(date string) sql.NullString {
+	return sql.NullString{String: date, Valid: date != ""}
 }

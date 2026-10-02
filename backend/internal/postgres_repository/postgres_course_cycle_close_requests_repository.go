@@ -263,6 +263,9 @@ func scanCourseCycleCloseRequest(row scannable) (models.CourseCycleCloseRequest,
 		&m.CreatedAt,
 		&m.UpdatedAt,
 		&m.CertificatesToken,
+		&m.CourseID,
+		&m.CourseName,
+		&m.CohortName,
 	)
 	return m, err
 }
@@ -275,6 +278,9 @@ func newCourseCycleCloseRequestFromModel(m models.CourseCycleCloseRequest) entit
 		Status:        entities.RequestStatus(m.Status),
 		CreatedAt:     m.CreatedAt,
 		UpdatedAt:     m.UpdatedAt,
+		CourseID:      m.CourseID,
+		CourseName:    m.CourseName.String,
+		CohortName:    m.CohortName.String,
 	}
 	if m.Comments.Valid {
 		req.Comments = m.Comments.String
