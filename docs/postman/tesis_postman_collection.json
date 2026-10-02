@@ -1842,14 +1842,14 @@
                     "response": []
                 },
                 {
-                    "name": "Update Group",
+                    "name": "Renew Group",
                     "event": [
                         {
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Successful PUT request\", function () {",
-                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                                    "pm.test(\"Renewal submitted\", function () {",
+                                    "    pm.expect(pm.response.code).to.eql(202);",
                                     "});",
                                     ""
                                 ],
@@ -1876,23 +1876,43 @@
                             "mode": "formdata",
                             "formdata": [
                                 {
+                                    "key": "nombre",
+                                    "value": "Mi nuevo grupo",
+                                    "type": "text"
+                                },
+                                {
                                     "key": "descripcion",
-                                    "value": "Descripción actualizada",
-                                    "type": "text"
-                                },
-                                {
-                                    "key": "objetivo",
-                                    "value": "Objetivo actualizado",
-                                    "type": "text"
-                                },
-                                {
-                                    "key": "ubicacion",
-                                    "value": "Edificio de Computación",
+                                    "value": "Este es un nuevo grupo",
                                     "type": "text"
                                 },
                                 {
                                     "key": "tipo",
                                     "value": "ciencias",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "fundacion",
+                                    "value": "2020-01-15",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "es_multidisciplinario",
+                                    "value": "false",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "facultad",
+                                    "value": "Ciencias",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "objetivo",
+                                    "value": "Promover la divulgación científica",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "ubicacion",
+                                    "value": "Edificio de Computación",
                                     "type": "text"
                                 },
                                 {
@@ -1926,7 +1946,8 @@
                                     "src": []
                                 }
                             ]
-                        }
+                        },
+                        "description": "Solicitud de renovación anual del grupo. Mismo payload que Create Group (el grupo completo: datos, miembros, logo, proyecto y documentos de miembros); al aprobarse todas las solicitudes reemplaza los datos del grupo. Solo el usuario del grupo puede enviarla, desde NOTIFIER_RENEWAL_WINDOW antes de la fecha de renovación, y una a la vez. Responde 202 con el id de la renovación; 403 si no es el usuario del grupo; 409 si aún no está abierta o ya hay una en revisión."
                     },
                     "response": []
                 },

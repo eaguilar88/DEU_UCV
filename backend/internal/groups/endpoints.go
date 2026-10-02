@@ -27,7 +27,7 @@ type Service interface {
 	GetRandomActiveGroups(ctx context.Context, limit int) ([]entities.ExtensionGroup, error)
 	GetGroupsSimple(ctx context.Context) ([]entities.ExtensionGroup, error)
 	CreateGroup(ctx context.Context, group entities.ExtensionGroup) (int64, string, error)
-	UpdateGroup(ctx context.Context, groupID string, group entities.ExtensionGroup) error
+	RenewGroup(ctx context.Context, groupID string, group entities.ExtensionGroup) (int64, error)
 	DeleteGroup(ctx context.Context, groupID, userID string) error
 }
 
@@ -65,8 +65,15 @@ func userIDFromContext(c echo.Context) (string, error) {
 
 // mapGroupError translates a service-layer error into the appropriate HTTP error.
 func mapGroupError(err error) error {
-	if errors.Is(err, ErrGroupNotFound) {
+	switch {
+	case errors.Is(err, ErrGroupNotFound):
 		return httperrors.NewNotFound("group not found")
+	case errors.Is(err, ErrNotGroupOwner):
+		return httperrors.NewForbidden("solo el usuario del grupo puede solicitar su renovación")
+	case errors.Is(err, ErrRenewalNotOpen):
+		return httperrors.NewConflict("la renovación del grupo aún no está disponible")
+	case errors.Is(err, ErrRenewalPending):
+		return httperrors.NewConflict("el grupo ya tiene una solicitud de renovación en revisión")
 	}
 	return httperrors.NewInternal(err)
 }
@@ -193,47 +200,31 @@ func (h *Handler) CreateGroup(c echo.Context) error {
 	})
 }
 
-func (h *Handler) UpdateGroup(c echo.Context) error {
+// RenewGroup submits the group's yearly renewal. It takes the same multipart payload as
+// CreateGroup and, as a PUT, the whole group: once approved it replaces the group's data,
+// members and files.
+func (h *Handler) RenewGroup(c echo.Context) error {
 	ctx := c.Request().Context()
-	var req UpdateGroupRequest
-	if err := c.Bind(&req); err != nil {
-		return httperrors.NewBadRequest("invalid request body")
+	groupID := c.Param("id")
+	if groupID == "" {
+		return httperrors.NewBadRequest("group ID is required")
 	}
 	userID, err := userIDFromContext(c)
 	if err != nil {
 		return err
 	}
-	req.OwnerID = userID
 
-	if raw := c.FormValue("miembros"); raw != "" && len(req.Members) == 0 {
-		if err := json.Unmarshal([]byte(raw), &req.Members); err != nil {
-			return httperrors.NewBadRequest("miembros: formato inválido")
-		}
-	}
-	if err := c.Validate(req); err != nil {
-		return httperrors.NewBadRequest("validation failed")
+	group, err := makeGroupRequestFromContext(c, userID, h.log)
+	if err != nil {
+		return httperrors.NewBadRequest(err.Error())
 	}
 
-	group := updateGroupEntityFromRequest(req)
-
-	if logo, err := utils.GetFileFrom(c, entities.GroupFileTypeLogo); err == nil && logo != nil {
-		group.Logo = logo
-	}
-	if projectFile, err := utils.GetFileFrom(c, entities.GroupFileTypeProject); err == nil && projectFile != nil {
-		group.Project = projectFile
-	}
-
-	for i := range group.Members {
-		if doc, err := utils.GetFileFrom(c, fmt.Sprintf("documento_miembro_%d", i)); err == nil && doc != nil {
-			group.Members[i].Document = doc
-		}
-	}
-
-	if err = h.svc.UpdateGroup(ctx, req.ID, group); err != nil {
+	renewalID, err := h.svc.RenewGroup(ctx, groupID, group)
+	if err != nil {
 		return mapGroupError(err)
 	}
 
-	return c.JSON(http.StatusAccepted, nil)
+	return c.JSON(http.StatusAccepted, RenewGroupResponse{ID: fmt.Sprintf("%d", renewalID)})
 }
 
 func (h *Handler) DeleteGroup(c echo.Context) error {

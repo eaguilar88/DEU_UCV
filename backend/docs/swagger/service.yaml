@@ -1402,7 +1402,13 @@ paths:
 
   /groups/requests/{id}:
     put:
-      summary: Update group
+      summary: Submit the group's yearly renewal request
+      description: >
+        Same multipart payload as POST /groups/requests, with the whole group (data, members,
+        logo, project and member documents). It is stored as a proposal and replaces the group's
+        data only once every approval request is approved (DEU only for multidisciplinary groups,
+        the group's faculty and the DEU otherwise). Only the group's user may submit it, from
+        NOTIFIER_RENEWAL_WINDOW before the renewal date on, and one at a time.
       tags: [Groups]
       security:
         - BearerAuth: []
@@ -1413,10 +1419,24 @@ paths:
           schema:
             type: string
       responses:
-        "200":
-          description: Updated
+        "202":
+          description: Renewal submitted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Renewal ID
+        "400":
+          description: Invalid payload
+        "403":
+          description: Caller is not the group's user
         "404":
           description: Group not found
+        "409":
+          description: Renewal not open yet, or a renewal is already under review
     delete:
       summary: Delete group
       tags: [Groups]

@@ -253,66 +253,6 @@ func (r *PostgresRepository) CreateGroupWithRequests(ctx context.Context, group 
 	return groupID, insertedMembers, nil
 }
 
-func (r *PostgresRepository) UpdateGroup(ctx context.Context, group entities.ExtensionGroup) ([]entities.GroupMember, error) {
-	tx, err := r.db.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback()
-
-	query, args, err := queries.UpdateGroup(newGroupToModel(group)).ToSql()
-	if err != nil {
-		return nil, err
-	}
-	stmt, err := tx.PrepareContext(ctx, query)
-	if err != nil {
-		return nil, err
-	}
-	defer stmt.Close()
-	result, err := stmt.ExecContext(ctx, args...)
-	if err != nil {
-		return nil, err
-	}
-	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
-		return nil, fmt.Errorf("%w: %w", groups.ErrGroupNotFound, err)
-	}
-
-	groupID, err := strconv.ParseInt(group.ID, 10, 64)
-	if err != nil {
-		return nil, err
-	}
-
-	if group.Email != "" {
-		if err := r.upsertContactInformation(ctx, tx, group.Email, entities.ContactTypeEmail, groupID); err != nil {
-			return nil, err
-		}
-	}
-	if group.Phone != "" {
-		if err := r.upsertContactInformation(ctx, tx, group.Phone, entities.ContactTypePhone, groupID); err != nil {
-			return nil, err
-		}
-	}
-
-	updatedMembers, err := r.upsertGroupMembers(ctx, tx, groupID, group.Members)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := tx.Commit(); err != nil {
-		return nil, err
-	}
-	return updatedMembers, nil
-}
-
-func (r *PostgresRepository) upsertContactInformation(ctx context.Context, tx *sql.Tx, contactValue string, contactType entities.ContactType, groupID int64) error {
-	query, args, err := queries.UpsertContact(string(contactType), contactValue, entities.OwnerTypeExtensionGroup.String(), groupID).ToSql()
-	if err != nil {
-		return err
-	}
-	_, err = tx.ExecContext(ctx, query, args...)
-	return err
-}
-
 func (r *PostgresRepository) DeleteGroup(ctx context.Context, groupID string) error {
 	query, args, err := queries.DeleteGroup(groupID).ToSql()
 	if err != nil {
@@ -349,6 +289,7 @@ func scanGroup(row scannable) (models.ExtensionGroup, error) {
 		&group.Type,
 		&group.Location,
 		&group.IsActive,
+		&group.RenewalDueAt,
 		&group.CreatedAt,
 		&group.UpdatedAt,
 		&group.DeletedAt,
@@ -429,12 +370,13 @@ func newGroupFromModel(group models.ExtensionGroup) entities.ExtensionGroup {
 		Owner: &entities.User{
 			ID: group.UserID,
 		},
-		Objective: group.Objective,
-		Location:  location,
-		Active:    group.IsActive,
-		CreatedAt: group.CreatedAt,
-		UpdatedAt: group.UpdatedAt,
-		DeletedAt: group.DeletedAt.String,
+		Objective:    group.Objective,
+		Location:     location,
+		Active:       group.IsActive,
+		RenewalDueAt: group.RenewalDueAt.Time,
+		CreatedAt:    group.CreatedAt,
+		UpdatedAt:    group.UpdatedAt,
+		DeletedAt:    group.DeletedAt.String,
 	}
 }
 

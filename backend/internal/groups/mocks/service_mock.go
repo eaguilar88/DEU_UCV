@@ -470,37 +470,46 @@ func (_c *MockService_GetRandomActiveGroups_Call) RunAndReturn(run func(ctx cont
 	return _c
 }
 
-// UpdateGroup provides a mock function for the type MockService
-func (_mock *MockService) UpdateGroup(ctx context.Context, groupID string, group entities.ExtensionGroup) error {
+// RenewGroup provides a mock function for the type MockService
+func (_mock *MockService) RenewGroup(ctx context.Context, groupID string, group entities.ExtensionGroup) (int64, error) {
 	ret := _mock.Called(ctx, groupID, group)
 
 	if len(ret) == 0 {
-		panic("no return value specified for UpdateGroup")
+		panic("no return value specified for RenewGroup")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, entities.ExtensionGroup) error); ok {
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, entities.ExtensionGroup) (int64, error)); ok {
+		return returnFunc(ctx, groupID, group)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, entities.ExtensionGroup) int64); ok {
 		r0 = returnFunc(ctx, groupID, group)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(int64)
 	}
-	return r0
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, entities.ExtensionGroup) error); ok {
+		r1 = returnFunc(ctx, groupID, group)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
-// MockService_UpdateGroup_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateGroup'
-type MockService_UpdateGroup_Call struct {
+// MockService_RenewGroup_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RenewGroup'
+type MockService_RenewGroup_Call struct {
 	*mock.Call
 }
 
-// UpdateGroup is a helper method to define mock.On call
+// RenewGroup is a helper method to define mock.On call
 //   - ctx context.Context
 //   - groupID string
 //   - group entities.ExtensionGroup
-func (_e *MockService_Expecter) UpdateGroup(ctx any, groupID any, group any) *MockService_UpdateGroup_Call {
-	return &MockService_UpdateGroup_Call{Call: _e.mock.On("UpdateGroup", ctx, groupID, group)}
+func (_e *MockService_Expecter) RenewGroup(ctx any, groupID any, group any) *MockService_RenewGroup_Call {
+	return &MockService_RenewGroup_Call{Call: _e.mock.On("RenewGroup", ctx, groupID, group)}
 }
 
-func (_c *MockService_UpdateGroup_Call) Run(run func(ctx context.Context, groupID string, group entities.ExtensionGroup)) *MockService_UpdateGroup_Call {
+func (_c *MockService_RenewGroup_Call) Run(run func(ctx context.Context, groupID string, group entities.ExtensionGroup)) *MockService_RenewGroup_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -523,12 +532,12 @@ func (_c *MockService_UpdateGroup_Call) Run(run func(ctx context.Context, groupI
 	return _c
 }
 
-func (_c *MockService_UpdateGroup_Call) Return(err error) *MockService_UpdateGroup_Call {
-	_c.Call.Return(err)
+func (_c *MockService_RenewGroup_Call) Return(n int64, err error) *MockService_RenewGroup_Call {
+	_c.Call.Return(n, err)
 	return _c
 }
 
-func (_c *MockService_UpdateGroup_Call) RunAndReturn(run func(ctx context.Context, groupID string, group entities.ExtensionGroup) error) *MockService_UpdateGroup_Call {
+func (_c *MockService_RenewGroup_Call) RunAndReturn(run func(ctx context.Context, groupID string, group entities.ExtensionGroup) (int64, error)) *MockService_RenewGroup_Call {
 	_c.Call.Return(run)
 	return _c
 }

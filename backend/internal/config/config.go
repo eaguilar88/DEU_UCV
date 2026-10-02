@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/caarlos0/env/v10"
 	"go.uber.org/zap"
@@ -34,6 +35,10 @@ type DeuConfig struct {
 	// suffix, and may be a different host.
 	PublicBaseURL string `env:"PUBLIC_BASE_URL" envDefault:"http://localhost:8080"`
 	GotenbergURL  string `env:"GOTENBERG_URL" envDefault:"http://gotenberg:3000"`
+
+	// RenewalWindow is how long before its yearly renewal date a group may submit its renewal. It
+	// is the same window in which the notifier reminds the group to renew.
+	RenewalWindow time.Duration `env:"NOTIFIER_RENEWAL_WINDOW" envDefault:"720h"`
 }
 
 func (s *DeuConfig) IsProd() bool {
@@ -63,6 +68,30 @@ type BlackBlazeB2Config struct {
 	Region         string `env:"REGION"                   envDefault:"us-west-002"`
 	ApplicationKey string `env:"APPLICATION_KEY"`
 	KeyID          string `env:"KEY_ID"`
+}
+
+// NotifierConfig is the configuration of the notifier service (cmd/notifier), which only needs the
+// database and the email client.
+type NotifierConfig struct {
+	Database DatabaseConfig `envPrefix:"POSTGRES_"`
+	Email    EmailConfig    `envPrefix:"EMAIL_"`
+
+	// RunAt is the local time of day (HH:MM, in TimeZone) when reminders are sent.
+	RunAt             string        `env:"NOTIFIER_RUN_AT" envDefault:"08:00"`
+	TimeZone          string        `env:"NOTIFIER_TIMEZONE" envDefault:"America/Caracas"`
+	PendingRequestAge time.Duration `env:"NOTIFIER_PENDING_REQUEST_AGE" envDefault:"72h"`
+	RenewalWindow     time.Duration `env:"NOTIFIER_RENEWAL_WINDOW" envDefault:"720h"`
+	ResendInterval    time.Duration `env:"NOTIFIER_RESEND_INTERVAL" envDefault:"168h"`
+}
+
+// ReadNotifier reads the notifier service config.
+func ReadNotifier(logger *zap.Logger) (NotifierConfig, error) {
+	var config NotifierConfig
+	if err := env.Parse(&config); err != nil {
+		logger.Error("failed to parse configuration", zap.Error(err))
+		return config, err
+	}
+	return config, nil
 }
 
 func (cfg DatabaseConfig) String() string {

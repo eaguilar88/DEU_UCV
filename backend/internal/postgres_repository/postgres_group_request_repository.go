@@ -307,6 +307,10 @@ func newGroupRequestFromModel(m models.GroupRequest) entities.GroupRequest {
 		UpdatedAt: m.UpdatedAt.Format(time.RFC3339),
 	}
 
+	if m.RenewalID.Valid {
+		gar.RenewalID = fmt.Sprintf("%d", m.RenewalID.Int64)
+	}
+
 	if m.ReviewerID.Valid {
 		gar.Reviewer = &entities.User{
 			ID: fmt.Sprintf("%d", m.ReviewerID.Int64),
@@ -333,6 +337,7 @@ func scanGroupRequest(row scannable) (models.GroupRequest, error) {
 		&result.UpdatedAt,
 		&result.ReviewerID,
 		&result.ReviewedAt,
+		&result.RenewalID,
 	)
 	if err != nil {
 		return models.GroupRequest{}, err
