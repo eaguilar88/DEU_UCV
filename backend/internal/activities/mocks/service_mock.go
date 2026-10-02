@@ -17,10 +17,19 @@ func NewMockService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -72,7 +81,7 @@ type MockService_CreateActivity_Call struct {
 // CreateActivity is a helper method to define mock.On call
 //   - ctx context.Context
 //   - activity entities.Activity
-func (_e *MockService_Expecter) CreateActivity(ctx interface{}, activity interface{}) *MockService_CreateActivity_Call {
+func (_e *MockService_Expecter) CreateActivity(ctx any, activity any) *MockService_CreateActivity_Call {
 	return &MockService_CreateActivity_Call{Call: _e.mock.On("CreateActivity", ctx, activity)}
 }
 
@@ -129,7 +138,7 @@ type MockService_DeleteActivity_Call struct {
 // DeleteActivity is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-func (_e *MockService_Expecter) DeleteActivity(ctx interface{}, id interface{}) *MockService_DeleteActivity_Call {
+func (_e *MockService_Expecter) DeleteActivity(ctx any, id any) *MockService_DeleteActivity_Call {
 	return &MockService_DeleteActivity_Call{Call: _e.mock.On("DeleteActivity", ctx, id)}
 }
 
@@ -210,7 +219,7 @@ type MockService_GetActivities_Call struct {
 //   - ctx context.Context
 //   - filter entities.ActivityFilter
 //   - pageScope entities.PageScope
-func (_e *MockService_Expecter) GetActivities(ctx interface{}, filter interface{}, pageScope interface{}) *MockService_GetActivities_Call {
+func (_e *MockService_Expecter) GetActivities(ctx any, filter any, pageScope any) *MockService_GetActivities_Call {
 	return &MockService_GetActivities_Call{Call: _e.mock.On("GetActivities", ctx, filter, pageScope)}
 }
 
@@ -282,7 +291,7 @@ type MockService_GetActivity_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - viewer entities.Viewer
-func (_e *MockService_Expecter) GetActivity(ctx interface{}, id interface{}, viewer interface{}) *MockService_GetActivity_Call {
+func (_e *MockService_Expecter) GetActivity(ctx any, id any, viewer any) *MockService_GetActivity_Call {
 	return &MockService_GetActivity_Call{Call: _e.mock.On("GetActivity", ctx, id, viewer)}
 }
 
@@ -353,7 +362,7 @@ type MockService_GetGroupDashboardSummary_Call struct {
 // GetGroupDashboardSummary is a helper method to define mock.On call
 //   - ctx context.Context
 //   - groupID string
-func (_e *MockService_Expecter) GetGroupDashboardSummary(ctx interface{}, groupID interface{}) *MockService_GetGroupDashboardSummary_Call {
+func (_e *MockService_Expecter) GetGroupDashboardSummary(ctx any, groupID any) *MockService_GetGroupDashboardSummary_Call {
 	return &MockService_GetGroupDashboardSummary_Call{Call: _e.mock.On("GetGroupDashboardSummary", ctx, groupID)}
 }
 
@@ -411,7 +420,7 @@ type MockService_ToggleFeature_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - featured bool
-func (_e *MockService_Expecter) ToggleFeature(ctx interface{}, id interface{}, featured interface{}) *MockService_ToggleFeature_Call {
+func (_e *MockService_Expecter) ToggleFeature(ctx any, id any, featured any) *MockService_ToggleFeature_Call {
 	return &MockService_ToggleFeature_Call{Call: _e.mock.On("ToggleFeature", ctx, id, featured)}
 }
 
@@ -474,7 +483,7 @@ type MockService_ToggleReportCheck_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - checked bool
-func (_e *MockService_Expecter) ToggleReportCheck(ctx interface{}, id interface{}, checked interface{}) *MockService_ToggleReportCheck_Call {
+func (_e *MockService_Expecter) ToggleReportCheck(ctx any, id any, checked any) *MockService_ToggleReportCheck_Call {
 	return &MockService_ToggleReportCheck_Call{Call: _e.mock.On("ToggleReportCheck", ctx, id, checked)}
 }
 
@@ -538,7 +547,7 @@ type MockService_UpdateActivity_Call struct {
 //   - id string
 //   - userID string
 //   - activity entities.Activity
-func (_e *MockService_Expecter) UpdateActivity(ctx interface{}, id interface{}, userID interface{}, activity interface{}) *MockService_UpdateActivity_Call {
+func (_e *MockService_Expecter) UpdateActivity(ctx any, id any, userID any, activity any) *MockService_UpdateActivity_Call {
 	return &MockService_UpdateActivity_Call{Call: _e.mock.On("UpdateActivity", ctx, id, userID, activity)}
 }
 

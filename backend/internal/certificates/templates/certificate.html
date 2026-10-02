@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Certificado</title>
+  <style>
+    @font-face { font-family: "Open Sans"; font-weight: 400; src: url("{{.FontRegular}}") format("woff2"); }
+    @font-face { font-family: "Open Sans"; font-weight: 700; src: url("{{.FontBold}}") format("woff2"); }
+    /* The page has the size of the designs in templates/assets; positions are in pt over them. */
+    @page { size: 779.25pt 519pt; margin: 0; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      width: 779.25pt;
+      height: 519pt;
+      font-family: "Open Sans", Arial, Helvetica, sans-serif;
+      color: #000;
+    }
+    .page { position: relative; width: 779.25pt; height: 519pt; overflow: hidden; }
+    .background { position: absolute; top: 0; left: 0; width: 779.25pt; height: 519pt; object-fit: fill; }
+    .line { position: absolute; left: 0; right: 0; margin: 0; text-align: center; }
+    .awarded { top: 155pt; font-size: 15pt; font-weight: bold; }
+    .name { top: 172pt; font-size: 20pt; }
+    .document { top: 199pt; font-size: 17pt; }
+    .ribbon { top: 241pt; font-size: 12pt; font-weight: bold; color: #fff; }
+    .course { top: 270pt; left: 150pt; right: 150pt; font-size: 18pt; font-weight: bold; line-height: 1.1; }
+    .details {
+      position: absolute;
+      top: 316pt;
+      left: 112pt;
+      right: 112pt;
+      margin: 0;
+      font-size: 9.5pt;
+      line-height: 1.4;
+      text-align: center;
+    }
+    .signature {
+      position: absolute;
+      top: 442pt;
+      width: 170pt;
+      margin: 0;
+      font-size: 7.5pt;
+      line-height: 1.35;
+      text-align: center;
+    }
+    .signature strong { display: block; }
+    .place-date { position: absolute; left: 44pt; top: 498pt; margin: 0; font-size: 9.5pt; color: #6b6b6b; }
+    .verification {
+      position: absolute;
+      left: 38pt;
+      top: 378pt;
+      width: 104pt;
+      text-align: center;
+      font-size: 5.5pt;
+      color: #3b3b3b;
+    }
+    .verification img { width: 62pt; height: 62pt; display: block; margin: 0 auto 1pt; }
+    .verification .code { font-family: "Courier New", monospace; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <img class="background" src="{{.Background}}" alt="">
+
+    {{if not .StaticText}}<p class="line awarded">Otorgado a:</p>{{end}}
+    <p class="line name">{{.FullName}}</p>
+    <p class="line document">C.I: {{.Document}}</p>
+    {{if not .StaticText}}<p class="line ribbon">Por tu participación en</p>{{end}}
+    <p class="line course">{{.CourseName}}</p>
+
+    <p class="details">
+      Realizado
+      {{- if .Duration}} con una duración de {{.Duration}}{{end}}
+      {{- if .EndMonth}}, finalizado en el mes de {{.EndMonth}} de {{.EndYear}}{{end}}
+      {{- if .Modality}} en modalidad {{.Modality}}{{end}}.
+      Esta actividad académica cuenta con el aval de la Universidad Central de Venezuela, a través de
+      {{.Endorsement}}, como parte de su compromiso con la formación continua y el fortalecimiento
+      del talento humano en el país.
+    </p>
+
+    {{/* The DEU design already prints the Director's signature under its left line. */}}
+    {{if .StaticText}}
+      <p class="signature" style="left: 409pt;">Instructor(a)</p>
+    {{else}}
+      <p class="signature" style="left: 121pt;">
+        <strong>Mercy Ospina</strong>
+        Directora de Extensión Universitaria<br>Universidad Central de Venezuela
+      </p>
+      <p class="signature" style="left: 302pt;">
+        <strong>Decano(a)</strong>
+        Facultad de {{.FacultyName}}<br>Universidad Central de Venezuela
+      </p>
+      <p class="signature" style="left: 483pt;">Instructor(a)</p>
+    {{end}}
+
+    <div class="verification">
+      <img src="{{.QRCode}}" alt="Código QR de verificación">
+      Verifique en {{.VerifyHost}}
+      <div class="code">{{.VerificationCode}}</div>
+    </div>
+
+    <p class="place-date">Caracas, {{.IssueDate}}</p>
+  </div>
+</body>
+</html>

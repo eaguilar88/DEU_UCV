@@ -11,10 +11,12 @@ import (
 var periodQuerySelectCommon = []string{
 	"cp.id",
 	"cp.course_id",
+	"cp.name",
 	"cp.start_date",
 	"cp.end_date",
 	"cp.is_active",
 	"cp.inscription_date",
+	"cp.capacity",
 	"cp.closed_at",
 	"cp.created_at",
 	"cp.updated_at",
@@ -28,6 +30,14 @@ func GetCoursePeriodByID(periodID string) sq.SelectBuilder {
 		Where(sq.Eq{"cp.id": periodID})
 }
 
+// GetCoursePeriodByIDIncludingInactive also returns closed (inactive) cycles, e.g. to show the
+// cycle a certificate was issued for.
+func GetCoursePeriodByIDIncludingInactive(periodID string) sq.SelectBuilder {
+	return psql.Select(periodQuerySelectCommon...).
+		From(fmt.Sprintf("%s AS cp", periodsTableName)).
+		Where(sq.Eq{"cp.id": periodID})
+}
+
 func GetCoursePeriods(courseID string, page entities.PageScope) sq.SelectBuilder {
 	return psql.Select(periodQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS cp", periodsTableName)).
@@ -37,8 +47,18 @@ func GetCoursePeriods(courseID string, page entities.PageScope) sq.SelectBuilder
 		Offset(uint64(page.Offset()))
 }
 
+func GetActiveCoursePeriodByCourseID(courseID string) sq.SelectBuilder {
+	return psql.Select(periodQuerySelectCommon...).
+		From(fmt.Sprintf("%s AS cp", periodsTableName)).
+		Where(sq.Eq{"cp.course_id": courseID}).
+		Where(sq.Eq{"cp.is_active": true}).
+		Where(sq.Eq{"cp.closed_at": nil}).
+		Where(sq.Eq{"cp.deleted_at": nil}).
+		Limit(1)
+}
+
 func GetLatestCoursePeriod(courseID string) sq.SelectBuilder {
-	return psql.Select("cp.id", "cp.start_date", "cp.end_date", "cp.inscription_date").
+	return psql.Select("cp.id", "cp.name", "cp.start_date", "cp.end_date", "cp.inscription_date").
 		From(fmt.Sprintf("%s AS cp", periodsTableName)).
 		Where(sq.Eq{"cp.course_id": courseID}).
 		Where(sq.Eq{"cp.is_active": true}).
@@ -50,24 +70,30 @@ func InsertCoursePeriod(coursePeriod models.CoursePeriod) sq.InsertBuilder {
 	return psql.Insert(periodsTableName).
 		Columns(
 			"course_id",
+			"name",
 			"start_date",
 			"end_date",
 			"inscription_date",
+			"capacity",
 		).
 		Values(
 			coursePeriod.CourseID,
+			coursePeriod.Name,
 			coursePeriod.StartDate,
 			coursePeriod.EndDate,
 			coursePeriod.InscriptionDate,
+			coursePeriod.Capacity,
 		).Suffix("RETURNING id")
 }
 
 func UpdateCoursePeriod(periodID string, coursePeriod models.CoursePeriod) sq.UpdateBuilder {
 	return psql.Update(periodsTableName).
 		Set("course_id", coursePeriod.CourseID).
+		Set("name", coursePeriod.Name).
 		Set("start_date", coursePeriod.StartDate).
 		Set("end_date", coursePeriod.EndDate).
 		Set("inscription_date", coursePeriod.InscriptionDate).
+		Set("capacity", coursePeriod.Capacity).
 		Where(sq.Eq{"id": periodID})
 }
 

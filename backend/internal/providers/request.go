@@ -31,3 +31,8 @@ type UpdateProviderRequest struct {
 type DeleteProviderRequest struct {
 	ID string
 }
+
+// RejectProviderRequest carries the reason sent to the provider in the rejection email.
+type RejectProviderRequest struct {
+	Reason string `json:"observaciones"`
+}

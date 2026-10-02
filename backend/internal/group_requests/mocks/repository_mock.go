@@ -17,10 +17,19 @@ func NewMockRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockRepository {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockRepository{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -63,7 +72,7 @@ type MockRepository_ApproveGroupRequest_Call struct {
 // ApproveGroupRequest is a helper method to define mock.On call
 //   - ctx context.Context
 //   - reqID string
-func (_e *MockRepository_Expecter) ApproveGroupRequest(ctx interface{}, reqID interface{}) *MockRepository_ApproveGroupRequest_Call {
+func (_e *MockRepository_Expecter) ApproveGroupRequest(ctx any, reqID any) *MockRepository_ApproveGroupRequest_Call {
 	return &MockRepository_ApproveGroupRequest_Call{Call: _e.mock.On("ApproveGroupRequest", ctx, reqID)}
 }
 
@@ -132,7 +141,7 @@ type MockRepository_ApproveGroupRequestAndActivate_Call struct {
 //   - groupID string
 //   - adminUser entities.User
 //   - notify func() error
-func (_e *MockRepository_Expecter) ApproveGroupRequestAndActivate(ctx interface{}, reqID interface{}, groupID interface{}, adminUser interface{}, notify interface{}) *MockRepository_ApproveGroupRequestAndActivate_Call {
+func (_e *MockRepository_Expecter) ApproveGroupRequestAndActivate(ctx any, reqID any, groupID any, adminUser any, notify any) *MockRepository_ApproveGroupRequestAndActivate_Call {
 	return &MockRepository_ApproveGroupRequestAndActivate_Call{Call: _e.mock.On("ApproveGroupRequestAndActivate", ctx, reqID, groupID, adminUser, notify)}
 }
 
@@ -216,7 +225,7 @@ type MockRepository_GetContactsByOwner_Call struct {
 //   - ctx context.Context
 //   - ownerID string
 //   - ownerType entities.OwnerType
-func (_e *MockRepository_Expecter) GetContactsByOwner(ctx interface{}, ownerID interface{}, ownerType interface{}) *MockRepository_GetContactsByOwner_Call {
+func (_e *MockRepository_Expecter) GetContactsByOwner(ctx any, ownerID any, ownerType any) *MockRepository_GetContactsByOwner_Call {
 	return &MockRepository_GetContactsByOwner_Call{Call: _e.mock.On("GetContactsByOwner", ctx, ownerID, ownerType)}
 }
 
@@ -287,7 +296,7 @@ type MockRepository_GetGroupByID_Call struct {
 // GetGroupByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - groupID string
-func (_e *MockRepository_Expecter) GetGroupByID(ctx interface{}, groupID interface{}) *MockRepository_GetGroupByID_Call {
+func (_e *MockRepository_Expecter) GetGroupByID(ctx any, groupID any) *MockRepository_GetGroupByID_Call {
 	return &MockRepository_GetGroupByID_Call{Call: _e.mock.On("GetGroupByID", ctx, groupID)}
 }
 
@@ -353,7 +362,7 @@ type MockRepository_GetGroupRequestByID_Call struct {
 // GetGroupRequestByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - reqID string
-func (_e *MockRepository_Expecter) GetGroupRequestByID(ctx interface{}, reqID interface{}) *MockRepository_GetGroupRequestByID_Call {
+func (_e *MockRepository_Expecter) GetGroupRequestByID(ctx any, reqID any) *MockRepository_GetGroupRequestByID_Call {
 	return &MockRepository_GetGroupRequestByID_Call{Call: _e.mock.On("GetGroupRequestByID", ctx, reqID)}
 }
 
@@ -435,7 +444,7 @@ type MockRepository_GetGroupRequestsByFaculty_Call struct {
 //   - faculty entities.Faculty
 //   - status string
 //   - pageScope entities.PageScope
-func (_e *MockRepository_Expecter) GetGroupRequestsByFaculty(ctx interface{}, faculty interface{}, status interface{}, pageScope interface{}) *MockRepository_GetGroupRequestsByFaculty_Call {
+func (_e *MockRepository_Expecter) GetGroupRequestsByFaculty(ctx any, faculty any, status any, pageScope any) *MockRepository_GetGroupRequestsByFaculty_Call {
 	return &MockRepository_GetGroupRequestsByFaculty_Call{Call: _e.mock.On("GetGroupRequestsByFaculty", ctx, faculty, status, pageScope)}
 }
 
@@ -513,7 +522,7 @@ type MockRepository_GetGroupRequestsByGroupID_Call struct {
 // GetGroupRequestsByGroupID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - groupID string
-func (_e *MockRepository_Expecter) GetGroupRequestsByGroupID(ctx interface{}, groupID interface{}) *MockRepository_GetGroupRequestsByGroupID_Call {
+func (_e *MockRepository_Expecter) GetGroupRequestsByGroupID(ctx any, groupID any) *MockRepository_GetGroupRequestsByGroupID_Call {
 	return &MockRepository_GetGroupRequestsByGroupID_Call{Call: _e.mock.On("GetGroupRequestsByGroupID", ctx, groupID)}
 }
 
@@ -581,7 +590,7 @@ type MockRepository_GetPendingGroupRequestsCounts_Call struct {
 // GetPendingGroupRequestsCounts is a helper method to define mock.On call
 //   - ctx context.Context
 //   - faculty entities.Faculty
-func (_e *MockRepository_Expecter) GetPendingGroupRequestsCounts(ctx interface{}, faculty interface{}) *MockRepository_GetPendingGroupRequestsCounts_Call {
+func (_e *MockRepository_Expecter) GetPendingGroupRequestsCounts(ctx any, faculty any) *MockRepository_GetPendingGroupRequestsCounts_Call {
 	return &MockRepository_GetPendingGroupRequestsCounts_Call{Call: _e.mock.On("GetPendingGroupRequestsCounts", ctx, faculty)}
 }
 
@@ -649,7 +658,7 @@ type MockRepository_GetUser_Call struct {
 // GetUser is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID string
-func (_e *MockRepository_Expecter) GetUser(ctx interface{}, userID interface{}) *MockRepository_GetUser_Call {
+func (_e *MockRepository_Expecter) GetUser(ctx any, userID any) *MockRepository_GetUser_Call {
 	return &MockRepository_GetUser_Call{Call: _e.mock.On("GetUser", ctx, userID)}
 }
 
@@ -707,7 +716,7 @@ type MockRepository_RejectGroupRequest_Call struct {
 //   - ctx context.Context
 //   - reqID string
 //   - reason string
-func (_e *MockRepository_Expecter) RejectGroupRequest(ctx interface{}, reqID interface{}, reason interface{}) *MockRepository_RejectGroupRequest_Call {
+func (_e *MockRepository_Expecter) RejectGroupRequest(ctx any, reqID any, reason any) *MockRepository_RejectGroupRequest_Call {
 	return &MockRepository_RejectGroupRequest_Call{Call: _e.mock.On("RejectGroupRequest", ctx, reqID, reason)}
 }
 

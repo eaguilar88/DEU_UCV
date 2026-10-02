@@ -3,9 +3,9 @@ package group_requests
 import (
 	"context"
 	"errors"
-	"strings"
 	"testing"
 
+	"github.com/eaguilar88/deu/internal/email"
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/group_requests/mocks"
 	"github.com/stretchr/testify/assert"
@@ -46,7 +46,7 @@ func TestService_ApproveGroupRequest(t *testing.T) {
 						assert.NotEqual(t, "nolodire", u.Password)
 						return runNotify(ctx, reqID, groupID, u, notify)
 					})
-				mailMock.EXPECT().Send(mock.Anything, "owner@test.com", mock.AnythingOfType("string"), mock.AnythingOfType("string")).
+				mailMock.EXPECT().SendTemplate(mock.Anything, "owner@test.com", email.TemplateGroupAdminCredentials, credentialsFor("Grupo Test")).
 					Return(nil)
 			},
 			wantErr: false,
@@ -106,7 +106,7 @@ func TestService_ApproveGroupRequest(t *testing.T) {
 				repoMock.EXPECT().GetUser(mock.Anything, "owner-1").Return(&entities.User{ID: "owner-1", Email: "owner@test.com"}, nil)
 				repoMock.EXPECT().ApproveGroupRequestAndActivate(mock.Anything, "req-1", "1", mock.AnythingOfType("entities.User"), mock.Anything).
 					RunAndReturn(runNotify)
-				mailMock.EXPECT().Send(mock.Anything, "owner@test.com", mock.AnythingOfType("string"), mock.AnythingOfType("string")).
+				mailMock.EXPECT().SendTemplate(mock.Anything, "owner@test.com", email.TemplateGroupAdminCredentials, credentialsFor("Grupo Test")).
 					Return(errors.New("smtp error"))
 			},
 			wantErr: true,
@@ -148,7 +148,7 @@ func TestService_RejectGroupRequest(t *testing.T) {
 	}
 	dbErr := errors.New("db error")
 	reason := "Documentación incompleta"
-	bodyHasReason := mock.MatchedBy(func(body string) bool { return strings.Contains(body, "Razón: "+reason) })
+	rejectedData := email.GroupRequestRejectedData{GroupName: "Grupo Test", Reason: reason}
 
 	tests := []testCase{
 		{
@@ -157,7 +157,7 @@ func TestService_RejectGroupRequest(t *testing.T) {
 				repoMock.EXPECT().GetGroupRequestByID(mock.Anything, "req-1").Return(baseReq, nil)
 				repoMock.EXPECT().RejectGroupRequest(mock.Anything, "req-1", reason).Return(nil)
 				repoMock.EXPECT().GetContactsByOwner(mock.Anything, "1", entities.OwnerTypeExtensionGroup).Return(emailContact, nil)
-				mailMock.EXPECT().Send(mock.Anything, "grupo@example.com", "Solicitud de registro de grupo rechazada", bodyHasReason).Return(nil)
+				mailMock.EXPECT().SendTemplate(mock.Anything, "grupo@example.com", email.TemplateGroupRequestRejected, rejectedData).Return(nil)
 			},
 		},
 		{
@@ -181,7 +181,7 @@ func TestService_RejectGroupRequest(t *testing.T) {
 				repoMock.EXPECT().GetGroupRequestByID(mock.Anything, "req-1").Return(baseReq, nil)
 				repoMock.EXPECT().RejectGroupRequest(mock.Anything, "req-1", reason).Return(nil)
 				repoMock.EXPECT().GetContactsByOwner(mock.Anything, "1", entities.OwnerTypeExtensionGroup).Return(emailContact, nil)
-				mailMock.EXPECT().Send(mock.Anything, "grupo@example.com", mock.Anything, mock.Anything).Return(errors.New("smtp error"))
+				mailMock.EXPECT().SendTemplate(mock.Anything, "grupo@example.com", mock.Anything, mock.Anything).Return(errors.New("smtp error"))
 			},
 		},
 		{
@@ -218,4 +218,14 @@ func TestService_RejectGroupRequest(t *testing.T) {
 			}
 		})
 	}
+}
+
+// credentialsFor matches the credentials email data for a group. The password is random, so it is
+// only checked to be present.
+func credentialsFor(groupName string) interface{} {
+	return mock.MatchedBy(func(data email.GroupAdminCredentialsData) bool {
+		return data.GroupName == groupName &&
+			data.Username == "grupo_test@extension.ucv.ve" &&
+			len(data.Password) == 12
+	})
 }

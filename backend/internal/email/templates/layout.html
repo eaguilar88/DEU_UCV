@@ -1,0 +1,25 @@
+{{/*
+  Shared HTML shell for every notification email.
+
+  Each email lives in its own file next to this one and defines two blocks:
+    - "subject": the email subject line. Keep it STATIC text (no {{.Field}} actions): html/template
+      escapes interpolated data for HTML, so a value like "&" would reach the subject as "&amp;".
+    - "content": the email body, rendered inside the layout below. Data is only available through
+      {{.Field}} and is escaped automatically.
+
+  Adding an email: create the file here, then add its Template constant (and data struct, if it
+  needs data) in ../templates.go.
+*/}}
+{{define "layout"}}<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:24px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.5;color:#222222;">
+  {{template "content" .}}
+  <hr style="border:none;border-top:1px solid #dddddd;margin:24px 0 12px;">
+  <p style="font-size:12px;color:#777777;">Dirección de Extensión Universitaria · Universidad Central de Venezuela</p>
+</body>
+</html>
+{{end}}

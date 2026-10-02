@@ -39,6 +39,7 @@ func (h *Handler) LoginHandleHTTP(c echo.Context) error {
 			ID:    user.ID,
 			Name:  user.FirstName + " " + user.LastName,
 			Roles: user.Roles,
+			Rol:   entities.UIRole(user.Roles),
 		},
 		Faculty:            user.Faculty,
 		ProviderCode:       user.ProviderCode,

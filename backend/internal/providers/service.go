@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -13,19 +12,23 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
+	"github.com/eaguilar88/deu/internal/email"
 	"github.com/eaguilar88/deu/internal/entities"
 	"go.uber.org/zap"
 )
 
 // Custom domain errors
 var (
-	ErrProviderNotFound  = errors.New("provider not found")
-	ErrInvalidProvider   = errors.New("invalid provider data")
-	ErrProviderExists    = errors.New("provider already exists")
-	ErrFileUploadFailed  = errors.New("failed to upload file")
-	ErrFileNotFound      = errors.New("file not found")
-	ErrNoIntentionLetter = errors.New("a new provider requires an intention letter")
-	ErrProviderForbidden = errors.New("not allowed to view this provider")
+	ErrProviderNotFound         = errors.New("provider not found")
+	ErrInvalidProvider          = errors.New("invalid provider data")
+	ErrProviderExists           = errors.New("provider already exists")
+	ErrFileUploadFailed         = errors.New("failed to upload file")
+	ErrFileNotFound             = errors.New("file not found")
+	ErrProviderForbidden        = errors.New("not allowed to view this provider")
+	ErrMissingInitialContract   = errors.New("carta_intencion and carta_compromiso are required for the initial contract")
+	ErrMissingAddendum          = errors.New("adenda is required")
+	ErrNoCoursesToCoverage      = errors.New("no approved courses without legal coverage for this provider")
+	ErrProviderAlreadyProcessed = errors.New("this provider request has already been processed")
 )
 
 // Repository defines the data access operations required by the providers service.
@@ -36,24 +39,32 @@ type Repository interface {
 	CreateProvider(ctx context.Context, provider entities.Provider) (int64, error)
 	UpdateProvider(ctx context.Context, providerID string, provider entities.Provider) error
 	DeleteProvider(ctx context.Context, providerID string) error
-	ApproveProvider(ctx context.Context, providerID string) error
-	RejectProvider(ctx context.Context, providerID string) error
+	// ApproveProvider approves the provider, changes its user's role and runs notify in one
+	// transaction: a failed email rolls the approval back.
+	ApproveProvider(ctx context.Context, providerID, userID, fromRole, toRole string, notify func() error) error
+	// RejectProvider rejects the provider and runs notify in one transaction.
+	RejectProvider(ctx context.Context, providerID string, notify func() error) error
 	CreateProviderRequest(ctx context.Context, providerID int64) error
-	UpdateUserRole(ctx context.Context, userID, fromRole, toRole string) error
 
 	GetProviderByUserID(ctx context.Context, userID string) (entities.Provider, error)
 	GetProviderContactInfo(ctx context.Context, providerID string) (entities.User, error)
+	GetFacultyCoordinatorEmails(ctx context.Context, faculty entities.Faculty) ([]string, error)
 
 	// Files
 	GetFilesByOwner(ctx context.Context, ownerID string, ownerType entities.OwnerType) (entities.GroupedFiles, error)
 	GetFilesByOwnerAndPurpose(ctx context.Context, ownerID, ownerType, purpose string) ([]*entities.File, error)
 	SaveFilesToDB(ctx context.Context, file []*entities.File) error
-	MarkCoursesWithDocumentation(ctx context.Context, providerID, from, to string) error
+
+	// Provider contracts
+	HasInitialContract(ctx context.Context, providerID string) (bool, error)
+	GetUncoveredCourseIDs(ctx context.Context, providerID string) ([]string, error)
+	CreateProviderContract(ctx context.Context, contract entities.ProviderContract, coveredCourseIDs []string) (entities.ProviderContract, error)
+	GetProviderContracts(ctx context.Context, providerID string) ([]entities.ProviderContract, error)
 }
 
 // MailClient defines the email sending operations required by the providers service.
 type MailClient interface {
-	Send(ctx context.Context, to string, subject string, body string) error
+	SendTemplate(ctx context.Context, to string, tmpl email.Template, data any) error
 }
 
 // StorageClient defines the file storage operations required by the providers service.
@@ -130,6 +141,17 @@ func (s *service) GetProvider(ctx context.Context, providerID string, viewer ent
 	}
 
 	provider.Files = files
+
+	contracts, err := s.repo.GetProviderContracts(ctx, providerID)
+	if err != nil {
+		s.logger.Error("failed to get provider contracts",
+			zap.Error(err),
+			zap.String("provider_id", providerID),
+			zap.String("action", "get_provider_contracts"),
+		)
+		return entities.Provider{}, fmt.Errorf("failed to get provider contracts: %w", err)
+	}
+	provider.Contracts = contracts
 
 	s.logger.Debug("provider retrieved successfully",
 		zap.String("provider_id", providerID),
@@ -230,14 +252,54 @@ func (s *service) CreateProvider(ctx context.Context, provider *entities.Provide
 		return -1, err
 	}
 
-	if err := s.emailClient.Send(ctx, contact.Email, "Solicitud de registro recibida", "Tu solicitud de registro como proveedor ha sido recibida y está bajo revisión. Recibirás una notificación cuando sea procesada."); err != nil {
+	if err := s.emailClient.SendTemplate(ctx, contact.Email, email.TemplateProviderRegistrationReceived, nil); err != nil {
 		s.logger.Warn("failed to send provider registration email",
 			zap.Error(err),
 			zap.String("action", "send_email"),
 		)
 	}
 
+	s.notifyCoordinators(ctx, *provider)
+
 	return createdProviderID, nil
+}
+
+// notifyCoordinators tells the faculty's coordinators about a new provider request. It is
+// best-effort: the provider is already registered, so failures are only logged.
+func (s *service) notifyCoordinators(ctx context.Context, provider entities.Provider) {
+	if provider.Faculty == "" {
+		s.logger.Warn("provider has no faculty, skipping coordinator notification",
+			zap.String("provider_id", provider.ID),
+		)
+		return
+	}
+
+	recipients, err := s.repo.GetFacultyCoordinatorEmails(ctx, provider.Faculty)
+	if err != nil {
+		s.logger.Warn("failed to get faculty coordinators", zap.Error(err), zap.String("provider_id", provider.ID))
+		return
+	}
+	if len(recipients) == 0 {
+		s.logger.Warn("no coordinators found for faculty",
+			zap.String("provider_id", provider.ID),
+			zap.String("faculty", string(provider.Faculty)),
+		)
+		return
+	}
+
+	data := email.ProviderRegistrationSubmittedData{
+		ProviderName: providerDisplayName(provider),
+		ProviderType: string(provider.Type),
+		Faculty:      string(provider.Faculty),
+	}
+	for _, to := range recipients {
+		if err := s.emailClient.SendTemplate(ctx, to, email.TemplateProviderRegistrationSubmitted, data); err != nil {
+			s.logger.Warn("failed to send provider request email to coordinator",
+				zap.Error(err),
+				zap.String("provider_id", provider.ID),
+			)
+		}
+	}
 }
 
 // UpdateProvider updates an existing provider's data and re-uploads its associated files.
@@ -289,84 +351,111 @@ func (s *service) UpdateProvider(ctx context.Context, providerID string, provide
 	return nil
 }
 
-// UploadProviderDocuments uploads an intention letter (optional) and a commitment letter (required)
-// for the provider associated with the given user. It gates on the intention letter existence,
-// versions the commitment letter, and marks provider courses as documented.
-func (s *service) UploadProviderDocuments(ctx context.Context, userID string, intentionLetter, commitmentLetter *entities.File) error {
-	provider, err := s.repo.GetProviderByUserID(ctx, userID)
+// SubmitProviderContract submits a provider's legal contract or addendum, admin-driven
+// by provider ID. Whether this is the initial contract or an addendum is inferred
+// server-side from whether the provider already has an initial contract on file:
+// the initial contract requires intentionLetter+commitmentLetter, an addendum requires
+// addendum. Every submission automatically covers all of the provider's currently
+// approved-but-uncovered courses (never a client-supplied course list) — an addendum
+// covering zero courses is rejected with ErrNoCoursesToCoverage, since it would be a
+// no-op; the initial contract may legitimately cover zero courses for a brand-new provider.
+func (s *service) SubmitProviderContract(ctx context.Context, providerID string, intentionLetter, commitmentLetter, addendum *entities.File) (entities.ProviderContract, error) {
+	provider, err := s.repo.GetProvider(ctx, providerID)
 	if err != nil {
-		s.logger.Error("failed to get provider by user ID", zap.Error(err), zap.String("user_id", userID))
+		s.logger.Error("failed to get provider", zap.Error(err), zap.String("provider_id", providerID))
 		if errors.Is(err, ErrProviderNotFound) {
-			return ErrProviderNotFound
+			return entities.ProviderContract{}, ErrProviderNotFound
 		}
-		return fmt.Errorf("failed to get provider: %w", err)
+		return entities.ProviderContract{}, fmt.Errorf("failed to get provider: %w", err)
 	}
 
-	existingIntention, err := s.repo.GetFilesByOwnerAndPurpose(ctx, provider.ID, string(entities.OwnerTypeProvider), entities.ProviderFileTypeIntentionLetter)
+	hasInitial, err := s.repo.HasInitialContract(ctx, provider.ID)
 	if err != nil {
-		s.logger.Error("failed to check intention letter", zap.Error(err))
-		return fmt.Errorf("failed to check intention letter: %w", err)
-	}
-	if len(existingIntention) == 0 && intentionLetter == nil {
-		return ErrNoIntentionLetter
+		s.logger.Error("failed to check for existing initial contract", zap.Error(err))
+		return entities.ProviderContract{}, fmt.Errorf("failed to check for existing initial contract: %w", err)
 	}
 
-	existingCommitment, err := s.repo.GetFilesByOwnerAndPurpose(ctx, provider.ID, string(entities.OwnerTypeProvider), entities.ProviderFileTypeCommitmentLetter)
-	if err != nil {
-		s.logger.Error("failed to check commitment letters", zap.Error(err))
-		return fmt.Errorf("failed to check commitment letters: %w", err)
-	}
-	nextVersion := len(existingCommitment) + 1
-	prevDate := ""
-	if len(existingCommitment) > 0 {
-		prevDate = existingCommitment[len(existingCommitment)-1].CreatedAt
+	contractType := entities.ContractTypeInitial
+	if hasInitial {
+		contractType = entities.ContractTypeAddendum
 	}
 
-	providerIDInt, err := strconv.ParseInt(provider.ID, 10, 64)
-	if err != nil {
-		s.logger.Error("invalid provider ID", zap.Error(err))
-		return fmt.Errorf("invalid provider ID: %w", err)
+	if contractType == entities.ContractTypeInitial {
+		if intentionLetter == nil || commitmentLetter == nil {
+			return entities.ProviderContract{}, ErrMissingInitialContract
+		}
+	} else if addendum == nil {
+		return entities.ProviderContract{}, ErrMissingAddendum
 	}
+
+	uncoveredCourseIDs, err := s.repo.GetUncoveredCourseIDs(ctx, provider.ID)
+	if err != nil {
+		s.logger.Error("failed to get uncovered course IDs", zap.Error(err))
+		return entities.ProviderContract{}, fmt.Errorf("failed to get uncovered course IDs: %w", err)
+	}
+	if contractType == entities.ContractTypeAddendum && len(uncoveredCourseIDs) == 0 {
+		return entities.ProviderContract{}, ErrNoCoursesToCoverage
+	}
+
+	contract, err := s.repo.CreateProviderContract(ctx, entities.ProviderContract{
+		ProviderID: provider.ID,
+		Type:       contractType,
+	}, uncoveredCourseIDs)
+	if err != nil {
+		s.logger.Error("failed to create provider contract", zap.Error(err))
+		return entities.ProviderContract{}, fmt.Errorf("failed to create provider contract: %w", err)
+	}
+
 	metadata := map[string]string{
 		"provider_id":      provider.ID,
 		"provider_type":    string(provider.Type),
-		"provider_user_id": userID,
+		"provider_user_id": provider.User.ID,
 	}
 
 	var filesToUpload []*entities.File
-	if intentionLetter != nil {
+	if contractType == entities.ContractTypeInitial {
 		intentionLetter.Purpose = entities.ProviderFileTypeIntentionLetter
-		intentionLetter.Version = 1
-		filesToUpload = append(filesToUpload, makeFileEntityFromFilePointer(intentionLetter, providerIDInt, userID, entities.OwnerTypeProvider, metadata))
+		commitmentLetter.Purpose = entities.ProviderFileTypeCommitmentLetter
+		filesToUpload = append(filesToUpload,
+			makeContractFileEntity(intentionLetter, contract.ID, provider.User.ID, metadata),
+			makeContractFileEntity(commitmentLetter, contract.ID, provider.User.ID, metadata),
+		)
+	} else {
+		addendum.Purpose = entities.ProviderFileTypeAddendum
+		filesToUpload = append(filesToUpload, makeContractFileEntity(addendum, contract.ID, provider.User.ID, metadata))
 	}
-
-	ext := filepath.Ext(commitmentLetter.Name)
-	base := strings.TrimSuffix(commitmentLetter.Name, ext)
-	commitmentLetter.Name = fmt.Sprintf("%s_v%d%s", base, nextVersion, ext)
-	commitmentLetter.Purpose = entities.ProviderFileTypeCommitmentLetter
-	commitmentLetter.Version = nextVersion
-	filesToUpload = append(filesToUpload, makeFileEntityFromFilePointer(commitmentLetter, providerIDInt, userID, entities.OwnerTypeProvider, metadata))
 
 	if err := s.storage.UploadFile(ctx, filesToUpload); err != nil {
-		s.logger.Error("failed to upload provider documents", zap.Error(err))
-		return fmt.Errorf("failed to upload documents: %w", err)
+		s.logger.Error("failed to upload provider contract documents", zap.Error(err))
+		return entities.ProviderContract{}, fmt.Errorf("failed to upload documents: %w", err)
 	}
 	if err := s.repo.SaveFilesToDB(ctx, filesToUpload); err != nil {
-		s.logger.Error("failed to save provider documents to DB", zap.Error(err))
-		return fmt.Errorf("failed to save documents: %w", err)
+		s.logger.Error("failed to save provider contract documents to DB", zap.Error(err))
+		return entities.ProviderContract{}, fmt.Errorf("failed to save documents: %w", err)
 	}
 
-	now := time.Now().Format(time.RFC3339)
-	if err := s.repo.MarkCoursesWithDocumentation(ctx, provider.ID, prevDate, now); err != nil {
-		s.logger.Error("failed to mark courses with documentation", zap.Error(err))
-		return fmt.Errorf("failed to mark courses: %w", err)
-	}
-
-	s.logger.Info("provider documents uploaded successfully",
+	contract.Files = filesToUpload
+	s.logger.Info("provider contract submitted successfully",
 		zap.String("provider_id", provider.ID),
-		zap.Int("commitment_version", nextVersion),
+		zap.String("contract_id", contract.ID),
+		zap.String("contract_type", string(contractType)),
+		zap.Int("covered_courses", len(uncoveredCourseIDs)),
 	)
-	return nil
+	return contract, nil
+}
+
+// makeContractFileEntity populates ownership and storage fields for a file owned by a
+// specific provider contract/addendum submission (not the provider directly), mirroring
+// makeFileEntityFromFilePointer's role for provider-level files.
+func makeContractFileEntity(file *entities.File, contractID, uploadedBy string, metadata map[string]string) *entities.File {
+	file.OwnerID = contractID
+	file.OwnerType = entities.OwnerTypeProviderContract
+	file.Key = fmt.Sprintf("files/provider-contracts/%s/%s", contractID, file.Name)
+	file.Public = false
+	file.MetaData = metadata
+	file.UploadedBy = uploadedBy
+	file.CreatedAt = time.Now().Format(time.RFC3339)
+	return file
 }
 
 // DeleteProvider soft-deletes a provider by ID.
@@ -379,25 +468,75 @@ func (s *service) DeleteProvider(ctx context.Context, providerID string) error {
 	return nil
 }
 
-// ApproveProvider sets the provider status to approved and promotes the user role from visitante to course_admin.
-func (s *service) ApproveProvider(ctx context.Context, providerID, userID string) error {
-	if err := s.repo.ApproveProvider(ctx, providerID); err != nil {
-		s.logger.Error("error approving provider", zap.Error(err))
+// ApproveProvider sets the provider status to approved, promotes the provider's user from
+// visitante to course_admin and emails them.
+func (s *service) ApproveProvider(ctx context.Context, providerID string) error {
+	provider, err := s.getPendingProvider(ctx, providerID)
+	if err != nil {
 		return err
 	}
-	if err := s.repo.UpdateUserRole(ctx, userID, entities.RoleNameFromID(entities.RoleVisitante), entities.RoleNameFromID(entities.RoleCourseAdmin)); err != nil {
-		s.logger.Error("error updating user role after provider approval", zap.Error(err))
+
+	notify := s.notifier(ctx, providerID, provider.User.Email, email.TemplateProviderApproved, email.ProviderApprovedData{
+		ProviderName: providerDisplayName(provider),
+	})
+	if err := s.repo.ApproveProvider(ctx, providerID, provider.User.ID,
+		entities.RoleNameFromID(entities.RoleVisitante), entities.RoleNameFromID(entities.RoleCourseAdmin), notify); err != nil {
+		s.logger.Error("error approving provider", zap.Error(err), zap.String("provider_id", providerID))
 		return err
 	}
 	return nil
 }
 
-// RejectProvider changes the status of a provider to active
-func (s *service) RejectProvider(ctx context.Context, providerID string) error {
-	if err := s.repo.RejectProvider(ctx, providerID); err != nil {
-		s.logger.Error("error enabling provider", zap.Error(err))
+// RejectProvider sets the provider status to rejected and emails its user the reason.
+func (s *service) RejectProvider(ctx context.Context, providerID, reason string) error {
+	provider, err := s.getPendingProvider(ctx, providerID)
+	if err != nil {
+		return err
+	}
+
+	notify := s.notifier(ctx, providerID, provider.User.Email, email.TemplateProviderRejected, email.ProviderRejectedData{
+		ProviderName: providerDisplayName(provider),
+		Reason:       reason,
+	})
+	if err := s.repo.RejectProvider(ctx, providerID, notify); err != nil {
+		s.logger.Error("error rejecting provider", zap.Error(err), zap.String("provider_id", providerID))
+		return err
 	}
 	return nil
+}
+
+// getPendingProvider loads a provider and checks it is still under review, so an admin action
+// (and its email) happens only once.
+func (s *service) getPendingProvider(ctx context.Context, providerID string) (entities.Provider, error) {
+	provider, err := s.repo.GetProvider(ctx, providerID)
+	if err != nil {
+		s.logger.Error("error getting provider to review", zap.Error(err), zap.String("provider_id", providerID))
+		return entities.Provider{}, err
+	}
+	if provider.Status != entities.ProviderStatusUnderReview {
+		return entities.Provider{}, ErrProviderAlreadyProcessed
+	}
+	return provider, nil
+}
+
+// notifier returns the callback the repository runs inside its transaction, so a failed email rolls
+// back the admin action.
+func (s *service) notifier(ctx context.Context, providerID, to string, tmpl email.Template, data any) func() error {
+	return func() error {
+		if err := s.emailClient.SendTemplate(ctx, to, tmpl, data); err != nil {
+			s.logger.Error("failed to send provider notification email", zap.Error(err), zap.String("provider_id", providerID))
+			return fmt.Errorf("error sending provider notification email: %w", err)
+		}
+		return nil
+	}
+}
+
+// providerDisplayName is the provider's name, or its user's full name when it has none.
+func providerDisplayName(provider entities.Provider) string {
+	if provider.Name != "" {
+		return provider.Name
+	}
+	return strings.TrimSpace(provider.User.FirstName + " " + provider.User.LastName)
 }
 
 // prepareFilesSlice builds the full list of file entities from a provider's file pointers,
@@ -407,6 +546,9 @@ func prepareFilesSlice(provider *entities.Provider, providerID int64, metadata m
 		makeFileEntityFromFilePointer(provider.Files.CI, providerID, provider.User.ID, entities.OwnerTypeProvider, metadata),
 		makeFileEntityFromFilePointer(provider.Files.RIF, providerID, provider.User.ID, entities.OwnerTypeProvider, metadata),
 		makeFileEntityFromFilePointer(provider.Files.ISLR, providerID, provider.User.ID, entities.OwnerTypeProvider, metadata),
+	}
+	if provider.Files.Logo != nil {
+		filesArr = append(filesArr, makeFileEntityFromFilePointer(provider.Files.Logo, providerID, provider.User.ID, entities.OwnerTypeProvider, metadata))
 	}
 
 	for _, resume := range provider.Files.Resumes {
@@ -500,6 +642,7 @@ func (s *service) getFilesForProvider(ctx context.Context, providerID string) (e
 	}
 
 	result := entities.ProviderFiles{
+		Logo:              files.GetSingleFile(entities.ProviderFileTypeLogo),
 		CI:                files.GetSingleFile(entities.ProviderFileTypeCI),
 		RIF:               files.GetSingleFile(entities.ProviderFileTypeRIF),
 		ISLR:              files.GetSingleFile(entities.ProviderFileTypeISLR),

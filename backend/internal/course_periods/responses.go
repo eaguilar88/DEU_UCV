@@ -14,10 +14,12 @@ type AnnouncementInfo struct {
 
 type GetCoursePeriodResponse struct {
 	ID              string             `json:"id"`
+	Name            string             `json:"nombre_cohorte"`
 	Announcements   []AnnouncementInfo `json:"publicaciones,omitempty"`
 	StartDate       string             `json:"fecha_inicio"`
 	EndDate         string             `json:"fecha_fin"`
 	InscriptionDate string             `json:"fecha_inscripcion"`
+	Capacity        int                `json:"capacidad"`
 	CreatedAt       string             `json:"creado_el"`
 	UpdatedAt       string             `json:"actualizado_el"`
 	DeletedAt       string             `json:"eliminado_en,omitempty"`
@@ -38,10 +40,12 @@ func periodToResponse(coursePeriod entities.CoursePeriod) GetCoursePeriodRespons
 
 	return GetCoursePeriodResponse{
 		ID:              coursePeriod.ID,
+		Name:            coursePeriod.Name,
 		Announcements:   announcements,
 		StartDate:       coursePeriod.StartDate,
 		EndDate:         coursePeriod.EndDate,
 		InscriptionDate: coursePeriod.InscriptionDate,
+		Capacity:        coursePeriod.Capacity,
 		CreatedAt:       coursePeriod.CreatedAt,
 		UpdatedAt:       coursePeriod.UpdatedAt,
 		DeletedAt:       coursePeriod.DeletedAt,

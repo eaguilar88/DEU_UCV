@@ -1,6 +1,7 @@
 package entities
 
 import (
+	"slices"
 	"time"
 )
 
@@ -97,4 +98,57 @@ func RoleIDFromName(name string) int {
 		return id
 	}
 	return 0
+}
+
+// UI role names: the vocabulary the diplomados frontend compares against. The backend authorizes
+// with the role names above; these are only sent to clients alongside them.
+const (
+	UIRoleAdmin       = "admin"
+	UIRoleCoordinator = "coordinador"
+	UIRoleProvider    = "proveedor"
+	UIRoleVisitor     = "visitante"
+)
+
+var uiRoleNames = map[string]string{
+	"root":          UIRoleAdmin,
+	"deu_admin":     UIRoleAdmin,
+	"faculty_admin": UIRoleCoordinator,
+	"course_admin":  UIRoleProvider,
+	"visitante":     UIRoleVisitor,
+}
+
+// uiRolePriority orders the UI roles from most to least privileged.
+var uiRolePriority = []string{UIRoleAdmin, UIRoleCoordinator, UIRoleProvider, UIRoleVisitor}
+
+// UIRoles translates role names into the UI vocabulary, without duplicates. Roles with no UI
+// name (e.g. group_admin, group_helper) are kept as they are.
+func UIRoles(roles []string) []string {
+	result := make([]string, 0, len(roles))
+	seen := make(map[string]bool, len(roles))
+	for _, role := range roles {
+		name, ok := uiRoleNames[role]
+		if !ok {
+			name = role
+		}
+		if !seen[name] {
+			seen[name] = true
+			result = append(result, name)
+		}
+	}
+	return result
+}
+
+// UIRole returns the most privileged UI role of roles: admin, then coordinador, proveedor and
+// visitante. A user with none of them gets their first role, or visitante if they have none.
+func UIRole(roles []string) string {
+	uiRoles := UIRoles(roles)
+	for _, candidate := range uiRolePriority {
+		if slices.Contains(uiRoles, candidate) {
+			return candidate
+		}
+	}
+	if len(uiRoles) > 0 {
+		return uiRoles[0]
+	}
+	return UIRoleVisitor
 }

@@ -17,6 +17,9 @@ type GetUserResponse struct {
 	Address           string `json:"direccion,omitempty"`
 	CreatedAt         string `json:"creado_en,omitempty"`
 	ProfilePictureURL string `json:"foto_perfil,omitempty"`
+	// Rol and Roles use the UI role names (e.g. "proveedor"); only the full profile has them.
+	Rol   string   `json:"rol,omitempty"`
+	Roles []string `json:"roles,omitempty"`
 	//TODO agregar el rol
 }
 

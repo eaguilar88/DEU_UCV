@@ -37,8 +37,51 @@ func (r *PostgresRepository) GetCourse(ctx context.Context, courseID string) (en
 	return newCourseFromModel(course), nil
 }
 
-func (r *PostgresRepository) GetCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error) {
-	query, args, err := queries.GetCourses(pageScope.PerPage, pageScope.Offset()).ToSql()
+// GetCourseIncludingInactive is GetCourse without the is_active and deleted_at filters, so issued
+// certificates keep resolving their course.
+func (r *PostgresRepository) GetCourseIncludingInactive(ctx context.Context, courseID string) (entities.Course, error) {
+	query, args, err := queries.GetCourseByIDIncludingInactive(courseID).ToSql()
+	if err != nil {
+		return entities.Course{}, err
+	}
+	course, err := scanCourse(r.db.QueryRowContext(ctx, query, args...))
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return entities.Course{}, fmt.Errorf("%w: %w", courses.ErrCourseNotFound, err)
+		}
+		return entities.Course{}, err
+	}
+	return newCourseFromModel(course), nil
+}
+
+func (r *PostgresRepository) GetCourses(ctx context.Context, filter entities.CourseFilter, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error) {
+	query, args, err := queries.GetCourses(filter, pageScope.PerPage, pageScope.Offset()).ToSql()
+	if err != nil {
+		return nil, entities.PageScope{}, err
+	}
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		return nil, entities.PageScope{}, err
+	}
+	defer stmt.Close()
+	rows, err := stmt.QueryContext(ctx, args...)
+	if err != nil {
+		return nil, entities.PageScope{}, err
+	}
+	defer rows.Close()
+	var courses []entities.Course
+	for rows.Next() {
+		course, err := scanCourse(rows)
+		if err != nil {
+			return nil, entities.PageScope{}, err
+		}
+		courses = append(courses, newCourseFromModel(course))
+	}
+	return courses, pageScope, nil
+}
+
+func (r *PostgresRepository) GetPublicCourses(ctx context.Context, pageScope entities.PageScope) ([]entities.Course, entities.PageScope, error) {
+	query, args, err := queries.GetPublicCourses(pageScope.PerPage, pageScope.Offset()).ToSql()
 	if err != nil {
 		return nil, entities.PageScope{}, err
 	}
@@ -226,6 +269,10 @@ func scanCourse(row scannable) (models.Course, error) {
 		&course.Location,
 		&course.IsActive,
 		&course.HasDocumentation,
+		&course.ManagementStatus,
+		&course.OriginFaculty,
+		&course.Competencies,
+		&course.Bibliography,
 		&course.CreatedAt,
 		&course.UpdatedAt,
 		&course.DeletedAt,
@@ -238,6 +285,8 @@ func newCourseFromModel(course models.Course) entities.Course {
 	c := entities.Course{
 		ID:               course.ID,
 		Name:             course.Name,
+		Owner:            entities.User{ID: course.OwnerID},
+		IsActive:         course.IsActive,
 		HasDocumentation: course.HasDocumentation,
 		CreatedAt:        course.CreatedAt,
 		UpdatedAt:        course.UpdatedAt,
@@ -298,8 +347,27 @@ func newCourseFromModel(course models.Course) entities.Course {
 		}
 	}
 
+	if course.OriginFaculty.Valid {
+		originFaculty, err := entities.FromString(course.OriginFaculty.String)
+		if err == nil {
+			c.OriginFaculty = originFaculty
+		}
+	}
+
 	if course.Location.Valid {
 		c.Location = course.Location.String
+	}
+
+	if course.ManagementStatus.Valid {
+		c.ManagementStatus = entities.CourseManagementStatus(course.ManagementStatus.String)
+	}
+
+	if course.Competencies.Valid {
+		c.Competencies = course.Competencies.String
+	}
+
+	if course.Bibliography.Valid {
+		c.Bibliography = course.Bibliography.String
 	}
 
 	return c
@@ -362,27 +430,29 @@ func newCourseModelFromEntities(course entities.Course) models.Course {
 			String: string(course.Faculty),
 			Valid:  course.Faculty != "",
 		},
+		OriginFaculty: sql.NullString{
+			String: string(course.OriginFaculty),
+			Valid:  course.OriginFaculty != "",
+		},
 		Location: sql.NullString{
 			String: course.Location,
 			Valid:  course.Location != "",
 		},
 		IsActive:         false,
 		HasDocumentation: course.HasDocumentation,
-		CreatedAt:        course.CreatedAt,
-		UpdatedAt:        course.UpdatedAt,
+		ManagementStatus: sql.NullString{
+			String: string(course.ManagementStatus),
+			Valid:  course.ManagementStatus != "",
+		},
+		Competencies: sql.NullString{
+			String: course.Competencies,
+			Valid:  course.Competencies != "",
+		},
+		Bibliography: sql.NullString{
+			String: course.Bibliography,
+			Valid:  course.Bibliography != "",
+		},
+		CreatedAt: course.CreatedAt,
+		UpdatedAt: course.UpdatedAt,
 	}
-}
-
-func (r *PostgresRepository) MarkCoursesWithDocumentation(ctx context.Context, providerID, from, to string) error {
-	query, args, err := queries.MarkCoursesWithDocumentation(providerID, from, to).ToSql()
-	if err != nil {
-		return err
-	}
-	stmt, err := r.db.PrepareContext(ctx, query)
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
-	_, err = stmt.ExecContext(ctx, args...)
-	return err
 }

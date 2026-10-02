@@ -5,7 +5,7 @@ info:
   version: 1.0.0
 
 servers:
-  - url: http://localhost:8080
+  - url: http://localhost:8081
     description: Ambiente Local
   - url: http://51.81.78.213:8081
     description: Servidor Remoto
@@ -38,7 +38,7 @@ components:
 
     LoginRequest:
       type: object
-      required: [ usuario, password ]
+      required: [usuario, password]
       properties:
         usuario:
           type: string
@@ -105,7 +105,7 @@ components:
 
     CreateUserRequest:
       type: object
-      required: [ cedula, email, nombres, apellidos, fecha_de_nacimiento ]
+      required: [cedula, email, nombres, apellidos, fecha_de_nacimiento]
       properties:
         cedula:
           type: string
@@ -138,7 +138,7 @@ components:
       description: >
         All listed fields overwrite the stored values. cedula, email and password
         cannot be changed through this endpoint.
-      required: [ fecha_nacimiento ]
+      required: [fecha_nacimiento]
       properties:
         primer_nombre:
           type: string
@@ -167,10 +167,10 @@ components:
           type: string
         party_type:
           type: string
-          enum: [ natural, juridica ]
+          enum: [natural, juridica]
         profit_type:
           type: string
-          enum: [ lucrativo, no_lucrativo ]
+          enum: [lucrativo, no_lucrativo]
         is_internal:
           type: boolean
         bio:
@@ -216,6 +216,9 @@ components:
           type: string
         is_active:
           type: boolean
+        estado_gestion:
+          type: string
+          description: Course-level management status. Empty unless a closure request is pending review ("solicitud-cierre").
         created_at:
           type: string
         updated_at:
@@ -367,7 +370,7 @@ components:
 
     CreateGroupResourceRequestBody:
       type: object
-      required: [ grupo_id, tipo ]
+      required: [grupo_id, tipo]
       properties:
         grupo_id:
           type: string
@@ -380,7 +383,7 @@ components:
 
     RequestStatus:
       type: string
-      enum: [ created, under_review, approved, rejected, redirected ]
+      enum: [created, under_review, approved, rejected, redirected]
 
     # ── Course Requests ───────────────────────────────────────────────────────
 
@@ -418,7 +421,7 @@ components:
 
     RejectWithReasonBody:
       type: object
-      required: [ razon ]
+      required: [razon]
       properties:
         razon:
           type: string
@@ -427,7 +430,7 @@ components:
 
     RedirectCourseRequestBody:
       type: object
-      required: [ facultad, motivo ]
+      required: [facultad, motivo]
       properties:
         facultad:
           type: string
@@ -514,13 +517,12 @@ components:
           type: string
 
 paths:
-
   # ── Health / Version ──────────────────────────────────────────────────────
 
   /health:
     get:
       summary: Health check
-      tags: [ System ]
+      tags: [System]
       responses:
         "200":
           description: Service is healthy
@@ -528,7 +530,7 @@ paths:
   /version:
     get:
       summary: Get API version
-      tags: [ System ]
+      tags: [System]
       responses:
         "200":
           description: Current version
@@ -543,7 +545,7 @@ paths:
   /files/{key}:
     get:
       summary: Download a file
-      tags: [ Files ]
+      tags: [Files]
       parameters:
         - name: key
           in: path
@@ -559,7 +561,7 @@ paths:
   /auth/login:
     post:
       summary: Login
-      tags: [ Auth ]
+      tags: [Auth]
       requestBody:
         required: true
         content:
@@ -581,7 +583,7 @@ paths:
   /users:
     get:
       summary: List users
-      tags: [ Users ]
+      tags: [Users]
       security:
         - BearerAuth: []
       parameters:
@@ -613,7 +615,7 @@ paths:
           description: Unauthorized
     post:
       summary: Create user
-      tags: [ Users ]
+      tags: [Users]
       requestBody:
         required: true
         content:
@@ -638,7 +640,7 @@ paths:
   /users/{id}:
     get:
       summary: Get user by ID
-      tags: [ Users ]
+      tags: [Users]
       parameters:
         - name: id
           in: path
@@ -656,7 +658,7 @@ paths:
           description: User not found
     put:
       summary: Update user
-      tags: [ Users ]
+      tags: [Users]
       security:
         - BearerAuth: []
       parameters:
@@ -682,7 +684,7 @@ paths:
           description: User not found
     delete:
       summary: Delete user
-      tags: [ Users ]
+      tags: [Users]
       security:
         - BearerAuth: []
       parameters:
@@ -704,7 +706,7 @@ paths:
   /providers:
     get:
       summary: List providers
-      tags: [ Providers ]
+      tags: [Providers]
       security:
         - BearerAuth: []
       parameters:
@@ -721,7 +723,7 @@ paths:
           description: Paginated provider list
     post:
       summary: Create provider
-      tags: [ Providers ]
+      tags: [Providers]
       security:
         - BearerAuth: []
       requestBody:
@@ -730,24 +732,25 @@ paths:
           multipart/form-data:
             schema:
               type: object
-              required: [ tipo_proveedor, tipo_persona, tipo_lucro, ci, rif, islr, logo ]
+              required:
+                [tipo_proveedor, tipo_persona, tipo_lucro, ci, rif, islr, logo]
               properties:
                 tipo_proveedor:
                   type: string
-                  enum: [ courses, groups ]
+                  enum: [courses, groups]
                 tipo_persona:
                   type: string
-                  enum: [ natural, juridical ]
+                  enum: [natural, juridical]
                 tipo_lucro:
                   type: string
-                  enum: [ lucrativo, no_lucrativo ]
+                  enum: [lucrativo, no_lucrativo]
                 nombre:
                   type: string
                 bio:
                   type: string
                 es_interno:
                   type: string
-                  enum: [ "true", "false" ]
+                  enum: ["true", "false"]
                 facultad:
                   type: string
                   description: faculty_enum value (e.g. Ingeniería, Medicina, DEU)
@@ -799,7 +802,7 @@ paths:
         The commitment letter is required; the intention letter is optional if one already exists in the database.
         Each commitment letter upload is versioned automatically (v1, v2, …).
         After upload, all courses for this provider created since the previous commitment letter are marked as has_documentation=true.
-      tags: [ Providers ]
+      tags: [Providers]
       security:
         - BearerAuth: []
       requestBody:
@@ -808,7 +811,7 @@ paths:
           multipart/form-data:
             schema:
               type: object
-              required: [ carta_compromiso ]
+              required: [carta_compromiso]
               properties:
                 carta_compromiso:
                   type: string
@@ -835,7 +838,7 @@ paths:
   /providers/{id}:
     get:
       summary: Get provider by ID
-      tags: [ Providers ]
+      tags: [Providers]
       security:
         - BearerAuth: []
       parameters:
@@ -855,7 +858,7 @@ paths:
           description: Provider not found
     put:
       summary: Update provider
-      tags: [ Providers ]
+      tags: [Providers]
       security:
         - BearerAuth: []
       parameters:
@@ -871,7 +874,7 @@ paths:
           description: Provider not found
     delete:
       summary: Delete provider
-      tags: [ Providers ]
+      tags: [Providers]
       security:
         - BearerAuth: []
       parameters:
@@ -891,7 +894,7 @@ paths:
   /courses:
     get:
       summary: List courses
-      tags: [ Courses ]
+      tags: [Courses]
       parameters:
         - name: page
           in: query
@@ -906,7 +909,7 @@ paths:
           description: Paginated course list
     post:
       summary: Create course
-      tags: [ Courses ]
+      tags: [Courses]
       security:
         - BearerAuth: []
       responses:
@@ -916,7 +919,7 @@ paths:
   /courses/{id}:
     get:
       summary: Get course by ID
-      tags: [ Courses ]
+      tags: [Courses]
       parameters:
         - name: id
           in: path
@@ -934,7 +937,7 @@ paths:
           description: Course not found
     put:
       summary: Update course
-      tags: [ Courses ]
+      tags: [Courses]
       security:
         - BearerAuth: []
       parameters:
@@ -950,7 +953,7 @@ paths:
           description: Course not found
     delete:
       summary: Delete course
-      tags: [ Courses ]
+      tags: [Courses]
       security:
         - BearerAuth: []
       parameters:
@@ -970,7 +973,7 @@ paths:
   /courses/{course_id}/periods:
     get:
       summary: List periods for a course
-      tags: [ Course Periods ]
+      tags: [Course Periods]
       parameters:
         - name: course_id
           in: path
@@ -990,7 +993,7 @@ paths:
           description: Paginated period list
     post:
       summary: Create a course period
-      tags: [ Course Periods ]
+      tags: [Course Periods]
       security:
         - BearerAuth: []
       parameters:
@@ -1006,7 +1009,7 @@ paths:
   /courses/{course_id}/periods/{id}:
     get:
       summary: Get a course period by ID
-      tags: [ Course Periods ]
+      tags: [Course Periods]
       parameters:
         - name: course_id
           in: path
@@ -1029,7 +1032,7 @@ paths:
           description: Period not found
     put:
       summary: Update a course period
-      tags: [ Course Periods ]
+      tags: [Course Periods]
       security:
         - BearerAuth: []
       parameters:
@@ -1050,7 +1053,7 @@ paths:
           description: Period not found
     delete:
       summary: Delete a course period
-      tags: [ Course Periods ]
+      tags: [Course Periods]
       security:
         - BearerAuth: []
       parameters:
@@ -1075,7 +1078,7 @@ paths:
   /course-periods/{period_id}/announcements/{id}:
     get:
       summary: Get announcement by ID
-      tags: [ Announcements ]
+      tags: [Announcements]
       parameters:
         - name: period_id
           in: path
@@ -1098,7 +1101,7 @@ paths:
           description: Announcement not found
     put:
       summary: Update announcement
-      tags: [ Announcements ]
+      tags: [Announcements]
       security:
         - BearerAuth: []
       parameters:
@@ -1119,7 +1122,7 @@ paths:
           description: Announcement not found
     delete:
       summary: Delete announcement
-      tags: [ Announcements ]
+      tags: [Announcements]
       security:
         - BearerAuth: []
       parameters:
@@ -1142,7 +1145,7 @@ paths:
   /course-periods/{period_id}/announcements:
     post:
       summary: Create announcement
-      tags: [ Announcements ]
+      tags: [Announcements]
       security:
         - BearerAuth: []
       parameters:
@@ -1156,7 +1159,7 @@ paths:
           application/json:
             schema:
               type: object
-              required: [ title, content ]
+              required: [title, content]
               properties:
                 title:
                   type: string
@@ -1171,7 +1174,7 @@ paths:
   /activities:
     get:
       summary: List activities
-      tags: [ Activities ]
+      tags: [Activities]
       parameters:
         - name: group_id
           in: query
@@ -1216,7 +1219,7 @@ paths:
           description: Missing required query parameters
     post:
       summary: Create activity
-      tags: [ Activities ]
+      tags: [Activities]
       security:
         - BearerAuth: []
       requestBody:
@@ -1225,7 +1228,7 @@ paths:
           multipart/form-data:
             schema:
               type: object
-              required: [ group_id, nombre ]
+              required: [group_id, nombre]
               properties:
                 group_id:
                   type: string
@@ -1271,7 +1274,7 @@ paths:
   /activities/{id}:
     get:
       summary: Get activity by ID
-      tags: [ Activities ]
+      tags: [Activities]
       parameters:
         - name: id
           in: path
@@ -1289,7 +1292,7 @@ paths:
           description: Activity not found
     put:
       summary: Update activity
-      tags: [ Activities ]
+      tags: [Activities]
       security:
         - BearerAuth: []
       parameters:
@@ -1331,7 +1334,7 @@ paths:
           description: Activity not found
     delete:
       summary: Delete activity
-      tags: [ Activities ]
+      tags: [Activities]
       security:
         - BearerAuth: []
       parameters:
@@ -1353,7 +1356,7 @@ paths:
   /groups:
     get:
       summary: List groups
-      tags: [ Groups ]
+      tags: [Groups]
       parameters:
         - name: page
           in: query
@@ -1370,7 +1373,7 @@ paths:
   /groups/{id}:
     get:
       summary: Get group by ID
-      tags: [ Groups ]
+      tags: [Groups]
       parameters:
         - name: id
           in: path
@@ -1390,7 +1393,7 @@ paths:
   /groups/requests:
     post:
       summary: Submit a new group registration request
-      tags: [ Groups ]
+      tags: [Groups]
       security:
         - BearerAuth: []
       responses:
@@ -1400,7 +1403,7 @@ paths:
   /groups/requests/{id}:
     put:
       summary: Update group
-      tags: [ Groups ]
+      tags: [Groups]
       security:
         - BearerAuth: []
       parameters:
@@ -1416,7 +1419,7 @@ paths:
           description: Group not found
     delete:
       summary: Delete group
-      tags: [ Groups ]
+      tags: [Groups]
       security:
         - BearerAuth: []
       parameters:
@@ -1436,7 +1439,7 @@ paths:
   /group-resource-requests:
     post:
       summary: Submit a group resource request
-      tags: [ Group Resource Requests ]
+      tags: [Group Resource Requests]
       security:
         - BearerAuth: []
       requestBody:
@@ -1465,7 +1468,7 @@ paths:
   /admin/group-resource-requests:
     get:
       summary: List group resource requests by faculty
-      tags: [ Admin - Group Resource Requests ]
+      tags: [Admin - Group Resource Requests]
       security:
         - BearerAuth: []
       parameters:
@@ -1506,7 +1509,7 @@ paths:
   /admin/group-resource-requests/{id}:
     get:
       summary: Get group resource request by ID
-      tags: [ Admin - Group Resource Requests ]
+      tags: [Admin - Group Resource Requests]
       security:
         - BearerAuth: []
       parameters:
@@ -1528,7 +1531,7 @@ paths:
   /admin/group-resource-requests/{id}/approve:
     post:
       summary: Approve a group resource request
-      tags: [ Admin - Group Resource Requests ]
+      tags: [Admin - Group Resource Requests]
       security:
         - BearerAuth: []
       parameters:
@@ -1546,7 +1549,7 @@ paths:
   /admin/group-resource-requests/{id}/reject:
     post:
       summary: Reject a group resource request
-      tags: [ Admin - Group Resource Requests ]
+      tags: [Admin - Group Resource Requests]
       security:
         - BearerAuth: []
       parameters:
@@ -1574,30 +1577,160 @@ paths:
   /course-cycle-close-requests:
     post:
       summary: Submit a course cycle close request
-      tags: [ Course Cycle Close Requests ]
+      description: >
+        archivo_participantes must be the .xlsx template from
+        GET /course-cycle-close-requests/participants-template, listing only the participants who
+        passed the course. Each row becomes a certificate, issued when the request is approved.
+      tags: [Course Cycle Close Requests]
       security:
         - BearerAuth: []
       requestBody:
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
-              required: [ course_cycle_id ]
+              required:
+                [
+                  course_cycle_id,
+                  archivo_participantes,
+                  archivo_vouchers,
+                  archivo_encuesta,
+                ]
               properties:
                 course_cycle_id:
                   type: string
+                  example: "12"
                 observaciones:
                   type: string
+                archivo_participantes:
+                  type: string
+                  format: binary
+                  description: Approved participants (.xlsx template, up to 2000 rows)
+                archivo_vouchers:
+                  type: string
+                  format: binary
+                archivo_encuesta:
+                  type: string
+                  format: binary
       responses:
         "201":
           description: Request submitted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: "10"
+        "400":
+          description: >
+            Missing field or invalid participants file (wrong extension or headers, empty,
+            blank or invalid values, duplicate cédula, too many rows). Row errors name the
+            spreadsheet row, e.g. "archivo de participantes, fila 7: cédula vacía".
+        "409":
+          description: A close request is already pending for this cycle
+
+  /course-cycle-close-requests/participants-template:
+    get:
+      summary: Download the approved participants template
+      description: >
+        .xlsx with a "Participantes" sheet (headers Nombres, Apellidos, Cédula, Correo; Correo
+        optional) and an "Instrucciones" sheet.
+      tags: [Course Cycle Close Requests]
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: participantes_aprobados.xlsx
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+
+  # ── Certificates (public) ─────────────────────────────────────────────────
+
+  /certificados/{code}:
+    get:
+      summary: Certificate verification page
+      description: >
+        HTML page reached from the certificate's QR code. Unknown, not yet issued and revoked
+        certificates all get the same "Certificado no válido" page with status 404.
+      tags: [Certificates]
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: Verification code (26 base32 characters, case-insensitive)
+          schema:
+            type: string
+            example: ABCDEFGHIJKLMNOPQRSTUVWXY2
+      responses:
+        "200":
+          description: Valid certificate page
+          content:
+            text/html:
+              schema:
+                type: string
+        "404":
+          description: Certificate not valid
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /certificados/{code}/pdf:
+    get:
+      summary: Download a certificate PDF
+      tags: [Certificates]
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+            example: ABCDEFGHIJKLMNOPQRSTUVWXY2
+      responses:
+        "200":
+          description: Certificate PDF (attachment)
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Certificate not valid
+
+  /certificados/lotes/{token}/zip:
+    get:
+      summary: Download every certificate of a close request as a ZIP
+      description: The link is emailed to the close request's submitter once the certificates are generated.
+      tags: [Certificates]
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+            example: ZYXWVUTSRQPONMLKJIHGFEDCB7
+      responses:
+        "200":
+          description: certificados.zip (attachment)
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Unknown token, or certificates not generated yet
 
   # ── Admin — Course Requests ───────────────────────────────────────────────
 
   /admin/course-requests:
     get:
       summary: List course requests by faculty
-      tags: [ Admin - Course Requests ]
+      tags: [Admin - Course Requests]
       security:
         - BearerAuth: []
       parameters:
@@ -1636,7 +1769,7 @@ paths:
   /admin/course-requests/{id}:
     get:
       summary: Get course request by ID
-      tags: [ Admin - Course Requests ]
+      tags: [Admin - Course Requests]
       security:
         - BearerAuth: []
       parameters:
@@ -1658,7 +1791,7 @@ paths:
   /admin/course-requests/{id}/approve:
     post:
       summary: Approve a course request
-      tags: [ Admin - Course Requests ]
+      tags: [Admin - Course Requests]
       security:
         - BearerAuth: []
       parameters:
@@ -1681,7 +1814,7 @@ paths:
   /admin/course-requests/{id}/reject:
     post:
       summary: Reject a course request
-      tags: [ Admin - Course Requests ]
+      tags: [Admin - Course Requests]
       security:
         - BearerAuth: []
       parameters:
@@ -1704,7 +1837,7 @@ paths:
   /admin/course-requests/{id}/redirect:
     post:
       summary: Redirect a course request to another faculty
-      tags: [ Admin - Course Requests ]
+      tags: [Admin - Course Requests]
       security:
         - BearerAuth: []
       parameters:
@@ -1732,7 +1865,7 @@ paths:
   /admin/group-requests:
     get:
       summary: List group requests by faculty
-      tags: [ Admin - Group Requests ]
+      tags: [Admin - Group Requests]
       security:
         - BearerAuth: []
       parameters:
@@ -1769,7 +1902,7 @@ paths:
   /admin/group-requests/{id}:
     get:
       summary: Get group request by ID
-      tags: [ Admin - Group Requests ]
+      tags: [Admin - Group Requests]
       security:
         - BearerAuth: []
       parameters:
@@ -1791,7 +1924,7 @@ paths:
   /admin/group-requests/{id}/approve:
     post:
       summary: Approve a group request
-      tags: [ Admin - Group Requests ]
+      tags: [Admin - Group Requests]
       security:
         - BearerAuth: []
       parameters:
@@ -1809,7 +1942,7 @@ paths:
   /admin/group-requests/{id}/reject:
     post:
       summary: Reject a group request
-      tags: [ Admin - Group Requests ]
+      tags: [Admin - Group Requests]
       security:
         - BearerAuth: []
       parameters:
@@ -1837,7 +1970,7 @@ paths:
   /admin/provider-requests:
     get:
       summary: List provider requests
-      tags: [ Admin - Provider Requests ]
+      tags: [Admin - Provider Requests]
       security:
         - BearerAuth: []
       parameters:
@@ -1869,7 +2002,7 @@ paths:
   /admin/provider-requests/{id}:
     get:
       summary: Get provider request by ID
-      tags: [ Admin - Provider Requests ]
+      tags: [Admin - Provider Requests]
       security:
         - BearerAuth: []
       parameters:
@@ -1891,7 +2024,7 @@ paths:
   /admin/provider-requests/{id}/approve:
     post:
       summary: Approve a provider request
-      tags: [ Admin - Provider Requests ]
+      tags: [Admin - Provider Requests]
       security:
         - BearerAuth: []
       parameters:
@@ -1909,7 +2042,7 @@ paths:
   /admin/provider-requests/{id}/reject:
     post:
       summary: Reject a provider request
-      tags: [ Admin - Provider Requests ]
+      tags: [Admin - Provider Requests]
       security:
         - BearerAuth: []
       parameters:
@@ -1934,7 +2067,7 @@ paths:
   /admin/course-cycle-close-requests:
     get:
       summary: List course cycle close requests
-      tags: [ Admin - Course Cycle Close Requests ]
+      tags: [Admin - Course Cycle Close Requests]
       security:
         - BearerAuth: []
       parameters:
@@ -1966,7 +2099,7 @@ paths:
   /admin/course-cycle-close-requests/{id}:
     get:
       summary: Get close request by ID
-      tags: [ Admin - Course Cycle Close Requests ]
+      tags: [Admin - Course Cycle Close Requests]
       security:
         - BearerAuth: []
       parameters:
@@ -1988,7 +2121,10 @@ paths:
   /admin/course-cycle-close-requests/{id}/approve:
     post:
       summary: Approve a course cycle close request
-      tags: [ Admin - Course Cycle Close Requests ]
+      description: >
+        Closes the cycle and queues the generation of the participants' certificates. A
+        background job renders them and emails the submitter the verification links and a ZIP.
+      tags: [Admin - Course Cycle Close Requests]
       security:
         - BearerAuth: []
       parameters:
@@ -2006,7 +2142,7 @@ paths:
   /admin/course-cycle-close-requests/{id}/reject:
     post:
       summary: Reject a course cycle close request
-      tags: [ Admin - Course Cycle Close Requests ]
+      tags: [Admin - Course Cycle Close Requests]
       security:
         - BearerAuth: []
       parameters:
@@ -2025,3 +2161,22 @@ paths:
           description: Rejected
         "404":
           description: Request not found
+
+  /admin/course-cycle-close-requests/{id}/certificates/retry:
+    post:
+      summary: Retry a failed certificates generation
+      description: Requeues the close request's certificates job after it exhausted its attempts.
+      tags: [Admin - Course Cycle Close Requests]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "202":
+          description: Job requeued
+        "409":
+          description: The close request has no failed certificates job

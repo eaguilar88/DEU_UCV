@@ -15,12 +15,15 @@ func coursesToResponse(courses []entities.Course) []GetCourseResponse {
 
 // courseToResponse converts a Course entity to GetCourseResponse.
 func courseToResponse(course entities.Course) GetCourseResponse {
-	var coverURL string
+	var coverURL, cvURL string
 	if course.Cover != nil {
 		coverURL = course.Cover.URL
 	}
+	if course.FacilitatorCV != nil {
+		cvURL = course.FacilitatorCV.URL
+	}
 
-	return GetCourseResponse{
+	response := GetCourseResponse{
 		ID:                course.ID,
 		Name:              course.Name,
 		Description:       course.Description,
@@ -37,9 +40,21 @@ func courseToResponse(course entities.Course) GetCourseResponse {
 		Schedule:          course.Schedule,
 		ProviderID:        course.Owner.ID,
 		Faculty:           string(course.Faculty),
+		OriginFaculty:     string(course.OriginFaculty),
 		Location:          course.Location,
 		Type:              course.Type.String(),
 		CreatedAt:         course.CreatedAt,
 		UpdatedAt:         course.UpdatedAt,
+		IsActive:          course.IsActive,
+		HasDocumentation:  course.HasDocumentation,
+		ManagementStatus:  string(course.ManagementStatus),
+		Competencies:      course.Competencies,
+		Bibliography:      course.Bibliography,
+		FacilitatorCV:     cvURL,
 	}
+	if course.Provider != nil {
+		response.Provider = &CourseProviderInfo{Name: course.Provider.Name, LogoURL: course.Provider.LogoURL}
+		response.OwnerUserID = course.Provider.UserID
+	}
+	return response
 }

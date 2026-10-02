@@ -1,29 +1,39 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	_ "embed"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"sync"
+	"syscall"
+	"time"
 
 	"github.com/eaguilar88/deu/docs"
 	"github.com/eaguilar88/deu/internal/activities"
 	"github.com/eaguilar88/deu/internal/auth"
+	"github.com/eaguilar88/deu/internal/certificates"
 	"github.com/eaguilar88/deu/internal/config"
 	"github.com/eaguilar88/deu/internal/course_cycle_close_requests"
 	"github.com/eaguilar88/deu/internal/course_periods"
 	"github.com/eaguilar88/deu/internal/course_requests"
 	"github.com/eaguilar88/deu/internal/courses"
 	"github.com/eaguilar88/deu/internal/email"
+	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/files"
+	"github.com/eaguilar88/deu/internal/gotenberg"
 	"github.com/eaguilar88/deu/internal/group_analytics"
 	"github.com/eaguilar88/deu/internal/group_dashboards"
 	"github.com/eaguilar88/deu/internal/group_requests"
 	"github.com/eaguilar88/deu/internal/group_resource_requests"
 	"github.com/eaguilar88/deu/internal/groups"
 	"github.com/eaguilar88/deu/internal/httperrors"
+	"github.com/eaguilar88/deu/internal/jobs"
 	"github.com/eaguilar88/deu/internal/jwt"
 	repository "github.com/eaguilar88/deu/internal/postgres_repository"
 	"github.com/eaguilar88/deu/internal/provider_requests"
@@ -39,6 +49,9 @@ import (
 
 //go:embed VERSION
 var appVersion string
+
+// shutdownTimeout bounds how long in-flight HTTP requests and the running job get to finish.
+const shutdownTimeout = 15 * time.Second
 
 type RegisterAdminEndpoints func(g *echo.Group)
 
@@ -97,7 +110,7 @@ func main() {
 	providerService := providers.NewService(repository, bbClient, mailClient, logger)
 	providerEndpoints := providers.NewHandler(providerService, logger)
 
-	courseSvc := courses.NewService(repository, bbClient, logger)
+	courseSvc := courses.NewService(repository, bbClient, mailClient, logger)
 	courseEndpoints := courses.NewHandler(courseSvc, logger)
 
 	cpService := course_periods.NewService(repository, logger)
@@ -115,14 +128,21 @@ func main() {
 	groupResourceRequestService := group_resource_requests.NewService(repository, mailClient, logger)
 	groupResourceRequestEndpoints := group_resource_requests.NewHandler(groupResourceRequestService, logger)
 
-	courseRequestService := course_requests.NewService(repository, logger)
+	courseRequestService := course_requests.NewService(repository, bbClient, mailClient, logger)
 	courseRequestEndpoints := course_requests.NewHandler(courseRequestService, logger)
 
 	providerRequestService := provider_requests.NewService(repository, mailClient, logger)
 	providerRequestEndpoints := provider_requests.NewHandler(providerRequestService, logger)
 
-	cycleCloseService := course_cycle_close_requests.NewService(repository, logger)
+	cycleCloseService := course_cycle_close_requests.NewService(repository, bbClient, mailClient, logger)
 	cycleCloseEndpoints := course_cycle_close_requests.NewHandler(cycleCloseService, logger)
+
+	pdfRenderer := gotenberg.NewClient(config.GotenbergURL)
+	certificatesService := certificates.NewService(repository, bbClient, mailClient, pdfRenderer, config.PublicBaseURL, logger)
+	certificatesEndpoints := certificates.NewHandler(certificatesService, logger)
+
+	worker := jobs.NewWorker(repository, logger)
+	worker.Register(entities.JobKindCourseCycleCertificates, certificatesService.GenerateForCloseRequest)
 
 	dashboardSvc := group_dashboards.NewService(repository, logger)
 	dashboardEndpoints := group_dashboards.NewHandler(dashboardSvc, logger)
@@ -161,7 +181,8 @@ func main() {
 	addAuthRoutes(e, authEndpoints)
 	addUserRoutes(e, userEndpoints, optionalAuth, middlewares...)
 	addProviderRoutes(e, providerEndpoints, middlewares...)
-	addCourseRoutes(e, courseEndpoints, middlewares...)
+	addCourseRoutes(e, courseEndpoints, optionalAuth, middlewares...)
+	addCourseRequestRoutes(e, courseRequestEndpoints, middlewares...)
 	addCoursePeriodRoutes(e, cpEndpoints, middlewares...)
 	addGroupsRoutes(e, groupEndpoints, optionalAuth, middlewares...)
 	addActivityRoutes(e, activityEndpoints, optionalAuth, middlewares...)
@@ -185,13 +206,49 @@ func main() {
 		courseRequestEndpoints.RegisterCourseRequestAdminEndpoints,
 		providerRequestEndpoints.RegisterProviderRequestAdminEndpoints,
 		cycleCloseEndpoints.RegisterAdminEndpoints,
+		certificatesEndpoints.RegisterAdminEndpoints,
 		activityEndpoints.RegisterActivityAdminEndpoints,
 		dashboardEndpoints.RegisterDashboardAdminEndpoints,
 	)
 
 	addCourseCycleCloseRequestRoutes(e, cycleCloseEndpoints, middlewares...)
+	certificatesEndpoints.RegisterPublicEndpoints(e)
 
-	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", config.HTTPPort)))
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		worker.Run(ctx)
+	}()
+
+	go func() {
+		if err := e.Start(fmt.Sprintf(":%d", config.HTTPPort)); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.Error("http server stopped", zap.Error(err))
+			stop()
+		}
+	}()
+
+	<-ctx.Done()
+	logger.Info("shutting down")
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	defer cancel()
+	if err := e.Shutdown(shutdownCtx); err != nil {
+		logger.Error("error shutting down http server", zap.Error(err))
+	}
+
+	workerDone := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(workerDone)
+	}()
+	select {
+	case <-workerDone:
+	case <-shutdownCtx.Done():
+		logger.Warn("jobs worker did not stop in time")
+	}
 }
 
 func addFileRoutes(e *echo.Echo, handler *files.Handler) {
@@ -251,10 +308,20 @@ func addUserRoutes(e *echo.Echo, endpoints *users.Handler, optionalAuth echo.Mid
 	protected.DELETE("/:id", endpoints.DeleteUser)
 }
 
-func addCourseRoutes(e *echo.Echo, endpoints *courses.Handler, middlewares ...echo.MiddlewareFunc) {
+func addCourseRequestRoutes(e *echo.Echo, endpoints *course_requests.Handler, middlewares ...echo.MiddlewareFunc) {
+	protectedGroup := e.Group("", middlewares...)
+	endpoints.RegisterCourseRequestEndpoints(protectedGroup)
+}
+
+// addCourseRoutes serves GET /courses with optional auth: anonymous and regular callers only
+// see open or closed courses; admins and a provider listing their own courses see them all.
+// GET /courses/:id also takes optional auth, so a provider and its reviewers can open a course
+// that is not approved yet.
+func addCourseRoutes(e *echo.Echo, endpoints *courses.Handler, optionalAuth echo.MiddlewareFunc, middlewares ...echo.MiddlewareFunc) {
 	publicGroup := e.Group("/courses")
-	publicGroup.GET("/:id", endpoints.GetCourse)
-	publicGroup.GET("", endpoints.GetCourses)
+	publicGroup.GET("/public", endpoints.GetPublicCourses)
+	publicGroup.GET("/:id", endpoints.GetCourse, optionalAuth)
+	publicGroup.GET("", endpoints.GetCourses, optionalAuth)
 	protectedGroup := e.Group("/courses", middlewares...)
 	protectedGroup.POST("", endpoints.CreateCourse)
 	protectedGroup.PUT("/:id", endpoints.UpdateCourse)
@@ -330,7 +397,6 @@ func addProviderRoutes(e *echo.Echo, endpoints *providers.Handler, middlewares .
 	group.GET("/:id", endpoints.GetProvider)
 	group.GET("", endpoints.GetProviders)
 	group.POST("", endpoints.CreateProvider)
-	group.POST("/documents", endpoints.UploadProviderDocuments)
 	group.PUT("/:id", endpoints.UpdateProvider)
 	group.DELETE("/:id", endpoints.DeleteProvider)
 }

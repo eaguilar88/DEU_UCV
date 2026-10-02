@@ -19,9 +19,13 @@ type Course struct {
 	Schedule          sql.NullString
 	Type              sql.NullString
 	Faculty           sql.NullString
+	OriginFaculty     sql.NullString
 	Location          sql.NullString
 	IsActive          bool
 	HasDocumentation  bool
+	ManagementStatus  sql.NullString
+	Competencies      sql.NullString
+	Bibliography      sql.NullString
 	CreatedAt         string
 	UpdatedAt         string
 	DeletedAt         sql.NullString

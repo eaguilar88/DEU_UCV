@@ -17,10 +17,19 @@ func NewMockService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -73,7 +82,7 @@ type MockService_GetDeuDashboard_Call struct {
 
 // GetDeuDashboard is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockService_Expecter) GetDeuDashboard(ctx interface{}) *MockService_GetDeuDashboard_Call {
+func (_e *MockService_Expecter) GetDeuDashboard(ctx any) *MockService_GetDeuDashboard_Call {
 	return &MockService_GetDeuDashboard_Call{Call: _e.mock.On("GetDeuDashboard", ctx)}
 }
 
@@ -136,7 +145,7 @@ type MockService_GetFacultyDashboard_Call struct {
 // GetFacultyDashboard is a helper method to define mock.On call
 //   - ctx context.Context
 //   - faculty string
-func (_e *MockService_Expecter) GetFacultyDashboard(ctx interface{}, faculty interface{}) *MockService_GetFacultyDashboard_Call {
+func (_e *MockService_Expecter) GetFacultyDashboard(ctx any, faculty any) *MockService_GetFacultyDashboard_Call {
 	return &MockService_GetFacultyDashboard_Call{Call: _e.mock.On("GetFacultyDashboard", ctx, faculty)}
 }
 
@@ -204,7 +213,7 @@ type MockService_GetGroupDashboard_Call struct {
 // GetGroupDashboard is a helper method to define mock.On call
 //   - ctx context.Context
 //   - groupID string
-func (_e *MockService_Expecter) GetGroupDashboard(ctx interface{}, groupID interface{}) *MockService_GetGroupDashboard_Call {
+func (_e *MockService_Expecter) GetGroupDashboard(ctx any, groupID any) *MockService_GetGroupDashboard_Call {
 	return &MockService_GetGroupDashboard_Call{Call: _e.mock.On("GetGroupDashboard", ctx, groupID)}
 }
 

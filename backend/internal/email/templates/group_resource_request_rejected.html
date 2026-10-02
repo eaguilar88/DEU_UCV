@@ -1,0 +1,6 @@
+{{define "subject"}}Solicitud de recursos rechazada{{end}}
+
+{{define "content"}}
+<p>La solicitud de recursos <strong>{{.ResourceType}}</strong> del grupo <strong>{{.GroupName}}</strong> ha sido rechazada.</p>
+{{if .Reason}}<p>Motivo: {{.Reason}}</p>{{end}}
+{{end}}

@@ -10,6 +10,8 @@ CREATE TABLE
         'provider',
         'user',
         'group_member'
+        'course_cycle_close_request',
+        'provider_contract'
       )
     ),
     owner_id INTEGER NOT NULL,

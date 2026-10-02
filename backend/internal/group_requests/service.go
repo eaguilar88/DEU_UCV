@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/eaguilar88/deu/internal/email"
 	"github.com/eaguilar88/deu/internal/entities"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
@@ -30,7 +31,7 @@ type Repository interface {
 
 // MailClient defines the email sending operations required by the group_requests service.
 type MailClient interface {
-	Send(ctx context.Context, to string, subject string, body string) error
+	SendTemplate(ctx context.Context, to string, tmpl email.Template, data any) error
 }
 
 type service struct {
@@ -126,13 +127,13 @@ func (s *service) ApproveGroupRequest(ctx context.Context, reqID string) error {
 		},
 	}
 
-	subject := "Datos de acceso del grupo de extensión"
-	body := fmt.Sprintf(
-		"El grupo %s ha sido aprobado y activado.\n\nUsuario: %s\nContraseña: %s\n\nPor favor inicie sesión y cambie su contraseña.",
-		req.GroupName, adminUser.Email, rawPassword,
-	)
+	credentials := email.GroupAdminCredentialsData{
+		GroupName: req.GroupName,
+		Username:  adminUser.Email,
+		Password:  rawPassword,
+	}
 	sendCredentials := func() error {
-		if err := s.emailClient.Send(ctx, owner.Email, subject, body); err != nil {
+		if err := s.emailClient.SendTemplate(ctx, owner.Email, email.TemplateGroupAdminCredentials, credentials); err != nil {
 			s.logger.Error("failed to send group admin credentials email", zap.Error(err), zap.String("group_id", req.GroupID))
 			return fmt.Errorf("error sending credentials email: %w", err)
 		}
@@ -180,9 +181,11 @@ func (s *service) RejectGroupRequest(ctx context.Context, reqID, reason string) 
 		return nil
 	}
 
-	subject := "Solicitud de registro de grupo rechazada"
-	body := fmt.Sprintf("La solicitud de registro del grupo %s ha sido rechazada por la facultad %s.\n\nRazón: %s", req.GroupName, req.Faculty, reason)
-	if err := s.emailClient.Send(ctx, to, subject, body); err != nil {
+	body := email.GroupRequestRejectedData{
+		GroupName: req.GroupName,
+		Reason:    reason,
+	}
+	if err := s.emailClient.SendTemplate(ctx, to, email.TemplateGroupRequestRejected, body); err != nil {
 		s.logger.Warn("failed to send group rejection email", append(logFields, zap.Error(err))...)
 	}
 	return nil

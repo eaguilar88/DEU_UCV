@@ -1,0 +1,23 @@
+{{define "subject"}}Certificados de la cohorte disponibles{{end}}
+
+{{define "content"}}
+<p>Los certificados de los participantes aprobados del curso <strong>{{.CourseName}}</strong> ya están disponibles.</p>
+<p>Puede descargarlos todos en un único archivo ZIP: <a href="{{.ZipURL}}">descargar certificados</a>.</p>
+<p>Cada participante tiene además un enlace personal, donde puede verificar y descargar su certificado. También se adjunta esta lista en una hoja de cálculo.</p>
+<table style="border-collapse:collapse;width:100%;font-size:14px;">
+  <thead>
+    <tr>
+      <th style="text-align:left;border-bottom:1px solid #dddddd;padding:6px;">Participante</th>
+      <th style="text-align:left;border-bottom:1px solid #dddddd;padding:6px;">Enlace</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range .Certificates}}
+    <tr>
+      <td style="border-bottom:1px solid #eeeeee;padding:6px;">{{.Name}}</td>
+      <td style="border-bottom:1px solid #eeeeee;padding:6px;"><a href="{{.URL}}">{{.URL}}</a></td>
+    </tr>
+    {{end}}
+  </tbody>
+</table>
+{{end}}

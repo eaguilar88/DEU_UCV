@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
+	"strings"
 
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/httperrors"
@@ -23,9 +24,9 @@ type Service interface {
 	CreateProvider(ctx context.Context, provider *entities.Provider) (int64, error)
 	UpdateProvider(ctx context.Context, providerID string, provider *entities.Provider) error
 	DeleteProvider(ctx context.Context, providerID string) error
-	UploadProviderDocuments(ctx context.Context, userID string, intentionLetter, commitmentLetter *entities.File) error
-	ApproveProvider(ctx context.Context, providerID, userID string) error
-	RejectProvider(ctx context.Context, providerID string) error
+	SubmitProviderContract(ctx context.Context, providerID string, intentionLetter, commitmentLetter, addendum *entities.File) (entities.ProviderContract, error)
+	ApproveProvider(ctx context.Context, providerID string) error
+	RejectProvider(ctx context.Context, providerID, reason string) error
 }
 
 // Handler holds the HTTP handler dependencies for the providers domain.
@@ -47,26 +48,39 @@ func (h *Handler) RegisterProviderAdminEndpoints(g *echo.Group) {
 	gr.GET("", h.GetProviders)
 	gr.POST("/:id/approve", h.ApproveProvider)
 	gr.POST("/:id/reject", h.RejectProvider)
+	gr.POST("/:id/legal-contracts", h.SubmitProviderContract)
 }
 
 func (h *Handler) ApproveProvider(c echo.Context) error {
 	ctx := c.Request().Context()
-	userID, ok := c.Get("userID").(string)
-	if !ok {
-		return httperrors.NewUnauthorized("authentication required")
-	}
-	if err := h.svc.ApproveProvider(ctx, c.Param("id"), userID); err != nil {
-		return httperrors.NewInternal(err)
+	if err := h.svc.ApproveProvider(ctx, c.Param("id")); err != nil {
+		return reviewProviderError(err)
 	}
 	return c.JSON(http.StatusAccepted, nil)
 }
 
 func (h *Handler) RejectProvider(c echo.Context) error {
 	ctx := c.Request().Context()
-	if err := h.svc.RejectProvider(ctx, c.Param("id")); err != nil {
-		return httperrors.NewInternal(err)
+	var req RejectProviderRequest
+	if err := c.Bind(&req); err != nil {
+		return httperrors.NewBadRequest("invalid request body")
+	}
+	if err := h.svc.RejectProvider(ctx, c.Param("id"), strings.TrimSpace(req.Reason)); err != nil {
+		return reviewProviderError(err)
 	}
 	return c.JSON(http.StatusAccepted, nil)
+}
+
+// reviewProviderError maps the errors of approving or rejecting a provider to HTTP errors.
+func reviewProviderError(err error) error {
+	switch {
+	case errors.Is(err, ErrProviderNotFound):
+		return httperrors.NewNotFound("provider not found")
+	case errors.Is(err, ErrProviderAlreadyProcessed):
+		return httperrors.NewConflict(ErrProviderAlreadyProcessed.Error())
+	default:
+		return httperrors.NewInternal(err)
+	}
 }
 
 func (h *Handler) GetProvider(c echo.Context) error {
@@ -193,32 +207,32 @@ func (h *Handler) DeleteProvider(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-func (h *Handler) UploadProviderDocuments(c echo.Context) error {
-	userID, ok := c.Get("userID").(string)
-	if !ok {
-		return httperrors.NewUnauthorized("authentication required")
+func (h *Handler) SubmitProviderContract(c echo.Context) error {
+	var intentionLetter, commitmentLetter, addendum *entities.File
+	if f, err := utils.GetFileFrom(c, "carta_intencion"); err == nil {
+		intentionLetter = f
+	}
+	if f, err := utils.GetFileFrom(c, "carta_compromiso"); err == nil {
+		commitmentLetter = f
+	}
+	if f, err := utils.GetFileFrom(c, "adenda"); err == nil {
+		addendum = f
 	}
 
-	commitmentLetter, err := utils.GetFileFrom(c, "carta_compromiso")
+	contract, err := h.svc.SubmitProviderContract(c.Request().Context(), c.Param("id"), intentionLetter, commitmentLetter, addendum)
 	if err != nil {
-		return httperrors.NewBadRequest("carta_compromiso es requerida")
-	}
-
-	var intentionLetter *entities.File
-	if il, err := utils.GetFileFrom(c, "carta_intencion"); err == nil {
-		intentionLetter = il
-	}
-
-	if err := h.svc.UploadProviderDocuments(c.Request().Context(), userID, intentionLetter, commitmentLetter); err != nil {
-		if errors.Is(err, ErrNoIntentionLetter) {
+		if errors.Is(err, ErrMissingInitialContract) || errors.Is(err, ErrMissingAddendum) {
 			return httperrors.NewBadRequest(err.Error())
 		}
 		if errors.Is(err, ErrProviderNotFound) {
 			return httperrors.NewNotFound("provider not found")
 		}
+		if errors.Is(err, ErrNoCoursesToCoverage) {
+			return httperrors.NewConflict(err.Error())
+		}
 		return httperrors.NewInternal(err)
 	}
-	return c.NoContent(http.StatusCreated)
+	return c.JSON(http.StatusCreated, providerContractToResponse(contract))
 }
 
 func makeProviderFromRequest(c echo.Context, userID string, logger *zap.Logger) (*entities.Provider, error) {

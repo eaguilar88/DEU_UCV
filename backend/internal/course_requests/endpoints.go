@@ -4,10 +4,13 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/facultyscope"
 	"github.com/eaguilar88/deu/internal/httperrors"
+	"github.com/eaguilar88/deu/internal/utils"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
@@ -18,6 +21,7 @@ type Service interface {
 	RedirectCourseRequest(ctx context.Context, reqID, reviewerID string, faculty entities.Faculty, reason string) error
 	GetCourseRequestsByFaculty(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.CourseRequest, entities.PageScope, error)
 	GetCourseRequestByID(ctx context.Context, reqID string) (entities.CourseRequest, error)
+	GetMyCourseRequests(ctx context.Context, userID string, pageScope entities.PageScope) ([]entities.CourseRequest, entities.PageScope, error)
 }
 
 type Handler struct {
@@ -41,6 +45,10 @@ func (h *Handler) RegisterCourseRequestAdminEndpoints(g *echo.Group) {
 	cr.POST("/:id/redirect", h.RedirectCourseRequest)
 }
 
+func (h *Handler) RegisterCourseRequestEndpoints(g *echo.Group) {
+	g.GET("/course-requests", h.GetMyCourseRequests)
+}
+
 func (h *Handler) ApproveCourseRequest(c echo.Context) error {
 	ctx := c.Request().Context()
 	reqID := c.Param("id")
@@ -58,9 +66,21 @@ func (h *Handler) ApproveCourseRequest(c echo.Context) error {
 		return httperrors.NewBadRequest("invalid request body")
 	}
 	request := entities.CourseRequest{
-		ID:       reqID,
-		Reviewer: entities.User{ID: userID},
-		Comments: req.Comments,
+		ID:             reqID,
+		Reviewer:       entities.User{ID: userID},
+		Comments:       req.Comments,
+		Classification: strings.TrimSpace(req.Classification),
+	}
+	if s := strings.TrimSpace(req.Score); s != "" {
+		score, err := strconv.ParseFloat(s, 64)
+		if err != nil || score < 0 {
+			return httperrors.NewBadRequest("calificacion must be a non-negative number")
+		}
+		request.Score = &score
+	}
+	// The evaluation document is optional and only sent with multipart requests.
+	if file, err := utils.GetFileFrom(c, entities.CourseRequestFileTypeEvaluation); err == nil {
+		request.EvaluationFile = file
 	}
 	courseType := entities.FromStringCourseType(req.CourseType)
 
@@ -139,7 +159,8 @@ func (h *Handler) RedirectCourseRequest(c echo.Context) error {
 
 func (h *Handler) GetCourseRequestsByFaculty(c echo.Context) error {
 	ctx := c.Request().Context()
-	faculty, err := facultyscope.Resolve(c, c.QueryParam("faculty"))
+	// A DEU-wide admin without ?faculty lists every faculty.
+	faculty, err := facultyscope.ResolveOptional(c, c.QueryParam("faculty"))
 	if err != nil {
 		return httperrors.NewBadRequest("invalid faculty")
 	}
@@ -158,23 +179,47 @@ func (h *Handler) GetCourseRequestsByFaculty(c echo.Context) error {
 		return httperrors.NewInternal(err)
 	}
 
+	return c.JSON(http.StatusOK, courseRequestsToResponse(requests, resultScope))
+}
+
+func (h *Handler) GetMyCourseRequests(c echo.Context) error {
+	ctx := c.Request().Context()
+	userID, ok := c.Get("userID").(string)
+	if !ok {
+		return httperrors.NewUnauthorized("authentication required")
+	}
+
+	var pageScope entities.PageScope
+	if err := pageScope.GetPageFromVars(c.QueryParam("page")); err != nil {
+		return httperrors.NewBadRequest("invalid page number")
+	}
+
+	if err := pageScope.GetPerPageFromVars(c.QueryParam("pageSize")); err != nil {
+		return httperrors.NewBadRequest("invalid page size")
+	}
+
+	requests, resultScope, err := h.svc.GetMyCourseRequests(ctx, userID, pageScope)
+	if err != nil {
+		return httperrors.NewInternal(err)
+	}
+
+	return c.JSON(http.StatusOK, courseRequestsToResponse(requests, resultScope))
+}
+
+// courseRequestsToResponse converts a slice of CourseRequest entities to the shared
+// list-response shape, used by both the admin (faculty-scoped) and the plain
+// (submitter-scoped) course-requests listing endpoints so their formats stay identical.
+func courseRequestsToResponse(requests []entities.CourseRequest, pageScope entities.PageScope) GetCourseRequestsResponse {
 	response := GetCourseRequestsResponse{
 		CourseRequests: make([]GetCourseRequestResponse, 0, len(requests)),
-		Pages:          resultScope,
+		Pages:          pageScope,
 	}
 
 	for _, req := range requests {
-		response.CourseRequests = append(response.CourseRequests, GetCourseRequestResponse{
-			ID:         req.ID,
-			Status:     req.Status,
-			Comments:   req.Comments,
-			ReviewedAt: req.ReviewedAt,
-			CreatedAt:  req.CreatedAt,
-			UpdatedAt:  req.UpdatedAt,
-		})
+		response.CourseRequests = append(response.CourseRequests, courseRequestToResponse(req))
 	}
 
-	return c.JSON(http.StatusOK, response)
+	return response
 }
 
 func (h *Handler) GetCourseRequestByID(c echo.Context) error {
@@ -192,32 +237,5 @@ func (h *Handler) GetCourseRequestByID(c echo.Context) error {
 		return httperrors.NewInternal(err)
 	}
 
-	response := GetCourseRequestResponse{
-		ID:         reqID,
-		Status:     req.Status,
-		Comments:   req.Comments,
-		ReviewedAt: req.ReviewedAt,
-		CreatedAt:  req.CreatedAt,
-		UpdatedAt:  req.UpdatedAt,
-	}
-
-	// Map course if present
-	if req.Course != nil {
-		response.Course = &CourseInfo{
-			ID:          req.Course.ID,
-			Name:        req.Course.Name,
-			Description: req.Course.Description,
-			Objectives:  req.Course.Objectives,
-			Duration:    req.Course.Duration,
-			Content:     req.Course.Content,
-			Type:        req.Course.Type.String(),
-			Faculty:     req.Course.Faculty.String(),
-			Cost:        req.Course.Cost,
-			Location:    req.Course.Location,
-			CreatedAt:   req.Course.CreatedAt,
-			UpdatedAt:   req.Course.UpdatedAt,
-		}
-	}
-
-	return c.JSON(http.StatusOK, response)
+	return c.JSON(http.StatusOK, courseRequestToResponse(req))
 }

@@ -17,10 +17,19 @@ func NewMockService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -80,7 +89,7 @@ type MockService_GetPublicFile_Call struct {
 // GetPublicFile is a helper method to define mock.On call
 //   - ctx context.Context
 //   - key string
-func (_e *MockService_Expecter) GetPublicFile(ctx interface{}, key interface{}) *MockService_GetPublicFile_Call {
+func (_e *MockService_Expecter) GetPublicFile(ctx any, key any) *MockService_GetPublicFile_Call {
 	return &MockService_GetPublicFile_Call{Call: _e.mock.On("GetPublicFile", ctx, key)}
 }
 

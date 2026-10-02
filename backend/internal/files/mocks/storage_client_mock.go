@@ -17,10 +17,19 @@ func NewMockStorageClient(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockStorageClient {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockStorageClient{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -80,7 +89,7 @@ type MockStorageClient_GetObject_Call struct {
 // GetObject is a helper method to define mock.On call
 //   - ctx context.Context
 //   - objectKey string
-func (_e *MockStorageClient_Expecter) GetObject(ctx interface{}, objectKey interface{}) *MockStorageClient_GetObject_Call {
+func (_e *MockStorageClient_Expecter) GetObject(ctx any, objectKey any) *MockStorageClient_GetObject_Call {
 	return &MockStorageClient_GetObject_Call{Call: _e.mock.On("GetObject", ctx, objectKey)}
 }
 

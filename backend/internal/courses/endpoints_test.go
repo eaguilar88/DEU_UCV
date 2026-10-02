@@ -36,7 +36,6 @@ func buildCourseForm() (*bytes.Buffer, string) {
 		"estructura_curricular": "Course content",
 		"evaluacion":            "Evaluation method",
 		"cronograma":            "Schedule",
-		"facultad":              "DEU",
 	}
 	for k, v := range fields {
 		_ = w.WriteField(k, v)
@@ -71,7 +70,7 @@ func TestHandler_GetCourse(t *testing.T) {
 			name: "success with latest period",
 			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
-				tc.svc.On("GetCourse", ctx.Request().Context(), mock.AnythingOfType("string")).
+				tc.svc.On("GetCourse", ctx.Request().Context(), mock.AnythingOfType("string"), entities.Viewer{}).
 					Return(entities.Course{ID: "1", Name: "Test Course"}, nil)
 				tc.svc.On("GetLatestCoursePeriod", ctx.Request().Context(), mock.AnythingOfType("string")).
 					Return(entities.CoursePeriod{ID: "period-1", StartDate: "2026-01-01"}, nil)
@@ -89,7 +88,7 @@ func TestHandler_GetCourse(t *testing.T) {
 			name: "success with no latest period",
 			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
-				tc.svc.On("GetCourse", ctx.Request().Context(), mock.AnythingOfType("string")).
+				tc.svc.On("GetCourse", ctx.Request().Context(), mock.AnythingOfType("string"), entities.Viewer{}).
 					Return(entities.Course{ID: "1", Name: "Test Course"}, nil)
 				tc.svc.On("GetLatestCoursePeriod", ctx.Request().Context(), mock.AnythingOfType("string")).
 					Return(entities.CoursePeriod{}, errors.New("not found"))
@@ -103,7 +102,7 @@ func TestHandler_GetCourse(t *testing.T) {
 			name: "error getting course",
 			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
-				tc.svc.On("GetCourse", ctx.Request().Context(), mock.AnythingOfType("string")).
+				tc.svc.On("GetCourse", ctx.Request().Context(), mock.AnythingOfType("string"), entities.Viewer{}).
 					Return(entities.Course{}, errors.New("db error"))
 			},
 			wantErr: httperrors.NewInternal(errors.New("db error")),
@@ -140,6 +139,8 @@ func TestHandler_GetCourses(t *testing.T) {
 	type testCase struct {
 		name    string
 		svc     *mocks.MockService
+		query   string
+		ctxVals map[string]any
 		prepare func(ctx echo.Context, tc *testCase)
 		resp    any
 		wantErr error
@@ -150,7 +151,7 @@ func TestHandler_GetCourses(t *testing.T) {
 			name: "success empty list",
 			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
-				tc.svc.On("GetCourses", ctx.Request().Context(), mock.AnythingOfType("entities.PageScope")).
+				tc.svc.On("GetCourses", ctx.Request().Context(), entities.CourseFilter{}, entities.Viewer{}, mock.AnythingOfType("entities.PageScope")).
 					Return([]entities.Course{}, entities.PageScope{}, nil)
 			},
 			resp: GetCoursesResponse{},
@@ -159,7 +160,7 @@ func TestHandler_GetCourses(t *testing.T) {
 			name: "success with courses",
 			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
-				tc.svc.On("GetCourses", ctx.Request().Context(), mock.AnythingOfType("entities.PageScope")).
+				tc.svc.On("GetCourses", ctx.Request().Context(), entities.CourseFilter{}, entities.Viewer{}, mock.AnythingOfType("entities.PageScope")).
 					Return([]entities.Course{{ID: "1", Name: "Course A"}}, entities.PageScope{Page: 1, PerPage: 10}, nil)
 			},
 			resp: GetCoursesResponse{
@@ -168,10 +169,34 @@ func TestHandler_GetCourses(t *testing.T) {
 			},
 		},
 		{
+			name:    "passes filters and viewer to the service",
+			svc:     &mocks.MockService{},
+			query:   "?usuario_id=7&codigo_proveedor=ECP-abc123&estado=abierto",
+			ctxVals: map[string]any{"userID": "7", "roles": []string{"provider"}},
+			prepare: func(ctx echo.Context, tc *testCase) {
+				tc.svc.On("GetCourses", ctx.Request().Context(),
+					entities.CourseFilter{
+						OwnerUserID:      "7",
+						ProviderCode:     "ECP-abc123",
+						ManagementStatus: entities.CourseManagementStatusOpen,
+					},
+					entities.Viewer{UserID: "7", Roles: []string{"provider"}},
+					mock.AnythingOfType("entities.PageScope")).
+					Return([]entities.Course{}, entities.PageScope{}, nil)
+			},
+			resp: GetCoursesResponse{},
+		},
+		{
+			name:    "error invalid estado",
+			svc:     &mocks.MockService{},
+			query:   "?estado=aprobado",
+			wantErr: httperrors.NewBadRequest("invalid estado: aprobado"),
+		},
+		{
 			name: "error getting courses",
 			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
-				tc.svc.On("GetCourses", ctx.Request().Context(), mock.AnythingOfType("entities.PageScope")).
+				tc.svc.On("GetCourses", ctx.Request().Context(), entities.CourseFilter{}, entities.Viewer{}, mock.AnythingOfType("entities.PageScope")).
 					Return(nil, entities.PageScope{}, errors.New("db error"))
 			},
 			wantErr: httperrors.NewInternal(errors.New("db error")),
@@ -181,7 +206,76 @@ func TestHandler_GetCourses(t *testing.T) {
 	logger := zap.NewNop()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, "/courses", nil)
+			req := httptest.NewRequest(http.MethodGet, "/courses"+tt.query, nil)
+			rec := httptest.NewRecorder()
+			ctx := echo.New().NewContext(req, rec)
+			for k, v := range tt.ctxVals {
+				ctx.Set(k, v)
+			}
+
+			if tt.prepare != nil {
+				tt.prepare(ctx, &tt)
+			}
+
+			h := NewHandler(tt.svc, logger)
+			err := h.GetCourses(ctx)
+			assertCustomError(t, tt.wantErr, err)
+			if tt.wantErr == nil {
+				var respBody GetCoursesResponse
+				require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &respBody))
+				assert.Equal(t, tt.resp, respBody)
+			}
+			tt.svc.AssertExpectations(t)
+		})
+	}
+}
+
+func TestHandler_GetPublicCourses(t *testing.T) {
+	type testCase struct {
+		name    string
+		svc     *mocks.MockService
+		prepare func(ctx echo.Context, tc *testCase)
+		resp    any
+		wantErr error
+	}
+
+	tests := []testCase{
+		{
+			name: "success empty list",
+			svc:  &mocks.MockService{},
+			prepare: func(ctx echo.Context, tc *testCase) {
+				tc.svc.On("GetPublicCourses", ctx.Request().Context(), mock.AnythingOfType("entities.PageScope")).
+					Return([]entities.Course{}, entities.PageScope{}, nil)
+			},
+			resp: GetCoursesResponse{},
+		},
+		{
+			name: "success with courses",
+			svc:  &mocks.MockService{},
+			prepare: func(ctx echo.Context, tc *testCase) {
+				tc.svc.On("GetPublicCourses", ctx.Request().Context(), mock.AnythingOfType("entities.PageScope")).
+					Return([]entities.Course{{ID: "1", Name: "Course A"}}, entities.PageScope{Page: 1, PerPage: 10}, nil)
+			},
+			resp: GetCoursesResponse{
+				Courses: []GetCourseResponse{{ID: "1", Name: "Course A"}},
+				Pages:   entities.PageScope{Page: 1, PerPage: 10},
+			},
+		},
+		{
+			name: "error getting public courses",
+			svc:  &mocks.MockService{},
+			prepare: func(ctx echo.Context, tc *testCase) {
+				tc.svc.On("GetPublicCourses", ctx.Request().Context(), mock.AnythingOfType("entities.PageScope")).
+					Return(nil, entities.PageScope{}, errors.New("db error"))
+			},
+			wantErr: httperrors.NewInternal(errors.New("db error")),
+		},
+	}
+
+	logger := zap.NewNop()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/courses/public", nil)
 			rec := httptest.NewRecorder()
 			ctx := echo.New().NewContext(req, rec)
 
@@ -190,7 +284,7 @@ func TestHandler_GetCourses(t *testing.T) {
 			}
 
 			h := NewHandler(tt.svc, logger)
-			err := h.GetCourses(ctx)
+			err := h.GetPublicCourses(ctx)
 			assertCustomError(t, tt.wantErr, err)
 			if tt.wantErr == nil {
 				var respBody GetCoursesResponse
@@ -252,6 +346,42 @@ func TestHandler_CreateCourse(t *testing.T) {
 			prepare: func(ctx echo.Context, tc *testCase) {
 				tc.svc.On("CreateCourse", ctx.Request().Context(), userID, mock.AnythingOfType("entities.Course")).
 					Return(int64(42), nil)
+			},
+			resp: CreateCoursesResponse{ID: "42"},
+		},
+		{
+			name:   "success ignores client-sent facultad",
+			svc:    &mocks.MockService{},
+			userID: &userID,
+			buildForm: func() (*bytes.Buffer, string) {
+				var b bytes.Buffer
+				w := multipart.NewWriter(&b)
+				fields := map[string]string{
+					"nombre":                "Test Course",
+					"descripcion":           "A test description",
+					"objetivos":             "Test objectives",
+					"fundamentacion":        "Test rationale",
+					"duracion":              "40 horas",
+					"estructura_costos":     "1000 BsS",
+					"perfil_docente":        "Instructor profile",
+					"exigencias":            "Requirements",
+					"estructura_curricular": "Course content",
+					"evaluacion":            "Evaluation method",
+					"cronograma":            "Schedule",
+					"facultad":              "Medicina",
+				}
+				for k, v := range fields {
+					_ = w.WriteField(k, v)
+				}
+				fw, _ := w.CreateFormFile("portada", "cover.jpg")
+				_, _ = fw.Write([]byte("fake image data"))
+				w.Close()
+				return &b, w.FormDataContentType()
+			},
+			prepare: func(ctx echo.Context, tc *testCase) {
+				tc.svc.On("CreateCourse", ctx.Request().Context(), userID, mock.MatchedBy(func(c entities.Course) bool {
+					return c.Faculty == "" && c.OriginFaculty == ""
+				})).Return(int64(42), nil)
 			},
 			resp: CreateCoursesResponse{ID: "42"},
 		},

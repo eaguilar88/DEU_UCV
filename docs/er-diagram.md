@@ -104,9 +104,12 @@ erDiagram
         text schedule
         course_type_enum type
         faculty_enum faculty
+        faculty_enum origin_faculty
         course_location_enum location
         bool is_active
         bool has_documentation
+        text competencies
+        text bibliography
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
@@ -118,6 +121,8 @@ erDiagram
         request_status_enum status
         int reviewer_id FK
         text comments
+        numeric score
+        text classification
         timestamp reviewed_at
         timestamp created_at
         timestamp updated_at
@@ -127,6 +132,7 @@ erDiagram
     course_cycles {
         int id PK
         int course_id FK
+        varchar name
         date start_date
         date end_date
         date inscription_date

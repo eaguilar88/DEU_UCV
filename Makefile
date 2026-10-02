@@ -112,7 +112,7 @@ stop-db:
 	docker compose -f docker-compose.dev.yml down -v
 
 generate-mocks:
-	docker pull vektra/mockery:v3.7.0 && docker run --user 1000:1000 --rm -v ${PWD}/backend:/src -w /src vektra/mockery:v3.7.0 --config .mockery.yaml
+	docker pull vektra/mockery:latest && docker run --user 1000:1000 --rm -v ${PWD}/backend:/src -w /src vektra/mockery:latest --config .mockery.yaml
 
 go-test:
 	cd backend && go test -count=1 -short -cover ./...
@@ -125,6 +125,7 @@ quality:
 	go vet ./... && \
 	go fmt ./... && \
 	goimports -w . && \
+	govulncheck ./... && \
 	golangci-lint run && \
 	go mod tidy && \
 	go test -count=1 -race -short -cover ./...

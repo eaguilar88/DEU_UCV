@@ -18,10 +18,19 @@ func NewMockStorageClient(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockStorageClient {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockStorageClient{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -64,7 +73,7 @@ type MockStorageClient_DeleteFile_Call struct {
 // DeleteFile is a helper method to define mock.On call
 //   - ctx context.Context
 //   - objectKey string
-func (_e *MockStorageClient_Expecter) DeleteFile(ctx interface{}, objectKey interface{}) *MockStorageClient_DeleteFile_Call {
+func (_e *MockStorageClient_Expecter) DeleteFile(ctx any, objectKey any) *MockStorageClient_DeleteFile_Call {
 	return &MockStorageClient_DeleteFile_Call{Call: _e.mock.On("DeleteFile", ctx, objectKey)}
 }
 
@@ -132,7 +141,7 @@ type MockStorageClient_GetFileMetadata_Call struct {
 // GetFileMetadata is a helper method to define mock.On call
 //   - ctx context.Context
 //   - objectKey string
-func (_e *MockStorageClient_Expecter) GetFileMetadata(ctx interface{}, objectKey interface{}) *MockStorageClient_GetFileMetadata_Call {
+func (_e *MockStorageClient_Expecter) GetFileMetadata(ctx any, objectKey any) *MockStorageClient_GetFileMetadata_Call {
 	return &MockStorageClient_GetFileMetadata_Call{Call: _e.mock.On("GetFileMetadata", ctx, objectKey)}
 }
 
@@ -198,7 +207,7 @@ type MockStorageClient_GetFileURL_Call struct {
 // GetFileURL is a helper method to define mock.On call
 //   - ctx context.Context
 //   - objectKey string
-func (_e *MockStorageClient_Expecter) GetFileURL(ctx interface{}, objectKey interface{}) *MockStorageClient_GetFileURL_Call {
+func (_e *MockStorageClient_Expecter) GetFileURL(ctx any, objectKey any) *MockStorageClient_GetFileURL_Call {
 	return &MockStorageClient_GetFileURL_Call{Call: _e.mock.On("GetFileURL", ctx, objectKey)}
 }
 
@@ -272,7 +281,7 @@ type MockStorageClient_GetObject_Call struct {
 // GetObject is a helper method to define mock.On call
 //   - ctx context.Context
 //   - objectKey string
-func (_e *MockStorageClient_Expecter) GetObject(ctx interface{}, objectKey interface{}) *MockStorageClient_GetObject_Call {
+func (_e *MockStorageClient_Expecter) GetObject(ctx any, objectKey any) *MockStorageClient_GetObject_Call {
 	return &MockStorageClient_GetObject_Call{Call: _e.mock.On("GetObject", ctx, objectKey)}
 }
 
@@ -304,6 +313,72 @@ func (_c *MockStorageClient_GetObject_Call) RunAndReturn(run func(ctx context.Co
 	return _c
 }
 
+// GetPresignedFileURL provides a mock function for the type MockStorageClient
+func (_mock *MockStorageClient) GetPresignedFileURL(ctx context.Context, objectKey string) (string, error) {
+	ret := _mock.Called(ctx, objectKey)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPresignedFileURL")
+	}
+
+	var r0 string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (string, error)); ok {
+		return returnFunc(ctx, objectKey)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) string); ok {
+		r0 = returnFunc(ctx, objectKey)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, objectKey)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockStorageClient_GetPresignedFileURL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPresignedFileURL'
+type MockStorageClient_GetPresignedFileURL_Call struct {
+	*mock.Call
+}
+
+// GetPresignedFileURL is a helper method to define mock.On call
+//   - ctx context.Context
+//   - objectKey string
+func (_e *MockStorageClient_Expecter) GetPresignedFileURL(ctx any, objectKey any) *MockStorageClient_GetPresignedFileURL_Call {
+	return &MockStorageClient_GetPresignedFileURL_Call{Call: _e.mock.On("GetPresignedFileURL", ctx, objectKey)}
+}
+
+func (_c *MockStorageClient_GetPresignedFileURL_Call) Run(run func(ctx context.Context, objectKey string)) *MockStorageClient_GetPresignedFileURL_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockStorageClient_GetPresignedFileURL_Call) Return(s string, err error) *MockStorageClient_GetPresignedFileURL_Call {
+	_c.Call.Return(s, err)
+	return _c
+}
+
+func (_c *MockStorageClient_GetPresignedFileURL_Call) RunAndReturn(run func(ctx context.Context, objectKey string) (string, error)) *MockStorageClient_GetPresignedFileURL_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UploadFile provides a mock function for the type MockStorageClient
 func (_mock *MockStorageClient) UploadFile(ctx context.Context, file []*entities.File) error {
 	ret := _mock.Called(ctx, file)
@@ -329,7 +404,7 @@ type MockStorageClient_UploadFile_Call struct {
 // UploadFile is a helper method to define mock.On call
 //   - ctx context.Context
 //   - file []*entities.File
-func (_e *MockStorageClient_Expecter) UploadFile(ctx interface{}, file interface{}) *MockStorageClient_UploadFile_Call {
+func (_e *MockStorageClient_Expecter) UploadFile(ctx any, file any) *MockStorageClient_UploadFile_Call {
 	return &MockStorageClient_UploadFile_Call{Call: _e.mock.On("UploadFile", ctx, file)}
 }
 

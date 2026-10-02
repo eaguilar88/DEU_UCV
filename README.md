@@ -9,6 +9,10 @@ Sistema para la Dirección de Extensión Universitaria de la UCV
 * Gestion Social Universitaria
     * Registro de grupos de extensión
     * Actividades de los grupos de extensión
+
+## Fuera de alcance para este proyecto
+Funcionalidades evaluadas y excluidas a propósito (por ejemplo, el manejo de participantes de cursos). Ver [Fuera de alcance](docs/fuera-de-alcance.md).
+
 ## Responsables
 - Ellery Aguilar
 - Robinson Roa

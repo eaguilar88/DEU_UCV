@@ -17,10 +17,19 @@ func NewMockRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockRepository {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockRepository{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -39,16 +48,16 @@ func (_m *MockRepository) EXPECT() *MockRepository_Expecter {
 }
 
 // ApproveProvider provides a mock function for the type MockRepository
-func (_mock *MockRepository) ApproveProvider(ctx context.Context, providerID string) error {
-	ret := _mock.Called(ctx, providerID)
+func (_mock *MockRepository) ApproveProvider(ctx context.Context, providerID string, userID string, fromRole string, toRole string, notify func() error) error {
+	ret := _mock.Called(ctx, providerID, userID, fromRole, toRole, notify)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ApproveProvider")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, providerID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string, func() error) error); ok {
+		r0 = returnFunc(ctx, providerID, userID, fromRole, toRole, notify)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -63,11 +72,15 @@ type MockRepository_ApproveProvider_Call struct {
 // ApproveProvider is a helper method to define mock.On call
 //   - ctx context.Context
 //   - providerID string
-func (_e *MockRepository_Expecter) ApproveProvider(ctx interface{}, providerID interface{}) *MockRepository_ApproveProvider_Call {
-	return &MockRepository_ApproveProvider_Call{Call: _e.mock.On("ApproveProvider", ctx, providerID)}
+//   - userID string
+//   - fromRole string
+//   - toRole string
+//   - notify func() error
+func (_e *MockRepository_Expecter) ApproveProvider(ctx any, providerID any, userID any, fromRole any, toRole any, notify any) *MockRepository_ApproveProvider_Call {
+	return &MockRepository_ApproveProvider_Call{Call: _e.mock.On("ApproveProvider", ctx, providerID, userID, fromRole, toRole, notify)}
 }
 
-func (_c *MockRepository_ApproveProvider_Call) Run(run func(ctx context.Context, providerID string)) *MockRepository_ApproveProvider_Call {
+func (_c *MockRepository_ApproveProvider_Call) Run(run func(ctx context.Context, providerID string, userID string, fromRole string, toRole string, notify func() error)) *MockRepository_ApproveProvider_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -77,9 +90,29 @@ func (_c *MockRepository_ApproveProvider_Call) Run(run func(ctx context.Context,
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		var arg5 func() error
+		if args[5] != nil {
+			arg5 = args[5].(func() error)
+		}
 		run(
 			arg0,
 			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
 		)
 	})
 	return _c
@@ -90,7 +123,7 @@ func (_c *MockRepository_ApproveProvider_Call) Return(err error) *MockRepository
 	return _c
 }
 
-func (_c *MockRepository_ApproveProvider_Call) RunAndReturn(run func(ctx context.Context, providerID string) error) *MockRepository_ApproveProvider_Call {
+func (_c *MockRepository_ApproveProvider_Call) RunAndReturn(run func(ctx context.Context, providerID string, userID string, fromRole string, toRole string, notify func() error) error) *MockRepository_ApproveProvider_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -129,7 +162,7 @@ type MockRepository_CreateProvider_Call struct {
 // CreateProvider is a helper method to define mock.On call
 //   - ctx context.Context
 //   - provider entities.Provider
-func (_e *MockRepository_Expecter) CreateProvider(ctx interface{}, provider interface{}) *MockRepository_CreateProvider_Call {
+func (_e *MockRepository_Expecter) CreateProvider(ctx any, provider any) *MockRepository_CreateProvider_Call {
 	return &MockRepository_CreateProvider_Call{Call: _e.mock.On("CreateProvider", ctx, provider)}
 }
 
@@ -161,6 +194,78 @@ func (_c *MockRepository_CreateProvider_Call) RunAndReturn(run func(ctx context.
 	return _c
 }
 
+// CreateProviderContract provides a mock function for the type MockRepository
+func (_mock *MockRepository) CreateProviderContract(ctx context.Context, contract entities.ProviderContract, coveredCourseIDs []string) (entities.ProviderContract, error) {
+	ret := _mock.Called(ctx, contract, coveredCourseIDs)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateProviderContract")
+	}
+
+	var r0 entities.ProviderContract
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.ProviderContract, []string) (entities.ProviderContract, error)); ok {
+		return returnFunc(ctx, contract, coveredCourseIDs)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.ProviderContract, []string) entities.ProviderContract); ok {
+		r0 = returnFunc(ctx, contract, coveredCourseIDs)
+	} else {
+		r0 = ret.Get(0).(entities.ProviderContract)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.ProviderContract, []string) error); ok {
+		r1 = returnFunc(ctx, contract, coveredCourseIDs)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_CreateProviderContract_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateProviderContract'
+type MockRepository_CreateProviderContract_Call struct {
+	*mock.Call
+}
+
+// CreateProviderContract is a helper method to define mock.On call
+//   - ctx context.Context
+//   - contract entities.ProviderContract
+//   - coveredCourseIDs []string
+func (_e *MockRepository_Expecter) CreateProviderContract(ctx any, contract any, coveredCourseIDs any) *MockRepository_CreateProviderContract_Call {
+	return &MockRepository_CreateProviderContract_Call{Call: _e.mock.On("CreateProviderContract", ctx, contract, coveredCourseIDs)}
+}
+
+func (_c *MockRepository_CreateProviderContract_Call) Run(run func(ctx context.Context, contract entities.ProviderContract, coveredCourseIDs []string)) *MockRepository_CreateProviderContract_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 entities.ProviderContract
+		if args[1] != nil {
+			arg1 = args[1].(entities.ProviderContract)
+		}
+		var arg2 []string
+		if args[2] != nil {
+			arg2 = args[2].([]string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_CreateProviderContract_Call) Return(providerContract entities.ProviderContract, err error) *MockRepository_CreateProviderContract_Call {
+	_c.Call.Return(providerContract, err)
+	return _c
+}
+
+func (_c *MockRepository_CreateProviderContract_Call) RunAndReturn(run func(ctx context.Context, contract entities.ProviderContract, coveredCourseIDs []string) (entities.ProviderContract, error)) *MockRepository_CreateProviderContract_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // CreateProviderRequest provides a mock function for the type MockRepository
 func (_mock *MockRepository) CreateProviderRequest(ctx context.Context, providerID int64) error {
 	ret := _mock.Called(ctx, providerID)
@@ -186,7 +291,7 @@ type MockRepository_CreateProviderRequest_Call struct {
 // CreateProviderRequest is a helper method to define mock.On call
 //   - ctx context.Context
 //   - providerID int64
-func (_e *MockRepository_Expecter) CreateProviderRequest(ctx interface{}, providerID interface{}) *MockRepository_CreateProviderRequest_Call {
+func (_e *MockRepository_Expecter) CreateProviderRequest(ctx any, providerID any) *MockRepository_CreateProviderRequest_Call {
 	return &MockRepository_CreateProviderRequest_Call{Call: _e.mock.On("CreateProviderRequest", ctx, providerID)}
 }
 
@@ -243,7 +348,7 @@ type MockRepository_DeleteProvider_Call struct {
 // DeleteProvider is a helper method to define mock.On call
 //   - ctx context.Context
 //   - providerID string
-func (_e *MockRepository_Expecter) DeleteProvider(ctx interface{}, providerID interface{}) *MockRepository_DeleteProvider_Call {
+func (_e *MockRepository_Expecter) DeleteProvider(ctx any, providerID any) *MockRepository_DeleteProvider_Call {
 	return &MockRepository_DeleteProvider_Call{Call: _e.mock.On("DeleteProvider", ctx, providerID)}
 }
 
@@ -271,6 +376,74 @@ func (_c *MockRepository_DeleteProvider_Call) Return(err error) *MockRepository_
 }
 
 func (_c *MockRepository_DeleteProvider_Call) RunAndReturn(run func(ctx context.Context, providerID string) error) *MockRepository_DeleteProvider_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetFacultyCoordinatorEmails provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetFacultyCoordinatorEmails(ctx context.Context, faculty entities.Faculty) ([]string, error) {
+	ret := _mock.Called(ctx, faculty)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetFacultyCoordinatorEmails")
+	}
+
+	var r0 []string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.Faculty) ([]string, error)); ok {
+		return returnFunc(ctx, faculty)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.Faculty) []string); ok {
+		r0 = returnFunc(ctx, faculty)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.Faculty) error); ok {
+		r1 = returnFunc(ctx, faculty)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetFacultyCoordinatorEmails_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetFacultyCoordinatorEmails'
+type MockRepository_GetFacultyCoordinatorEmails_Call struct {
+	*mock.Call
+}
+
+// GetFacultyCoordinatorEmails is a helper method to define mock.On call
+//   - ctx context.Context
+//   - faculty entities.Faculty
+func (_e *MockRepository_Expecter) GetFacultyCoordinatorEmails(ctx any, faculty any) *MockRepository_GetFacultyCoordinatorEmails_Call {
+	return &MockRepository_GetFacultyCoordinatorEmails_Call{Call: _e.mock.On("GetFacultyCoordinatorEmails", ctx, faculty)}
+}
+
+func (_c *MockRepository_GetFacultyCoordinatorEmails_Call) Run(run func(ctx context.Context, faculty entities.Faculty)) *MockRepository_GetFacultyCoordinatorEmails_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 entities.Faculty
+		if args[1] != nil {
+			arg1 = args[1].(entities.Faculty)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetFacultyCoordinatorEmails_Call) Return(strings []string, err error) *MockRepository_GetFacultyCoordinatorEmails_Call {
+	_c.Call.Return(strings, err)
+	return _c
+}
+
+func (_c *MockRepository_GetFacultyCoordinatorEmails_Call) RunAndReturn(run func(ctx context.Context, faculty entities.Faculty) ([]string, error)) *MockRepository_GetFacultyCoordinatorEmails_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -312,7 +485,7 @@ type MockRepository_GetFilesByOwner_Call struct {
 //   - ctx context.Context
 //   - ownerID string
 //   - ownerType entities.OwnerType
-func (_e *MockRepository_Expecter) GetFilesByOwner(ctx interface{}, ownerID interface{}, ownerType interface{}) *MockRepository_GetFilesByOwner_Call {
+func (_e *MockRepository_Expecter) GetFilesByOwner(ctx any, ownerID any, ownerType any) *MockRepository_GetFilesByOwner_Call {
 	return &MockRepository_GetFilesByOwner_Call{Call: _e.mock.On("GetFilesByOwner", ctx, ownerID, ownerType)}
 }
 
@@ -387,7 +560,7 @@ type MockRepository_GetFilesByOwnerAndPurpose_Call struct {
 //   - ownerID string
 //   - ownerType string
 //   - purpose string
-func (_e *MockRepository_Expecter) GetFilesByOwnerAndPurpose(ctx interface{}, ownerID interface{}, ownerType interface{}, purpose interface{}) *MockRepository_GetFilesByOwnerAndPurpose_Call {
+func (_e *MockRepository_Expecter) GetFilesByOwnerAndPurpose(ctx any, ownerID any, ownerType any, purpose any) *MockRepository_GetFilesByOwnerAndPurpose_Call {
 	return &MockRepository_GetFilesByOwnerAndPurpose_Call{Call: _e.mock.On("GetFilesByOwnerAndPurpose", ctx, ownerID, ownerType, purpose)}
 }
 
@@ -463,7 +636,7 @@ type MockRepository_GetProvider_Call struct {
 // GetProvider is a helper method to define mock.On call
 //   - ctx context.Context
 //   - providerID string
-func (_e *MockRepository_Expecter) GetProvider(ctx interface{}, providerID interface{}) *MockRepository_GetProvider_Call {
+func (_e *MockRepository_Expecter) GetProvider(ctx any, providerID any) *MockRepository_GetProvider_Call {
 	return &MockRepository_GetProvider_Call{Call: _e.mock.On("GetProvider", ctx, providerID)}
 }
 
@@ -529,7 +702,7 @@ type MockRepository_GetProviderByCode_Call struct {
 // GetProviderByCode is a helper method to define mock.On call
 //   - ctx context.Context
 //   - code string
-func (_e *MockRepository_Expecter) GetProviderByCode(ctx interface{}, code interface{}) *MockRepository_GetProviderByCode_Call {
+func (_e *MockRepository_Expecter) GetProviderByCode(ctx any, code any) *MockRepository_GetProviderByCode_Call {
 	return &MockRepository_GetProviderByCode_Call{Call: _e.mock.On("GetProviderByCode", ctx, code)}
 }
 
@@ -595,7 +768,7 @@ type MockRepository_GetProviderByUserID_Call struct {
 // GetProviderByUserID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID string
-func (_e *MockRepository_Expecter) GetProviderByUserID(ctx interface{}, userID interface{}) *MockRepository_GetProviderByUserID_Call {
+func (_e *MockRepository_Expecter) GetProviderByUserID(ctx any, userID any) *MockRepository_GetProviderByUserID_Call {
 	return &MockRepository_GetProviderByUserID_Call{Call: _e.mock.On("GetProviderByUserID", ctx, userID)}
 }
 
@@ -661,7 +834,7 @@ type MockRepository_GetProviderContactInfo_Call struct {
 // GetProviderContactInfo is a helper method to define mock.On call
 //   - ctx context.Context
 //   - providerID string
-func (_e *MockRepository_Expecter) GetProviderContactInfo(ctx interface{}, providerID interface{}) *MockRepository_GetProviderContactInfo_Call {
+func (_e *MockRepository_Expecter) GetProviderContactInfo(ctx any, providerID any) *MockRepository_GetProviderContactInfo_Call {
 	return &MockRepository_GetProviderContactInfo_Call{Call: _e.mock.On("GetProviderContactInfo", ctx, providerID)}
 }
 
@@ -689,6 +862,74 @@ func (_c *MockRepository_GetProviderContactInfo_Call) Return(user entities.User,
 }
 
 func (_c *MockRepository_GetProviderContactInfo_Call) RunAndReturn(run func(ctx context.Context, providerID string) (entities.User, error)) *MockRepository_GetProviderContactInfo_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetProviderContracts provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetProviderContracts(ctx context.Context, providerID string) ([]entities.ProviderContract, error) {
+	ret := _mock.Called(ctx, providerID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetProviderContracts")
+	}
+
+	var r0 []entities.ProviderContract
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]entities.ProviderContract, error)); ok {
+		return returnFunc(ctx, providerID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []entities.ProviderContract); ok {
+		r0 = returnFunc(ctx, providerID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]entities.ProviderContract)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, providerID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetProviderContracts_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetProviderContracts'
+type MockRepository_GetProviderContracts_Call struct {
+	*mock.Call
+}
+
+// GetProviderContracts is a helper method to define mock.On call
+//   - ctx context.Context
+//   - providerID string
+func (_e *MockRepository_Expecter) GetProviderContracts(ctx any, providerID any) *MockRepository_GetProviderContracts_Call {
+	return &MockRepository_GetProviderContracts_Call{Call: _e.mock.On("GetProviderContracts", ctx, providerID)}
+}
+
+func (_c *MockRepository_GetProviderContracts_Call) Run(run func(ctx context.Context, providerID string)) *MockRepository_GetProviderContracts_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetProviderContracts_Call) Return(providerContracts []entities.ProviderContract, err error) *MockRepository_GetProviderContracts_Call {
+	_c.Call.Return(providerContracts, err)
+	return _c
+}
+
+func (_c *MockRepository_GetProviderContracts_Call) RunAndReturn(run func(ctx context.Context, providerID string) ([]entities.ProviderContract, error)) *MockRepository_GetProviderContracts_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -736,7 +977,7 @@ type MockRepository_GetProviders_Call struct {
 //   - ctx context.Context
 //   - pageScope entities.PageScope
 //   - filters entities.ProviderFilters
-func (_e *MockRepository_Expecter) GetProviders(ctx interface{}, pageScope interface{}, filters interface{}) *MockRepository_GetProviders_Call {
+func (_e *MockRepository_Expecter) GetProviders(ctx any, pageScope any, filters any) *MockRepository_GetProviders_Call {
 	return &MockRepository_GetProviders_Call{Call: _e.mock.On("GetProviders", ctx, pageScope, filters)}
 }
 
@@ -773,38 +1014,47 @@ func (_c *MockRepository_GetProviders_Call) RunAndReturn(run func(ctx context.Co
 	return _c
 }
 
-// MarkCoursesWithDocumentation provides a mock function for the type MockRepository
-func (_mock *MockRepository) MarkCoursesWithDocumentation(ctx context.Context, providerID string, from string, to string) error {
-	ret := _mock.Called(ctx, providerID, from, to)
+// GetUncoveredCourseIDs provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetUncoveredCourseIDs(ctx context.Context, providerID string) ([]string, error) {
+	ret := _mock.Called(ctx, providerID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for MarkCoursesWithDocumentation")
+		panic("no return value specified for GetUncoveredCourseIDs")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) error); ok {
-		r0 = returnFunc(ctx, providerID, from, to)
-	} else {
-		r0 = ret.Error(0)
+	var r0 []string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]string, error)); ok {
+		return returnFunc(ctx, providerID)
 	}
-	return r0
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []string); ok {
+		r0 = returnFunc(ctx, providerID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, providerID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
-// MockRepository_MarkCoursesWithDocumentation_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MarkCoursesWithDocumentation'
-type MockRepository_MarkCoursesWithDocumentation_Call struct {
+// MockRepository_GetUncoveredCourseIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUncoveredCourseIDs'
+type MockRepository_GetUncoveredCourseIDs_Call struct {
 	*mock.Call
 }
 
-// MarkCoursesWithDocumentation is a helper method to define mock.On call
+// GetUncoveredCourseIDs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - providerID string
-//   - from string
-//   - to string
-func (_e *MockRepository_Expecter) MarkCoursesWithDocumentation(ctx interface{}, providerID interface{}, from interface{}, to interface{}) *MockRepository_MarkCoursesWithDocumentation_Call {
-	return &MockRepository_MarkCoursesWithDocumentation_Call{Call: _e.mock.On("MarkCoursesWithDocumentation", ctx, providerID, from, to)}
+func (_e *MockRepository_Expecter) GetUncoveredCourseIDs(ctx any, providerID any) *MockRepository_GetUncoveredCourseIDs_Call {
+	return &MockRepository_GetUncoveredCourseIDs_Call{Call: _e.mock.On("GetUncoveredCourseIDs", ctx, providerID)}
 }
 
-func (_c *MockRepository_MarkCoursesWithDocumentation_Call) Run(run func(ctx context.Context, providerID string, from string, to string)) *MockRepository_MarkCoursesWithDocumentation_Call {
+func (_c *MockRepository_GetUncoveredCourseIDs_Call) Run(run func(ctx context.Context, providerID string)) *MockRepository_GetUncoveredCourseIDs_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -814,45 +1064,101 @@ func (_c *MockRepository_MarkCoursesWithDocumentation_Call) Run(run func(ctx con
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 string
-		if args[3] != nil {
-			arg3 = args[3].(string)
-		}
 		run(
 			arg0,
 			arg1,
-			arg2,
-			arg3,
 		)
 	})
 	return _c
 }
 
-func (_c *MockRepository_MarkCoursesWithDocumentation_Call) Return(err error) *MockRepository_MarkCoursesWithDocumentation_Call {
-	_c.Call.Return(err)
+func (_c *MockRepository_GetUncoveredCourseIDs_Call) Return(strings []string, err error) *MockRepository_GetUncoveredCourseIDs_Call {
+	_c.Call.Return(strings, err)
 	return _c
 }
 
-func (_c *MockRepository_MarkCoursesWithDocumentation_Call) RunAndReturn(run func(ctx context.Context, providerID string, from string, to string) error) *MockRepository_MarkCoursesWithDocumentation_Call {
+func (_c *MockRepository_GetUncoveredCourseIDs_Call) RunAndReturn(run func(ctx context.Context, providerID string) ([]string, error)) *MockRepository_GetUncoveredCourseIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// HasInitialContract provides a mock function for the type MockRepository
+func (_mock *MockRepository) HasInitialContract(ctx context.Context, providerID string) (bool, error) {
+	ret := _mock.Called(ctx, providerID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for HasInitialContract")
+	}
+
+	var r0 bool
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (bool, error)); ok {
+		return returnFunc(ctx, providerID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) bool); ok {
+		r0 = returnFunc(ctx, providerID)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, providerID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_HasInitialContract_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HasInitialContract'
+type MockRepository_HasInitialContract_Call struct {
+	*mock.Call
+}
+
+// HasInitialContract is a helper method to define mock.On call
+//   - ctx context.Context
+//   - providerID string
+func (_e *MockRepository_Expecter) HasInitialContract(ctx any, providerID any) *MockRepository_HasInitialContract_Call {
+	return &MockRepository_HasInitialContract_Call{Call: _e.mock.On("HasInitialContract", ctx, providerID)}
+}
+
+func (_c *MockRepository_HasInitialContract_Call) Run(run func(ctx context.Context, providerID string)) *MockRepository_HasInitialContract_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_HasInitialContract_Call) Return(b bool, err error) *MockRepository_HasInitialContract_Call {
+	_c.Call.Return(b, err)
+	return _c
+}
+
+func (_c *MockRepository_HasInitialContract_Call) RunAndReturn(run func(ctx context.Context, providerID string) (bool, error)) *MockRepository_HasInitialContract_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RejectProvider provides a mock function for the type MockRepository
-func (_mock *MockRepository) RejectProvider(ctx context.Context, providerID string) error {
-	ret := _mock.Called(ctx, providerID)
+func (_mock *MockRepository) RejectProvider(ctx context.Context, providerID string, notify func() error) error {
+	ret := _mock.Called(ctx, providerID, notify)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RejectProvider")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, providerID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, func() error) error); ok {
+		r0 = returnFunc(ctx, providerID, notify)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -867,11 +1173,12 @@ type MockRepository_RejectProvider_Call struct {
 // RejectProvider is a helper method to define mock.On call
 //   - ctx context.Context
 //   - providerID string
-func (_e *MockRepository_Expecter) RejectProvider(ctx interface{}, providerID interface{}) *MockRepository_RejectProvider_Call {
-	return &MockRepository_RejectProvider_Call{Call: _e.mock.On("RejectProvider", ctx, providerID)}
+//   - notify func() error
+func (_e *MockRepository_Expecter) RejectProvider(ctx any, providerID any, notify any) *MockRepository_RejectProvider_Call {
+	return &MockRepository_RejectProvider_Call{Call: _e.mock.On("RejectProvider", ctx, providerID, notify)}
 }
 
-func (_c *MockRepository_RejectProvider_Call) Run(run func(ctx context.Context, providerID string)) *MockRepository_RejectProvider_Call {
+func (_c *MockRepository_RejectProvider_Call) Run(run func(ctx context.Context, providerID string, notify func() error)) *MockRepository_RejectProvider_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -881,9 +1188,14 @@ func (_c *MockRepository_RejectProvider_Call) Run(run func(ctx context.Context, 
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
+		var arg2 func() error
+		if args[2] != nil {
+			arg2 = args[2].(func() error)
+		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -894,7 +1206,7 @@ func (_c *MockRepository_RejectProvider_Call) Return(err error) *MockRepository_
 	return _c
 }
 
-func (_c *MockRepository_RejectProvider_Call) RunAndReturn(run func(ctx context.Context, providerID string) error) *MockRepository_RejectProvider_Call {
+func (_c *MockRepository_RejectProvider_Call) RunAndReturn(run func(ctx context.Context, providerID string, notify func() error) error) *MockRepository_RejectProvider_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -924,7 +1236,7 @@ type MockRepository_SaveFilesToDB_Call struct {
 // SaveFilesToDB is a helper method to define mock.On call
 //   - ctx context.Context
 //   - file []*entities.File
-func (_e *MockRepository_Expecter) SaveFilesToDB(ctx interface{}, file interface{}) *MockRepository_SaveFilesToDB_Call {
+func (_e *MockRepository_Expecter) SaveFilesToDB(ctx any, file any) *MockRepository_SaveFilesToDB_Call {
 	return &MockRepository_SaveFilesToDB_Call{Call: _e.mock.On("SaveFilesToDB", ctx, file)}
 }
 
@@ -982,7 +1294,7 @@ type MockRepository_UpdateProvider_Call struct {
 //   - ctx context.Context
 //   - providerID string
 //   - provider entities.Provider
-func (_e *MockRepository_Expecter) UpdateProvider(ctx interface{}, providerID interface{}, provider interface{}) *MockRepository_UpdateProvider_Call {
+func (_e *MockRepository_Expecter) UpdateProvider(ctx any, providerID any, provider any) *MockRepository_UpdateProvider_Call {
 	return &MockRepository_UpdateProvider_Call{Call: _e.mock.On("UpdateProvider", ctx, providerID, provider)}
 }
 
@@ -1015,75 +1327,6 @@ func (_c *MockRepository_UpdateProvider_Call) Return(err error) *MockRepository_
 }
 
 func (_c *MockRepository_UpdateProvider_Call) RunAndReturn(run func(ctx context.Context, providerID string, provider entities.Provider) error) *MockRepository_UpdateProvider_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// UpdateUserRole provides a mock function for the type MockRepository
-func (_mock *MockRepository) UpdateUserRole(ctx context.Context, userID string, fromRole string, toRole string) error {
-	ret := _mock.Called(ctx, userID, fromRole, toRole)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateUserRole")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) error); ok {
-		r0 = returnFunc(ctx, userID, fromRole, toRole)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// MockRepository_UpdateUserRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateUserRole'
-type MockRepository_UpdateUserRole_Call struct {
-	*mock.Call
-}
-
-// UpdateUserRole is a helper method to define mock.On call
-//   - ctx context.Context
-//   - userID string
-//   - fromRole string
-//   - toRole string
-func (_e *MockRepository_Expecter) UpdateUserRole(ctx interface{}, userID interface{}, fromRole interface{}, toRole interface{}) *MockRepository_UpdateUserRole_Call {
-	return &MockRepository_UpdateUserRole_Call{Call: _e.mock.On("UpdateUserRole", ctx, userID, fromRole, toRole)}
-}
-
-func (_c *MockRepository_UpdateUserRole_Call) Run(run func(ctx context.Context, userID string, fromRole string, toRole string)) *MockRepository_UpdateUserRole_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 string
-		if args[3] != nil {
-			arg3 = args[3].(string)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-			arg3,
-		)
-	})
-	return _c
-}
-
-func (_c *MockRepository_UpdateUserRole_Call) Return(err error) *MockRepository_UpdateUserRole_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *MockRepository_UpdateUserRole_Call) RunAndReturn(run func(ctx context.Context, userID string, fromRole string, toRole string) error) *MockRepository_UpdateUserRole_Call {
 	_c.Call.Return(run)
 	return _c
 }

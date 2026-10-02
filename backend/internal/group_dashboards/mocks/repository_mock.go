@@ -17,10 +17,19 @@ func NewMockRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockRepository {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockRepository{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -91,7 +100,7 @@ type MockRepository_GetDeuDashboardMetrics_Call struct {
 
 // GetDeuDashboardMetrics is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockRepository_Expecter) GetDeuDashboardMetrics(ctx interface{}) *MockRepository_GetDeuDashboardMetrics_Call {
+func (_e *MockRepository_Expecter) GetDeuDashboardMetrics(ctx any) *MockRepository_GetDeuDashboardMetrics_Call {
 	return &MockRepository_GetDeuDashboardMetrics_Call{Call: _e.mock.On("GetDeuDashboardMetrics", ctx)}
 }
 
@@ -158,7 +167,7 @@ type MockRepository_GetFacultyDashboardMetrics_Call struct {
 // GetFacultyDashboardMetrics is a helper method to define mock.On call
 //   - ctx context.Context
 //   - faculty string
-func (_e *MockRepository_Expecter) GetFacultyDashboardMetrics(ctx interface{}, faculty interface{}) *MockRepository_GetFacultyDashboardMetrics_Call {
+func (_e *MockRepository_Expecter) GetFacultyDashboardMetrics(ctx any, faculty any) *MockRepository_GetFacultyDashboardMetrics_Call {
 	return &MockRepository_GetFacultyDashboardMetrics_Call{Call: _e.mock.On("GetFacultyDashboardMetrics", ctx, faculty)}
 }
 
@@ -230,7 +239,7 @@ type MockRepository_GetGroupDashboardMetrics_Call struct {
 // GetGroupDashboardMetrics is a helper method to define mock.On call
 //   - ctx context.Context
 //   - groupID string
-func (_e *MockRepository_Expecter) GetGroupDashboardMetrics(ctx interface{}, groupID interface{}) *MockRepository_GetGroupDashboardMetrics_Call {
+func (_e *MockRepository_Expecter) GetGroupDashboardMetrics(ctx any, groupID any) *MockRepository_GetGroupDashboardMetrics_Call {
 	return &MockRepository_GetGroupDashboardMetrics_Call{Call: _e.mock.On("GetGroupDashboardMetrics", ctx, groupID)}
 }
 

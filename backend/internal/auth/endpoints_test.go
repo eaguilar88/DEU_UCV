@@ -129,3 +129,23 @@ func assertCustomError(t *testing.T, expected, actual error) {
 	assert.Equal(t, expectedErr.StatusCode(), actualErr.StatusCode(), "status codes should match")
 	assert.Equal(t, expectedErr.SafeMessage(), actualErr.SafeMessage(), "safe messages should match")
 }
+
+func TestAuthEndpointsHandler_Login_Roles(t *testing.T) {
+	svc := mocks.NewMockService(t)
+	body, err := json.Marshal(LoginRequest{Username: "proveedor@example.test", Password: "secreto"})
+	require.NoError(t, err)
+	req := httptest.NewRequest(http.MethodPost, "/auth/login", bytes.NewReader(body))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	ctx := echo.New().NewContext(req, rec)
+	svc.EXPECT().Login(mock.Anything, "proveedor@example.test", "secreto").
+		Return("token", &entities.User{ID: "15", Roles: []string{"course_admin"}}, nil)
+
+	require.NoError(t, NewHandler(svc).LoginHandleHTTP(ctx))
+
+	var resp LoginResponse
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &resp))
+	// roles keeps the backend names (grupos reads them); rol is the UI name.
+	assert.Equal(t, []string{"course_admin"}, resp.User.Roles)
+	assert.Equal(t, "proveedor", resp.User.Rol)
+}

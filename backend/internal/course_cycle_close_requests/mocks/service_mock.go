@@ -17,10 +17,19 @@ func NewMockService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -64,7 +73,7 @@ type MockService_ApproveCloseRequest_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - reviewerID string
-func (_e *MockService_Expecter) ApproveCloseRequest(ctx interface{}, id interface{}, reviewerID interface{}) *MockService_ApproveCloseRequest_Call {
+func (_e *MockService_Expecter) ApproveCloseRequest(ctx any, id any, reviewerID any) *MockService_ApproveCloseRequest_Call {
 	return &MockService_ApproveCloseRequest_Call{Call: _e.mock.On("ApproveCloseRequest", ctx, id, reviewerID)}
 }
 
@@ -135,7 +144,7 @@ type MockService_GetCloseRequestByID_Call struct {
 // GetCloseRequestByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-func (_e *MockService_Expecter) GetCloseRequestByID(ctx interface{}, id interface{}) *MockService_GetCloseRequestByID_Call {
+func (_e *MockService_Expecter) GetCloseRequestByID(ctx any, id any) *MockService_GetCloseRequestByID_Call {
 	return &MockService_GetCloseRequestByID_Call{Call: _e.mock.On("GetCloseRequestByID", ctx, id)}
 }
 
@@ -210,7 +219,7 @@ type MockService_GetCloseRequests_Call struct {
 //   - ctx context.Context
 //   - faculty entities.Faculty
 //   - pageScope entities.PageScope
-func (_e *MockService_Expecter) GetCloseRequests(ctx interface{}, faculty interface{}, pageScope interface{}) *MockService_GetCloseRequests_Call {
+func (_e *MockService_Expecter) GetCloseRequests(ctx any, faculty any, pageScope any) *MockService_GetCloseRequests_Call {
 	return &MockService_GetCloseRequests_Call{Call: _e.mock.On("GetCloseRequests", ctx, faculty, pageScope)}
 }
 
@@ -247,6 +256,68 @@ func (_c *MockService_GetCloseRequests_Call) RunAndReturn(run func(ctx context.C
 	return _c
 }
 
+// ParticipantsTemplate provides a mock function for the type MockService
+func (_mock *MockService) ParticipantsTemplate(ctx context.Context) ([]byte, error) {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ParticipantsTemplate")
+	}
+
+	var r0 []byte
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]byte, error)); ok {
+		return returnFunc(ctx)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []byte); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]byte)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockService_ParticipantsTemplate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ParticipantsTemplate'
+type MockService_ParticipantsTemplate_Call struct {
+	*mock.Call
+}
+
+// ParticipantsTemplate is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockService_Expecter) ParticipantsTemplate(ctx any) *MockService_ParticipantsTemplate_Call {
+	return &MockService_ParticipantsTemplate_Call{Call: _e.mock.On("ParticipantsTemplate", ctx)}
+}
+
+func (_c *MockService_ParticipantsTemplate_Call) Run(run func(ctx context.Context)) *MockService_ParticipantsTemplate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *MockService_ParticipantsTemplate_Call) Return(bytes []byte, err error) *MockService_ParticipantsTemplate_Call {
+	_c.Call.Return(bytes, err)
+	return _c
+}
+
+func (_c *MockService_ParticipantsTemplate_Call) RunAndReturn(run func(ctx context.Context) ([]byte, error)) *MockService_ParticipantsTemplate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // RejectCloseRequest provides a mock function for the type MockService
 func (_mock *MockService) RejectCloseRequest(ctx context.Context, id string, reviewerID string, comments string) error {
 	ret := _mock.Called(ctx, id, reviewerID, comments)
@@ -274,7 +345,7 @@ type MockService_RejectCloseRequest_Call struct {
 //   - id string
 //   - reviewerID string
 //   - comments string
-func (_e *MockService_Expecter) RejectCloseRequest(ctx interface{}, id interface{}, reviewerID interface{}, comments interface{}) *MockService_RejectCloseRequest_Call {
+func (_e *MockService_Expecter) RejectCloseRequest(ctx any, id any, reviewerID any, comments any) *MockService_RejectCloseRequest_Call {
 	return &MockService_RejectCloseRequest_Call{Call: _e.mock.On("RejectCloseRequest", ctx, id, reviewerID, comments)}
 }
 
@@ -317,8 +388,8 @@ func (_c *MockService_RejectCloseRequest_Call) RunAndReturn(run func(ctx context
 }
 
 // SubmitCloseRequest provides a mock function for the type MockService
-func (_mock *MockService) SubmitCloseRequest(ctx context.Context, cycleID int64, submittedByID string) (int64, error) {
-	ret := _mock.Called(ctx, cycleID, submittedByID)
+func (_mock *MockService) SubmitCloseRequest(ctx context.Context, request entities.CourseCycleCloseRequest, submittedByID string) (int64, error) {
+	ret := _mock.Called(ctx, request, submittedByID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SubmitCloseRequest")
@@ -326,16 +397,16 @@ func (_mock *MockService) SubmitCloseRequest(ctx context.Context, cycleID int64,
 
 	var r0 int64
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, string) (int64, error)); ok {
-		return returnFunc(ctx, cycleID, submittedByID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.CourseCycleCloseRequest, string) (int64, error)); ok {
+		return returnFunc(ctx, request, submittedByID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, string) int64); ok {
-		r0 = returnFunc(ctx, cycleID, submittedByID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.CourseCycleCloseRequest, string) int64); ok {
+		r0 = returnFunc(ctx, request, submittedByID)
 	} else {
 		r0 = ret.Get(0).(int64)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, string) error); ok {
-		r1 = returnFunc(ctx, cycleID, submittedByID)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.CourseCycleCloseRequest, string) error); ok {
+		r1 = returnFunc(ctx, request, submittedByID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -349,21 +420,21 @@ type MockService_SubmitCloseRequest_Call struct {
 
 // SubmitCloseRequest is a helper method to define mock.On call
 //   - ctx context.Context
-//   - cycleID int64
+//   - request entities.CourseCycleCloseRequest
 //   - submittedByID string
-func (_e *MockService_Expecter) SubmitCloseRequest(ctx interface{}, cycleID interface{}, submittedByID interface{}) *MockService_SubmitCloseRequest_Call {
-	return &MockService_SubmitCloseRequest_Call{Call: _e.mock.On("SubmitCloseRequest", ctx, cycleID, submittedByID)}
+func (_e *MockService_Expecter) SubmitCloseRequest(ctx any, request any, submittedByID any) *MockService_SubmitCloseRequest_Call {
+	return &MockService_SubmitCloseRequest_Call{Call: _e.mock.On("SubmitCloseRequest", ctx, request, submittedByID)}
 }
 
-func (_c *MockService_SubmitCloseRequest_Call) Run(run func(ctx context.Context, cycleID int64, submittedByID string)) *MockService_SubmitCloseRequest_Call {
+func (_c *MockService_SubmitCloseRequest_Call) Run(run func(ctx context.Context, request entities.CourseCycleCloseRequest, submittedByID string)) *MockService_SubmitCloseRequest_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 int64
+		var arg1 entities.CourseCycleCloseRequest
 		if args[1] != nil {
-			arg1 = args[1].(int64)
+			arg1 = args[1].(entities.CourseCycleCloseRequest)
 		}
 		var arg2 string
 		if args[2] != nil {
@@ -383,7 +454,7 @@ func (_c *MockService_SubmitCloseRequest_Call) Return(n int64, err error) *MockS
 	return _c
 }
 
-func (_c *MockService_SubmitCloseRequest_Call) RunAndReturn(run func(ctx context.Context, cycleID int64, submittedByID string) (int64, error)) *MockService_SubmitCloseRequest_Call {
+func (_c *MockService_SubmitCloseRequest_Call) RunAndReturn(run func(ctx context.Context, request entities.CourseCycleCloseRequest, submittedByID string) (int64, error)) *MockService_SubmitCloseRequest_Call {
 	_c.Call.Return(run)
 	return _c
 }

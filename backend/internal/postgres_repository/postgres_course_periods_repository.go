@@ -38,6 +38,23 @@ func (r *PostgresRepository) GetCoursePeriodByID(ctx context.Context, periodID s
 	return newCoursePeriodFromModel(coursePeriod), nil
 }
 
+// GetCoursePeriodByIDIncludingInactive is GetCoursePeriodByID without the is_active filter, so it
+// also finds cycles closed by an approved close request.
+func (r *PostgresRepository) GetCoursePeriodByIDIncludingInactive(ctx context.Context, periodID string) (entities.CoursePeriod, error) {
+	query, args, err := queries.GetCoursePeriodByIDIncludingInactive(periodID).ToSql()
+	if err != nil {
+		return entities.CoursePeriod{}, err
+	}
+	coursePeriod, err := scanCoursePeriod(r.db.QueryRowContext(ctx, query, args...))
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return entities.CoursePeriod{}, fmt.Errorf("%w: %w", course_periods.ErrCoursePeriodNotFound, err)
+		}
+		return entities.CoursePeriod{}, err
+	}
+	return newCoursePeriodFromModel(coursePeriod), nil
+}
+
 func (r *PostgresRepository) GetCoursePeriods(ctx context.Context, courseID string, pageScope entities.PageScope) ([]entities.CoursePeriod, entities.PageScope, error) {
 	query, args, err := queries.GetCoursePeriods(courseID, pageScope).ToSql()
 	if err != nil {
@@ -64,6 +81,29 @@ func (r *PostgresRepository) GetCoursePeriods(ctx context.Context, courseID stri
 	return coursePeriods, pageScope, nil
 }
 
+func (r *PostgresRepository) GetActiveCoursePeriodByCourseID(ctx context.Context, courseID string) (entities.CoursePeriod, error) {
+	query, args, err := queries.GetActiveCoursePeriodByCourseID(courseID).ToSql()
+	if err != nil {
+		return entities.CoursePeriod{}, err
+	}
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		return entities.CoursePeriod{}, err
+	}
+	//nolint:errcheck
+	defer stmt.Close()
+	var coursePeriod models.CoursePeriod
+	row := stmt.QueryRowContext(ctx, args...)
+	coursePeriod, err = scanCoursePeriod(row)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return entities.CoursePeriod{}, fmt.Errorf("%w: %w", course_periods.ErrCoursePeriodNotFound, err)
+		}
+		return entities.CoursePeriod{}, err
+	}
+	return newCoursePeriodFromModel(coursePeriod), nil
+}
+
 func (r *PostgresRepository) GetLatestCoursePeriod(ctx context.Context, courseID string) (entities.CoursePeriod, error) {
 	query, args, err := queries.GetLatestCoursePeriod(courseID).ToSql()
 	if err != nil {
@@ -76,8 +116,10 @@ func (r *PostgresRepository) GetLatestCoursePeriod(ctx context.Context, courseID
 	defer stmt.Close()
 
 	var period entities.CoursePeriod
+	var startDate, endDate, inscriptionDate sql.NullString
 	row := stmt.QueryRowContext(ctx, args...)
-	err = row.Scan(&period.ID, &period.StartDate, &period.EndDate, &period.InscriptionDate)
+	err = row.Scan(&period.ID, &period.Name, &startDate, &endDate, &inscriptionDate)
+	period.StartDate, period.EndDate, period.InscriptionDate = startDate.String, endDate.String, inscriptionDate.String
 	if err != nil {
 		// If no period found, return empty period without error
 		if err.Error() == "sql: no rows in result set" {
@@ -93,28 +135,48 @@ func (r *PostgresRepository) CreateCoursePeriod(ctx context.Context, coursePerio
 	cpModel := models.CoursePeriod{
 		ID:              coursePeriod.ID,
 		CourseID:        coursePeriod.Course.ID,
-		StartDate:       coursePeriod.StartDate,
-		EndDate:         coursePeriod.EndDate,
-		InscriptionDate: coursePeriod.InscriptionDate,
+		Name:            coursePeriod.Name,
+		StartDate:       nullableDate(coursePeriod.StartDate),
+		EndDate:         nullableDate(coursePeriod.EndDate),
+		InscriptionDate: nullableDate(coursePeriod.InscriptionDate),
+		Capacity:        coursePeriod.Capacity,
 	}
 
-	query, args, err := queries.InsertCoursePeriod(cpModel).ToSql()
+	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return -1, err
 	}
-	stmt, err := r.db.PrepareContext(ctx, query)
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	insertQuery, insertArgs, err := queries.InsertCoursePeriod(cpModel).ToSql()
 	if err != nil {
 		return -1, err
 	}
-	defer stmt.Close()
 	var lastInsertedID int64
-	err = stmt.QueryRowContext(ctx, args...).Scan(&lastInsertedID)
-	if err != nil {
+	if err = tx.QueryRowContext(ctx, insertQuery, insertArgs...).Scan(&lastInsertedID); err != nil {
 		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == pgErrorCodeUniqueViolation {
 			r.logger.Error("duplicated course period", zap.Error(err))
 			return -1, httperrors.NewDuplicateEntryError(err)
 		}
 		r.logger.Error("error inserting course period", zap.Error(err))
+		return -1, err
+	}
+
+	open := string(entities.CourseManagementStatusOpen)
+	statusQuery, statusArgs, err := queries.SetCourseManagementStatus(coursePeriod.Course.ID, &open).ToSql()
+	if err != nil {
+		return -1, err
+	}
+	if _, err = tx.ExecContext(ctx, statusQuery, statusArgs...); err != nil {
+		r.logger.Error("error setting course management status", zap.Error(err))
+		return -1, err
+	}
+
+	if err = tx.Commit(); err != nil {
 		return -1, err
 	}
 	return lastInsertedID, nil
@@ -311,10 +373,12 @@ func scanCoursePeriod(row scannable) (models.CoursePeriod, error) {
 	err := row.Scan(
 		&coursePeriod.ID,
 		&coursePeriod.CourseID,
+		&coursePeriod.Name,
 		&coursePeriod.StartDate,
 		&coursePeriod.EndDate,
 		&coursePeriod.IsActive,
 		&coursePeriod.InscriptionDate,
+		&coursePeriod.Capacity,
 		&coursePeriod.ClosedAt,
 		&coursePeriod.CreatedAt,
 		&coursePeriod.UpdatedAt,
@@ -335,13 +399,15 @@ func newCoursePeriodFromModel(coursePeriod models.CoursePeriod) entities.CourseP
 	}
 
 	return entities.CoursePeriod{
-		ID: coursePeriod.ID,
+		ID:   coursePeriod.ID,
+		Name: coursePeriod.Name,
 		Course: entities.Course{
 			ID: coursePeriod.CourseID,
 		},
-		StartDate:       coursePeriod.StartDate,
-		EndDate:         coursePeriod.EndDate,
-		InscriptionDate: coursePeriod.InscriptionDate,
+		StartDate:       coursePeriod.StartDate.String,
+		EndDate:         coursePeriod.EndDate.String,
+		InscriptionDate: coursePeriod.InscriptionDate.String,
+		Capacity:        coursePeriod.Capacity,
 		IsActive:        coursePeriod.IsActive,
 		ClosedAt:        closedAt,
 		CreatedAt:       coursePeriod.CreatedAt,
@@ -354,9 +420,16 @@ func newCoursePeriodModelFromEntities(cp entities.CoursePeriod) models.CoursePer
 	return models.CoursePeriod{
 		ID:              cp.ID,
 		CourseID:        cp.Course.ID,
-		StartDate:       cp.StartDate,
-		EndDate:         cp.EndDate,
+		Name:            cp.Name,
+		StartDate:       nullableDate(cp.StartDate),
+		EndDate:         nullableDate(cp.EndDate),
 		IsActive:        cp.IsActive,
-		InscriptionDate: cp.InscriptionDate,
+		InscriptionDate: nullableDate(cp.InscriptionDate),
+		Capacity:        cp.Capacity,
 	}
+}
+
+// nullableDate stores an empty date as NULL: a DATE column rejects "".
+func nullableDate(date string) sql.NullString {
+	return sql.NullString{String: date, Valid: date != ""}
 }

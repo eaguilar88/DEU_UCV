@@ -13,7 +13,7 @@ func userToResponse(user entities.User) GetUserResponse {
 		dob = t.Format(clientDateFormat)
 	}
 
-	return GetUserResponse{
+	response := GetUserResponse{
 		ID:                user.ID,
 		CI:                user.CI,
 		Email:             user.Email,
@@ -28,6 +28,11 @@ func userToResponse(user entities.User) GetUserResponse {
 		CreatedAt:         user.CreatedAt,
 		ProfilePictureURL: user.ProfilePictureURL,
 	}
+	if len(user.Roles) > 0 {
+		response.Rol = entities.UIRole(user.Roles)
+		response.Roles = entities.UIRoles(user.Roles)
+	}
+	return response
 }
 
 // usersToResponse converts a slice of User entities to responses.

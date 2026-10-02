@@ -17,10 +17,19 @@ func NewMockService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -78,7 +87,7 @@ type MockService_CreateGroup_Call struct {
 // CreateGroup is a helper method to define mock.On call
 //   - ctx context.Context
 //   - group entities.ExtensionGroup
-func (_e *MockService_Expecter) CreateGroup(ctx interface{}, group interface{}) *MockService_CreateGroup_Call {
+func (_e *MockService_Expecter) CreateGroup(ctx any, group any) *MockService_CreateGroup_Call {
 	return &MockService_CreateGroup_Call{Call: _e.mock.On("CreateGroup", ctx, group)}
 }
 
@@ -136,7 +145,7 @@ type MockService_DeleteGroup_Call struct {
 //   - ctx context.Context
 //   - groupID string
 //   - userID string
-func (_e *MockService_Expecter) DeleteGroup(ctx interface{}, groupID interface{}, userID interface{}) *MockService_DeleteGroup_Call {
+func (_e *MockService_Expecter) DeleteGroup(ctx any, groupID any, userID any) *MockService_DeleteGroup_Call {
 	return &MockService_DeleteGroup_Call{Call: _e.mock.On("DeleteGroup", ctx, groupID, userID)}
 }
 
@@ -208,7 +217,7 @@ type MockService_GetGroup_Call struct {
 //   - ctx context.Context
 //   - groupID string
 //   - viewer entities.Viewer
-func (_e *MockService_Expecter) GetGroup(ctx interface{}, groupID interface{}, viewer interface{}) *MockService_GetGroup_Call {
+func (_e *MockService_Expecter) GetGroup(ctx any, groupID any, viewer any) *MockService_GetGroup_Call {
 	return &MockService_GetGroup_Call{Call: _e.mock.On("GetGroup", ctx, groupID, viewer)}
 }
 
@@ -289,7 +298,7 @@ type MockService_GetGroups_Call struct {
 //   - filter entities.GroupFilter
 //   - pageScope entities.PageScope
 //   - viewer entities.Viewer
-func (_e *MockService_Expecter) GetGroups(ctx interface{}, filter interface{}, pageScope interface{}, viewer interface{}) *MockService_GetGroups_Call {
+func (_e *MockService_Expecter) GetGroups(ctx any, filter any, pageScope any, viewer any) *MockService_GetGroups_Call {
 	return &MockService_GetGroups_Call{Call: _e.mock.On("GetGroups", ctx, filter, pageScope, viewer)}
 }
 
@@ -366,7 +375,7 @@ type MockService_GetGroupsSimple_Call struct {
 
 // GetGroupsSimple is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockService_Expecter) GetGroupsSimple(ctx interface{}) *MockService_GetGroupsSimple_Call {
+func (_e *MockService_Expecter) GetGroupsSimple(ctx any) *MockService_GetGroupsSimple_Call {
 	return &MockService_GetGroupsSimple_Call{Call: _e.mock.On("GetGroupsSimple", ctx)}
 }
 
@@ -429,7 +438,7 @@ type MockService_GetRandomActiveGroups_Call struct {
 // GetRandomActiveGroups is a helper method to define mock.On call
 //   - ctx context.Context
 //   - limit int
-func (_e *MockService_Expecter) GetRandomActiveGroups(ctx interface{}, limit interface{}) *MockService_GetRandomActiveGroups_Call {
+func (_e *MockService_Expecter) GetRandomActiveGroups(ctx any, limit any) *MockService_GetRandomActiveGroups_Call {
 	return &MockService_GetRandomActiveGroups_Call{Call: _e.mock.On("GetRandomActiveGroups", ctx, limit)}
 }
 
@@ -487,7 +496,7 @@ type MockService_UpdateGroup_Call struct {
 //   - ctx context.Context
 //   - groupID string
 //   - group entities.ExtensionGroup
-func (_e *MockService_Expecter) UpdateGroup(ctx interface{}, groupID interface{}, group interface{}) *MockService_UpdateGroup_Call {
+func (_e *MockService_Expecter) UpdateGroup(ctx any, groupID any, group any) *MockService_UpdateGroup_Call {
 	return &MockService_UpdateGroup_Call{Call: _e.mock.On("UpdateGroup", ctx, groupID, group)}
 }
 

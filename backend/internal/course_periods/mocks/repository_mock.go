@@ -17,10 +17,19 @@ func NewMockRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockRepository {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockRepository{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -73,7 +82,7 @@ type MockRepository_CreateAnnouncement_Call struct {
 //   - ctx context.Context
 //   - periodID string
 //   - announcement entities.Announcement
-func (_e *MockRepository_Expecter) CreateAnnouncement(ctx interface{}, periodID interface{}, announcement interface{}) *MockRepository_CreateAnnouncement_Call {
+func (_e *MockRepository_Expecter) CreateAnnouncement(ctx any, periodID any, announcement any) *MockRepository_CreateAnnouncement_Call {
 	return &MockRepository_CreateAnnouncement_Call{Call: _e.mock.On("CreateAnnouncement", ctx, periodID, announcement)}
 }
 
@@ -144,7 +153,7 @@ type MockRepository_CreateCoursePeriod_Call struct {
 // CreateCoursePeriod is a helper method to define mock.On call
 //   - ctx context.Context
 //   - coursePeriod entities.CoursePeriod
-func (_e *MockRepository_Expecter) CreateCoursePeriod(ctx interface{}, coursePeriod interface{}) *MockRepository_CreateCoursePeriod_Call {
+func (_e *MockRepository_Expecter) CreateCoursePeriod(ctx any, coursePeriod any) *MockRepository_CreateCoursePeriod_Call {
 	return &MockRepository_CreateCoursePeriod_Call{Call: _e.mock.On("CreateCoursePeriod", ctx, coursePeriod)}
 }
 
@@ -201,7 +210,7 @@ type MockRepository_DeleteAnnouncement_Call struct {
 // DeleteAnnouncement is a helper method to define mock.On call
 //   - ctx context.Context
 //   - announcementID string
-func (_e *MockRepository_Expecter) DeleteAnnouncement(ctx interface{}, announcementID interface{}) *MockRepository_DeleteAnnouncement_Call {
+func (_e *MockRepository_Expecter) DeleteAnnouncement(ctx any, announcementID any) *MockRepository_DeleteAnnouncement_Call {
 	return &MockRepository_DeleteAnnouncement_Call{Call: _e.mock.On("DeleteAnnouncement", ctx, announcementID)}
 }
 
@@ -258,7 +267,7 @@ type MockRepository_DeleteCoursePeriod_Call struct {
 // DeleteCoursePeriod is a helper method to define mock.On call
 //   - ctx context.Context
 //   - periodID string
-func (_e *MockRepository_Expecter) DeleteCoursePeriod(ctx interface{}, periodID interface{}) *MockRepository_DeleteCoursePeriod_Call {
+func (_e *MockRepository_Expecter) DeleteCoursePeriod(ctx any, periodID any) *MockRepository_DeleteCoursePeriod_Call {
 	return &MockRepository_DeleteCoursePeriod_Call{Call: _e.mock.On("DeleteCoursePeriod", ctx, periodID)}
 }
 
@@ -286,6 +295,72 @@ func (_c *MockRepository_DeleteCoursePeriod_Call) Return(err error) *MockReposit
 }
 
 func (_c *MockRepository_DeleteCoursePeriod_Call) RunAndReturn(run func(ctx context.Context, periodID string) error) *MockRepository_DeleteCoursePeriod_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetActiveCoursePeriodByCourseID provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetActiveCoursePeriodByCourseID(ctx context.Context, courseID string) (entities.CoursePeriod, error) {
+	ret := _mock.Called(ctx, courseID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetActiveCoursePeriodByCourseID")
+	}
+
+	var r0 entities.CoursePeriod
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (entities.CoursePeriod, error)); ok {
+		return returnFunc(ctx, courseID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) entities.CoursePeriod); ok {
+		r0 = returnFunc(ctx, courseID)
+	} else {
+		r0 = ret.Get(0).(entities.CoursePeriod)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, courseID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetActiveCoursePeriodByCourseID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetActiveCoursePeriodByCourseID'
+type MockRepository_GetActiveCoursePeriodByCourseID_Call struct {
+	*mock.Call
+}
+
+// GetActiveCoursePeriodByCourseID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - courseID string
+func (_e *MockRepository_Expecter) GetActiveCoursePeriodByCourseID(ctx any, courseID any) *MockRepository_GetActiveCoursePeriodByCourseID_Call {
+	return &MockRepository_GetActiveCoursePeriodByCourseID_Call{Call: _e.mock.On("GetActiveCoursePeriodByCourseID", ctx, courseID)}
+}
+
+func (_c *MockRepository_GetActiveCoursePeriodByCourseID_Call) Run(run func(ctx context.Context, courseID string)) *MockRepository_GetActiveCoursePeriodByCourseID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetActiveCoursePeriodByCourseID_Call) Return(coursePeriod entities.CoursePeriod, err error) *MockRepository_GetActiveCoursePeriodByCourseID_Call {
+	_c.Call.Return(coursePeriod, err)
+	return _c
+}
+
+func (_c *MockRepository_GetActiveCoursePeriodByCourseID_Call) RunAndReturn(run func(ctx context.Context, courseID string) (entities.CoursePeriod, error)) *MockRepository_GetActiveCoursePeriodByCourseID_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -324,7 +399,7 @@ type MockRepository_GetAnnouncementByID_Call struct {
 // GetAnnouncementByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - announcementID string
-func (_e *MockRepository_Expecter) GetAnnouncementByID(ctx interface{}, announcementID interface{}) *MockRepository_GetAnnouncementByID_Call {
+func (_e *MockRepository_Expecter) GetAnnouncementByID(ctx any, announcementID any) *MockRepository_GetAnnouncementByID_Call {
 	return &MockRepository_GetAnnouncementByID_Call{Call: _e.mock.On("GetAnnouncementByID", ctx, announcementID)}
 }
 
@@ -392,7 +467,7 @@ type MockRepository_GetAnnouncementsByCoursePeriodID_Call struct {
 // GetAnnouncementsByCoursePeriodID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - periodID string
-func (_e *MockRepository_Expecter) GetAnnouncementsByCoursePeriodID(ctx interface{}, periodID interface{}) *MockRepository_GetAnnouncementsByCoursePeriodID_Call {
+func (_e *MockRepository_Expecter) GetAnnouncementsByCoursePeriodID(ctx any, periodID any) *MockRepository_GetAnnouncementsByCoursePeriodID_Call {
 	return &MockRepository_GetAnnouncementsByCoursePeriodID_Call{Call: _e.mock.On("GetAnnouncementsByCoursePeriodID", ctx, periodID)}
 }
 
@@ -420,6 +495,72 @@ func (_c *MockRepository_GetAnnouncementsByCoursePeriodID_Call) Return(announcem
 }
 
 func (_c *MockRepository_GetAnnouncementsByCoursePeriodID_Call) RunAndReturn(run func(ctx context.Context, periodID string) ([]entities.Announcement, error)) *MockRepository_GetAnnouncementsByCoursePeriodID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetCourse provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetCourse(ctx context.Context, courseID string) (entities.Course, error) {
+	ret := _mock.Called(ctx, courseID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCourse")
+	}
+
+	var r0 entities.Course
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (entities.Course, error)); ok {
+		return returnFunc(ctx, courseID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) entities.Course); ok {
+		r0 = returnFunc(ctx, courseID)
+	} else {
+		r0 = ret.Get(0).(entities.Course)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, courseID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetCourse_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCourse'
+type MockRepository_GetCourse_Call struct {
+	*mock.Call
+}
+
+// GetCourse is a helper method to define mock.On call
+//   - ctx context.Context
+//   - courseID string
+func (_e *MockRepository_Expecter) GetCourse(ctx any, courseID any) *MockRepository_GetCourse_Call {
+	return &MockRepository_GetCourse_Call{Call: _e.mock.On("GetCourse", ctx, courseID)}
+}
+
+func (_c *MockRepository_GetCourse_Call) Run(run func(ctx context.Context, courseID string)) *MockRepository_GetCourse_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetCourse_Call) Return(course entities.Course, err error) *MockRepository_GetCourse_Call {
+	_c.Call.Return(course, err)
+	return _c
+}
+
+func (_c *MockRepository_GetCourse_Call) RunAndReturn(run func(ctx context.Context, courseID string) (entities.Course, error)) *MockRepository_GetCourse_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -458,7 +599,7 @@ type MockRepository_GetCoursePeriodByID_Call struct {
 // GetCoursePeriodByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - periodID string
-func (_e *MockRepository_Expecter) GetCoursePeriodByID(ctx interface{}, periodID interface{}) *MockRepository_GetCoursePeriodByID_Call {
+func (_e *MockRepository_Expecter) GetCoursePeriodByID(ctx any, periodID any) *MockRepository_GetCoursePeriodByID_Call {
 	return &MockRepository_GetCoursePeriodByID_Call{Call: _e.mock.On("GetCoursePeriodByID", ctx, periodID)}
 }
 
@@ -533,7 +674,7 @@ type MockRepository_GetCoursePeriods_Call struct {
 //   - ctx context.Context
 //   - courseID string
 //   - pageScope entities.PageScope
-func (_e *MockRepository_Expecter) GetCoursePeriods(ctx interface{}, courseID interface{}, pageScope interface{}) *MockRepository_GetCoursePeriods_Call {
+func (_e *MockRepository_Expecter) GetCoursePeriods(ctx any, courseID any, pageScope any) *MockRepository_GetCoursePeriods_Call {
 	return &MockRepository_GetCoursePeriods_Call{Call: _e.mock.On("GetCoursePeriods", ctx, courseID, pageScope)}
 }
 
@@ -606,7 +747,7 @@ type MockRepository_GetUsersByCoursePeriodID_Call struct {
 // GetUsersByCoursePeriodID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - periodID string
-func (_e *MockRepository_Expecter) GetUsersByCoursePeriodID(ctx interface{}, periodID interface{}) *MockRepository_GetUsersByCoursePeriodID_Call {
+func (_e *MockRepository_Expecter) GetUsersByCoursePeriodID(ctx any, periodID any) *MockRepository_GetUsersByCoursePeriodID_Call {
 	return &MockRepository_GetUsersByCoursePeriodID_Call{Call: _e.mock.On("GetUsersByCoursePeriodID", ctx, periodID)}
 }
 
@@ -664,7 +805,7 @@ type MockRepository_UpdateAnnouncement_Call struct {
 //   - ctx context.Context
 //   - announcementID string
 //   - announcement entities.Announcement
-func (_e *MockRepository_Expecter) UpdateAnnouncement(ctx interface{}, announcementID interface{}, announcement interface{}) *MockRepository_UpdateAnnouncement_Call {
+func (_e *MockRepository_Expecter) UpdateAnnouncement(ctx any, announcementID any, announcement any) *MockRepository_UpdateAnnouncement_Call {
 	return &MockRepository_UpdateAnnouncement_Call{Call: _e.mock.On("UpdateAnnouncement", ctx, announcementID, announcement)}
 }
 
@@ -727,7 +868,7 @@ type MockRepository_UpdateCoursePeriod_Call struct {
 //   - ctx context.Context
 //   - periodID string
 //   - coursePeriod entities.CoursePeriod
-func (_e *MockRepository_Expecter) UpdateCoursePeriod(ctx interface{}, periodID interface{}, coursePeriod interface{}) *MockRepository_UpdateCoursePeriod_Call {
+func (_e *MockRepository_Expecter) UpdateCoursePeriod(ctx any, periodID any, coursePeriod any) *MockRepository_UpdateCoursePeriod_Call {
 	return &MockRepository_UpdateCoursePeriod_Call{Call: _e.mock.On("UpdateCoursePeriod", ctx, periodID, coursePeriod)}
 }
 

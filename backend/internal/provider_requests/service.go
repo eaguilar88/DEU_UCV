@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"strconv"
+	"strings"
 
+	"github.com/eaguilar88/deu/internal/email"
 	"github.com/eaguilar88/deu/internal/entities"
 	"go.uber.org/zap"
 )
@@ -22,7 +24,7 @@ type Repository interface {
 }
 
 type MailClient interface {
-	Send(ctx context.Context, to string, subject string, body string) error
+	SendTemplate(ctx context.Context, to string, tmpl email.Template, data any) error
 }
 
 type service struct {
@@ -61,7 +63,7 @@ func (s *service) ApproveProviderRequest(ctx context.Context, id, reviewerID str
 		return err
 	}
 
-	if err := s.emailClient.Send(ctx, provider.User.Email, "Solicitud de registro aprobada", "Tu solicitud ha sido aprobada"); err != nil {
+	if err := s.emailClient.SendTemplate(ctx, provider.User.Email, email.TemplateProviderRequestApproved, nil); err != nil {
 		s.logger.Warn("failed to send approval email",
 			zap.Error(err),
 			zap.String("provider_request_id", id),
@@ -81,7 +83,31 @@ func (s *service) RejectProviderRequest(ctx context.Context, id, reviewerID, com
 		return ErrRequestIsProcessed
 	}
 
-	return s.repo.RejectProviderRequest(ctx, id, reviewerID, comments)
+	providerIDStr := strconv.FormatInt(existing.ProviderID, 10)
+	provider, err := s.repo.GetProvider(ctx, providerIDStr)
+	if err != nil {
+		s.logger.Error("failed to get provider", zap.Error(err), zap.String("provider_id", providerIDStr))
+		return err
+	}
+
+	if err := s.repo.RejectProviderRequest(ctx, id, reviewerID, comments); err != nil {
+		s.logger.Error("failed to reject provider request", zap.Error(err))
+		return err
+	}
+
+	name := provider.Name
+	if name == "" {
+		name = strings.TrimSpace(provider.User.FirstName + " " + provider.User.LastName)
+	}
+	data := email.ProviderRejectedData{ProviderName: name, Reason: comments}
+	if err := s.emailClient.SendTemplate(ctx, provider.User.Email, email.TemplateProviderRejected, data); err != nil {
+		s.logger.Warn("failed to send rejection email",
+			zap.Error(err),
+			zap.String("provider_request_id", id),
+		)
+	}
+
+	return nil
 }
 
 func (s *service) GetProviderRequests(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.ProviderRequest, entities.PageScope, error) {

@@ -17,10 +17,19 @@ func NewMockRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockRepository {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockRepository{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -72,7 +81,7 @@ type MockRepository_GetGroupByUserID_Call struct {
 // GetGroupByUserID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID string
-func (_e *MockRepository_Expecter) GetGroupByUserID(ctx interface{}, userID interface{}) *MockRepository_GetGroupByUserID_Call {
+func (_e *MockRepository_Expecter) GetGroupByUserID(ctx any, userID any) *MockRepository_GetGroupByUserID_Call {
 	return &MockRepository_GetGroupByUserID_Call{Call: _e.mock.On("GetGroupByUserID", ctx, userID)}
 }
 
@@ -138,7 +147,7 @@ type MockRepository_GetProviderByUserID_Call struct {
 // GetProviderByUserID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID string
-func (_e *MockRepository_Expecter) GetProviderByUserID(ctx interface{}, userID interface{}) *MockRepository_GetProviderByUserID_Call {
+func (_e *MockRepository_Expecter) GetProviderByUserID(ctx any, userID any) *MockRepository_GetProviderByUserID_Call {
 	return &MockRepository_GetProviderByUserID_Call{Call: _e.mock.On("GetProviderByUserID", ctx, userID)}
 }
 
@@ -204,7 +213,7 @@ type MockRepository_GetProviderCodeByUserID_Call struct {
 // GetProviderCodeByUserID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID string
-func (_e *MockRepository_Expecter) GetProviderCodeByUserID(ctx interface{}, userID interface{}) *MockRepository_GetProviderCodeByUserID_Call {
+func (_e *MockRepository_Expecter) GetProviderCodeByUserID(ctx any, userID any) *MockRepository_GetProviderCodeByUserID_Call {
 	return &MockRepository_GetProviderCodeByUserID_Call{Call: _e.mock.On("GetProviderCodeByUserID", ctx, userID)}
 }
 
@@ -272,7 +281,7 @@ type MockRepository_GetUserByUsername_Call struct {
 // GetUserByUsername is a helper method to define mock.On call
 //   - ctx context.Context
 //   - username string
-func (_e *MockRepository_Expecter) GetUserByUsername(ctx interface{}, username interface{}) *MockRepository_GetUserByUsername_Call {
+func (_e *MockRepository_Expecter) GetUserByUsername(ctx any, username any) *MockRepository_GetUserByUsername_Call {
 	return &MockRepository_GetUserByUsername_Call{Call: _e.mock.On("GetUserByUsername", ctx, username)}
 }
 
@@ -340,7 +349,7 @@ type MockRepository_GetUserRoles_Call struct {
 // GetUserRoles is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID string
-func (_e *MockRepository_Expecter) GetUserRoles(ctx interface{}, userID interface{}) *MockRepository_GetUserRoles_Call {
+func (_e *MockRepository_Expecter) GetUserRoles(ctx any, userID any) *MockRepository_GetUserRoles_Call {
 	return &MockRepository_GetUserRoles_Call{Call: _e.mock.On("GetUserRoles", ctx, userID)}
 }
 

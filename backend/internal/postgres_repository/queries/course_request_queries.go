@@ -1,6 +1,7 @@
 package queries
 
 import (
+	"database/sql"
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
@@ -17,6 +18,8 @@ var courseRequestQuerySelectCommon = []string{
 	"r.created_at",
 	"r.updated_at",
 	"r.deleted_at",
+	"r.score",
+	"r.classification",
 }
 
 var courseRequestWithCourseSelect = []string{
@@ -29,6 +32,8 @@ var courseRequestWithCourseSelect = []string{
 	"r.created_at",
 	"r.updated_at",
 	"r.deleted_at",
+	"r.score",
+	"r.classification",
 	// Course fields (excluding deleted_at)
 	"c.id",
 	"c.name",
@@ -44,40 +49,72 @@ var courseRequestWithCourseSelect = []string{
 	"c.is_active",
 	"c.created_at",
 	"c.updated_at",
+	"c.has_documentation",
+	// The course owner's user account.
+	"p.user_id",
+}
+
+// fromCourseRequestsWithCourse joins each request (r) with its course (c) and provider (p).
+func fromCourseRequestsWithCourse(q sq.SelectBuilder) sq.SelectBuilder {
+	return q.From(fmt.Sprintf("%s AS r", courseRequestsTableName)).
+		Join(fmt.Sprintf("%s AS c ON c.id = r.course_id", coursesTableName)).
+		Join(fmt.Sprintf("%s AS p ON p.id = c.provider_id", providersTableName))
 }
 
 func GetCourseRequestByID(requestID string) sq.SelectBuilder {
-	return psql.Select(courseRequestWithCourseSelect...).
-		From(fmt.Sprintf("%s AS r", courseRequestsTableName)).
-		Join(fmt.Sprintf("%s AS c ON c.id = r.course_id", coursesTableName)).
+	return fromCourseRequestsWithCourse(psql.Select(courseRequestWithCourseSelect...)).
 		Where(sq.Eq{"r.deleted_at": nil}).
 		Where(sq.Eq{"r.id": requestID})
 }
 
+// GetCourseRequestsByFaculty lists requests with their course. An empty faculty lists every
+// faculty (DEU-wide admin).
 func GetCourseRequestsByFaculty(faculty string, limit, offset int) sq.SelectBuilder {
-	return psql.Select(courseRequestQuerySelectCommon...).
+	q := fromCourseRequestsWithCourse(psql.Select(courseRequestWithCourseSelect...)).
+		Where(sq.Eq{"r.deleted_at": nil})
+	if faculty != "" {
+		q = q.Where(sq.Eq{"c.faculty": faculty})
+	}
+	return q.OrderBy("r.created_at DESC").
+		Limit(uint64(limit)).
+		Offset(uint64(offset))
+}
+
+func CountCourseRequestsByFaculty(faculty string) sq.SelectBuilder {
+	q := psql.Select("COUNT(*)").
 		From(fmt.Sprintf("%s AS r", courseRequestsTableName)).
 		Join(fmt.Sprintf("%s AS c ON c.id = r.course_id", coursesTableName)).
-		Where(sq.Eq{"c.faculty": faculty}).
+		Where(sq.Eq{"r.deleted_at": nil})
+	if faculty != "" {
+		q = q.Where(sq.Eq{"c.faculty": faculty})
+	}
+	return q
+}
+
+func GetCourseRequestsByProvider(providerID string, limit, offset int) sq.SelectBuilder {
+	return fromCourseRequestsWithCourse(psql.Select(courseRequestWithCourseSelect...)).
+		Where(sq.Eq{"c.provider_id": providerID}).
 		Where(sq.Eq{"r.deleted_at": nil}).
 		OrderBy("r.created_at DESC").
 		Limit(uint64(limit)).
 		Offset(uint64(offset))
 }
 
-func CountCourseRequestsByFaculty(faculty string) sq.SelectBuilder {
+func CountCourseRequestsByProvider(providerID string) sq.SelectBuilder {
 	return psql.Select("COUNT(*)").
 		From(fmt.Sprintf("%s AS r", courseRequestsTableName)).
 		Join(fmt.Sprintf("%s AS c ON c.id = r.course_id", coursesTableName)).
-		Where(sq.Eq{"c.faculty": faculty}).
+		Where(sq.Eq{"c.provider_id": providerID}).
 		Where(sq.Eq{"r.deleted_at": nil})
 }
 
-func ApproveCourseRequest(requestID, reviewerID, comments string) sq.UpdateBuilder {
+func ApproveCourseRequest(requestID, reviewerID, comments string, score sql.NullFloat64, classification sql.NullString) sq.UpdateBuilder {
 	return psql.Update(courseRequestsTableName).
 		Set("status", "approved").
 		Set("reviewer_id", reviewerID).
 		Set("comments", comments).
+		Set("score", score).
+		Set("classification", classification).
 		Set("reviewed_at", sq.Expr("NOW()")).
 		Where(sq.Eq{"id": requestID, "status": "under_review"})
 }

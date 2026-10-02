@@ -17,10 +17,19 @@ func NewMockService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -73,7 +82,7 @@ type MockService_CreateAnnouncement_Call struct {
 //   - ctx context.Context
 //   - periodID string
 //   - announcement entities.Announcement
-func (_e *MockService_Expecter) CreateAnnouncement(ctx interface{}, periodID interface{}, announcement interface{}) *MockService_CreateAnnouncement_Call {
+func (_e *MockService_Expecter) CreateAnnouncement(ctx any, periodID any, announcement any) *MockService_CreateAnnouncement_Call {
 	return &MockService_CreateAnnouncement_Call{Call: _e.mock.On("CreateAnnouncement", ctx, periodID, announcement)}
 }
 
@@ -144,7 +153,7 @@ type MockService_CreateCoursePeriod_Call struct {
 // CreateCoursePeriod is a helper method to define mock.On call
 //   - ctx context.Context
 //   - period entities.CoursePeriod
-func (_e *MockService_Expecter) CreateCoursePeriod(ctx interface{}, period interface{}) *MockService_CreateCoursePeriod_Call {
+func (_e *MockService_Expecter) CreateCoursePeriod(ctx any, period any) *MockService_CreateCoursePeriod_Call {
 	return &MockService_CreateCoursePeriod_Call{Call: _e.mock.On("CreateCoursePeriod", ctx, period)}
 }
 
@@ -201,7 +210,7 @@ type MockService_DeleteAnnouncement_Call struct {
 // DeleteAnnouncement is a helper method to define mock.On call
 //   - ctx context.Context
 //   - announcementID string
-func (_e *MockService_Expecter) DeleteAnnouncement(ctx interface{}, announcementID interface{}) *MockService_DeleteAnnouncement_Call {
+func (_e *MockService_Expecter) DeleteAnnouncement(ctx any, announcementID any) *MockService_DeleteAnnouncement_Call {
 	return &MockService_DeleteAnnouncement_Call{Call: _e.mock.On("DeleteAnnouncement", ctx, announcementID)}
 }
 
@@ -259,7 +268,7 @@ type MockService_DeleteCoursePeriod_Call struct {
 //   - ctx context.Context
 //   - periodID string
 //   - userID string
-func (_e *MockService_Expecter) DeleteCoursePeriod(ctx interface{}, periodID interface{}, userID interface{}) *MockService_DeleteCoursePeriod_Call {
+func (_e *MockService_Expecter) DeleteCoursePeriod(ctx any, periodID any, userID any) *MockService_DeleteCoursePeriod_Call {
 	return &MockService_DeleteCoursePeriod_Call{Call: _e.mock.On("DeleteCoursePeriod", ctx, periodID, userID)}
 }
 
@@ -330,7 +339,7 @@ type MockService_GetAnnouncement_Call struct {
 // GetAnnouncement is a helper method to define mock.On call
 //   - ctx context.Context
 //   - announcementID string
-func (_e *MockService_Expecter) GetAnnouncement(ctx interface{}, announcementID interface{}) *MockService_GetAnnouncement_Call {
+func (_e *MockService_Expecter) GetAnnouncement(ctx any, announcementID any) *MockService_GetAnnouncement_Call {
 	return &MockService_GetAnnouncement_Call{Call: _e.mock.On("GetAnnouncement", ctx, announcementID)}
 }
 
@@ -396,7 +405,7 @@ type MockService_GetCoursePeriod_Call struct {
 // GetCoursePeriod is a helper method to define mock.On call
 //   - ctx context.Context
 //   - periodID string
-func (_e *MockService_Expecter) GetCoursePeriod(ctx interface{}, periodID interface{}) *MockService_GetCoursePeriod_Call {
+func (_e *MockService_Expecter) GetCoursePeriod(ctx any, periodID any) *MockService_GetCoursePeriod_Call {
 	return &MockService_GetCoursePeriod_Call{Call: _e.mock.On("GetCoursePeriod", ctx, periodID)}
 }
 
@@ -471,7 +480,7 @@ type MockService_GetCoursePeriods_Call struct {
 //   - ctx context.Context
 //   - courseID string
 //   - pageScope entities.PageScope
-func (_e *MockService_Expecter) GetCoursePeriods(ctx interface{}, courseID interface{}, pageScope interface{}) *MockService_GetCoursePeriods_Call {
+func (_e *MockService_Expecter) GetCoursePeriods(ctx any, courseID any, pageScope any) *MockService_GetCoursePeriods_Call {
 	return &MockService_GetCoursePeriods_Call{Call: _e.mock.On("GetCoursePeriods", ctx, courseID, pageScope)}
 }
 
@@ -534,7 +543,7 @@ type MockService_UpdateAnnouncement_Call struct {
 //   - ctx context.Context
 //   - announcementID string
 //   - announcement entities.Announcement
-func (_e *MockService_Expecter) UpdateAnnouncement(ctx interface{}, announcementID interface{}, announcement interface{}) *MockService_UpdateAnnouncement_Call {
+func (_e *MockService_Expecter) UpdateAnnouncement(ctx any, announcementID any, announcement any) *MockService_UpdateAnnouncement_Call {
 	return &MockService_UpdateAnnouncement_Call{Call: _e.mock.On("UpdateAnnouncement", ctx, announcementID, announcement)}
 }
 
@@ -597,7 +606,7 @@ type MockService_UpdateCoursePeriod_Call struct {
 //   - ctx context.Context
 //   - periodID string
 //   - period entities.CoursePeriod
-func (_e *MockService_Expecter) UpdateCoursePeriod(ctx interface{}, periodID interface{}, period interface{}) *MockService_UpdateCoursePeriod_Call {
+func (_e *MockService_Expecter) UpdateCoursePeriod(ctx any, periodID any, period any) *MockService_UpdateCoursePeriod_Call {
 	return &MockService_UpdateCoursePeriod_Call{Call: _e.mock.On("UpdateCoursePeriod", ctx, periodID, period)}
 }
 

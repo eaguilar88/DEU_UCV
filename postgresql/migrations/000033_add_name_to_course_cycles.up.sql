@@ -1,0 +1,1 @@
+ALTER TABLE deu.course_cycles ADD COLUMN name VARCHAR NOT NULL DEFAULT '';

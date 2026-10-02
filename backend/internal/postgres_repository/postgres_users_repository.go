@@ -229,6 +229,45 @@ func (r *PostgresRepository) GetUserRoles(ctx context.Context, userID string) ([
 	return roles, nil
 }
 
+// GetFacultyCoordinatorEmails returns the emails of the faculty_admin users assigned to faculty.
+func (r *PostgresRepository) GetFacultyCoordinatorEmails(ctx context.Context, faculty entities.Faculty) ([]string, error) {
+	return r.getEmailsByRole(ctx, entities.RoleNameFromID(entities.RoleFacultyAdmin), faculty)
+}
+
+// GetDEUAdminEmails returns the emails of every deu_admin user.
+func (r *PostgresRepository) GetDEUAdminEmails(ctx context.Context) ([]string, error) {
+	return r.getEmailsByRole(ctx, entities.RoleNameFromID(entities.RoleDeuAdmin), "")
+}
+
+func (r *PostgresRepository) getEmailsByRole(ctx context.Context, roleName string, faculty entities.Faculty) ([]string, error) {
+	query, args, err := queries.GetEmailsByRole(roleName, faculty).ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.QueryContext(ctx, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	emails := make([]string, 0)
+	for rows.Next() {
+		var address string
+		if err := rows.Scan(&address); err != nil {
+			return nil, err
+		}
+		emails = append(emails, address)
+	}
+	return emails, rows.Err()
+}
+
 func (r *PostgresRepository) GetProviderCodeByUserID(ctx context.Context, userID string) (string, error) {
 	query, args, err := queries.GetProviderCodeByUserID(userID).ToSql()
 	if err != nil {
@@ -264,17 +303,29 @@ func (r *PostgresRepository) AddRoleToUser(ctx context.Context, tx *sql.Tx, user
 }
 
 func (r *PostgresRepository) UpdateUserRole(ctx context.Context, userID, fromRole, toRole string) error {
+	return updateUserRole(ctx, r.db, userID, fromRole, toRole)
+}
+
+// updateUserRole replaces fromRole with toRole for the user, on p (the database or a transaction).
+func updateUserRole(ctx context.Context, p preparer, userID, fromRole, toRole string) error {
 	query, args, err := queries.UpdateUserRole(userID, fromRole, toRole).ToSql()
 	if err != nil {
 		return err
 	}
-	stmt, err := r.db.PrepareContext(ctx, query)
+	stmt, err := p.PrepareContext(ctx, query)
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
-	_, err = stmt.ExecContext(ctx, args...)
-	return err
+	result, err := stmt.ExecContext(ctx, args...)
+	if err != nil {
+		return err
+	}
+	// No row means the user does not hold fromRole, so nothing was updated.
+	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
+		return fmt.Errorf("%w: user %s, role %s: %w", users.ErrUserRoleNotFound, userID, fromRole, err)
+	}
+	return nil
 }
 
 func (r *PostgresRepository) GetUsersByCoursePeriodID(ctx context.Context, periodID string) ([]entities.User, error) {

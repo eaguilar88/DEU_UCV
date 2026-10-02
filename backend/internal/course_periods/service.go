@@ -2,13 +2,17 @@ package course_periods
 
 import (
 	"context"
+	"errors"
 
+	"github.com/eaguilar88/deu/internal/courses"
 	"github.com/eaguilar88/deu/internal/entities"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
 
 type Repository interface {
+	GetCourse(ctx context.Context, courseID string) (entities.Course, error)
+	GetActiveCoursePeriodByCourseID(ctx context.Context, courseID string) (entities.CoursePeriod, error)
 	GetCoursePeriodByID(ctx context.Context, periodID string) (entities.CoursePeriod, error)
 	GetCoursePeriods(ctx context.Context, courseID string, pageScope entities.PageScope) ([]entities.CoursePeriod, entities.PageScope, error)
 	CreateCoursePeriod(ctx context.Context, coursePeriod entities.CoursePeriod) (int64, error)
@@ -77,6 +81,32 @@ func (s *service) GetCoursePeriods(ctx context.Context, courseID string, pageSco
 }
 
 func (s *service) CreateCoursePeriod(ctx context.Context, period entities.CoursePeriod) (int64, error) {
+	// security.CustomValidator silently drops regular field-validation errors, so the
+	// "capacidad" validate tag on the request DTO is not actually enforced at the HTTP layer.
+	if period.Capacity <= 0 {
+		return -1, ErrInvalidCapacity
+	}
+	if period.Name == "" {
+		return -1, ErrCohortNameRequired
+	}
+
+	course, err := s.repo.GetCourse(ctx, period.Course.ID)
+	if err != nil {
+		return -1, err
+	}
+
+	if course.ManagementStatus == entities.CourseManagementStatusClosureRequested {
+		return -1, courses.ErrCourseClosureRequestPending
+	}
+
+	if _, err := s.repo.GetActiveCoursePeriodByCourseID(ctx, period.Course.ID); err != nil {
+		if !errors.Is(err, ErrCoursePeriodNotFound) {
+			return -1, err
+		}
+	} else {
+		return -1, ErrCoursePeriodAlreadyOpen
+	}
+
 	id, err := s.repo.CreateCoursePeriod(ctx, period)
 	if err != nil {
 		return -1, err
@@ -85,6 +115,9 @@ func (s *service) CreateCoursePeriod(ctx context.Context, period entities.Course
 }
 
 func (s *service) UpdateCoursePeriod(ctx context.Context, periodID string, period entities.CoursePeriod) error {
+	if period.Name == "" {
+		return ErrCohortNameRequired
+	}
 	return s.repo.UpdateCoursePeriod(ctx, periodID, period)
 }
 

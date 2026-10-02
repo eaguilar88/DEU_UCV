@@ -1,0 +1,6 @@
+{{define "subject"}}Solicitud de curso aprobada{{end}}
+
+{{define "content"}}
+<p>Tu solicitud para el curso <strong>{{.CourseName}}</strong> ha sido aprobada.</p>
+{{if .Comments}}<p>Observaciones: {{.Comments}}</p>{{end}}
+{{end}}

@@ -49,11 +49,6 @@ func toCourseEntity(c echo.Context) (entities.Course, error) {
 		}
 	}
 
-	faculty, err := entities.FromString(formValue(c, "facultad"))
-	if err != nil {
-		return entities.Course{}, fmt.Errorf("facultad is required")
-	}
-
 	course := entities.Course{
 		Name:              formValue(c, "nombre"),
 		Description:       formValue(c, "descripcion"),
@@ -68,8 +63,14 @@ func toCourseEntity(c echo.Context) (entities.Course, error) {
 		Evaluation:        formValue(c, "evaluacion"),
 		Schedule:          formValue(c, "cronograma"),
 		Type:              entities.FromStringCourseType(formValue(c, "tipo")),
-		Faculty:           faculty,
 		Location:          formValue(c, "ubicacion"),
+		Competencies:      formValue(c, "contenido_competencias"),
+		Bibliography:      formValue(c, "bibliografia"),
+	}
+
+	// The facilitator CV is optional.
+	if cv, err := utils.GetFileFrom(c, entities.CourseFileTypeFacilitatorCV); err == nil {
+		course.FacilitatorCV = cv
 	}
 
 	cover, err := utils.GetFileFrom(c, entities.CourseFileTypeCover)
@@ -98,5 +99,7 @@ func toCourseUpdateEntity(req UpdateCourseRequest, ID string) entities.Course {
 		Schedule:          req.Schedule,
 		Type:              entities.FromStringCourseType(req.Type),
 		Location:          req.Location,
+		Competencies:      req.Competencies,
+		Bibliography:      req.Bibliography,
 	}
 }

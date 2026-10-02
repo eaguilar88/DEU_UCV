@@ -17,10 +17,19 @@ func NewMockRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockRepository {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockRepository{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -75,7 +84,7 @@ type MockRepository_GetActivitiesByCityMetrics_Call struct {
 //   - ctx context.Context
 //   - year int
 //   - groupID string
-func (_e *MockRepository_Expecter) GetActivitiesByCityMetrics(ctx interface{}, year interface{}, groupID interface{}) *MockRepository_GetActivitiesByCityMetrics_Call {
+func (_e *MockRepository_Expecter) GetActivitiesByCityMetrics(ctx any, year any, groupID any) *MockRepository_GetActivitiesByCityMetrics_Call {
 	return &MockRepository_GetActivitiesByCityMetrics_Call{Call: _e.mock.On("GetActivitiesByCityMetrics", ctx, year, groupID)}
 }
 
@@ -149,7 +158,7 @@ type MockRepository_GetActivitiesByStateMetrics_Call struct {
 //   - ctx context.Context
 //   - year int
 //   - groupID string
-func (_e *MockRepository_Expecter) GetActivitiesByStateMetrics(ctx interface{}, year interface{}, groupID interface{}) *MockRepository_GetActivitiesByStateMetrics_Call {
+func (_e *MockRepository_Expecter) GetActivitiesByStateMetrics(ctx any, year any, groupID any) *MockRepository_GetActivitiesByStateMetrics_Call {
 	return &MockRepository_GetActivitiesByStateMetrics_Call{Call: _e.mock.On("GetActivitiesByStateMetrics", ctx, year, groupID)}
 }
 
@@ -223,7 +232,7 @@ type MockRepository_GetActivityParticipantsMetrics_Call struct {
 //   - ctx context.Context
 //   - year int
 //   - groupID string
-func (_e *MockRepository_Expecter) GetActivityParticipantsMetrics(ctx interface{}, year interface{}, groupID interface{}) *MockRepository_GetActivityParticipantsMetrics_Call {
+func (_e *MockRepository_Expecter) GetActivityParticipantsMetrics(ctx any, year any, groupID any) *MockRepository_GetActivityParticipantsMetrics_Call {
 	return &MockRepository_GetActivityParticipantsMetrics_Call{Call: _e.mock.On("GetActivityParticipantsMetrics", ctx, year, groupID)}
 }
 
@@ -297,7 +306,7 @@ type MockRepository_GetGroupParticipantsMetrics_Call struct {
 //   - ctx context.Context
 //   - year int
 //   - groupID string
-func (_e *MockRepository_Expecter) GetGroupParticipantsMetrics(ctx interface{}, year interface{}, groupID interface{}) *MockRepository_GetGroupParticipantsMetrics_Call {
+func (_e *MockRepository_Expecter) GetGroupParticipantsMetrics(ctx any, year any, groupID any) *MockRepository_GetGroupParticipantsMetrics_Call {
 	return &MockRepository_GetGroupParticipantsMetrics_Call{Call: _e.mock.On("GetGroupParticipantsMetrics", ctx, year, groupID)}
 }
 
@@ -373,7 +382,7 @@ type MockRepository_GetKnowledgeAreasByYearMetrics_Call struct {
 //   - endYear int
 //   - masterAreas []string
 //   - groupID string
-func (_e *MockRepository_Expecter) GetKnowledgeAreasByYearMetrics(ctx interface{}, startYear interface{}, endYear interface{}, masterAreas interface{}, groupID interface{}) *MockRepository_GetKnowledgeAreasByYearMetrics_Call {
+func (_e *MockRepository_Expecter) GetKnowledgeAreasByYearMetrics(ctx any, startYear any, endYear any, masterAreas any, groupID any) *MockRepository_GetKnowledgeAreasByYearMetrics_Call {
 	return &MockRepository_GetKnowledgeAreasByYearMetrics_Call{Call: _e.mock.On("GetKnowledgeAreasByYearMetrics", ctx, startYear, endYear, masterAreas, groupID)}
 }
 
@@ -458,7 +467,7 @@ type MockRepository_GetYearlyActivitiesMetrics_Call struct {
 //   - startYear int
 //   - endYear int
 //   - groupID string
-func (_e *MockRepository_Expecter) GetYearlyActivitiesMetrics(ctx interface{}, startYear interface{}, endYear interface{}, groupID interface{}) *MockRepository_GetYearlyActivitiesMetrics_Call {
+func (_e *MockRepository_Expecter) GetYearlyActivitiesMetrics(ctx any, startYear any, endYear any, groupID any) *MockRepository_GetYearlyActivitiesMetrics_Call {
 	return &MockRepository_GetYearlyActivitiesMetrics_Call{Call: _e.mock.On("GetYearlyActivitiesMetrics", ctx, startYear, endYear, groupID)}
 }
 

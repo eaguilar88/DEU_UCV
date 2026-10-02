@@ -30,6 +30,23 @@ func GetRolesByUserID(userID string) sq.SelectBuilder {
 		Where(sq.Eq{"pr.user_id": userID})
 }
 
+// GetEmailsByRole selects the emails of the users holding roleName. A non-empty faculty keeps only
+// the assignments scoped to that faculty.
+func GetEmailsByRole(roleName string, faculty entities.Faculty) sq.SelectBuilder {
+	query := psql.Select("DISTINCT u.email").
+		From(fmt.Sprintf("%s AS u", usersTableName)).
+		Join(fmt.Sprintf("%s AS pr ON pr.user_id = u.id", pivotTableName)).
+		Join(fmt.Sprintf("%s AS r ON r.id = pr.role_id", rolesTableName)).
+		Where(sq.Eq{"u.deleted_at": nil}).
+		Where(sq.Eq{"pr.deleted_at": nil}).
+		Where(sq.Eq{"r.deleted_at": nil}).
+		Where(sq.Eq{"r.name": roleName})
+	if faculty != "" {
+		query = query.Where(sq.Eq{"pr.faculty": string(faculty)})
+	}
+	return query
+}
+
 func GetUserByUsername(username string) sq.SelectBuilder {
 	return psql.Select("u.id", "u.email", "u.first_name", "u.last_name", "u.password").
 		From(fmt.Sprintf("%s AS u", usersTableName)).

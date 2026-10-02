@@ -86,3 +86,17 @@ func TestJWTSigner_GenerateJWT_GroupAndProviderClaims(t *testing.T) {
 		assert.Equal(t, "", v1Claims["providerName"])
 	})
 }
+
+func TestJWTSigner_GenerateJWT_UIRoles(t *testing.T) {
+	signer := NewJWTSigner("test-signing-key", 3600, zap.NewNop())
+
+	tokenString, err := signer.GenerateJWT("user-id", []entities.UserRole{{Name: "course_admin", DomainType: "course"}}, "", "", "", "", "")
+	require.NoError(t, err)
+	claims, err := signer.ValidateToken(tokenString)
+	require.NoError(t, err)
+
+	// The UI reads the top-level claims; authorization keeps reading v1.roles.
+	assert.Equal(t, "proveedor", claims["rol"])
+	assert.Equal(t, []any{"proveedor"}, claims["roles"])
+	assert.Equal(t, []any{"course_admin"}, claims["v1"].(map[string]any)["roles"])
+}
