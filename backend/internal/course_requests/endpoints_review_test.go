@@ -59,7 +59,7 @@ func TestHandler_RejectCourseRequest(t *testing.T) {
 			body:   `{"observaciones":"Documentación incompleta"}`,
 			userID: "reviewer-1",
 			prepare: func(svc *mocks.MockService) {
-				svc.EXPECT().RejectCourseRequest(mock.Anything, "1", "reviewer-1", "Documentación incompleta").Return(nil)
+				svc.EXPECT().RejectCourseRequest(mock.Anything, "1", "reviewer-1", "Documentación incompleta", entities.Viewer{UserID: "reviewer-1"}).Return(nil)
 			},
 			wantStatus: http.StatusNoContent,
 		},
@@ -73,7 +73,7 @@ func TestHandler_RejectCourseRequest(t *testing.T) {
 			body:   `{}`,
 			userID: "reviewer-1",
 			prepare: func(svc *mocks.MockService) {
-				svc.EXPECT().RejectCourseRequest(mock.Anything, "1", "reviewer-1", "").Return(ErrCourseRequestNotFound)
+				svc.EXPECT().RejectCourseRequest(mock.Anything, "1", "reviewer-1", "", mock.Anything).Return(ErrCourseRequestNotFound)
 			},
 			wantStatus: http.StatusNotFound,
 		},
@@ -82,9 +82,27 @@ func TestHandler_RejectCourseRequest(t *testing.T) {
 			body:   `{}`,
 			userID: "reviewer-1",
 			prepare: func(svc *mocks.MockService) {
-				svc.EXPECT().RejectCourseRequest(mock.Anything, "1", "reviewer-1", "").Return(errors.New("db error"))
+				svc.EXPECT().RejectCourseRequest(mock.Anything, "1", "reviewer-1", "", mock.Anything).Return(errors.New("db error"))
 			},
 			wantStatus: http.StatusInternalServerError,
+		},
+		{
+			name:   "request of another faculty returns 403",
+			body:   `{}`,
+			userID: "reviewer-1",
+			prepare: func(svc *mocks.MockService) {
+				svc.EXPECT().RejectCourseRequest(mock.Anything, "1", "reviewer-1", "", mock.Anything).Return(ErrCourseRequestForbidden)
+			},
+			wantStatus: http.StatusForbidden,
+		},
+		{
+			name:   "already processed request returns 409",
+			body:   `{}`,
+			userID: "reviewer-1",
+			prepare: func(svc *mocks.MockService) {
+				svc.EXPECT().RejectCourseRequest(mock.Anything, "1", "reviewer-1", "", mock.Anything).Return(ErrRequestIsProcessed)
+			},
+			wantStatus: http.StatusConflict,
 		},
 	}
 
@@ -116,7 +134,7 @@ func TestHandler_RedirectCourseRequest(t *testing.T) {
 			body:   `{"facultad":"Ciencias","motivo":"Facultad incorrecta"}`,
 			userID: "reviewer-1",
 			prepare: func(svc *mocks.MockService) {
-				svc.EXPECT().RedirectCourseRequest(mock.Anything, "1", "reviewer-1", entities.FacultyCiencias, "Facultad incorrecta").Return(nil)
+				svc.EXPECT().RedirectCourseRequest(mock.Anything, "1", "reviewer-1", entities.FacultyCiencias, "Facultad incorrecta", entities.Viewer{UserID: "reviewer-1"}).Return(nil)
 			},
 			wantStatus: http.StatusNoContent,
 		},
@@ -142,9 +160,27 @@ func TestHandler_RedirectCourseRequest(t *testing.T) {
 			body:   `{"facultad":"Ciencias","motivo":"Facultad incorrecta"}`,
 			userID: "reviewer-1",
 			prepare: func(svc *mocks.MockService) {
-				svc.EXPECT().RedirectCourseRequest(mock.Anything, "1", "reviewer-1", entities.FacultyCiencias, "Facultad incorrecta").Return(ErrCourseRequestNotFound)
+				svc.EXPECT().RedirectCourseRequest(mock.Anything, "1", "reviewer-1", entities.FacultyCiencias, "Facultad incorrecta", mock.Anything).Return(ErrCourseRequestNotFound)
 			},
 			wantStatus: http.StatusNotFound,
+		},
+		{
+			name:   "request of another faculty returns 403",
+			body:   `{"facultad":"Ciencias","motivo":"Facultad incorrecta"}`,
+			userID: "reviewer-1",
+			prepare: func(svc *mocks.MockService) {
+				svc.EXPECT().RedirectCourseRequest(mock.Anything, "1", "reviewer-1", entities.FacultyCiencias, "Facultad incorrecta", mock.Anything).Return(ErrCourseRequestForbidden)
+			},
+			wantStatus: http.StatusForbidden,
+		},
+		{
+			name:   "already processed request returns 409",
+			body:   `{"facultad":"Ciencias","motivo":"Facultad incorrecta"}`,
+			userID: "reviewer-1",
+			prepare: func(svc *mocks.MockService) {
+				svc.EXPECT().RedirectCourseRequest(mock.Anything, "1", "reviewer-1", entities.FacultyCiencias, "Facultad incorrecta", mock.Anything).Return(ErrRequestIsProcessed)
+			},
+			wantStatus: http.StatusConflict,
 		},
 	}
 

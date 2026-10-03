@@ -175,6 +175,55 @@ func TestService_GetProvider(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name:       "success with contract documents in intention, commitment order",
+			providerID: "1",
+			prepare: func(repoMock *mocks.MockRepository, storageMock *mocks.MockStorageClient) {
+				repoMock.EXPECT().GetProvider(mock.Anything, "1").Return(entities.Provider{ID: "1"}, nil)
+				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1", entities.OwnerTypeProvider).
+					Return(entities.GroupedFiles{}, nil)
+				repoMock.EXPECT().GetProviderContracts(mock.Anything, "1").Return([]entities.ProviderContract{
+					{ID: "c1", Type: entities.ContractTypeInitial},
+					{ID: "c2", Type: entities.ContractTypeAddendum},
+				}, nil)
+				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "c1", entities.OwnerTypeProviderContract).
+					Return(entities.GroupedFiles{
+						entities.ProviderFileTypeCommitmentLetter: {{Key: "compromiso-key"}},
+						entities.ProviderFileTypeIntentionLetter:  {{Key: "intencion-key"}},
+					}, nil)
+				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "c2", entities.OwnerTypeProviderContract).
+					Return(entities.GroupedFiles{entities.ProviderFileTypeAddendum: {{Key: "adenda-key"}}}, nil)
+				storageMock.EXPECT().GetPresignedFileURL(mock.Anything, "intencion-key").Return("http://url/intencion.pdf", nil)
+				storageMock.EXPECT().GetPresignedFileURL(mock.Anything, "compromiso-key").Return("http://url/compromiso.pdf", nil)
+				storageMock.EXPECT().GetPresignedFileURL(mock.Anything, "adenda-key").Return("http://url/adenda.pdf", nil)
+			},
+			want: entities.Provider{
+				ID: "1",
+				Contracts: []entities.ProviderContract{
+					{ID: "c1", Type: entities.ContractTypeInitial, Files: []*entities.File{
+						{Key: "intencion-key", URL: "http://url/intencion.pdf"},
+						{Key: "compromiso-key", URL: "http://url/compromiso.pdf"},
+					}},
+					{ID: "c2", Type: entities.ContractTypeAddendum, Files: []*entities.File{
+						{Key: "adenda-key", URL: "http://url/adenda.pdf"},
+					}},
+				},
+			},
+		},
+		{
+			name:       "get contract files error",
+			providerID: "1",
+			prepare: func(repoMock *mocks.MockRepository, _ *mocks.MockStorageClient) {
+				repoMock.EXPECT().GetProvider(mock.Anything, "1").Return(entities.Provider{ID: "1"}, nil)
+				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1", entities.OwnerTypeProvider).
+					Return(entities.GroupedFiles{}, nil)
+				repoMock.EXPECT().GetProviderContracts(mock.Anything, "1").
+					Return([]entities.ProviderContract{{ID: "c1", Type: entities.ContractTypeInitial}}, nil)
+				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "c1", entities.OwnerTypeProviderContract).
+					Return(nil, errors.New("db error"))
+			},
+			wantErr: true,
+		},
 	}
 
 	loggerMock := zap.NewNop()
