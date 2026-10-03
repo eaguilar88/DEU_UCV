@@ -1,0 +1,10 @@
+{{define "subject"}}Recordatorio: solicitudes pendientes por revisar{{end}}
+
+{{define "content"}}
+<p>Tienes solicitudes pendientes por revisar en tu facultad ({{.Faculty}}) con {{.MinDays}} días o más desde que fueron formuladas:</p>
+<ul>
+  {{if .CourseRequests}}<li>Solicitudes de cursos: <strong>{{.CourseRequests}}</strong></li>{{end}}
+  {{if .GroupRequests}}<li>Solicitudes de grupos de extensión: <strong>{{.GroupRequests}}</strong></li>{{end}}
+</ul>
+<p>Ingresa al sistema para revisarlas.</p>
+{{end}}

@@ -27,6 +27,12 @@ type Repository interface {
 	GetGroupByID(ctx context.Context, groupID string) (entities.ExtensionGroup, error)
 	GetUser(ctx context.Context, userID string) (*entities.User, error)
 	GetContactsByOwner(ctx context.Context, ownerID string, ownerType entities.OwnerType) ([]entities.Contact, error)
+
+	// Yearly renewals
+	GetGroupRenewal(ctx context.Context, renewalID string) (entities.GroupRenewal, error)
+	ApplyGroupRenewal(ctx context.Context, reqID string, renewal entities.GroupRenewal) error
+	RejectGroupRenewal(ctx context.Context, reqID, renewalID, reason string) error
+	GetFilesByOwner(ctx context.Context, ownerID string, ownerType entities.OwnerType) (entities.GroupedFiles, error)
 }
 
 // MailClient defines the email sending operations required by the group_requests service.
@@ -34,16 +40,23 @@ type MailClient interface {
 	SendTemplate(ctx context.Context, to string, tmpl email.Template, data any) error
 }
 
+// StorageClient signs the links to a renewal's proposed files for its reviewers.
+type StorageClient interface {
+	GetPresignedFileURL(ctx context.Context, objectKey string) (string, error)
+}
+
 type service struct {
 	repo        Repository
 	emailClient MailClient
+	storage     StorageClient
 	logger      *zap.Logger
 }
 
-func NewService(repo Repository, emailClient MailClient, logger *zap.Logger) Service {
+func NewService(repo Repository, emailClient MailClient, storage StorageClient, logger *zap.Logger) Service {
 	return &service{
 		repo:        repo,
 		emailClient: emailClient,
+		storage:     storage,
 		logger:      logger,
 	}
 }
@@ -60,8 +73,9 @@ func (s *service) ApproveGroupRequest(ctx context.Context, reqID string) error {
 		return err
 	}
 
+	// Only the requests of the same round count: the group's creation, or this same renewal.
 	allApproved := true
-	for _, r := range allRequests {
+	for _, r := range sameRound(allRequests, req.RenewalID) {
 		if r.ID == reqID {
 			continue
 		}
@@ -73,6 +87,10 @@ func (s *service) ApproveGroupRequest(ctx context.Context, reqID string) error {
 
 	if !allApproved {
 		return s.repo.ApproveGroupRequest(ctx, reqID)
+	}
+
+	if req.RenewalID != "" {
+		return s.applyRenewal(ctx, req)
 	}
 
 	group, err := s.repo.GetGroupByID(ctx, req.GroupID)
@@ -148,6 +166,49 @@ func (s *service) ApproveGroupRequest(ctx context.Context, reqID string) error {
 	return nil
 }
 
+// applyRenewal approves the renewal's last pending request, replacing the group's data with the
+// renewal's, and lets the group know.
+func (s *service) applyRenewal(ctx context.Context, req entities.GroupRequest) error {
+	logFields := []zap.Field{zap.String("group_id", req.GroupID), zap.String("renewal_id", req.RenewalID)}
+	renewal, err := s.repo.GetGroupRenewal(ctx, req.RenewalID)
+	if err != nil {
+		s.logger.Error("failed to get group renewal", append(logFields, zap.Error(err))...)
+		return err
+	}
+
+	if err := s.repo.ApplyGroupRenewal(ctx, req.ID, renewal); err != nil {
+		s.logger.Error("failed to apply group renewal", append(logFields, zap.Error(err))...)
+		return err
+	}
+	s.logger.Info("group renewal approved and applied", logFields...)
+
+	// The renewal is already applied, so a notification failure is logged but not returned.
+	to := renewal.Group.Email
+	if to == "" {
+		if to, err = s.groupContactEmail(ctx, req.GroupID); err != nil {
+			s.logger.Warn("failed to get group contact email for renewal approval notice", append(logFields, zap.Error(err))...)
+			return nil
+		}
+	}
+	body := email.GroupRequestApprovedData{GroupName: renewal.Group.Name}
+	if err := s.emailClient.SendTemplate(ctx, to, email.TemplateGroupRenewalApproved, body); err != nil {
+		s.logger.Warn("failed to send group renewal approval email", append(logFields, zap.Error(err))...)
+	}
+	return nil
+}
+
+// sameRound keeps the requests of one approval round: the group's creation (renewalID empty) or
+// one of its renewals.
+func sameRound(requests []entities.GroupRequest, renewalID string) []entities.GroupRequest {
+	round := make([]entities.GroupRequest, 0, len(requests))
+	for _, r := range requests {
+		if r.RenewalID == renewalID {
+			round = append(round, r)
+		}
+	}
+	return round
+}
+
 // generateRandomPassword returns a cryptographically random alphanumeric
 // password of the given length.
 func generateRandomPassword(length int) (string, error) {
@@ -169,7 +230,12 @@ func (s *service) RejectGroupRequest(ctx context.Context, reqID, reason string) 
 		return err
 	}
 
-	if err := s.repo.RejectGroupRequest(ctx, reqID, reason); err != nil {
+	// Rejecting one request of a renewal rejects the whole renewal, so the group can submit a new one.
+	if req.RenewalID != "" {
+		if err := s.repo.RejectGroupRenewal(ctx, reqID, req.RenewalID, reason); err != nil {
+			return err
+		}
+	} else if err := s.repo.RejectGroupRequest(ctx, reqID, reason); err != nil {
 		return err
 	}
 
@@ -218,7 +284,7 @@ func (s *service) GetGroupRequestsByFaculty(ctx context.Context, faculty entitie
 			s.logger.Error("failed to get approvals for group request", zap.Error(err), zap.String("group_id", req.GroupID))
 			return nil, entities.PageScope{}, 0, err
 		}
-		requests[i].Approvals = approvals
+		requests[i].Approvals = sameRound(approvals, req.RenewalID)
 	}
 
 	return requests, ps, pendingCount, nil
@@ -230,13 +296,57 @@ func (s *service) GetGroupRequestByID(ctx context.Context, reqID string) (entiti
 		return entities.GroupRequest{}, err
 	}
 
-	req.Approvals, err = s.repo.GetGroupRequestsByGroupID(ctx, req.GroupID)
+	approvals, err := s.repo.GetGroupRequestsByGroupID(ctx, req.GroupID)
 	if err != nil {
 		s.logger.Error("failed to get approvals for group request", zap.Error(err), zap.String("group_id", req.GroupID))
 		return entities.GroupRequest{}, err
 	}
+	req.Approvals = sameRound(approvals, req.RenewalID)
+
+	if req.RenewalID != "" {
+		renewal, err := s.repo.GetGroupRenewal(ctx, req.RenewalID)
+		if err != nil {
+			s.logger.Error("failed to get group renewal", zap.Error(err), zap.String("renewal_id", req.RenewalID))
+			return entities.GroupRequest{}, err
+		}
+		s.attachRenewalFiles(ctx, &renewal)
+		req.Renewal = &renewal
+	}
 
 	return req, nil
+}
+
+// attachRenewalFiles sets the renewal's proposed logo, project and member documents, with links
+// for its reviewers.
+func (s *service) attachRenewalFiles(ctx context.Context, renewal *entities.GroupRenewal) {
+	files, err := s.repo.GetFilesByOwner(ctx, renewal.ID, entities.OwnerTypeGroupRenewal)
+	if err != nil {
+		s.logger.Error("failed to get group renewal files", zap.Error(err), zap.String("renewal_id", renewal.ID))
+		return
+	}
+
+	sign := func(f *entities.File) *entities.File {
+		if f == nil {
+			return nil
+		}
+		url, err := s.storage.GetPresignedFileURL(ctx, f.Key)
+		if err != nil {
+			s.logger.Warn("failed to sign group renewal file", zap.Error(err), zap.String("key", f.Key))
+			return f
+		}
+		f.URL = url
+		return f
+	}
+
+	renewal.Group.Logo = sign(files.GetSingleFile(entities.GroupFileTypeLogo))
+	renewal.Group.Project = sign(files.GetSingleFile(entities.GroupFileTypeProject))
+	for _, doc := range files.GetMultipleFiles(entities.GroupMemberFileTypeDocument) {
+		i, err := strconv.Atoi(doc.MetaData[entities.GroupRenewalMemberIndexKey])
+		if err != nil || i < 0 || i >= len(renewal.Group.Members) {
+			continue
+		}
+		renewal.Group.Members[i].Document = sign(doc)
+	}
 }
 
 func (s *service) GetPendingGroupRequestsCounts(ctx context.Context, faculty entities.Faculty) ([]entities.FacultyPendingCount, error) {

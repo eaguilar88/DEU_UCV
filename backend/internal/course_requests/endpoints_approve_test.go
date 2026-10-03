@@ -49,12 +49,12 @@ func TestHandler_ApproveCourseRequest_Multipart(t *testing.T) {
 		return r.ID == "1" && r.Reviewer.ID == "reviewer-1" && r.Comments == "buen curso" &&
 			r.Score != nil && *r.Score == 18.5 && r.Classification == "Formación para el trabajo" &&
 			r.EvaluationFile != nil && r.EvaluationFile.Name == "archivo_evaluacion.pdf"
-	}), entities.CourseType_LifeSkills).Return(nil)
+	}), entities.CourseType_LifeSkills, mock.Anything).Return(nil)
 
 	err = NewHandler(svc, zap.NewNop()).ApproveCourseRequest(ctx)
 
 	require.NoError(t, err)
-	assert.Equal(t, http.StatusAccepted, rec.Code)
+	assert.Equal(t, http.StatusNoContent, rec.Code)
 }
 
 func TestHandler_ApproveCourseRequest_JSON(t *testing.T) {
@@ -66,12 +66,12 @@ func TestHandler_ApproveCourseRequest_JSON(t *testing.T) {
 	svc := mocks.NewMockService(t)
 	svc.EXPECT().ApproveCourseRequest(mock.Anything, mock.MatchedBy(func(r entities.CourseRequest) bool {
 		return r.Comments == "ok" && r.Score == nil && r.EvaluationFile == nil
-	}), entities.CourseType_LifeSkills).Return(nil)
+	}), entities.CourseType_LifeSkills, mock.Anything).Return(nil)
 
 	err := NewHandler(svc, zap.NewNop()).ApproveCourseRequest(ctx)
 
 	require.NoError(t, err)
-	assert.Equal(t, http.StatusAccepted, rec.Code)
+	assert.Equal(t, http.StatusNoContent, rec.Code)
 }
 
 func TestHandler_ApproveCourseRequest_InvalidScore(t *testing.T) {

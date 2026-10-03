@@ -188,6 +188,34 @@ components:
           type: string
         updated_at:
           type: string
+        contratos_legales:
+          type: array
+          description: Only returned by GET /providers/{id}.
+          items:
+            $ref: "#/components/schemas/ProviderContract"
+
+    ProviderContract:
+      type: object
+      properties:
+        id:
+          type: string
+        tipo:
+          type: string
+          enum: [inicial, adenda]
+        creado_en:
+          type: string
+        cursos_amparados:
+          type: array
+          description: IDs of the courses the contract covers
+          items:
+            type: string
+        archivos:
+          type: array
+          description: >
+            Short-lived pre-signed URLs of the contract's documents, in a fixed order: intention
+            letter then commitment letter for the initial contract, the addendum for an addendum.
+          items:
+            type: string
 
     # ── Courses ───────────────────────────────────────────────────────────────
 
@@ -1402,7 +1430,13 @@ paths:
 
   /groups/requests/{id}:
     put:
-      summary: Update group
+      summary: Submit the group's yearly renewal request
+      description: >
+        Same multipart payload as POST /groups/requests, with the whole group (data, members,
+        logo, project and member documents). It is stored as a proposal and replaces the group's
+        data only once every approval request is approved (DEU only for multidisciplinary groups,
+        the group's faculty and the DEU otherwise). Only the group's user may submit it, from
+        NOTIFIER_RENEWAL_WINDOW before the renewal date on, and one at a time.
       tags: [Groups]
       security:
         - BearerAuth: []
@@ -1413,10 +1447,24 @@ paths:
           schema:
             type: string
       responses:
-        "200":
-          description: Updated
+        "202":
+          description: Renewal submitted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Renewal ID
+        "400":
+          description: Invalid payload
+        "403":
+          description: Caller is not the group's user
         "404":
           description: Group not found
+        "409":
+          description: Renewal not open yet, or a renewal is already under review
     delete:
       summary: Delete group
       tags: [Groups]
@@ -1730,6 +1778,9 @@ paths:
   /admin/course-requests:
     get:
       summary: List course requests by faculty
+      description: >
+        Includes the requests whose course belongs to the faculty and the ones the faculty
+        redirected to another faculty, which it can see but no longer review.
       tags: [Admin - Course Requests]
       security:
         - BearerAuth: []
@@ -1806,10 +1857,14 @@ paths:
             schema:
               $ref: "#/components/schemas/ApproveCourseRequestBody"
       responses:
-        "200":
+        "204":
           description: Approved
+        "403":
+          description: The request belongs to another faculty. Only the course's current faculty (or a global admin) may review it, not the faculty it was redirected from.
         "404":
           description: Request not found
+        "409":
+          description: The request was already processed
 
   /admin/course-requests/{id}/reject:
     post:
@@ -1829,10 +1884,14 @@ paths:
             schema:
               $ref: "#/components/schemas/RejectRequestBody"
       responses:
-        "200":
+        "204":
           description: Rejected
+        "403":
+          description: The request belongs to another faculty. Only the course's current faculty (or a global admin) may review it, not the faculty it was redirected from.
         "404":
           description: Request not found
+        "409":
+          description: The request was already processed
 
   /admin/course-requests/{id}/redirect:
     post:
@@ -1853,12 +1912,16 @@ paths:
             schema:
               $ref: "#/components/schemas/RedirectCourseRequestBody"
       responses:
-        "200":
+        "204":
           description: Redirected
         "400":
           description: Missing required fields
+        "403":
+          description: The request belongs to another faculty. Only the course's current faculty (or a global admin) may review it, not the faculty it was redirected from.
         "404":
           description: Request not found
+        "409":
+          description: The request was already processed
 
   # ── Admin — Group Requests ────────────────────────────────────────────────
 

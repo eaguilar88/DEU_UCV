@@ -15,7 +15,8 @@ RUN go mod download
 COPY . .
 
 # Build the project
-RUN go build -o main cmd/deu/main.go
+RUN go build -o main cmd/deu/main.go && \
+    go build -o notifier ./cmd/notifier
 
 # Stage 2: Final Image
 FROM alpine:3.22
@@ -24,6 +25,7 @@ WORKDIR /app
 
 # Copy only the necessary files from the builder stage
 COPY --from=builder /app/main .
+COPY --from=builder /app/notifier .
 
 # Expose port 8081
 EXPOSE 8081

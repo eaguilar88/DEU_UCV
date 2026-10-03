@@ -151,6 +151,17 @@ func (s *service) GetProvider(ctx context.Context, providerID string, viewer ent
 		)
 		return entities.Provider{}, fmt.Errorf("failed to get provider contracts: %w", err)
 	}
+	for i := range contracts {
+		if contracts[i].Files, err = s.getContractFiles(ctx, contracts[i]); err != nil {
+			s.logger.Error("failed to get provider contract files",
+				zap.Error(err),
+				zap.String("provider_id", providerID),
+				zap.String("contract_id", contracts[i].ID),
+				zap.String("action", "get_provider_contract_files"),
+			)
+			return entities.Provider{}, fmt.Errorf("failed to get provider contract files: %w", err)
+		}
+	}
 	provider.Contracts = contracts
 
 	s.logger.Debug("provider retrieved successfully",
@@ -456,6 +467,34 @@ func makeContractFileEntity(file *entities.File, contractID, uploadedBy string, 
 	file.UploadedBy = uploadedBy
 	file.CreatedAt = time.Now().Format(time.RFC3339)
 	return file
+}
+
+// getContractFiles returns a contract's documents with pre-signed URLs, in a fixed order the
+// frontend reads by position: intention then commitment letter for the initial contract, the
+// addendum otherwise.
+func (s *service) getContractFiles(ctx context.Context, contract entities.ProviderContract) ([]*entities.File, error) {
+	grouped, err := s.repo.GetFilesByOwner(ctx, contract.ID, entities.OwnerTypeProviderContract)
+	if err != nil {
+		return nil, err
+	}
+
+	purposes := []string{entities.ProviderFileTypeAddendum}
+	if contract.Type == entities.ContractTypeInitial {
+		purposes = []string{entities.ProviderFileTypeIntentionLetter, entities.ProviderFileTypeCommitmentLetter}
+	}
+
+	var files []*entities.File
+	for _, purpose := range purposes {
+		f := grouped.GetSingleFile(purpose)
+		if f == nil {
+			continue
+		}
+		if f.URL, err = s.storage.GetPresignedFileURL(ctx, f.Key); err != nil {
+			return nil, err
+		}
+		files = append(files, f)
+	}
+	return files, nil
 }
 
 // DeleteProvider soft-deletes a provider by ID.

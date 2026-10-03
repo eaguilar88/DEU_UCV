@@ -9,6 +9,7 @@ type GroupRequest struct {
 	ID         int64          `db:"id"`
 	GroupID    int64          `db:"group_id"`
 	GroupName  string         `db:"group_name"`
+	RenewalID  sql.NullInt64  `db:"renewal_id"`
 	Status     string         `db:"status"`
 	Faculty    string         `db:"faculty"`
 	ReviewerID sql.NullInt64  `db:"reviewer_id"`

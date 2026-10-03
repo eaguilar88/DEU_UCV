@@ -26,6 +26,8 @@ const (
 	TemplateProviderRegistrationSubmitted Template = "provider_registration_submitted"
 	TemplateCourseRequestSubmittedFaculty Template = "course_request_submitted_faculty"
 	TemplateCourseRequestSubmittedDEU     Template = "course_request_submitted_deu"
+	TemplateGroupRequestSubmittedFaculty  Template = "group_request_submitted_faculty"
+	TemplateGroupRequestSubmittedDEU      Template = "group_request_submitted_deu"
 	TemplateGroupAdminCredentials         Template = "group_admin_credentials"
 	TemplateGroupRequestRejected          Template = "group_request_rejected"
 	TemplateGroupRequestApproved          Template = "group_request_approved"
@@ -37,6 +39,11 @@ const (
 	TemplateCourseCycleCloseApproved      Template = "course_cycle_close_approved"
 	TemplateCourseCycleCloseRejected      Template = "course_cycle_close_rejected"
 	TemplateCourseCycleCertificatesReady  Template = "course_cycle_certificates_ready"
+	TemplateCoordinatorPendingReminder    Template = "coordinator_pending_requests_reminder"
+	TemplateGroupRenewalReminder          Template = "group_renewal_reminder"
+	TemplateGroupRenewalSubmittedFaculty  Template = "group_renewal_submitted_faculty"
+	TemplateGroupRenewalSubmittedDEU      Template = "group_renewal_submitted_deu"
+	TemplateGroupRenewalApproved          Template = "group_renewal_approved"
 )
 
 // allTemplates lists every template parsed at startup. A template missing from this list cannot be sent.
@@ -49,6 +56,8 @@ var allTemplates = []Template{
 	TemplateProviderRegistrationSubmitted,
 	TemplateCourseRequestSubmittedFaculty,
 	TemplateCourseRequestSubmittedDEU,
+	TemplateGroupRequestSubmittedFaculty,
+	TemplateGroupRequestSubmittedDEU,
 	TemplateGroupAdminCredentials,
 	TemplateGroupRequestApproved,
 	TemplateGroupRequestRejected,
@@ -60,6 +69,11 @@ var allTemplates = []Template{
 	TemplateCourseCycleCloseApproved,
 	TemplateCourseCycleCloseRejected,
 	TemplateCourseCycleCertificatesReady,
+	TemplateCoordinatorPendingReminder,
+	TemplateGroupRenewalReminder,
+	TemplateGroupRenewalSubmittedFaculty,
+	TemplateGroupRenewalSubmittedDEU,
+	TemplateGroupRenewalApproved,
 }
 
 // Data passed to each template. Templates without variables (user_welcome,
@@ -90,6 +104,11 @@ type CourseRequestSubmittedData struct {
 	CourseName   string
 	ProviderName string
 	Faculty      string
+}
+
+type GroupRequestSubmittedData struct {
+	GroupName string
+	Faculty   string
 }
 
 type CourseRequestApprovedData struct {
@@ -140,6 +159,19 @@ type CourseCycleCertificatesReadyData struct {
 	CourseName   string
 	ZipURL       string
 	Certificates []CertificateLink
+}
+
+type CoordinatorPendingReminderData struct {
+	Faculty        string
+	MinDays        int
+	CourseRequests int
+	GroupRequests  int
+}
+
+type GroupRenewalReminderData struct {
+	GroupName string
+	DueDate   string
+	Overdue   bool
 }
 
 // CertificateLink is a participant's name and the link to their certificate's verification page.

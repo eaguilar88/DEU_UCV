@@ -13,9 +13,12 @@ type CourseInfo struct {
 	Content     string `json:"contenido,omitempty"`
 	Type        string `json:"tipo,omitempty"`
 	Faculty     string `json:"facultad,omitempty"`
-	Cost        string `json:"costo,omitempty"`
-	Location    string `json:"ubicacion,omitempty"`
-	IsActive    bool   `json:"activo,omitempty"`
+	// OriginFaculty is where the course was formulated. It differs from Faculty when the request
+	// was redirected to another faculty for review (an indirect formulation).
+	OriginFaculty string `json:"facultad_origen,omitempty"`
+	Cost          string `json:"costo,omitempty"`
+	Location      string `json:"ubicacion,omitempty"`
+	IsActive      bool   `json:"activo,omitempty"`
 	// HasDocumentation reports whether a legal contract covers the course.
 	HasDocumentation bool   `json:"tiene_documentacion_legal"`
 	CreatedAt        string `json:"creado_en,omitempty"`
@@ -23,7 +26,6 @@ type CourseInfo struct {
 
 	// The rest of the proposal. Only the request detail loads it (list items leave it empty).
 	ProviderID        string `json:"id_proveedor,omitempty"`
-	OriginFaculty     string `json:"facultad_origen,omitempty"`
 	Rationale         string `json:"fundamentacion,omitempty"`
 	InstructorProfile string `json:"perfil_docente,omitempty"`
 	Profiles          string `json:"perfiles,omitempty"`

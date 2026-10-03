@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/eaguilar88/deu/internal/email"
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/groups/mocks"
 	"github.com/stretchr/testify/assert"
@@ -57,7 +58,7 @@ func TestService_GetRandomActiveGroups(t *testing.T) {
 			if tt.prepare != nil {
 				tt.prepare(repoMock, tt.limit)
 			}
-			s := NewService(repoMock, storageMock, loggerMock)
+			s := NewService(repoMock, storageMock, nil, 0, loggerMock)
 			got, err := s.GetRandomActiveGroups(ctx, tt.limit)
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
@@ -117,7 +118,7 @@ func TestService_GetGroups(t *testing.T) {
 			if tt.prepare != nil {
 				tt.prepare(repoMock, tt.filter, tt.pageScope)
 			}
-			s := NewService(repoMock, storageMock, loggerMock)
+			s := NewService(repoMock, storageMock, nil, 0, loggerMock)
 			got, _, err := s.GetGroups(ctx, tt.filter, tt.pageScope, entities.Viewer{UserID: "1", Roles: []string{"deu_admin"}})
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
@@ -155,7 +156,7 @@ func TestService_GetGroup_Visibility(t *testing.T) {
 		storageMock.EXPECT().GetFileURL(mock.Anything, "logo-key").Return("https://files/logo-key", nil)
 		// No GetPresignedFileURL and no member-file lookups: the mocks fail on unexpected calls.
 
-		got, err := NewService(repoMock, storageMock, zap.NewNop()).GetGroup(context.Background(), "1", entities.Viewer{})
+		got, err := NewService(repoMock, storageMock, nil, 0, zap.NewNop()).GetGroup(context.Background(), "1", entities.Viewer{})
 
 		assert.NoError(t, err)
 		assert.Nil(t, got.Members)
@@ -179,7 +180,7 @@ func TestService_GetGroup_Visibility(t *testing.T) {
 		storageMock.EXPECT().GetPresignedFileURL(mock.Anything, "project-key").Return("https://b2/project?sig", nil)
 		storageMock.EXPECT().GetPresignedFileURL(mock.Anything, "doc-key").Return("https://b2/doc?sig", nil)
 
-		got, err := NewService(repoMock, storageMock, zap.NewNop()).GetGroup(context.Background(), "1", entities.Viewer{UserID: "10"})
+		got, err := NewService(repoMock, storageMock, nil, 0, zap.NewNop()).GetGroup(context.Background(), "1", entities.Viewer{UserID: "10"})
 
 		assert.NoError(t, err)
 		assert.Len(t, got.Members, 1)
@@ -203,7 +204,7 @@ func TestService_GetGroups_MixedVisibility(t *testing.T) {
 	repoMock.EXPECT().GetContactsByOwner(mock.Anything, mock.Anything, entities.OwnerTypeExtensionGroup).
 		Return(nil, nil)
 
-	got, _, err := NewService(repoMock, storageMock, zap.NewNop()).
+	got, _, err := NewService(repoMock, storageMock, nil, 0, zap.NewNop()).
 		GetGroups(context.Background(), entities.GroupFilter{}, entities.PageScope{}, entities.Viewer{UserID: "10"})
 
 	assert.NoError(t, err)
@@ -233,6 +234,64 @@ func TestRestrictFilter(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equal(t, tt.want, restrictFilter(requested, tt.viewer))
+		})
+	}
+}
+
+func TestService_CreateGroup_NotifiesApprovers(t *testing.T) {
+	owner := &entities.User{ID: "10"}
+	facultyGroup := entities.ExtensionGroup{Name: "Grupo Coral", Owner: owner, Faculty: []entities.Faculty{entities.FacultyCiencias}}
+	multiGroup := entities.ExtensionGroup{Name: "Grupo Mixto", Owner: owner, IsMultidisciplinary: true, Faculty: []entities.Faculty{entities.FacultyCiencias}}
+
+	facultyData := email.GroupRequestSubmittedData{GroupName: "Grupo Coral", Faculty: "Ciencias"}
+	multiData := email.GroupRequestSubmittedData{GroupName: "Grupo Mixto", Faculty: multidisciplinaryLabel}
+
+	tests := []struct {
+		name    string
+		group   entities.ExtensionGroup
+		prepare func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient)
+	}{
+		{
+			name:  "faculty group notifies the faculty coordinators and the DEU",
+			group: facultyGroup,
+			prepare: func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient) {
+				repoMock.EXPECT().GetFacultyCoordinatorEmails(mock.Anything, entities.FacultyCiencias).Return([]string{"coord@example.com"}, nil)
+				repoMock.EXPECT().GetDEUAdminEmails(mock.Anything).Return([]string{"deu@example.com"}, nil)
+				mailMock.EXPECT().SendTemplate(mock.Anything, "coord@example.com", email.TemplateGroupRequestSubmittedFaculty, facultyData).Return(nil)
+				mailMock.EXPECT().SendTemplate(mock.Anything, "deu@example.com", email.TemplateGroupRequestSubmittedDEU, facultyData).Return(nil)
+			},
+		},
+		{
+			name:  "multidisciplinary group notifies only the DEU",
+			group: multiGroup,
+			prepare: func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient) {
+				repoMock.EXPECT().GetDEUAdminEmails(mock.Anything).Return([]string{"deu@example.com"}, nil)
+				mailMock.EXPECT().SendTemplate(mock.Anything, "deu@example.com", email.TemplateGroupRequestSubmittedDEU, multiData).Return(nil)
+			},
+		},
+		{
+			name:  "notification failures do not fail the creation",
+			group: facultyGroup,
+			prepare: func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient) {
+				repoMock.EXPECT().GetFacultyCoordinatorEmails(mock.Anything, entities.FacultyCiencias).Return(nil, errors.New("db down"))
+				repoMock.EXPECT().GetDEUAdminEmails(mock.Anything).Return([]string{"deu@example.com"}, nil)
+				mailMock.EXPECT().SendTemplate(mock.Anything, "deu@example.com", email.TemplateGroupRequestSubmittedDEU, facultyData).Return(errors.New("smtp down"))
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repoMock := mocks.NewMockRepository(t)
+			storageMock := mocks.NewMockStorageClient(t)
+			mailMock := mocks.NewMockMailClient(t)
+
+			repoMock.EXPECT().CreateGroupWithRequests(mock.Anything, tt.group, mock.Anything).Return(int64(5), nil, nil)
+			tt.prepare(repoMock, mailMock)
+
+			id, _, err := NewService(repoMock, storageMock, mailMock, 0, zap.NewNop()).CreateGroup(context.Background(), tt.group)
+			assert.NoError(t, err)
+			assert.Equal(t, int64(5), id)
 		})
 	}
 }

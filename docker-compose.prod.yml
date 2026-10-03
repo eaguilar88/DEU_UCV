@@ -114,6 +114,21 @@ services:
       - "traefik.http.services.backend.loadbalancer.server.port=8081" # Target container's port
     networks:
       - web
+  notifier:
+    # Sends the reminder emails (cmd/notifier) once on start and then daily at NOTIFIER_RUN_AT.
+    # Same image as the backend, different entrypoint.
+    build:
+      context: "./backend"
+      dockerfile: "Dockerfile"
+    entrypoint: ["./notifier"]
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - web
   gotenberg:
     # Renders certificate HTML to PDF for the backend (internal/gotenberg). Not published: only
     # reachable from the backend over the web network.
