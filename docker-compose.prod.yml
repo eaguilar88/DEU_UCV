@@ -4,7 +4,7 @@ services:
     restart: unless-stopped
     command:
       - "--api.dashboard=true" # Enable the dashboard
-      - "--api.insecure=true" # Allow insecure dashboard (for local testing)
+      - "--api.insecure=true" # Dashboard on :8080 without auth; only published on the VPS loopback (see ports)
       - "--providers.docker=true" # Enable Docker provider
       - "--providers.docker.exposedbydefault=false" # Don't expose containers by default
       - "--entrypoints.web.address=:80" # Define entrypoint for HTTP
@@ -17,7 +17,8 @@ services:
     ports:
       - "80:80" # Expose HTTP
       - "443:443" # Expose HTTPS
-      - "8080:8080" # Expose Traefik dashboard (optional)
+      # Dashboard reachable only from the VPS itself: ssh -L 8080:localhost:8080 user@<vps>, then http://localhost:8080
+      - "127.0.0.1:8080:8080"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro" # Allow Traefik to talk to Docker
       - "letsencrypt:/letsencrypt"
@@ -27,7 +28,18 @@ services:
     build:
       context: "./diplomados"
       dockerfile: "Dockerfile"
+      args:
+        # Base de las peticiones del navegador. /api pasa por el proxy; https://api.extension.ucv.ve
+        # habla con Go directamente (requiere el origen en ALLOWED_ORIGINS). Cambiarla exige rebuild.
+        - NEXT_PUBLIC_API_URL=/api
     restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      # Destino del proxy /api/* (src/app/api/[...path]) y de las llamadas SSR.
+      - INTERNAL_API_URL=http://backend:8081
+      # Puerto de Next (next start lo lee de PORT); el label de Traefik usa el mismo valor.
+      - PORT=${DIPLOMADOS_PORT:-3000}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.formacion.rule=Host(`formacion.extension.ucv.ve`)"
@@ -38,7 +50,7 @@ services:
       - "traefik.http.routers.formacion-secure.rule=Host(`formacion.extension.ucv.ve`)"
       - "traefik.http.routers.formacion-secure.entrypoints=websecure"
       - "traefik.http.routers.formacion-secure.tls.certresolver=letsencrypt"
-      - "traefik.http.services.formacion.loadbalancer.server.port=3000"
+      - "traefik.http.services.formacion.loadbalancer.server.port=${DIPLOMADOS_PORT:-3000}"
     networks:
       - web
   grupos:
@@ -78,8 +90,6 @@ services:
         condition: service_healthy
       gotenberg:
         condition: service_started
-    ports:
-      - ${HTTP_SERVE_PORT}:${HTTP_SERVE_PORT}
     env_file:
       - .env
     secrets:

@@ -8,6 +8,10 @@ import (
 	"github.com/eaguilar88/deu/internal/postgres_repository/models"
 )
 
+// activeProviderJoin joins the user's provider only while it is approved, so a pending or
+// rejected provider has no provider code.
+var activeProviderJoin = fmt.Sprintf("%s AS p ON p.user_id = u.id AND p.status = ? AND p.deleted_at IS NULL", providersTableName)
+
 var userQuerySelectCommon = []string{
 	"u.id",
 	"u.ci",
@@ -57,7 +61,7 @@ func GetUserByUsername(username string) sq.SelectBuilder {
 func GetUserByID(userID string) sq.SelectBuilder {
 	return psql.Select(userQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS u", usersTableName)).
-		LeftJoin(fmt.Sprintf("%s AS p ON p.user_id = u.id", providersTableName)).
+		LeftJoin(activeProviderJoin, entities.ProviderStatusActive).
 		Where(sq.Eq{"u.deleted_at": nil}).
 		Where(sq.Eq{"u.id": userID})
 }
@@ -66,7 +70,7 @@ func GetUsers(limit, offset int) sq.SelectBuilder {
 	return psql.Select(userQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS u", usersTableName)).
 		Limit(uint64(limit)).
-		LeftJoin(fmt.Sprintf("%s AS p ON p.user_id = u.id", providersTableName)).
+		LeftJoin(activeProviderJoin, entities.ProviderStatusActive).
 		Where(sq.Eq{"u.deleted_at": nil}).
 		Offset(uint64(offset))
 }

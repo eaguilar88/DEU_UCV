@@ -385,6 +385,8 @@ func scanCourseRequestWithCourse(row scannable) (models.CourseRequest, error) {
 		&course.CreatedAt,
 		&course.UpdatedAt,
 		&course.HasDocumentation,
+		&course.LegalContractID,
+		&course.LegalContractType,
 		&result.OwnerUserID,
 	)
 

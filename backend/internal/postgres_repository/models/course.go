@@ -29,4 +29,6 @@ type Course struct {
 	CreatedAt         string
 	UpdatedAt         string
 	DeletedAt         sql.NullString
+	LegalContractID   sql.NullString
+	LegalContractType sql.NullString
 }

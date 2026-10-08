@@ -10,6 +10,7 @@ import (
 
 	"github.com/eaguilar88/deu/internal/email"
 	"github.com/eaguilar88/deu/internal/entities"
+	"github.com/eaguilar88/deu/internal/providers"
 	"go.uber.org/zap"
 )
 
@@ -240,8 +241,15 @@ func (s *service) attachCoverURLs(ctx context.Context, courses []entities.Course
 func (s *service) CreateCourse(ctx context.Context, userID string, course entities.Course) (int64, error) {
 	provider, err := s.repo.GetProviderByUserID(ctx, userID)
 	if err != nil {
+		if errors.Is(err, providers.ErrProviderNotFound) {
+			return -1, ErrNotApprovedProvider
+		}
 		s.log.Error("failed to get provider by user ID", zap.Error(err), zap.String("user_id", userID))
 		return -1, err
+	}
+	// Only an approved (active) provider can formulate courses.
+	if provider.Status != entities.ProviderStatusActive {
+		return -1, ErrNotApprovedProvider
 	}
 
 	course.Owner.ID = provider.ID

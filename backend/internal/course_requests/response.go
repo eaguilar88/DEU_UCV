@@ -19,10 +19,11 @@ type CourseInfo struct {
 	Cost          string `json:"costo,omitempty"`
 	Location      string `json:"ubicacion,omitempty"`
 	IsActive      bool   `json:"activo,omitempty"`
-	// HasDocumentation reports whether a legal contract covers the course.
-	HasDocumentation bool   `json:"tiene_documentacion_legal"`
-	CreatedAt        string `json:"creado_en,omitempty"`
-	UpdatedAt        string `json:"actualizado_en,omitempty"`
+	// LegalDocumentID identifies the contract covering the course (INTENCION-<id> or ADENDA-<id>),
+	// empty if none covers it.
+	LegalDocumentID string `json:"documento_legal_id,omitempty"`
+	CreatedAt       string `json:"creado_en,omitempty"`
+	UpdatedAt       string `json:"actualizado_en,omitempty"`
 
 	// The rest of the proposal. Only the request detail loads it (list items leave it empty).
 	ProviderID        string `json:"id_proveedor,omitempty"`
@@ -34,7 +35,7 @@ type CourseInfo struct {
 	Schedule          string `json:"cronograma,omitempty"`
 	Competencies      string `json:"contenido_competencias,omitempty"`
 	Bibliography      string `json:"bibliografia,omitempty"`
-	Cover             string `json:"portada,omitempty"`
+	Cover             string `json:"image_url,omitempty"`
 	FacilitatorCV     string `json:"cv_facilitador_url,omitempty"`
 }
 

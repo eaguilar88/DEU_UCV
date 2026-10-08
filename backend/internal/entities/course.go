@@ -79,6 +79,8 @@ type Course struct {
 	// IsActive is true once the course request is approved.
 	IsActive         bool
 	HasDocumentation bool
+	// LegalContract is the contract that covers the course (only ID and Type), nil if none.
+	LegalContract    *ProviderContract
 	ManagementStatus CourseManagementStatus
 	// Competencies lists the course modules with their contents and competencies.
 	Competencies  string

@@ -589,8 +589,21 @@
                                 },
                                 {
                                     "key": "islr",
+                                    "description": "Opcional",
                                     "type": "file",
                                     "src": []
+                                },
+                                {
+                                    "key": "titulo",
+                                    "type": "file",
+                                    "src": []
+                                },
+                                {
+                                    "key": "registro_mercantil",
+                                    "description": "Obligatorio si tipo_persona es juridica",
+                                    "type": "file",
+                                    "src": [],
+                                    "disabled": true
                                 },
                                 {
                                     "key": "logo",
@@ -677,8 +690,21 @@
                                 },
                                 {
                                     "key": "islr",
+                                    "description": "Opcional",
                                     "type": "file",
                                     "src": []
+                                },
+                                {
+                                    "key": "titulo",
+                                    "type": "file",
+                                    "src": []
+                                },
+                                {
+                                    "key": "registro_mercantil",
+                                    "description": "Obligatorio si tipo_persona es juridica",
+                                    "type": "file",
+                                    "src": [],
+                                    "disabled": true
                                 },
                                 {
                                     "key": "logo",

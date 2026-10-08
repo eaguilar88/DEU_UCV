@@ -51,15 +51,19 @@ var courseRequestWithCourseSelect = []string{
 	"c.created_at",
 	"c.updated_at",
 	"c.has_documentation",
+	// The contract covering the course (see withCoveringContract).
+	"lc.id",
+	"lc.type",
 	// The course owner's user account.
 	"p.user_id",
 }
 
-// fromCourseRequestsWithCourse joins each request (r) with its course (c) and provider (p).
+// fromCourseRequestsWithCourse joins each request (r) with its course (c), provider (p) and
+// covering contract (lc).
 func fromCourseRequestsWithCourse(q sq.SelectBuilder) sq.SelectBuilder {
-	return q.From(fmt.Sprintf("%s AS r", courseRequestsTableName)).
+	return withCoveringContract(q.From(fmt.Sprintf("%s AS r", courseRequestsTableName)).
 		Join(fmt.Sprintf("%s AS c ON c.id = r.course_id", coursesTableName)).
-		Join(fmt.Sprintf("%s AS p ON p.id = c.provider_id", providersTableName))
+		Join(fmt.Sprintf("%s AS p ON p.id = c.provider_id", providersTableName)))
 }
 
 func GetCourseRequestByID(requestID string) sq.SelectBuilder {

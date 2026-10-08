@@ -761,14 +761,14 @@ paths:
             schema:
               type: object
               required:
-                [tipo_proveedor, tipo_persona, tipo_lucro, ci, rif, islr, logo]
+                [tipo_proveedor, tipo_persona, tipo_lucro, ci, rif, titulo, logo, resumes]
               properties:
                 tipo_proveedor:
                   type: string
                   enum: [courses, groups]
                 tipo_persona:
                   type: string
-                  enum: [natural, juridical]
+                  enum: [natural, juridica]
                 tipo_lucro:
                   type: string
                   enum: [lucrativo, no_lucrativo]
@@ -791,6 +791,14 @@ paths:
                 islr:
                   type: string
                   format: binary
+                  description: Optional
+                titulo:
+                  type: string
+                  format: binary
+                registro_mercantil:
+                  type: string
+                  format: binary
+                  description: Required when tipo_persona is juridica
                 logo:
                   type: string
                   format: binary
@@ -820,7 +828,9 @@ paths:
         "401":
           description: Unauthorized
         "409":
-          description: Duplicate entry
+          description: >-
+            The user already has a provider request under review, or is already an approved
+            provider. A rejected provider may apply again.
 
   /providers/documents:
     post:
@@ -943,6 +953,8 @@ paths:
       responses:
         "201":
           description: Course created
+        "403":
+          description: The user is not an approved (active) provider
 
   /courses/{id}:
     get:
@@ -1033,6 +1045,10 @@ paths:
       responses:
         "201":
           description: Period created
+        "409":
+          description: >-
+            The course is not covered by a legal contract, already has an open period, or has a
+            pending closure request.
 
   /courses/{course_id}/periods/{id}:
     get:

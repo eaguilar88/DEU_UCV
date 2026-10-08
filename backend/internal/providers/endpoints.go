@@ -163,6 +163,9 @@ func (h *Handler) CreateProvider(c echo.Context) error {
 
 	id, err := h.svc.CreateProvider(ctx, provider)
 	if err != nil {
+		if errors.Is(err, ErrProviderRequestPending) || errors.Is(err, ErrProviderAlreadyApproved) {
+			return httperrors.NewConflict(err.Error())
+		}
 		return httperrors.NewInternal(err)
 	}
 
@@ -237,7 +240,7 @@ func (h *Handler) SubmitProviderContract(c echo.Context) error {
 
 func makeProviderFromRequest(c echo.Context, userID string, logger *zap.Logger) (*entities.Provider, error) {
 	providerType := c.FormValue("tipo_proveedor")
-	party := c.FormValue("tipo_persona")
+	party := entities.ProviderPartyType(c.FormValue("tipo_persona"))
 	profitType := c.FormValue("tipo_lucro")
 	name := c.FormValue("nombre")
 	bio := c.FormValue("bio")
@@ -248,8 +251,8 @@ func makeProviderFromRequest(c echo.Context, userID string, logger *zap.Logger) 
 		return nil, errors.New("tipo_proveedor must be 'courses' or 'groups'")
 	}
 
-	if party != string(entities.PartyTypeNatural) && party != string(entities.PartyTypeJuridical) {
-		return nil, errors.New("tipo_persona must be 'natural' or 'juridical'")
+	if party != entities.PartyTypeNatural && party != entities.PartyTypeJuridical {
+		return nil, errors.New("tipo_persona must be 'natural' or 'juridica'")
 	}
 
 	if profitType != string(entities.ProfitTypeLucrativo) && profitType != string(entities.ProfitTypeNoLucrativo) {
@@ -267,10 +270,20 @@ func makeProviderFromRequest(c echo.Context, userID string, logger *zap.Logger) 
 		return nil, errors.New("rif is required")
 	}
 
-	islr, err := utils.GetFileFrom(c, entities.ProviderFileTypeISLR)
+	// The ISLR declaration is optional.
+	islr, _ := utils.GetFileFrom(c, entities.ProviderFileTypeISLR)
+
+	title, err := utils.GetFileFrom(c, entities.ProviderFileTypeTitle)
 	if err != nil {
-		logger.Error("error getting islr", zap.Error(err))
-		return nil, errors.New("islr is required")
+		logger.Error("error getting titulo", zap.Error(err))
+		return nil, errors.New("titulo is required")
+	}
+
+	// The mercantile registry is only required for juridical providers.
+	mercantileReg, err := utils.GetFileFrom(c, entities.ProviderFileTypeMercantileReg)
+	if err != nil && party == entities.PartyTypeJuridical {
+		logger.Error("error getting registro_mercantil", zap.Error(err))
+		return nil, errors.New("registro_mercantil is required for juridical providers")
 	}
 
 	logo, err := utils.GetFileFrom(c, entities.ProviderFileTypeLogo)
@@ -296,15 +309,17 @@ func makeProviderFromRequest(c echo.Context, userID string, logger *zap.Logger) 
 		Name:       name,
 		Bio:        bio,
 		Type:       entities.ProviderType(providerType),
-		PartyType:  entities.ProviderPartyType(party),
+		PartyType:  party,
 		ProfitType: entities.ProviderProfitType(profitType),
 		IsInternal: isInternal == "true",
 		Faculty:    entities.Faculty(faculty),
 		Files: entities.ProviderFiles{
-			CI:   ci,
-			RIF:  rif,
-			ISLR: islr,
-			Logo: logo,
+			CI:            ci,
+			RIF:           rif,
+			ISLR:          islr,
+			Title:         title,
+			MercantileReg: mercantileReg,
+			Logo:          logo,
 		},
 	}
 	resumes := make([]*entities.File, 0, len(files["resumes"]))

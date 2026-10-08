@@ -111,7 +111,8 @@ func TestHandler_GetCourseRequestsByFaculty_Scope(t *testing.T) {
 			svc.EXPECT().GetCourseRequestsByFaculty(mock.Anything, tt.wantFaculty, mock.Anything).
 				Return([]entities.CourseRequest{{
 					ID: "1", User: entities.User{ID: "owner-1"},
-					Course: &entities.Course{ID: "3", Name: "Curso", HasDocumentation: true},
+					Course: &entities.Course{ID: "3", Name: "Curso", HasDocumentation: true,
+						LegalContract: &entities.ProviderContract{ID: "7", Type: entities.ContractTypeInitial}},
 				}}, entities.PageScope{}, nil)
 
 			err := NewHandler(svc, zap.NewNop()).GetCourseRequestsByFaculty(ctx)
@@ -119,7 +120,7 @@ func TestHandler_GetCourseRequestsByFaculty_Scope(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, http.StatusOK, rec.Code)
 			// List items carry their course, its contract status and the owner's user.
-			assert.Contains(t, rec.Body.String(), `"curso":{"id":"3","nombre":"Curso","tiene_documentacion_legal":true},"usuario_id":"owner-1"`)
+			assert.Contains(t, rec.Body.String(), `"curso":{"id":"3","nombre":"Curso","documento_legal_id":"INTENCION-7"},"usuario_id":"owner-1"`)
 		})
 	}
 }

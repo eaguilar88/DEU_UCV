@@ -33,12 +33,14 @@ const (
 	ProviderFileTypeResume           = "curriculums"
 	ProviderFileTypeOther            = "otros"
 	ProviderFileTypeLogo             = "logo"
+	ProviderFileTypeTitle            = "titulo"
+	ProviderFileTypeMercantileReg    = "registro_mercantil"
 	ProviderFileTypeIntentionLetter  = "carta_intencion"
 	ProviderFileTypeCommitmentLetter = "carta_compromiso"
 
 	// Legal identity types
 	PartyTypeNatural   ProviderPartyType = "natural"
-	PartyTypeJuridical ProviderPartyType = "juridico"
+	PartyTypeJuridical ProviderPartyType = "juridica"
 
 	// Profit types
 	ProfitTypeLucrativo   ProviderProfitType = "lucrativo"
@@ -56,6 +58,8 @@ type ProviderFiles struct {
 	CI                *File
 	RIF               *File
 	ISLR              *File
+	Title             *File
+	MercantileReg     *File
 	Resumes           []*File
 	Others            []*File
 	IntentionLetter   *File
