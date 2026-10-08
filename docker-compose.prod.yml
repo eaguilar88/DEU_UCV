@@ -38,8 +38,6 @@ services:
     environment:
       # Destino del proxy /api/* (src/app/api/[...path]) y de las llamadas SSR.
       - INTERNAL_API_URL=http://backend:8081
-      # Puerto de Next (next start lo lee de PORT); el label de Traefik usa el mismo valor.
-      - PORT=${DIPLOMADOS_PORT:-3000}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.formacion.rule=Host(`formacion.extension.ucv.ve`)"
@@ -50,7 +48,7 @@ services:
       - "traefik.http.routers.formacion-secure.rule=Host(`formacion.extension.ucv.ve`)"
       - "traefik.http.routers.formacion-secure.entrypoints=websecure"
       - "traefik.http.routers.formacion-secure.tls.certresolver=letsencrypt"
-      - "traefik.http.services.formacion.loadbalancer.server.port=${DIPLOMADOS_PORT:-3000}"
+      - "traefik.http.services.formacion.loadbalancer.server.port=3000"
     networks:
       - web
   grupos:
