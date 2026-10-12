@@ -112,6 +112,10 @@ func (h *Handler) GetProviders(c echo.Context) error {
 		Type: entities.ProviderType(c.QueryParam("type")),
 	}
 
+	if userID, ok := c.Get("userID").(string); ok {
+		filters.UserID = userID
+	}
+
 	if faculty, ok := c.Get("faculty").(string); ok {
 		// the logged user has a faculty on its claims
 		filters.Faculty = entities.Faculty(faculty)
@@ -135,7 +139,7 @@ func (h *Handler) GetProviders(c echo.Context) error {
 			b := v == "true"
 			filters.IsInternal = &b
 		}
-		if v := c.QueryParam("status"); v != "" {
+		if v := c.QueryParam("status"); v != "" && v != string(entities.ProviderStatusAll) {
 			filters.Status = entities.ProviderStatus(v)
 		}
 	}

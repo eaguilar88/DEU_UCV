@@ -100,9 +100,18 @@ func GetProviders(filters entities.ProviderFilters, limit, offset int) sq.Select
 		q = q.Where(sq.Eq{"p.code": filters.Code})
 	}
 
-	if filters.IsAdmin && filters.Status != "" {
-		q = q.Where(sq.Eq{"p.status": string(filters.Status)})
-	} else {
+	switch {
+	case filters.IsAdmin:
+		if filters.Status != "" {
+			q = q.Where(sq.Eq{"p.status": string(filters.Status)})
+		}
+	case filters.UserID != "":
+		// A provider always sees its own requests, whatever their status.
+		q = q.Where(sq.Or{
+			sq.Eq{"p.status": entities.ProviderStatusActive},
+			sq.Eq{"p.user_id": filters.UserID},
+		})
+	default:
 		q = q.Where(sq.Eq{"p.status": entities.ProviderStatusActive})
 	}
 

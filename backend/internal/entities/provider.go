@@ -49,8 +49,9 @@ const (
 	// Provider statuses
 	ProviderStatusUnderReview ProviderStatus = "under_review"
 	ProviderStatusRejected    ProviderStatus = "rejected"
-	ProviderStatusActive      ProviderStatus = "active"
 	ProviderStatusInactive    ProviderStatus = "inactive"
+	ProviderStatusActive      ProviderStatus = "active"
+	ProviderStatusAll         ProviderStatus = "all"
 )
 
 type ProviderFiles struct {
@@ -88,6 +89,7 @@ type Provider struct {
 type ProviderFilters struct {
 	Faculty Faculty
 	Type    ProviderType
+	UserID  string
 	ProviderAdminFilters
 }
 
