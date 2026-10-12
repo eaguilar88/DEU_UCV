@@ -271,7 +271,10 @@ func makeProviderFromRequest(c echo.Context, userID string, logger *zap.Logger) 
 	}
 
 	// The ISLR declaration is optional.
-	islr, _ := utils.GetFileFrom(c, entities.ProviderFileTypeISLR)
+	islr, err := utils.GetFileFrom(c, entities.ProviderFileTypeISLR)
+	if err != nil {
+		logger.Info("error getting islr file", zap.Error(err))
+	}
 
 	title, err := utils.GetFileFrom(c, entities.ProviderFileTypeTitle)
 	if err != nil {
