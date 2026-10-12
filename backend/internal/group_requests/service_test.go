@@ -121,7 +121,7 @@ func TestService_ApproveGroupRequest(t *testing.T) {
 			if tt.prepare != nil {
 				tt.prepare(repoMock, mailMock)
 			}
-			s := NewService(repoMock, mailMock, loggerMock)
+			s := NewService(repoMock, mailMock, nil, loggerMock)
 			err := s.ApproveGroupRequest(context.Background(), "req-1")
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -209,7 +209,7 @@ func TestService_RejectGroupRequest(t *testing.T) {
 			mailMock := mocks.NewMockMailClient(t)
 			tt.prepare(repoMock, mailMock)
 
-			s := NewService(repoMock, mailMock, zap.NewNop())
+			s := NewService(repoMock, mailMock, nil, zap.NewNop())
 			err := s.RejectGroupRequest(context.Background(), "req-1", reason)
 			if tt.wantErr != nil {
 				assert.ErrorIs(t, err, tt.wantErr)

@@ -63,7 +63,9 @@ type CreateGroupResponse struct {
 	ID   string `json:"id"`
 	Code string `json:"codigo_proveedor"`
 }
-type UpdateGroupResponse struct{}
+type RenewGroupResponse struct {
+	ID string `json:"id"`
+}
 
 type DeleteGroupResponse struct{}
 

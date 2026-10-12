@@ -47,6 +47,135 @@ func (_m *MockRepository) EXPECT() *MockRepository_Expecter {
 	return &MockRepository_Expecter{mock: &_m.Mock}
 }
 
+// CancelGroupRenewal provides a mock function for the type MockRepository
+func (_mock *MockRepository) CancelGroupRenewal(ctx context.Context, renewalID string) error {
+	ret := _mock.Called(ctx, renewalID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CancelGroupRenewal")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, renewalID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockRepository_CancelGroupRenewal_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CancelGroupRenewal'
+type MockRepository_CancelGroupRenewal_Call struct {
+	*mock.Call
+}
+
+// CancelGroupRenewal is a helper method to define mock.On call
+//   - ctx context.Context
+//   - renewalID string
+func (_e *MockRepository_Expecter) CancelGroupRenewal(ctx any, renewalID any) *MockRepository_CancelGroupRenewal_Call {
+	return &MockRepository_CancelGroupRenewal_Call{Call: _e.mock.On("CancelGroupRenewal", ctx, renewalID)}
+}
+
+func (_c *MockRepository_CancelGroupRenewal_Call) Run(run func(ctx context.Context, renewalID string)) *MockRepository_CancelGroupRenewal_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_CancelGroupRenewal_Call) Return(err error) *MockRepository_CancelGroupRenewal_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockRepository_CancelGroupRenewal_Call) RunAndReturn(run func(ctx context.Context, renewalID string) error) *MockRepository_CancelGroupRenewal_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CreateGroupRenewal provides a mock function for the type MockRepository
+func (_mock *MockRepository) CreateGroupRenewal(ctx context.Context, renewal entities.GroupRenewal, requests []entities.GroupRequest) (int64, error) {
+	ret := _mock.Called(ctx, renewal, requests)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateGroupRenewal")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.GroupRenewal, []entities.GroupRequest) (int64, error)); ok {
+		return returnFunc(ctx, renewal, requests)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.GroupRenewal, []entities.GroupRequest) int64); ok {
+		r0 = returnFunc(ctx, renewal, requests)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.GroupRenewal, []entities.GroupRequest) error); ok {
+		r1 = returnFunc(ctx, renewal, requests)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_CreateGroupRenewal_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateGroupRenewal'
+type MockRepository_CreateGroupRenewal_Call struct {
+	*mock.Call
+}
+
+// CreateGroupRenewal is a helper method to define mock.On call
+//   - ctx context.Context
+//   - renewal entities.GroupRenewal
+//   - requests []entities.GroupRequest
+func (_e *MockRepository_Expecter) CreateGroupRenewal(ctx any, renewal any, requests any) *MockRepository_CreateGroupRenewal_Call {
+	return &MockRepository_CreateGroupRenewal_Call{Call: _e.mock.On("CreateGroupRenewal", ctx, renewal, requests)}
+}
+
+func (_c *MockRepository_CreateGroupRenewal_Call) Run(run func(ctx context.Context, renewal entities.GroupRenewal, requests []entities.GroupRequest)) *MockRepository_CreateGroupRenewal_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 entities.GroupRenewal
+		if args[1] != nil {
+			arg1 = args[1].(entities.GroupRenewal)
+		}
+		var arg2 []entities.GroupRequest
+		if args[2] != nil {
+			arg2 = args[2].([]entities.GroupRequest)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_CreateGroupRenewal_Call) Return(n int64, err error) *MockRepository_CreateGroupRenewal_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockRepository_CreateGroupRenewal_Call) RunAndReturn(run func(ctx context.Context, renewal entities.GroupRenewal, requests []entities.GroupRequest) (int64, error)) *MockRepository_CreateGroupRenewal_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // CreateGroupWithRequests provides a mock function for the type MockRepository
 func (_mock *MockRepository) CreateGroupWithRequests(ctx context.Context, group entities.ExtensionGroup, requests []entities.GroupRequest) (int64, []entities.GroupMember, error) {
 	ret := _mock.Called(ctx, group, requests)
@@ -254,6 +383,136 @@ func (_c *MockRepository_GetContactsByOwner_Call) Return(contacts []entities.Con
 }
 
 func (_c *MockRepository_GetContactsByOwner_Call) RunAndReturn(run func(ctx context.Context, ownerID string, ownerType entities.OwnerType) ([]entities.Contact, error)) *MockRepository_GetContactsByOwner_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetDEUAdminEmails provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetDEUAdminEmails(ctx context.Context) ([]string, error) {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetDEUAdminEmails")
+	}
+
+	var r0 []string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]string, error)); ok {
+		return returnFunc(ctx)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []string); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetDEUAdminEmails_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetDEUAdminEmails'
+type MockRepository_GetDEUAdminEmails_Call struct {
+	*mock.Call
+}
+
+// GetDEUAdminEmails is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockRepository_Expecter) GetDEUAdminEmails(ctx any) *MockRepository_GetDEUAdminEmails_Call {
+	return &MockRepository_GetDEUAdminEmails_Call{Call: _e.mock.On("GetDEUAdminEmails", ctx)}
+}
+
+func (_c *MockRepository_GetDEUAdminEmails_Call) Run(run func(ctx context.Context)) *MockRepository_GetDEUAdminEmails_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetDEUAdminEmails_Call) Return(strings []string, err error) *MockRepository_GetDEUAdminEmails_Call {
+	_c.Call.Return(strings, err)
+	return _c
+}
+
+func (_c *MockRepository_GetDEUAdminEmails_Call) RunAndReturn(run func(ctx context.Context) ([]string, error)) *MockRepository_GetDEUAdminEmails_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetFacultyCoordinatorEmails provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetFacultyCoordinatorEmails(ctx context.Context, faculty entities.Faculty) ([]string, error) {
+	ret := _mock.Called(ctx, faculty)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetFacultyCoordinatorEmails")
+	}
+
+	var r0 []string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.Faculty) ([]string, error)); ok {
+		return returnFunc(ctx, faculty)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.Faculty) []string); ok {
+		r0 = returnFunc(ctx, faculty)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.Faculty) error); ok {
+		r1 = returnFunc(ctx, faculty)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetFacultyCoordinatorEmails_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetFacultyCoordinatorEmails'
+type MockRepository_GetFacultyCoordinatorEmails_Call struct {
+	*mock.Call
+}
+
+// GetFacultyCoordinatorEmails is a helper method to define mock.On call
+//   - ctx context.Context
+//   - faculty entities.Faculty
+func (_e *MockRepository_Expecter) GetFacultyCoordinatorEmails(ctx any, faculty any) *MockRepository_GetFacultyCoordinatorEmails_Call {
+	return &MockRepository_GetFacultyCoordinatorEmails_Call{Call: _e.mock.On("GetFacultyCoordinatorEmails", ctx, faculty)}
+}
+
+func (_c *MockRepository_GetFacultyCoordinatorEmails_Call) Run(run func(ctx context.Context, faculty entities.Faculty)) *MockRepository_GetFacultyCoordinatorEmails_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 entities.Faculty
+		if args[1] != nil {
+			arg1 = args[1].(entities.Faculty)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetFacultyCoordinatorEmails_Call) Return(strings []string, err error) *MockRepository_GetFacultyCoordinatorEmails_Call {
+	_c.Call.Return(strings, err)
+	return _c
+}
+
+func (_c *MockRepository_GetFacultyCoordinatorEmails_Call) RunAndReturn(run func(ctx context.Context, faculty entities.Faculty) ([]string, error)) *MockRepository_GetFacultyCoordinatorEmails_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -661,74 +920,6 @@ func (_c *MockRepository_SaveFilesToDB_Call) Return(err error) *MockRepository_S
 }
 
 func (_c *MockRepository_SaveFilesToDB_Call) RunAndReturn(run func(ctx context.Context, file []*entities.File) error) *MockRepository_SaveFilesToDB_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// UpdateGroup provides a mock function for the type MockRepository
-func (_mock *MockRepository) UpdateGroup(ctx context.Context, group entities.ExtensionGroup) ([]entities.GroupMember, error) {
-	ret := _mock.Called(ctx, group)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateGroup")
-	}
-
-	var r0 []entities.GroupMember
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.ExtensionGroup) ([]entities.GroupMember, error)); ok {
-		return returnFunc(ctx, group)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.ExtensionGroup) []entities.GroupMember); ok {
-		r0 = returnFunc(ctx, group)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]entities.GroupMember)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, entities.ExtensionGroup) error); ok {
-		r1 = returnFunc(ctx, group)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockRepository_UpdateGroup_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateGroup'
-type MockRepository_UpdateGroup_Call struct {
-	*mock.Call
-}
-
-// UpdateGroup is a helper method to define mock.On call
-//   - ctx context.Context
-//   - group entities.ExtensionGroup
-func (_e *MockRepository_Expecter) UpdateGroup(ctx any, group any) *MockRepository_UpdateGroup_Call {
-	return &MockRepository_UpdateGroup_Call{Call: _e.mock.On("UpdateGroup", ctx, group)}
-}
-
-func (_c *MockRepository_UpdateGroup_Call) Run(run func(ctx context.Context, group entities.ExtensionGroup)) *MockRepository_UpdateGroup_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 entities.ExtensionGroup
-		if args[1] != nil {
-			arg1 = args[1].(entities.ExtensionGroup)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockRepository_UpdateGroup_Call) Return(groupMembers []entities.GroupMember, err error) *MockRepository_UpdateGroup_Call {
-	_c.Call.Return(groupMembers, err)
-	return _c
-}
-
-func (_c *MockRepository_UpdateGroup_Call) RunAndReturn(run func(ctx context.Context, group entities.ExtensionGroup) ([]entities.GroupMember, error)) *MockRepository_UpdateGroup_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -2,12 +2,15 @@ package courses
 
 import (
 	"context"
+	"database/sql"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/eaguilar88/deu/internal/courses/mocks"
 	"github.com/eaguilar88/deu/internal/email"
 	"github.com/eaguilar88/deu/internal/entities"
+	"github.com/eaguilar88/deu/internal/providers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
@@ -22,6 +25,8 @@ func TestService_CreateCourse(t *testing.T) {
 		prepare func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient)
 		want    int64
 		wantErr bool
+		// wantErrIs, when set, is the error CreateCourse must return.
+		wantErrIs error
 	}
 
 	tests := []testCase{
@@ -31,7 +36,7 @@ func TestService_CreateCourse(t *testing.T) {
 			course: entities.Course{Name: "Test Course", Faculty: entities.FacultyIngenieria},
 			prepare: func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient) {
 				repoMock.EXPECT().GetProviderByUserID(mock.Anything, userID).
-					Return(entities.Provider{ID: "p-1", Faculty: entities.FacultyCiencias}, nil)
+					Return(entities.Provider{ID: "p-1", Faculty: entities.FacultyCiencias, Status: entities.ProviderStatusActive}, nil)
 				repoMock.EXPECT().CreateCourseWithRequest(mock.Anything, mock.MatchedBy(func(c entities.Course) bool {
 					return c.Owner.ID == "p-1" &&
 						c.Faculty == entities.FacultyCiencias &&
@@ -47,7 +52,7 @@ func TestService_CreateCourse(t *testing.T) {
 			course: entities.Course{Name: "Test Course"},
 			prepare: func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient) {
 				repoMock.EXPECT().GetProviderByUserID(mock.Anything, userID).
-					Return(entities.Provider{ID: "p-1"}, nil)
+					Return(entities.Provider{ID: "p-1", Status: entities.ProviderStatusActive}, nil)
 				repoMock.EXPECT().CreateCourseWithRequest(mock.Anything, mock.MatchedBy(func(c entities.Course) bool {
 					return c.Faculty == entities.FacultyDEU && c.OriginFaculty == entities.FacultyDEU
 				})).Return(int64(10), int64(20), nil)
@@ -61,7 +66,7 @@ func TestService_CreateCourse(t *testing.T) {
 			course: entities.Course{Name: "Test Course"},
 			prepare: func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient) {
 				repoMock.EXPECT().GetProviderByUserID(mock.Anything, userID).
-					Return(entities.Provider{ID: "p-1", Name: "ACME", Faculty: entities.FacultyCiencias}, nil)
+					Return(entities.Provider{ID: "p-1", Name: "ACME", Faculty: entities.FacultyCiencias, Status: entities.ProviderStatusActive}, nil)
 				repoMock.EXPECT().CreateCourseWithRequest(mock.Anything, mock.Anything).Return(int64(10), int64(20), nil)
 				repoMock.EXPECT().GetFacultyCoordinatorEmails(mock.Anything, entities.FacultyCiencias).
 					Return([]string{"coord1@example.com", "coord2@example.com"}, nil)
@@ -78,7 +83,7 @@ func TestService_CreateCourse(t *testing.T) {
 			course: entities.Course{Name: "Test Course"},
 			prepare: func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient) {
 				repoMock.EXPECT().GetProviderByUserID(mock.Anything, userID).
-					Return(entities.Provider{ID: "p-1", Faculty: entities.FacultyCiencias}, nil)
+					Return(entities.Provider{ID: "p-1", Faculty: entities.FacultyCiencias, Status: entities.ProviderStatusActive}, nil)
 				repoMock.EXPECT().CreateCourseWithRequest(mock.Anything, mock.Anything).Return(int64(10), int64(20), nil)
 				repoMock.EXPECT().GetFacultyCoordinatorEmails(mock.Anything, mock.Anything).Return([]string{"coord@example.com"}, nil)
 				repoMock.EXPECT().GetDEUAdminEmails(mock.Anything).Return(nil, errors.New("db error"))
@@ -97,6 +102,39 @@ func TestService_CreateCourse(t *testing.T) {
 			want:    -1,
 			wantErr: true,
 		},
+		{
+			name:   "provider under review cannot formulate",
+			course: entities.Course{Name: "Test Course"},
+			prepare: func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient) {
+				repoMock.EXPECT().GetProviderByUserID(mock.Anything, userID).
+					Return(entities.Provider{ID: "p-1", Status: entities.ProviderStatusUnderReview}, nil)
+			},
+			want:      -1,
+			wantErr:   true,
+			wantErrIs: ErrNotApprovedProvider,
+		},
+		{
+			name:   "rejected provider cannot formulate",
+			course: entities.Course{Name: "Test Course"},
+			prepare: func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient) {
+				repoMock.EXPECT().GetProviderByUserID(mock.Anything, userID).
+					Return(entities.Provider{ID: "p-1", Status: entities.ProviderStatusRejected}, nil)
+			},
+			want:      -1,
+			wantErr:   true,
+			wantErrIs: ErrNotApprovedProvider,
+		},
+		{
+			name:   "user without provider cannot formulate",
+			course: entities.Course{Name: "Test Course"},
+			prepare: func(repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient) {
+				repoMock.EXPECT().GetProviderByUserID(mock.Anything, userID).
+					Return(entities.Provider{}, fmt.Errorf("%w: %w", providers.ErrProviderNotFound, sql.ErrNoRows))
+			},
+			want:      -1,
+			wantErr:   true,
+			wantErrIs: ErrNotApprovedProvider,
+		},
 	}
 
 	for _, tt := range tests {
@@ -111,6 +149,9 @@ func TestService_CreateCourse(t *testing.T) {
 			got, err := s.CreateCourse(context.Background(), userID, tt.course)
 			if tt.wantErr {
 				assert.Error(t, err)
+				if tt.wantErrIs != nil {
+					assert.ErrorIs(t, err, tt.wantErrIs)
+				}
 			} else {
 				assert.NoError(t, err)
 			}
@@ -214,7 +255,7 @@ func TestService_GetCourses(t *testing.T) {
 func TestService_CreateCourse_UploadsCoverAndFacilitatorCV(t *testing.T) {
 	repoMock := mocks.NewMockRepository(t)
 	storageMock := mocks.NewMockStorageClient(t)
-	repoMock.EXPECT().GetProviderByUserID(mock.Anything, "user-1").Return(entities.Provider{ID: "p-1"}, nil)
+	repoMock.EXPECT().GetProviderByUserID(mock.Anything, "user-1").Return(entities.Provider{ID: "p-1", Status: entities.ProviderStatusActive}, nil)
 	repoMock.EXPECT().CreateCourseWithRequest(mock.Anything, mock.Anything).Return(int64(10), int64(20), nil)
 	repoMock.EXPECT().GetFacultyCoordinatorEmails(mock.Anything, mock.Anything).Return(nil, nil)
 	repoMock.EXPECT().GetDEUAdminEmails(mock.Anything).Return(nil, nil)

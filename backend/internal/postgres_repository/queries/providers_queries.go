@@ -53,14 +53,20 @@ func GetProviderByUserID(userID string) sq.SelectBuilder {
 	return psql.Select(providerQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS p", providersTableName)).
 		Join(fmt.Sprintf("%s AS u ON u.id = p.user_id", usersTableName)).
-		Where(sq.Eq{"p.user_id": userID})
+		Where(sq.Eq{"p.user_id": userID}).
+		Where(sq.Eq{"p.deleted_at": nil}).
+		// A user can have a rejected provider and a newer one; the newest is the current one.
+		OrderBy("p.created_at DESC").
+		Limit(1)
 }
 
 func GetProviderCodeByUserID(userID string) sq.SelectBuilder {
 	return psql.Select("COALESCE(p.code, '')").
 		From(fmt.Sprintf("%s AS p", providersTableName)).
 		Where(sq.Eq{"p.deleted_at": nil}).
-		Where(sq.Eq{"p.user_id": userID})
+		Where(sq.Eq{"p.user_id": userID}).
+		// Only an approved provider gets a provider code in its token.
+		Where(sq.Eq{"p.status": entities.ProviderStatusActive})
 }
 
 func GetProviders(filters entities.ProviderFilters, limit, offset int) sq.SelectBuilder {
@@ -94,9 +100,18 @@ func GetProviders(filters entities.ProviderFilters, limit, offset int) sq.Select
 		q = q.Where(sq.Eq{"p.code": filters.Code})
 	}
 
-	if filters.IsAdmin && filters.Status != "" {
-		q = q.Where(sq.Eq{"p.status": string(filters.Status)})
-	} else {
+	switch {
+	case filters.IsAdmin:
+		if filters.Status != "" {
+			q = q.Where(sq.Eq{"p.status": string(filters.Status)})
+		}
+	case filters.UserID != "":
+		// A provider always sees its own requests, whatever their status.
+		q = q.Where(sq.Or{
+			sq.Eq{"p.status": entities.ProviderStatusActive},
+			sq.Eq{"p.user_id": filters.UserID},
+		})
+	default:
 		q = q.Where(sq.Eq{"p.status": entities.ProviderStatusActive})
 	}
 

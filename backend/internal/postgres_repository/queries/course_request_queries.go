@@ -44,21 +44,26 @@ var courseRequestWithCourseSelect = []string{
 	"c.content",
 	"c.type",
 	"c.faculty",
+	"c.origin_faculty",
 	"c.cost",
 	"c.location",
 	"c.is_active",
 	"c.created_at",
 	"c.updated_at",
 	"c.has_documentation",
+	// The contract covering the course (see withCoveringContract).
+	"lc.id",
+	"lc.type",
 	// The course owner's user account.
 	"p.user_id",
 }
 
-// fromCourseRequestsWithCourse joins each request (r) with its course (c) and provider (p).
+// fromCourseRequestsWithCourse joins each request (r) with its course (c), provider (p) and
+// covering contract (lc).
 func fromCourseRequestsWithCourse(q sq.SelectBuilder) sq.SelectBuilder {
-	return q.From(fmt.Sprintf("%s AS r", courseRequestsTableName)).
+	return withCoveringContract(q.From(fmt.Sprintf("%s AS r", courseRequestsTableName)).
 		Join(fmt.Sprintf("%s AS c ON c.id = r.course_id", coursesTableName)).
-		Join(fmt.Sprintf("%s AS p ON p.id = c.provider_id", providersTableName))
+		Join(fmt.Sprintf("%s AS p ON p.id = c.provider_id", providersTableName)))
 }
 
 func GetCourseRequestByID(requestID string) sq.SelectBuilder {
@@ -73,7 +78,7 @@ func GetCourseRequestsByFaculty(faculty string, limit, offset int) sq.SelectBuil
 	q := fromCourseRequestsWithCourse(psql.Select(courseRequestWithCourseSelect...)).
 		Where(sq.Eq{"r.deleted_at": nil})
 	if faculty != "" {
-		q = q.Where(sq.Eq{"c.faculty": faculty})
+		q = q.Where(sq.Or{sq.Eq{"c.faculty": faculty}, sq.Eq{"c.origin_faculty": faculty}})
 	}
 	return q.OrderBy("r.created_at DESC").
 		Limit(uint64(limit)).
@@ -86,7 +91,7 @@ func CountCourseRequestsByFaculty(faculty string) sq.SelectBuilder {
 		Join(fmt.Sprintf("%s AS c ON c.id = r.course_id", coursesTableName)).
 		Where(sq.Eq{"r.deleted_at": nil})
 	if faculty != "" {
-		q = q.Where(sq.Eq{"c.faculty": faculty})
+		q = q.Where(sq.Or{sq.Eq{"c.faculty": faculty}, sq.Eq{"c.origin_faculty": faculty}})
 	}
 	return q
 }

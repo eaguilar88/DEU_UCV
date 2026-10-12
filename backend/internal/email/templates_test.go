@@ -16,7 +16,7 @@ func sampleData(name Template, value string) any {
 	switch name {
 	case TemplateGroupAdminCredentials:
 		return GroupAdminCredentialsData{GroupName: value, Username: value, Password: value}
-	case TemplateGroupRequestApproved:
+	case TemplateGroupRequestApproved, TemplateGroupRenewalApproved:
 		return GroupRequestApprovedData{GroupName: value}
 	case TemplateGroupRequestRejected:
 		return GroupRequestRejectedData{GroupName: value, Reason: value}
@@ -32,6 +32,9 @@ func sampleData(name Template, value string) any {
 		return ProviderRegistrationSubmittedData{ProviderName: value, ProviderType: value, Faculty: value}
 	case TemplateCourseRequestSubmittedFaculty, TemplateCourseRequestSubmittedDEU:
 		return CourseRequestSubmittedData{CourseName: value, ProviderName: value, Faculty: value}
+	case TemplateGroupRequestSubmittedFaculty, TemplateGroupRequestSubmittedDEU,
+		TemplateGroupRenewalSubmittedFaculty, TemplateGroupRenewalSubmittedDEU:
+		return GroupRequestSubmittedData{GroupName: value, Faculty: value}
 	case TemplateCourseRequestApproved:
 		return CourseRequestApprovedData{CourseName: value, Comments: value}
 	case TemplateCourseRequestRejected:
@@ -48,6 +51,10 @@ func sampleData(name Template, value string) any {
 			ZipURL:       "https://example.com/zip",
 			Certificates: []CertificateLink{{Name: value, URL: "https://example.com/c"}},
 		}
+	case TemplateCoordinatorPendingReminder:
+		return CoordinatorPendingReminderData{Faculty: value, MinDays: 3, CourseRequests: 2, GroupRequests: 1}
+	case TemplateGroupRenewalReminder:
+		return GroupRenewalReminderData{GroupName: value, DueDate: value}
 	default:
 		return nil
 	}

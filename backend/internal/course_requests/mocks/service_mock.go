@@ -48,16 +48,16 @@ func (_m *MockService) EXPECT() *MockService_Expecter {
 }
 
 // ApproveCourseRequest provides a mock function for the type MockService
-func (_mock *MockService) ApproveCourseRequest(ctx context.Context, cr entities.CourseRequest, courseType entities.CourseType) error {
-	ret := _mock.Called(ctx, cr, courseType)
+func (_mock *MockService) ApproveCourseRequest(ctx context.Context, cr entities.CourseRequest, courseType entities.CourseType, viewer entities.Viewer) error {
+	ret := _mock.Called(ctx, cr, courseType, viewer)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ApproveCourseRequest")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.CourseRequest, entities.CourseType) error); ok {
-		r0 = returnFunc(ctx, cr, courseType)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, entities.CourseRequest, entities.CourseType, entities.Viewer) error); ok {
+		r0 = returnFunc(ctx, cr, courseType, viewer)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -73,11 +73,12 @@ type MockService_ApproveCourseRequest_Call struct {
 //   - ctx context.Context
 //   - cr entities.CourseRequest
 //   - courseType entities.CourseType
-func (_e *MockService_Expecter) ApproveCourseRequest(ctx any, cr any, courseType any) *MockService_ApproveCourseRequest_Call {
-	return &MockService_ApproveCourseRequest_Call{Call: _e.mock.On("ApproveCourseRequest", ctx, cr, courseType)}
+//   - viewer entities.Viewer
+func (_e *MockService_Expecter) ApproveCourseRequest(ctx any, cr any, courseType any, viewer any) *MockService_ApproveCourseRequest_Call {
+	return &MockService_ApproveCourseRequest_Call{Call: _e.mock.On("ApproveCourseRequest", ctx, cr, courseType, viewer)}
 }
 
-func (_c *MockService_ApproveCourseRequest_Call) Run(run func(ctx context.Context, cr entities.CourseRequest, courseType entities.CourseType)) *MockService_ApproveCourseRequest_Call {
+func (_c *MockService_ApproveCourseRequest_Call) Run(run func(ctx context.Context, cr entities.CourseRequest, courseType entities.CourseType, viewer entities.Viewer)) *MockService_ApproveCourseRequest_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -91,10 +92,15 @@ func (_c *MockService_ApproveCourseRequest_Call) Run(run func(ctx context.Contex
 		if args[2] != nil {
 			arg2 = args[2].(entities.CourseType)
 		}
+		var arg3 entities.Viewer
+		if args[3] != nil {
+			arg3 = args[3].(entities.Viewer)
+		}
 		run(
 			arg0,
 			arg1,
 			arg2,
+			arg3,
 		)
 	})
 	return _c
@@ -105,7 +111,7 @@ func (_c *MockService_ApproveCourseRequest_Call) Return(err error) *MockService_
 	return _c
 }
 
-func (_c *MockService_ApproveCourseRequest_Call) RunAndReturn(run func(ctx context.Context, cr entities.CourseRequest, courseType entities.CourseType) error) *MockService_ApproveCourseRequest_Call {
+func (_c *MockService_ApproveCourseRequest_Call) RunAndReturn(run func(ctx context.Context, cr entities.CourseRequest, courseType entities.CourseType, viewer entities.Viewer) error) *MockService_ApproveCourseRequest_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -337,16 +343,16 @@ func (_c *MockService_GetMyCourseRequests_Call) RunAndReturn(run func(ctx contex
 }
 
 // RedirectCourseRequest provides a mock function for the type MockService
-func (_mock *MockService) RedirectCourseRequest(ctx context.Context, reqID string, reviewerID string, faculty entities.Faculty, reason string) error {
-	ret := _mock.Called(ctx, reqID, reviewerID, faculty, reason)
+func (_mock *MockService) RedirectCourseRequest(ctx context.Context, reqID string, reviewerID string, faculty entities.Faculty, reason string, viewer entities.Viewer) error {
+	ret := _mock.Called(ctx, reqID, reviewerID, faculty, reason, viewer)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RedirectCourseRequest")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, entities.Faculty, string) error); ok {
-		r0 = returnFunc(ctx, reqID, reviewerID, faculty, reason)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, entities.Faculty, string, entities.Viewer) error); ok {
+		r0 = returnFunc(ctx, reqID, reviewerID, faculty, reason, viewer)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -364,11 +370,12 @@ type MockService_RedirectCourseRequest_Call struct {
 //   - reviewerID string
 //   - faculty entities.Faculty
 //   - reason string
-func (_e *MockService_Expecter) RedirectCourseRequest(ctx any, reqID any, reviewerID any, faculty any, reason any) *MockService_RedirectCourseRequest_Call {
-	return &MockService_RedirectCourseRequest_Call{Call: _e.mock.On("RedirectCourseRequest", ctx, reqID, reviewerID, faculty, reason)}
+//   - viewer entities.Viewer
+func (_e *MockService_Expecter) RedirectCourseRequest(ctx any, reqID any, reviewerID any, faculty any, reason any, viewer any) *MockService_RedirectCourseRequest_Call {
+	return &MockService_RedirectCourseRequest_Call{Call: _e.mock.On("RedirectCourseRequest", ctx, reqID, reviewerID, faculty, reason, viewer)}
 }
 
-func (_c *MockService_RedirectCourseRequest_Call) Run(run func(ctx context.Context, reqID string, reviewerID string, faculty entities.Faculty, reason string)) *MockService_RedirectCourseRequest_Call {
+func (_c *MockService_RedirectCourseRequest_Call) Run(run func(ctx context.Context, reqID string, reviewerID string, faculty entities.Faculty, reason string, viewer entities.Viewer)) *MockService_RedirectCourseRequest_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -390,12 +397,17 @@ func (_c *MockService_RedirectCourseRequest_Call) Run(run func(ctx context.Conte
 		if args[4] != nil {
 			arg4 = args[4].(string)
 		}
+		var arg5 entities.Viewer
+		if args[5] != nil {
+			arg5 = args[5].(entities.Viewer)
+		}
 		run(
 			arg0,
 			arg1,
 			arg2,
 			arg3,
 			arg4,
+			arg5,
 		)
 	})
 	return _c
@@ -406,22 +418,22 @@ func (_c *MockService_RedirectCourseRequest_Call) Return(err error) *MockService
 	return _c
 }
 
-func (_c *MockService_RedirectCourseRequest_Call) RunAndReturn(run func(ctx context.Context, reqID string, reviewerID string, faculty entities.Faculty, reason string) error) *MockService_RedirectCourseRequest_Call {
+func (_c *MockService_RedirectCourseRequest_Call) RunAndReturn(run func(ctx context.Context, reqID string, reviewerID string, faculty entities.Faculty, reason string, viewer entities.Viewer) error) *MockService_RedirectCourseRequest_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RejectCourseRequest provides a mock function for the type MockService
-func (_mock *MockService) RejectCourseRequest(ctx context.Context, reqID string, reviewerID string, comments string) error {
-	ret := _mock.Called(ctx, reqID, reviewerID, comments)
+func (_mock *MockService) RejectCourseRequest(ctx context.Context, reqID string, reviewerID string, comments string, viewer entities.Viewer) error {
+	ret := _mock.Called(ctx, reqID, reviewerID, comments, viewer)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RejectCourseRequest")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) error); ok {
-		r0 = returnFunc(ctx, reqID, reviewerID, comments)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, entities.Viewer) error); ok {
+		r0 = returnFunc(ctx, reqID, reviewerID, comments, viewer)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -438,11 +450,12 @@ type MockService_RejectCourseRequest_Call struct {
 //   - reqID string
 //   - reviewerID string
 //   - comments string
-func (_e *MockService_Expecter) RejectCourseRequest(ctx any, reqID any, reviewerID any, comments any) *MockService_RejectCourseRequest_Call {
-	return &MockService_RejectCourseRequest_Call{Call: _e.mock.On("RejectCourseRequest", ctx, reqID, reviewerID, comments)}
+//   - viewer entities.Viewer
+func (_e *MockService_Expecter) RejectCourseRequest(ctx any, reqID any, reviewerID any, comments any, viewer any) *MockService_RejectCourseRequest_Call {
+	return &MockService_RejectCourseRequest_Call{Call: _e.mock.On("RejectCourseRequest", ctx, reqID, reviewerID, comments, viewer)}
 }
 
-func (_c *MockService_RejectCourseRequest_Call) Run(run func(ctx context.Context, reqID string, reviewerID string, comments string)) *MockService_RejectCourseRequest_Call {
+func (_c *MockService_RejectCourseRequest_Call) Run(run func(ctx context.Context, reqID string, reviewerID string, comments string, viewer entities.Viewer)) *MockService_RejectCourseRequest_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -460,11 +473,16 @@ func (_c *MockService_RejectCourseRequest_Call) Run(run func(ctx context.Context
 		if args[3] != nil {
 			arg3 = args[3].(string)
 		}
+		var arg4 entities.Viewer
+		if args[4] != nil {
+			arg4 = args[4].(entities.Viewer)
+		}
 		run(
 			arg0,
 			arg1,
 			arg2,
 			arg3,
+			arg4,
 		)
 	})
 	return _c
@@ -475,7 +493,7 @@ func (_c *MockService_RejectCourseRequest_Call) Return(err error) *MockService_R
 	return _c
 }
 
-func (_c *MockService_RejectCourseRequest_Call) RunAndReturn(run func(ctx context.Context, reqID string, reviewerID string, comments string) error) *MockService_RejectCourseRequest_Call {
+func (_c *MockService_RejectCourseRequest_Call) RunAndReturn(run func(ctx context.Context, reqID string, reviewerID string, comments string, viewer entities.Viewer) error) *MockService_RejectCourseRequest_Call {
 	_c.Call.Return(run)
 	return _c
 }

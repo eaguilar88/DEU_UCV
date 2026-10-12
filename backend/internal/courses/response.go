@@ -16,7 +16,7 @@ type GetCourseResponse struct {
 	ID                string                  `json:"id,omitempty"`
 	Name              string                  `json:"nombre,omitempty"`
 	Description       string                  `json:"descripcion,omitempty"`
-	Cover             string                  `json:"portada,omitempty"`
+	Cover             string                  `json:"image_url,omitempty"`
 	Objectives        string                  `json:"objetivos,omitempty"`
 	Rationale         string                  `json:"fundamentacion,omitempty"`
 	Duration          string                  `json:"duracion,omitempty"`
@@ -39,7 +39,7 @@ type GetCourseResponse struct {
 	// OwnerUserID is the user account of the course's provider (only on the course detail).
 	OwnerUserID      string              `json:"usuario_id,omitempty"`
 	IsActive         bool                `json:"activo"`
-	HasDocumentation bool                `json:"tiene_documentacion_legal"`
+	LegalDocumentID  string              `json:"documento_legal_id,omitempty"`
 	ManagementStatus string              `json:"estado_gestion,omitempty"`
 	Competencies     string              `json:"contenido_competencias,omitempty"`
 	Bibliography     string              `json:"bibliografia,omitempty"`

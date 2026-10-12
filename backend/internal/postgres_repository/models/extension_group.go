@@ -20,6 +20,7 @@ type ExtensionGroup struct {
 	Director            string
 	Location            sql.NullString
 	IsActive            bool
+	RenewalDueAt        sql.NullTime
 	CreatedAt           string
 	UpdatedAt           string
 	DeletedAt           sql.NullString

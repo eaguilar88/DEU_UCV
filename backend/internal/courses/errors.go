@@ -7,4 +7,5 @@ var (
 	ErrCourseAlreadyExists         = errors.New("course already exists")
 	ErrInvalidInput                = errors.New("invalid input")
 	ErrCourseClosureRequestPending = errors.New("course has a pending closure request")
+	ErrNotApprovedProvider         = errors.New("only approved providers can formulate courses")
 )

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/eaguilar88/deu/internal/entities"
 )
 
 var providerContractQuerySelectCommon = []string{
@@ -63,6 +64,7 @@ func GetContractCourseIDs(contractID string) sq.SelectBuilder {
 func SetCoursesDocumented(courseIDs []string) sq.UpdateBuilder {
 	return psql.Update(coursesTableName).
 		Set("has_documentation", true).
+		Set("estado_gestion", sq.Expr("COALESCE(estado_gestion, ?)", string(entities.CourseManagementStatusClosed))).
 		Set("updated_at", sq.Expr("NOW()")).
 		Where(sq.Eq{"id": courseIDs})
 }

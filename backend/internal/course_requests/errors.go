@@ -2,4 +2,7 @@ package course_requests
 
 import "errors"
 
-var ErrCourseRequestNotFound = errors.New("course request not found")
+var (
+	ErrCourseRequestNotFound  = errors.New("course request not found")
+	ErrCourseRequestForbidden = errors.New("you do not have permission to review this course request")
+)

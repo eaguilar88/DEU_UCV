@@ -1,0 +1,10 @@
+{{define "subject"}}Recordatorio: renovación anual del grupo de extensión{{end}}
+
+{{define "content"}}
+{{if .Overdue}}
+<p>El registro anual del grupo <strong>{{.GroupName}}</strong> venció el <strong>{{.DueDate}}</strong>.</p>
+{{else}}
+<p>El registro anual del grupo <strong>{{.GroupName}}</strong> vence el <strong>{{.DueDate}}</strong>.</p>
+{{end}}
+<p>Ingresa al sistema para realizar la renovación.</p>
+{{end}}

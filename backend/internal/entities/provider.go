@@ -33,12 +33,14 @@ const (
 	ProviderFileTypeResume           = "curriculums"
 	ProviderFileTypeOther            = "otros"
 	ProviderFileTypeLogo             = "logo"
+	ProviderFileTypeTitle            = "titulo"
+	ProviderFileTypeMercantileReg    = "registro_mercantil"
 	ProviderFileTypeIntentionLetter  = "carta_intencion"
 	ProviderFileTypeCommitmentLetter = "carta_compromiso"
 
 	// Legal identity types
 	PartyTypeNatural   ProviderPartyType = "natural"
-	PartyTypeJuridical ProviderPartyType = "juridico"
+	PartyTypeJuridical ProviderPartyType = "juridica"
 
 	// Profit types
 	ProfitTypeLucrativo   ProviderProfitType = "lucrativo"
@@ -47,8 +49,9 @@ const (
 	// Provider statuses
 	ProviderStatusUnderReview ProviderStatus = "under_review"
 	ProviderStatusRejected    ProviderStatus = "rejected"
-	ProviderStatusActive      ProviderStatus = "active"
 	ProviderStatusInactive    ProviderStatus = "inactive"
+	ProviderStatusActive      ProviderStatus = "active"
+	ProviderStatusAll         ProviderStatus = "all"
 )
 
 type ProviderFiles struct {
@@ -56,6 +59,8 @@ type ProviderFiles struct {
 	CI                *File
 	RIF               *File
 	ISLR              *File
+	Title             *File
+	MercantileReg     *File
 	Resumes           []*File
 	Others            []*File
 	IntentionLetter   *File
@@ -84,6 +89,7 @@ type Provider struct {
 type ProviderFilters struct {
 	Faculty Faculty
 	Type    ProviderType
+	UserID  string
 	ProviderAdminFilters
 }
 

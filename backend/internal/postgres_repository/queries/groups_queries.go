@@ -22,6 +22,7 @@ var groupQuerySelectCommon = []string{
 	"g.type",
 	"g.location",
 	"g.is_active",
+	"g.renewal_due_at",
 	"g.created_at",
 	"g.updated_at",
 	"g.deleted_at",
@@ -122,17 +123,6 @@ func InsertGroup(group models.ExtensionGroup) sq.InsertBuilder {
 			sq.Expr("NOW()"),
 			sq.Expr("NOW()"),
 		).Suffix("RETURNING id")
-}
-
-func UpdateGroup(group models.ExtensionGroup) sq.UpdateBuilder {
-	return psql.Update(groupsTableName).
-		Set("description", group.Description).
-		Set("objective", group.Objective).
-		Set("type", group.Type).
-		Set("location", group.Location).
-		Set("is_active", group.IsActive).
-		Set("updated_at", sq.Expr("NOW()")).
-		Where(sq.Eq{"id": group.ID})
 }
 
 func DeleteGroup(groupID string) sq.DeleteBuilder {

@@ -179,7 +179,7 @@ func TestCoursePeriodService_CreateCoursePeriod(t *testing.T) {
 			name:   "success",
 			period: entities.CoursePeriod{Name: "Cohorte 2026-I", Capacity: 30},
 			prepare: func(ctx context.Context, repoMock *mocks.MockRepository) {
-				repoMock.EXPECT().GetCourse(ctx, mock.AnythingOfType("string")).Return(entities.Course{ID: "course-id"}, nil)
+				repoMock.EXPECT().GetCourse(ctx, mock.AnythingOfType("string")).Return(entities.Course{ID: "course-id", HasDocumentation: true}, nil)
 				repoMock.EXPECT().GetActiveCoursePeriodByCourseID(ctx, mock.AnythingOfType("string")).
 					Return(entities.CoursePeriod{}, ErrCoursePeriodNotFound)
 				repoMock.EXPECT().CreateCoursePeriod(ctx, mock.AnythingOfType("entities.CoursePeriod")).RunAndReturn(
@@ -194,7 +194,7 @@ func TestCoursePeriodService_CreateCoursePeriod(t *testing.T) {
 			name:   "error creating new course period",
 			period: entities.CoursePeriod{Name: "Cohorte 2026-I", Capacity: 30},
 			prepare: func(ctx context.Context, repoMock *mocks.MockRepository) {
-				repoMock.EXPECT().GetCourse(ctx, mock.AnythingOfType("string")).Return(entities.Course{ID: "course-id"}, nil)
+				repoMock.EXPECT().GetCourse(ctx, mock.AnythingOfType("string")).Return(entities.Course{ID: "course-id", HasDocumentation: true}, nil)
 				repoMock.EXPECT().GetActiveCoursePeriodByCourseID(ctx, mock.AnythingOfType("string")).
 					Return(entities.CoursePeriod{}, ErrCoursePeriodNotFound)
 				repoMock.EXPECT().CreateCoursePeriod(ctx, mock.AnythingOfType("entities.CoursePeriod")).RunAndReturn(
@@ -219,7 +219,7 @@ func TestCoursePeriodService_CreateCoursePeriod(t *testing.T) {
 			name:   "error a course period is already open",
 			period: entities.CoursePeriod{Name: "Cohorte 2026-I", Capacity: 30},
 			prepare: func(ctx context.Context, repoMock *mocks.MockRepository) {
-				repoMock.EXPECT().GetCourse(ctx, mock.AnythingOfType("string")).Return(entities.Course{ID: "course-id"}, nil)
+				repoMock.EXPECT().GetCourse(ctx, mock.AnythingOfType("string")).Return(entities.Course{ID: "course-id", HasDocumentation: true}, nil)
 				repoMock.EXPECT().GetActiveCoursePeriodByCourseID(ctx, mock.AnythingOfType("string")).
 					Return(entities.CoursePeriod{ID: "period-id"}, nil)
 			},
@@ -235,6 +235,15 @@ func TestCoursePeriodService_CreateCoursePeriod(t *testing.T) {
 			},
 			want:    int64(-1),
 			wantErr: courses.ErrCourseClosureRequestPending,
+		},
+		{
+			name:   "error course not covered by a legal contract",
+			period: entities.CoursePeriod{Name: "Cohorte 2026-I", Capacity: 30},
+			prepare: func(ctx context.Context, repoMock *mocks.MockRepository) {
+				repoMock.EXPECT().GetCourse(ctx, mock.AnythingOfType("string")).Return(entities.Course{ID: "course-id"}, nil)
+			},
+			want:    int64(-1),
+			wantErr: ErrCourseNotCovered,
 		},
 		{
 			name:    "error invalid capacity",

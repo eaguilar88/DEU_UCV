@@ -13,6 +13,7 @@ type GetProviderResponse struct {
 	Logo           string                     `json:"provider_avatar_url,omitempty"`
 	Type           string                     `json:"tipo,omitempty"`
 	ProfitType     string                     `json:"tipo_lucro,omitempty"`
+	PartyType      string                     `json:"tipo_persona,omitempty"`
 	Faculty        string                     `json:"facultad,omitempty"`
 	Contact        []string                   `json:"emails_contacto,omitempty"`
 	Phones         []string                   `json:"telefonos_contacto,omitempty"`
@@ -55,11 +56,14 @@ func providerContractsToResponse(contracts []entities.ProviderContract) []Provid
 }
 
 type ProviderFiles struct {
-	CI      string   `json:"ci,omitempty"`
-	RIF     string   `json:"rif,omitempty"`
-	ISLR    string   `json:"islr,omitempty"`
-	Resumes []string `json:"resumenes,omitempty"`
-	Others  []string `json:"otros,omitempty"`
+	CI    string `json:"ci,omitempty"`
+	RIF   string `json:"rif,omitempty"`
+	ISLR  string `json:"islr,omitempty"`
+	Title string `json:"titulo,omitempty"`
+	// MercantileReg is only uploaded by juridical providers.
+	MercantileReg string   `json:"registro_mercantil,omitempty"`
+	Resumes       []string `json:"resumenes,omitempty"`
+	Others        []string `json:"otros,omitempty"`
 }
 
 // providerToResponse converts a Provider entity to GetProviderResponse.
@@ -74,6 +78,7 @@ func providerToResponse(entity entities.Provider) GetProviderResponse {
 		Bio:        entity.Bio,
 		Type:       string(entity.Type),
 		ProfitType: string(entity.ProfitType),
+		PartyType:  string(entity.PartyType),
 		Faculty:    string(entity.Faculty),
 	}
 
@@ -90,6 +95,12 @@ func providerToResponse(entity entities.Provider) GetProviderResponse {
 	}
 	if entity.Files.ISLR != nil {
 		files.ISLR = entity.Files.ISLR.URL
+	}
+	if entity.Files.Title != nil {
+		files.Title = entity.Files.Title.URL
+	}
+	if entity.Files.MercantileReg != nil {
+		files.MercantileReg = entity.Files.MercantileReg.URL
 	}
 	if entity.Files.Resumes != nil {
 		for _, file := range entity.Files.Resumes {

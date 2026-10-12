@@ -50,6 +50,8 @@ The response always includes a `pagination` object:
 
 Course requests are scoped to a faculty. The admin must pass the faculty they are reviewing for.
 
+The list includes the requests a faculty redirected to another one, but only the course's current faculty (or a global admin) may approve, reject or redirect them.
+
 ### List requests
 ```
 GET /admin/course-requests?faculty=<faculty>&page=1&per_page=10
@@ -109,8 +111,10 @@ Content-Type: application/json
 }
 ```
 
-**Response `200`:** `{}`
+**Response `204`:** No content.
+**Response `403`:** The request belongs to another faculty.
 **Response `404`:** Request not found.
+**Response `409`:** The request was already processed.
 
 ### Reject
 ```
@@ -122,8 +126,10 @@ Content-Type: application/json
 }
 ```
 
-**Response `200`:** `{}`
+**Response `204`:** No content.
+**Response `403`:** The request belongs to another faculty.
 **Response `404`:** Request not found.
+**Response `409`:** The request was already processed.
 
 ### Redirect (send to another faculty)
 ```
@@ -136,9 +142,11 @@ Content-Type: application/json
 }
 ```
 
-**Response `200`:** `{}`
+**Response `204`:** No content.
 **Response `400`:** Missing `facultad` or `motivo`.
+**Response `403`:** The request belongs to another faculty.
 **Response `404`:** Request not found.
+**Response `409`:** The request was already processed.
 
 ---
 

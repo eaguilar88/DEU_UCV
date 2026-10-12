@@ -49,12 +49,12 @@ func TestHandler_ApproveCourseRequest_Multipart(t *testing.T) {
 		return r.ID == "1" && r.Reviewer.ID == "reviewer-1" && r.Comments == "buen curso" &&
 			r.Score != nil && *r.Score == 18.5 && r.Classification == "Formación para el trabajo" &&
 			r.EvaluationFile != nil && r.EvaluationFile.Name == "archivo_evaluacion.pdf"
-	}), entities.CourseType_LifeSkills).Return(nil)
+	}), entities.CourseType_LifeSkills, mock.Anything).Return(nil)
 
 	err = NewHandler(svc, zap.NewNop()).ApproveCourseRequest(ctx)
 
 	require.NoError(t, err)
-	assert.Equal(t, http.StatusAccepted, rec.Code)
+	assert.Equal(t, http.StatusNoContent, rec.Code)
 }
 
 func TestHandler_ApproveCourseRequest_JSON(t *testing.T) {
@@ -66,12 +66,12 @@ func TestHandler_ApproveCourseRequest_JSON(t *testing.T) {
 	svc := mocks.NewMockService(t)
 	svc.EXPECT().ApproveCourseRequest(mock.Anything, mock.MatchedBy(func(r entities.CourseRequest) bool {
 		return r.Comments == "ok" && r.Score == nil && r.EvaluationFile == nil
-	}), entities.CourseType_LifeSkills).Return(nil)
+	}), entities.CourseType_LifeSkills, mock.Anything).Return(nil)
 
 	err := NewHandler(svc, zap.NewNop()).ApproveCourseRequest(ctx)
 
 	require.NoError(t, err)
-	assert.Equal(t, http.StatusAccepted, rec.Code)
+	assert.Equal(t, http.StatusNoContent, rec.Code)
 }
 
 func TestHandler_ApproveCourseRequest_InvalidScore(t *testing.T) {
@@ -111,7 +111,8 @@ func TestHandler_GetCourseRequestsByFaculty_Scope(t *testing.T) {
 			svc.EXPECT().GetCourseRequestsByFaculty(mock.Anything, tt.wantFaculty, mock.Anything).
 				Return([]entities.CourseRequest{{
 					ID: "1", User: entities.User{ID: "owner-1"},
-					Course: &entities.Course{ID: "3", Name: "Curso", HasDocumentation: true},
+					Course: &entities.Course{ID: "3", Name: "Curso", HasDocumentation: true,
+						LegalContract: &entities.ProviderContract{ID: "7", Type: entities.ContractTypeInitial}},
 				}}, entities.PageScope{}, nil)
 
 			err := NewHandler(svc, zap.NewNop()).GetCourseRequestsByFaculty(ctx)
@@ -119,7 +120,7 @@ func TestHandler_GetCourseRequestsByFaculty_Scope(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, http.StatusOK, rec.Code)
 			// List items carry their course, its contract status and the owner's user.
-			assert.Contains(t, rec.Body.String(), `"curso":{"id":"3","nombre":"Curso","tiene_documentacion_legal":true},"usuario_id":"owner-1"`)
+			assert.Contains(t, rec.Body.String(), `"curso":{"id":"3","nombre":"Curso","documento_legal_id":"INTENCION-7"},"usuario_id":"owner-1"`)
 		})
 	}
 }
