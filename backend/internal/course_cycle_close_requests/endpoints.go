@@ -99,10 +99,7 @@ func (h *Handler) ApproveCloseRequest(c echo.Context) error {
 	}
 
 	if err := h.svc.ApproveCloseRequest(ctx, id, userID); err != nil {
-		if errors.Is(err, ErrCycleCloseRequestNotFound) {
-			return httperrors.NewNotFound("close request not found")
-		}
-		return httperrors.NewInternal(err)
+		return reviewCloseRequestError(err)
 	}
 
 	return c.NoContent(http.StatusAccepted)
@@ -126,13 +123,22 @@ func (h *Handler) RejectCloseRequest(c echo.Context) error {
 	}
 
 	if err := h.svc.RejectCloseRequest(ctx, id, userID, req.Comments); err != nil {
-		if errors.Is(err, ErrCycleCloseRequestNotFound) {
-			return httperrors.NewNotFound("close request not found")
-		}
-		return httperrors.NewInternal(err)
+		return reviewCloseRequestError(err)
 	}
 
 	return c.NoContent(http.StatusAccepted)
+}
+
+// reviewCloseRequestError maps the errors of approving or rejecting a close request to HTTP errors.
+func reviewCloseRequestError(err error) error {
+	switch {
+	case errors.Is(err, ErrCycleCloseRequestNotFound):
+		return httperrors.NewNotFound("close request not found")
+	case errors.Is(err, ErrRequestIsProcessed):
+		return httperrors.NewConflict(ErrRequestIsProcessed.Error())
+	default:
+		return httperrors.NewInternal(err)
+	}
 }
 
 func (h *Handler) GetCloseRequests(c echo.Context) error {
