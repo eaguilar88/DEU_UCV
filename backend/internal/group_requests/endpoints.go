@@ -140,6 +140,7 @@ func (h *Handler) GetGroupRequestsByFaculty(c echo.Context) error {
 			Faculty:   string(req.Faculty),
 			CreatedAt: req.CreatedAt,
 			UpdatedAt: req.UpdatedAt,
+			IsRenewal: req.RenewalID != "",
 			Approvals: toApprovals(req.Approvals),
 		})
 	}
@@ -171,7 +172,9 @@ func (h *Handler) GetGroupRequestByID(c echo.Context) error {
 		Faculty:   string(req.Faculty),
 		CreatedAt: req.CreatedAt,
 		UpdatedAt: req.UpdatedAt,
+		IsRenewal: req.RenewalID != "",
 		Approvals: toApprovals(req.Approvals),
+		Renewal:   toRenewalProposal(req.Renewal),
 	}
 
 	return c.JSON(http.StatusOK, response)

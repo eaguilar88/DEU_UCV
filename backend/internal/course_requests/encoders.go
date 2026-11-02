@@ -36,7 +36,7 @@ func courseToInfo(course entities.Course) *CourseInfo {
 		Cost:              course.Cost,
 		Location:          course.Location,
 		IsActive:          course.IsActive,
-		HasDocumentation:  course.HasDocumentation,
+		LegalDocumentID:   course.LegalContract.DocumentID(),
 		CreatedAt:         course.CreatedAt,
 		UpdatedAt:         course.UpdatedAt,
 		ProviderID:        course.Owner.ID,

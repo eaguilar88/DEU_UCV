@@ -132,6 +132,9 @@ func (h *Handler) CreateCourse(c echo.Context) error {
 
 	courseID, err := h.svc.CreateCourse(ctx, userID, course)
 	if err != nil {
+		if errors.Is(err, ErrNotApprovedProvider) {
+			return httperrors.NewForbidden(ErrNotApprovedProvider.Error())
+		}
 		return httperrors.NewInternal(err)
 	}
 

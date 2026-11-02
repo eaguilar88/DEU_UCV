@@ -49,7 +49,8 @@ func (r *PostgresRepository) GetUncoveredCourseIDs(ctx context.Context, provider
 
 // CreateProviderContract inserts a provider_contracts row, links every covered
 // course via provider_contract_courses, and flips has_documentation=true on
-// those courses, all within a single transaction.
+// those courses (setting estado_gestion='cerrado' when it is still empty), all
+// within a single transaction.
 func (r *PostgresRepository) CreateProviderContract(ctx context.Context, contract entities.ProviderContract, coveredCourseIDs []string) (entities.ProviderContract, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {

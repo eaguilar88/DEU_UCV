@@ -16,6 +16,7 @@ var groupAuthRequestQuerySelectCommon = []string{
 	"gr.updated_at",
 	"gr.reviewer_id",
 	"gr.reviewed_at",
+	"gr.renewal_id",
 }
 
 func GetGroupRequestByID(requestID string) sq.SelectBuilder {
@@ -99,6 +100,7 @@ func InsertGroupRequest(req models.GroupRequest) sq.InsertBuilder {
 			"faculty",
 			"status",
 			"comments",
+			"renewal_id",
 			"created_at",
 			"updated_at",
 		).
@@ -107,6 +109,7 @@ func InsertGroupRequest(req models.GroupRequest) sq.InsertBuilder {
 			req.Faculty,
 			req.Status,
 			req.Comments,
+			req.RenewalID,
 			sq.Expr("NOW()"),
 			sq.Expr("NOW()"),
 		).Suffix("RETURNING id")
@@ -115,6 +118,7 @@ func InsertGroupRequest(req models.GroupRequest) sq.InsertBuilder {
 func ActivateGroup(groupID string) sq.UpdateBuilder {
 	return psql.Update("deu.extension_groups").
 		Set("is_active", true).
+		Set("renewal_due_at", sq.Expr("NOW() + INTERVAL '1 year'")).
 		Set("updated_at", sq.Expr("NOW()")).
 		Where(sq.Eq{"id": groupID})
 }

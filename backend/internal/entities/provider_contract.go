@@ -1,5 +1,7 @@
 package entities
 
+import "fmt"
+
 type ContractType string
 
 const (
@@ -25,4 +27,17 @@ type ProviderContract struct {
 	CoveredCourses []string
 	Files          []*File
 	CreatedAt      string
+}
+
+// DocumentID identifies the contract the way the diplomados UI expects it:
+// INTENCION-<id> for the initial contract and ADENDA-<id> for an addendum.
+// A nil contract (course not covered) yields an empty string.
+func (c *ProviderContract) DocumentID() string {
+	if c == nil {
+		return ""
+	}
+	if c.Type == ContractTypeAddendum {
+		return fmt.Sprintf("ADENDA-%s", c.ID)
+	}
+	return fmt.Sprintf("INTENCION-%s", c.ID)
 }

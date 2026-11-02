@@ -10,6 +10,17 @@ Sistema para la Dirección de Extensión Universitaria de la UCV
     * Registro de grupos de extensión
     * Actividades de los grupos de extensión
 
+## Índice de documentación
+
+### [Integración con Grupos de Extensión Universitaria](https://github.com/Kristian333/gsu_ucv)
+- [Renovación anual de grupos de extensión](docs/renovacion-grupos.md): solicitud de renovación, aprobación y almacenamiento de archivos propuestos (owner `group_renewal`).
+- [Recordatorios por correo](docs/recordatorios.md): avisos de renovación a los grupos, desactivación de grupos vencidos y recordatorios a coordinadores de solicitudes de grupos pendientes.
+
+### [Integración con Educación Continua y Permanente](https://github.com/RoaRobinson97/ecp_ucv)
+- [Diplomados (ECP) con el backend Go](docs/diplomados_prod.md)
+- [Recordatorios por correo](docs/recordatorios.md): recordatorios a coordinadores de solicitudes de cursos pendientes.
+- [Cierre de cohorte y generación de certificados](docs/cierre-cohorte-certificados.md): diagrama de flujo desde la solicitud de cierre hasta la validación del certificado, con preguntas frecuentes para el usuario.
+
 ## Fuera de alcance para este proyecto
 Funcionalidades evaluadas y excluidas a propósito (por ejemplo, el manejo de participantes de cursos). Ver [Fuera de alcance](docs/fuera-de-alcance.md).
 

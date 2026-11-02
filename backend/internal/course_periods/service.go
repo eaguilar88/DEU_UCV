@@ -99,6 +99,12 @@ func (s *service) CreateCoursePeriod(ctx context.Context, period entities.Course
 		return -1, courses.ErrCourseClosureRequestPending
 	}
 
+	// A cohort can only open on a course covered by a legal contract. A closed course was
+	// already opened once, so it is covered too.
+	if !course.HasDocumentation {
+		return -1, ErrCourseNotCovered
+	}
+
 	if _, err := s.repo.GetActiveCoursePeriodByCourseID(ctx, period.Course.ID); err != nil {
 		if !errors.Is(err, ErrCoursePeriodNotFound) {
 			return -1, err

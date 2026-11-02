@@ -119,10 +119,10 @@ func main() {
 	activityService := activities.NewService(repository, bbClient, logger)
 	activityEndpoints := activities.NewHandler(activityService, logger)
 
-	groupService := groups.NewService(repository, bbClient, logger)
+	groupService := groups.NewService(repository, bbClient, mailClient, config.RenewalWindow, logger)
 	groupEndpoints := groups.NewHandler(groupService, logger)
 
-	groupRequestService := group_requests.NewService(repository, mailClient, logger)
+	groupRequestService := group_requests.NewService(repository, mailClient, bbClient, logger)
 	groupRequestEndpoints := group_requests.NewHandler(groupRequestService, logger)
 
 	groupResourceRequestService := group_resource_requests.NewService(repository, mailClient, logger)
@@ -373,7 +373,7 @@ func addGroupsRoutes(e *echo.Echo, endpoints *groups.Handler, optionalAuth echo.
 	publicGroup.GET("", endpoints.GetGroups, optionalAuth)
 	protectedGroup := e.Group("/groups/requests", middlewares...)
 	protectedGroup.POST("", endpoints.CreateGroup)
-	protectedGroup.PUT("/:id", endpoints.UpdateGroup)
+	protectedGroup.PUT("/:id", endpoints.RenewGroup)
 	protectedGroup.DELETE("/:id", endpoints.DeleteGroup)
 }
 

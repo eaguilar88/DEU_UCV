@@ -1,5 +1,7 @@
 package entities
 
+import "time"
+
 type GroupType string
 
 const (
@@ -56,6 +58,7 @@ type ExtensionGroup struct {
 	Active              bool
 	Email               string
 	Phone               string
+	RenewalDueAt        time.Time // zero until the group is approved
 	CreatedAt           string
 	UpdatedAt           string
 	DeletedAt           string

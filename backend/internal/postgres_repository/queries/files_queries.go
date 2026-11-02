@@ -31,7 +31,7 @@ func GetFileByID(fileID string) sq.SelectBuilder {
 func GetFilesByOwner(ownerID, ownerType string) sq.SelectBuilder {
 	return psql.Select(fileQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS f", filesTableName)).
-		Where(sq.Eq{"f.owner_id": ownerID, "f.owner_type": ownerType})
+		Where(sq.Eq{"f.owner_id": ownerID, "f.owner_type": ownerType, "f.deleted_at": nil})
 }
 
 func InsertFile(files []models.File) sq.InsertBuilder {

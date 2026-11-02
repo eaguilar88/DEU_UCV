@@ -29,6 +29,8 @@ var (
 	ErrMissingAddendum          = errors.New("adenda is required")
 	ErrNoCoursesToCoverage      = errors.New("no approved courses without legal coverage for this provider")
 	ErrProviderAlreadyProcessed = errors.New("this provider request has already been processed")
+	ErrProviderRequestPending   = errors.New("provider request already under review")
+	ErrProviderAlreadyApproved  = errors.New("user is already an approved provider")
 )
 
 // Repository defines the data access operations required by the providers service.
@@ -151,6 +153,17 @@ func (s *service) GetProvider(ctx context.Context, providerID string, viewer ent
 		)
 		return entities.Provider{}, fmt.Errorf("failed to get provider contracts: %w", err)
 	}
+	for i := range contracts {
+		if contracts[i].Files, err = s.getContractFiles(ctx, contracts[i]); err != nil {
+			s.logger.Error("failed to get provider contract files",
+				zap.Error(err),
+				zap.String("provider_id", providerID),
+				zap.String("contract_id", contracts[i].ID),
+				zap.String("action", "get_provider_contract_files"),
+			)
+			return entities.Provider{}, fmt.Errorf("failed to get provider contract files: %w", err)
+		}
+	}
 	provider.Contracts = contracts
 
 	s.logger.Debug("provider retrieved successfully",
@@ -209,6 +222,18 @@ func (s *service) GetProviders(ctx context.Context, pageScope entities.PageScope
 // saves file metadata to the database, creates a provider request for admin review,
 // and sends a confirmation email. Returns the new provider's database ID.
 func (s *service) CreateProvider(ctx context.Context, provider *entities.Provider) (int64, error) {
+	// A user may apply again after a rejection, but not while a request is under review or approved.
+	existing, err := s.repo.GetProviderByUserID(ctx, provider.User.ID)
+	switch {
+	case err == nil && existing.Status == entities.ProviderStatusUnderReview:
+		return -1, ErrProviderRequestPending
+	case err == nil && existing.Status == entities.ProviderStatusActive:
+		return -1, ErrProviderAlreadyApproved
+	case err != nil && !errors.Is(err, ErrProviderNotFound):
+		s.logger.Error("failed to check existing provider", zap.Error(err))
+		return -1, err
+	}
+
 	code, err := entities.GenerateProviderCode(provider.Type)
 	if err != nil {
 		s.logger.Error("failed to generate provider code", zap.Error(err))
@@ -458,6 +483,34 @@ func makeContractFileEntity(file *entities.File, contractID, uploadedBy string, 
 	return file
 }
 
+// getContractFiles returns a contract's documents with pre-signed URLs, in a fixed order the
+// frontend reads by position: intention then commitment letter for the initial contract, the
+// addendum otherwise.
+func (s *service) getContractFiles(ctx context.Context, contract entities.ProviderContract) ([]*entities.File, error) {
+	grouped, err := s.repo.GetFilesByOwner(ctx, contract.ID, entities.OwnerTypeProviderContract)
+	if err != nil {
+		return nil, err
+	}
+
+	purposes := []string{entities.ProviderFileTypeAddendum}
+	if contract.Type == entities.ContractTypeInitial {
+		purposes = []string{entities.ProviderFileTypeIntentionLetter, entities.ProviderFileTypeCommitmentLetter}
+	}
+
+	var files []*entities.File
+	for _, purpose := range purposes {
+		f := grouped.GetSingleFile(purpose)
+		if f == nil {
+			continue
+		}
+		if f.URL, err = s.storage.GetPresignedFileURL(ctx, f.Key); err != nil {
+			return nil, err
+		}
+		files = append(files, f)
+	}
+	return files, nil
+}
+
 // DeleteProvider soft-deletes a provider by ID.
 func (s *service) DeleteProvider(ctx context.Context, providerID string) error {
 	err := s.repo.DeleteProvider(ctx, providerID)
@@ -542,13 +595,20 @@ func providerDisplayName(provider entities.Provider) string {
 // prepareFilesSlice builds the full list of file entities from a provider's file pointers,
 // setting ownership, storage key, and metadata on each file.
 func prepareFilesSlice(provider *entities.Provider, providerID int64, metadata map[string]string) ([]*entities.File, error) {
-	filesArr := []*entities.File{
-		makeFileEntityFromFilePointer(provider.Files.CI, providerID, provider.User.ID, entities.OwnerTypeProvider, metadata),
-		makeFileEntityFromFilePointer(provider.Files.RIF, providerID, provider.User.ID, entities.OwnerTypeProvider, metadata),
-		makeFileEntityFromFilePointer(provider.Files.ISLR, providerID, provider.User.ID, entities.OwnerTypeProvider, metadata),
+	filesArr := []*entities.File{}
+	// ISLR and the mercantile registry are optional, so a single file may be missing.
+	single := []*entities.File{
+		provider.Files.CI,
+		provider.Files.RIF,
+		provider.Files.ISLR,
+		provider.Files.Title,
+		provider.Files.MercantileReg,
+		provider.Files.Logo,
 	}
-	if provider.Files.Logo != nil {
-		filesArr = append(filesArr, makeFileEntityFromFilePointer(provider.Files.Logo, providerID, provider.User.ID, entities.OwnerTypeProvider, metadata))
+	for _, file := range single {
+		if file != nil {
+			filesArr = append(filesArr, makeFileEntityFromFilePointer(file, providerID, provider.User.ID, entities.OwnerTypeProvider, metadata))
+		}
 	}
 
 	for _, resume := range provider.Files.Resumes {
@@ -646,6 +706,8 @@ func (s *service) getFilesForProvider(ctx context.Context, providerID string) (e
 		CI:                files.GetSingleFile(entities.ProviderFileTypeCI),
 		RIF:               files.GetSingleFile(entities.ProviderFileTypeRIF),
 		ISLR:              files.GetSingleFile(entities.ProviderFileTypeISLR),
+		Title:             files.GetSingleFile(entities.ProviderFileTypeTitle),
+		MercantileReg:     files.GetSingleFile(entities.ProviderFileTypeMercantileReg),
 		Resumes:           files.GetMultipleFiles(entities.ProviderFileTypeResume),
 		Others:            files.GetMultipleFiles(entities.ProviderFileTypeOther),
 		IntentionLetter:   files.GetSingleFile(entities.ProviderFileTypeIntentionLetter),

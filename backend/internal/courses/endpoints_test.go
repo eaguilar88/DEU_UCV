@@ -63,6 +63,8 @@ func TestHandler_GetCourse(t *testing.T) {
 		prepare func(ctx echo.Context, tc *testCase)
 		resp    any
 		wantErr error
+		// wantJSON are fragments the raw body must contain, to check the JSON field names.
+		wantJSON []string
 	}
 
 	tests := []testCase{
@@ -99,6 +101,32 @@ func TestHandler_GetCourse(t *testing.T) {
 			},
 		},
 		{
+			name: "covered course exposes its cover and covering contract",
+			svc:  &mocks.MockService{},
+			prepare: func(ctx echo.Context, tc *testCase) {
+				tc.svc.On("GetCourse", ctx.Request().Context(), mock.AnythingOfType("string"), entities.Viewer{}).
+					Return(entities.Course{
+						ID:               "1",
+						Name:             "Test Course",
+						Cover:            &entities.File{URL: "https://files.example/cover.png"},
+						HasDocumentation: true,
+						LegalContract:    &entities.ProviderContract{ID: "9", Type: entities.ContractTypeAddendum},
+					}, nil)
+				tc.svc.On("GetLatestCoursePeriod", ctx.Request().Context(), mock.AnythingOfType("string")).
+					Return(entities.CoursePeriod{}, errors.New("not found"))
+			},
+			resp: GetCourseResponse{
+				ID:              "1",
+				Name:            "Test Course",
+				Cover:           "https://files.example/cover.png",
+				LegalDocumentID: "ADENDA-9",
+			},
+			wantJSON: []string{
+				`"image_url":"https://files.example/cover.png"`,
+				`"documento_legal_id":"ADENDA-9"`,
+			},
+		},
+		{
 			name: "error getting course",
 			svc:  &mocks.MockService{},
 			prepare: func(ctx echo.Context, tc *testCase) {
@@ -129,6 +157,9 @@ func TestHandler_GetCourse(t *testing.T) {
 				var respBody GetCourseResponse
 				require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &respBody))
 				assert.Equal(t, tt.resp, respBody)
+				for _, fragment := range tt.wantJSON {
+					assert.Contains(t, rec.Body.String(), fragment)
+				}
 			}
 			tt.svc.AssertExpectations(t)
 		})
@@ -337,6 +368,17 @@ func TestHandler_CreateCourse(t *testing.T) {
 					Return(int64(-1), errors.New("db error"))
 			},
 			wantErr: httperrors.NewInternal(errors.New("db error")),
+		},
+		{
+			name:      "error provider not approved",
+			svc:       &mocks.MockService{},
+			userID:    &userID,
+			buildForm: buildCourseForm,
+			prepare: func(ctx echo.Context, tc *testCase) {
+				tc.svc.On("CreateCourse", ctx.Request().Context(), userID, mock.AnythingOfType("entities.Course")).
+					Return(int64(-1), ErrNotApprovedProvider)
+			},
+			wantErr: httperrors.NewForbidden(ErrNotApprovedProvider.Error()),
 		},
 		{
 			name:      "success",

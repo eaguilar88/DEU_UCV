@@ -2,7 +2,9 @@ package providers
 
 import (
 	"context"
+	"database/sql"
 	"errors"
+	"fmt"
 	"slices"
 	"testing"
 
@@ -172,6 +174,55 @@ func TestService_GetProvider(t *testing.T) {
 					RunAndReturn(func(_ context.Context, _ string) ([]entities.ProviderContract, error) {
 						return nil, errors.New("db error")
 					})
+			},
+			wantErr: true,
+		},
+		{
+			name:       "success with contract documents in intention, commitment order",
+			providerID: "1",
+			prepare: func(repoMock *mocks.MockRepository, storageMock *mocks.MockStorageClient) {
+				repoMock.EXPECT().GetProvider(mock.Anything, "1").Return(entities.Provider{ID: "1"}, nil)
+				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1", entities.OwnerTypeProvider).
+					Return(entities.GroupedFiles{}, nil)
+				repoMock.EXPECT().GetProviderContracts(mock.Anything, "1").Return([]entities.ProviderContract{
+					{ID: "c1", Type: entities.ContractTypeInitial},
+					{ID: "c2", Type: entities.ContractTypeAddendum},
+				}, nil)
+				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "c1", entities.OwnerTypeProviderContract).
+					Return(entities.GroupedFiles{
+						entities.ProviderFileTypeCommitmentLetter: {{Key: "compromiso-key"}},
+						entities.ProviderFileTypeIntentionLetter:  {{Key: "intencion-key"}},
+					}, nil)
+				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "c2", entities.OwnerTypeProviderContract).
+					Return(entities.GroupedFiles{entities.ProviderFileTypeAddendum: {{Key: "adenda-key"}}}, nil)
+				storageMock.EXPECT().GetPresignedFileURL(mock.Anything, "intencion-key").Return("http://url/intencion.pdf", nil)
+				storageMock.EXPECT().GetPresignedFileURL(mock.Anything, "compromiso-key").Return("http://url/compromiso.pdf", nil)
+				storageMock.EXPECT().GetPresignedFileURL(mock.Anything, "adenda-key").Return("http://url/adenda.pdf", nil)
+			},
+			want: entities.Provider{
+				ID: "1",
+				Contracts: []entities.ProviderContract{
+					{ID: "c1", Type: entities.ContractTypeInitial, Files: []*entities.File{
+						{Key: "intencion-key", URL: "http://url/intencion.pdf"},
+						{Key: "compromiso-key", URL: "http://url/compromiso.pdf"},
+					}},
+					{ID: "c2", Type: entities.ContractTypeAddendum, Files: []*entities.File{
+						{Key: "adenda-key", URL: "http://url/adenda.pdf"},
+					}},
+				},
+			},
+		},
+		{
+			name:       "get contract files error",
+			providerID: "1",
+			prepare: func(repoMock *mocks.MockRepository, _ *mocks.MockStorageClient) {
+				repoMock.EXPECT().GetProvider(mock.Anything, "1").Return(entities.Provider{ID: "1"}, nil)
+				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "1", entities.OwnerTypeProvider).
+					Return(entities.GroupedFiles{}, nil)
+				repoMock.EXPECT().GetProviderContracts(mock.Anything, "1").
+					Return([]entities.ProviderContract{{ID: "c1", Type: entities.ContractTypeInitial}}, nil)
+				repoMock.EXPECT().GetFilesByOwner(mock.Anything, "c1", entities.OwnerTypeProviderContract).
+					Return(nil, errors.New("db error"))
 			},
 			wantErr: true,
 		},
@@ -400,6 +451,12 @@ func TestService_GetProviders(t *testing.T) {
 	}
 }
 
+// expectNoExistingProvider makes the duplicate-request check of CreateProvider find no provider.
+func expectNoExistingProvider(repoMock *mocks.MockRepository) {
+	repoMock.EXPECT().GetProviderByUserID(mock.Anything, mock.Anything).
+		Return(entities.Provider{}, fmt.Errorf("%w: %w", ErrProviderNotFound, sql.ErrNoRows))
+}
+
 func TestService_CreateProvider(t *testing.T) {
 	type testCase struct {
 		name    string
@@ -407,6 +464,15 @@ func TestService_CreateProvider(t *testing.T) {
 		prepare func(repoMock *mocks.MockRepository)
 		wantID  int64
 		wantErr bool
+		// wantErrIs, when set, is the error CreateProvider must return.
+		wantErrIs error
+	}
+
+	repoCreateError := func(repoMock *mocks.MockRepository) {
+		repoMock.EXPECT().CreateProvider(mock.Anything, mock.AnythingOfType("entities.Provider")).
+			RunAndReturn(func(_ context.Context, _ entities.Provider) (int64, error) {
+				return int64(-1), errors.New("db error")
+			})
 	}
 
 	tests := []testCase{
@@ -414,10 +480,52 @@ func TestService_CreateProvider(t *testing.T) {
 			name:  "repo create error",
 			pType: entities.CourseProviderType,
 			prepare: func(repoMock *mocks.MockRepository) {
-				repoMock.EXPECT().CreateProvider(mock.Anything, mock.AnythingOfType("entities.Provider")).
-					RunAndReturn(func(_ context.Context, _ entities.Provider) (int64, error) {
-						return int64(-1), errors.New("db error")
-					})
+				expectNoExistingProvider(repoMock)
+				repoCreateError(repoMock)
+			},
+			wantID:  int64(-1),
+			wantErr: true,
+		},
+		{
+			name:  "request already under review",
+			pType: entities.CourseProviderType,
+			prepare: func(repoMock *mocks.MockRepository) {
+				repoMock.EXPECT().GetProviderByUserID(mock.Anything, mock.Anything).
+					Return(entities.Provider{ID: "5", Status: entities.ProviderStatusUnderReview}, nil)
+			},
+			wantID:    int64(-1),
+			wantErr:   true,
+			wantErrIs: ErrProviderRequestPending,
+		},
+		{
+			name:  "user is already an approved provider",
+			pType: entities.CourseProviderType,
+			prepare: func(repoMock *mocks.MockRepository) {
+				repoMock.EXPECT().GetProviderByUserID(mock.Anything, mock.Anything).
+					Return(entities.Provider{ID: "5", Status: entities.ProviderStatusActive}, nil)
+			},
+			wantID:    int64(-1),
+			wantErr:   true,
+			wantErrIs: ErrProviderAlreadyApproved,
+		},
+		{
+			name:  "a rejected provider may apply again",
+			pType: entities.CourseProviderType,
+			prepare: func(repoMock *mocks.MockRepository) {
+				repoMock.EXPECT().GetProviderByUserID(mock.Anything, mock.Anything).
+					Return(entities.Provider{ID: "5", Status: entities.ProviderStatusRejected}, nil)
+				// Reaching the insert proves the request was not rejected as a duplicate.
+				repoCreateError(repoMock)
+			},
+			wantID:  int64(-1),
+			wantErr: true,
+		},
+		{
+			name:  "error checking the existing provider",
+			pType: entities.CourseProviderType,
+			prepare: func(repoMock *mocks.MockRepository) {
+				repoMock.EXPECT().GetProviderByUserID(mock.Anything, mock.Anything).
+					Return(entities.Provider{}, errors.New("db error"))
 			},
 			wantID:  int64(-1),
 			wantErr: true,
@@ -438,6 +546,9 @@ func TestService_CreateProvider(t *testing.T) {
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Equal(t, tt.wantID, gotID)
+				if tt.wantErrIs != nil {
+					assert.ErrorIs(t, err, tt.wantErrIs)
+				}
 			} else {
 				assert.NoError(t, err)
 			}
@@ -708,6 +819,7 @@ func TestService_uploadAndSave(t *testing.T) {
 			repoMock := mocks.NewMockRepository(t)
 			storageMock := mocks.NewMockStorageClient(t)
 			mailMock := mocks.NewMockMailClient(t)
+			expectNoExistingProvider(repoMock)
 			if tt.prepare != nil {
 				tt.prepare(ctx, repoMock, storageMock, mailMock)
 			}
@@ -902,6 +1014,20 @@ func Test_prepareFilesSlice(t *testing.T) {
 			wantLen:    4,
 			wantKeys:   []string{"files/providers/42/ci.pdf", "files/providers/42/rif.pdf", "files/providers/42/islr.pdf", "files/providers/42/logo.jpg"},
 			wantPublic: []string{"files/providers/42/logo.jpg"},
+		},
+		{
+			name: "optional ISLR missing, with title and mercantile registry",
+			provider: &entities.Provider{
+				User: entities.User{ID: "user-1"},
+				Files: entities.ProviderFiles{
+					CI:            &entities.File{Name: "ci.pdf"},
+					RIF:           &entities.File{Name: "rif.pdf"},
+					Title:         &entities.File{Name: "titulo.pdf"},
+					MercantileReg: &entities.File{Name: "registro_mercantil.pdf"},
+				},
+			},
+			wantLen:  4,
+			wantKeys: []string{"files/providers/42/ci.pdf", "files/providers/42/rif.pdf", "files/providers/42/titulo.pdf", "files/providers/42/registro_mercantil.pdf"},
 		},
 	}
 
@@ -1272,6 +1398,7 @@ func TestService_CreateProvider_NotifiesCoordinators(t *testing.T) {
 		return provider
 	}
 	prepareCreated := func(repoMock *mocks.MockRepository, storageMock *mocks.MockStorageClient, mailMock *mocks.MockMailClient) {
+		expectNoExistingProvider(repoMock)
 		repoMock.EXPECT().CreateProvider(mock.Anything, mock.Anything).Return(int64(7), nil)
 		storageMock.EXPECT().UploadFile(mock.Anything, mock.Anything).Return(nil)
 		repoMock.EXPECT().SaveFilesToDB(mock.Anything, mock.Anything).Return(nil)
@@ -1340,6 +1467,7 @@ func TestService_CreateProvider_WithoutFacultySkipsCoordinators(t *testing.T) {
 	repoMock := mocks.NewMockRepository(t)
 	storageMock := mocks.NewMockStorageClient(t)
 	mailMock := mocks.NewMockMailClient(t)
+	expectNoExistingProvider(repoMock)
 	repoMock.EXPECT().CreateProvider(mock.Anything, mock.Anything).Return(int64(7), nil)
 	storageMock.EXPECT().UploadFile(mock.Anything, mock.Anything).Return(nil)
 	repoMock.EXPECT().SaveFilesToDB(mock.Anything, mock.Anything).Return(nil)

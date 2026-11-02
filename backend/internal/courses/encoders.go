@@ -46,7 +46,7 @@ func courseToResponse(course entities.Course) GetCourseResponse {
 		CreatedAt:         course.CreatedAt,
 		UpdatedAt:         course.UpdatedAt,
 		IsActive:          course.IsActive,
-		HasDocumentation:  course.HasDocumentation,
+		LegalDocumentID:   course.LegalContract.DocumentID(),
 		ManagementStatus:  string(course.ManagementStatus),
 		Competencies:      course.Competencies,
 		Bibliography:      course.Bibliography,

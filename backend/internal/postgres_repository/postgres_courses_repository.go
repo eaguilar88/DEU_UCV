@@ -276,6 +276,8 @@ func scanCourse(row scannable) (models.Course, error) {
 		&course.CreatedAt,
 		&course.UpdatedAt,
 		&course.DeletedAt,
+		&course.LegalContractID,
+		&course.LegalContractType,
 	)
 
 	return course, err
@@ -294,6 +296,13 @@ func newCourseFromModel(course models.Course) entities.Course {
 
 	if course.Description.Valid {
 		c.Description = course.Description.String
+	}
+
+	if course.LegalContractID.Valid {
+		c.LegalContract = &entities.ProviderContract{
+			ID:   course.LegalContractID.String,
+			Type: entities.ContractType(course.LegalContractType.String),
+		}
 	}
 
 	if course.Objectives.Valid {

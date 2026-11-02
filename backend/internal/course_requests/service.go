@@ -59,8 +59,8 @@ func NewService(repo Repository, storage StorageClient, emailClient MailClient, 
 	}
 }
 
-func (s *service) ApproveCourseRequest(ctx context.Context, request entities.CourseRequest, courseType entities.CourseType) error {
-	existing, recipient, err := s.getPendingRequestAndRecipient(ctx, request.ID)
+func (s *service) ApproveCourseRequest(ctx context.Context, request entities.CourseRequest, courseType entities.CourseType, viewer entities.Viewer) error {
+	existing, recipient, err := s.getPendingRequestAndRecipient(ctx, request.ID, viewer)
 	if err != nil {
 		return err
 	}
@@ -95,8 +95,8 @@ func (s *service) ApproveCourseRequest(ctx context.Context, request entities.Cou
 	return nil
 }
 
-func (s *service) RejectCourseRequest(ctx context.Context, reqID, reviewerID, comments string) error {
-	existing, recipient, err := s.getPendingRequestAndRecipient(ctx, reqID)
+func (s *service) RejectCourseRequest(ctx context.Context, reqID, reviewerID, comments string, viewer entities.Viewer) error {
+	existing, recipient, err := s.getPendingRequestAndRecipient(ctx, reqID, viewer)
 	if err != nil {
 		return err
 	}
@@ -108,8 +108,8 @@ func (s *service) RejectCourseRequest(ctx context.Context, reqID, reviewerID, co
 	return s.repo.RejectCourseRequest(ctx, reqID, reviewerID, comments, notify)
 }
 
-func (s *service) RedirectCourseRequest(ctx context.Context, reqID, reviewerID string, faculty entities.Faculty, reason string) error {
-	existing, recipient, err := s.getPendingRequestAndRecipient(ctx, reqID)
+func (s *service) RedirectCourseRequest(ctx context.Context, reqID, reviewerID string, faculty entities.Faculty, reason string, viewer entities.Viewer) error {
+	existing, recipient, err := s.getPendingRequestAndRecipient(ctx, reqID, viewer)
 	if err != nil {
 		return err
 	}
@@ -122,12 +122,16 @@ func (s *service) RedirectCourseRequest(ctx context.Context, reqID, reviewerID s
 	return s.repo.RedirectCourseRequest(ctx, reqID, reviewerID, faculty, reason, notify)
 }
 
-// getPendingRequestAndRecipient loads a course request, checks it is still under review, and resolves
-// the email of the provider that owns the course, so the admin action can notify them.
-func (s *service) getPendingRequestAndRecipient(ctx context.Context, reqID string) (entities.CourseRequest, string, error) {
+// getPendingRequestAndRecipient loads a course request, checks the viewer may review it and that it is
+// still under review, and resolves the email of the provider that owns the course, so the admin action
+// can notify them.
+func (s *service) getPendingRequestAndRecipient(ctx context.Context, reqID string, viewer entities.Viewer) (entities.CourseRequest, string, error) {
 	existing, err := s.repo.GetCourseRequestByID(ctx, reqID)
 	if err != nil {
 		return entities.CourseRequest{}, "", err
+	}
+	if !canReview(viewer, existing) {
+		return entities.CourseRequest{}, "", ErrCourseRequestForbidden
 	}
 	if existing.Status != entities.RequestStatus_UNDER_REVIEW {
 		return entities.CourseRequest{}, "", ErrRequestIsProcessed
@@ -156,6 +160,15 @@ func (s *service) notifier(ctx context.Context, reqID, to string, tmpl email.Tem
 		}
 		return nil
 	}
+}
+
+// canReview reports whether viewer may act on the request: only the course's current faculty, not the
+// one it was redirected from, which still lists it.
+func canReview(viewer entities.Viewer, request entities.CourseRequest) bool {
+	if viewer.IsGlobalAdmin() {
+		return true
+	}
+	return request.Course != nil && viewer.IsFacultyAdminOf(request.Course.Faculty)
 }
 
 func courseName(request entities.CourseRequest) string {

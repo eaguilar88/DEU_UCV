@@ -85,8 +85,19 @@ func pendingCourseRequest() entities.CourseRequest {
 	return entities.CourseRequest{
 		ID:     "1",
 		Status: entities.RequestStatus_UNDER_REVIEW,
-		Course: &entities.Course{ID: "3", Name: "Curso de prueba", Owner: entities.User{ID: "provider-1"}},
+		Course: &entities.Course{
+			ID:            "3",
+			Name:          "Curso de prueba",
+			Owner:         entities.User{ID: "provider-1"},
+			Faculty:       entities.FacultyCiencias,
+			OriginFaculty: entities.FacultyCiencias,
+		},
 	}
+}
+
+// facultyAdmin is a faculty_admin of the given faculty.
+func facultyAdmin(faculty entities.Faculty) entities.Viewer {
+	return entities.Viewer{UserID: "reviewer-1", Roles: []string{"faculty_admin"}, Faculty: faculty}
 }
 
 func expectProviderLookup(repoMock *mocks.MockRepository) {
@@ -101,7 +112,7 @@ type reviewAction struct {
 	template    email.Template
 	data        any
 	expectWrite func(repoMock *mocks.MockRepository) *mock.Call
-	run         func(s Service) error
+	run         func(s Service, viewer entities.Viewer) error
 }
 
 func courseReviewActions() []reviewAction {
@@ -117,9 +128,9 @@ func courseReviewActions() []reviewAction {
 						return notify()
 					}).Call
 			},
-			run: func(s Service) error {
+			run: func(s Service, viewer entities.Viewer) error {
 				req := entities.CourseRequest{ID: "1", Reviewer: entities.User{ID: "reviewer-1"}, Comments: "buen curso"}
-				return s.ApproveCourseRequest(context.Background(), req, entities.CourseType_SkillDevelopment)
+				return s.ApproveCourseRequest(context.Background(), req, entities.CourseType_SkillDevelopment, viewer)
 			},
 		},
 		{
@@ -130,8 +141,8 @@ func courseReviewActions() []reviewAction {
 				return repoMock.EXPECT().RejectCourseRequest(mock.Anything, "1", "reviewer-1", "no cumple", mock.Anything).
 					RunAndReturn(func(_ context.Context, _, _, _ string, notify func() error) error { return notify() }).Call
 			},
-			run: func(s Service) error {
-				return s.RejectCourseRequest(context.Background(), "1", "reviewer-1", "no cumple")
+			run: func(s Service, viewer entities.Viewer) error {
+				return s.RejectCourseRequest(context.Background(), "1", "reviewer-1", "no cumple", viewer)
 			},
 		},
 		{
@@ -148,8 +159,8 @@ func courseReviewActions() []reviewAction {
 						return notify()
 					}).Call
 			},
-			run: func(s Service) error {
-				return s.RedirectCourseRequest(context.Background(), "1", "reviewer-1", entities.FacultyCiencias, "otra facultad")
+			run: func(s Service, viewer entities.Viewer) error {
+				return s.RedirectCourseRequest(context.Background(), "1", "reviewer-1", entities.FacultyCiencias, "otra facultad", viewer)
 			},
 		},
 	}
@@ -158,9 +169,13 @@ func courseReviewActions() []reviewAction {
 func TestCourseRequestService_ReviewNotifications(t *testing.T) {
 	type testCase struct {
 		name    string
+		viewer  *entities.Viewer
 		prepare func(action reviewAction, repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient)
 		wantErr error
 	}
+
+	deuAdmin := entities.Viewer{UserID: "reviewer-1", Roles: []string{"deu_admin"}}
+	otherFacultyAdmin := facultyAdmin(entities.FacultyIngenieria)
 
 	tests := []testCase{
 		{
@@ -172,6 +187,35 @@ func TestCourseRequestService_ReviewNotifications(t *testing.T) {
 				mailMock.EXPECT().SendTemplate(mock.Anything, "provider@test.com", action.template, action.data).
 					Return(nil)
 			},
+		},
+		{
+			name:   "a global admin may review any faculty's request",
+			viewer: &deuAdmin,
+			prepare: func(action reviewAction, repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient) {
+				repoMock.EXPECT().GetCourseRequestByID(mock.Anything, "1").Return(pendingCourseRequest(), nil)
+				expectProviderLookup(repoMock)
+				action.expectWrite(repoMock)
+				mailMock.EXPECT().SendTemplate(mock.Anything, "provider@test.com", action.template, action.data).
+					Return(nil)
+			},
+		},
+		{
+			name:   "an admin of another faculty is forbidden",
+			viewer: &otherFacultyAdmin,
+			prepare: func(action reviewAction, repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient) {
+				repoMock.EXPECT().GetCourseRequestByID(mock.Anything, "1").Return(pendingCourseRequest(), nil)
+			},
+			wantErr: ErrCourseRequestForbidden,
+		},
+		{
+			name:   "the faculty a request was redirected from is forbidden",
+			viewer: &otherFacultyAdmin,
+			prepare: func(action reviewAction, repoMock *mocks.MockRepository, mailMock *mocks.MockMailClient) {
+				req := pendingCourseRequest()
+				req.Course.OriginFaculty = entities.FacultyIngenieria
+				repoMock.EXPECT().GetCourseRequestByID(mock.Anything, "1").Return(req, nil)
+			},
+			wantErr: ErrCourseRequestForbidden,
 		},
 		{
 			name: "error request already processed",
@@ -220,7 +264,11 @@ func TestCourseRequestService_ReviewNotifications(t *testing.T) {
 				tt.prepare(action, repoMock, mailMock)
 
 				s := NewService(repoMock, mocks.NewMockStorageClient(t), mailMock, zap.NewNop())
-				err := action.run(s)
+				viewer := facultyAdmin(entities.FacultyCiencias)
+				if tt.viewer != nil {
+					viewer = *tt.viewer
+				}
+				err := action.run(s, viewer)
 				if tt.wantErr != nil {
 					assert.EqualError(t, err, tt.wantErr.Error())
 				} else {
@@ -261,7 +309,7 @@ func TestCourseRequestService_ApproveWithEvaluation(t *testing.T) {
 		}), entities.CourseType_LifeSkills.String(), mock.Anything).Return(nil)
 
 		s := NewService(repoMock, storageMock, mailMock, zap.NewNop())
-		err := s.ApproveCourseRequest(context.Background(), newRequest(), entities.CourseType_LifeSkills)
+		err := s.ApproveCourseRequest(context.Background(), newRequest(), entities.CourseType_LifeSkills, facultyAdmin(entities.FacultyCiencias))
 
 		assert.NoError(t, err)
 	})
@@ -276,7 +324,7 @@ func TestCourseRequestService_ApproveWithEvaluation(t *testing.T) {
 		storageMock.EXPECT().DeleteFile(mock.Anything, evaluationKey).Return(nil)
 
 		s := NewService(repoMock, storageMock, mocks.NewMockMailClient(t), zap.NewNop())
-		err := s.ApproveCourseRequest(context.Background(), newRequest(), entities.CourseType_LifeSkills)
+		err := s.ApproveCourseRequest(context.Background(), newRequest(), entities.CourseType_LifeSkills, facultyAdmin(entities.FacultyCiencias))
 
 		assert.EqualError(t, err, "db error")
 	})
@@ -289,7 +337,7 @@ func TestCourseRequestService_ApproveWithEvaluation(t *testing.T) {
 		storageMock.EXPECT().UploadFile(mock.Anything, mock.Anything).Return(errors.New("b2 down"))
 
 		s := NewService(repoMock, storageMock, mocks.NewMockMailClient(t), zap.NewNop())
-		err := s.ApproveCourseRequest(context.Background(), newRequest(), entities.CourseType_LifeSkills)
+		err := s.ApproveCourseRequest(context.Background(), newRequest(), entities.CourseType_LifeSkills, facultyAdmin(entities.FacultyCiencias))
 
 		assert.EqualError(t, err, "b2 down")
 	})

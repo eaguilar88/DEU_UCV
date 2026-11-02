@@ -30,17 +30,6 @@ type CreateGroupRequest struct {
 	Phone               string           `form:"telefono"`
 }
 
-type UpdateGroupRequest struct {
-	ID          string           `param:"id" validate:"required"`
-	OwnerID     string           `validate:"required"`
-	Description string           `form:"descripcion"`
-	Objective   string           `validate:"required" form:"objetivo"`
-	Location    string           `form:"ubicacion"`
-	Type        []string         `form:"tipo"`
-	Email       string           `form:"correo"`
-	Phone       string           `form:"telefono"`
-	Members     []GroupMemberDTO `form:"miembros"`
-}
 type DeleteGroupRequest struct {
 	ID      string `param:"id" validate:"required"`
 	OwnerID string `validate:"required"`
@@ -93,34 +82,6 @@ func ValidateFaculty(facultyStr string) (entities.Faculty, error) {
 		return "", fmt.Errorf("invalid faculty: %s", facultyStr)
 	}
 	return faculty, nil
-}
-
-// updateGroupEntityFromRequest converts UpdateGroupRequest to an ExtensionGroup entity.
-func updateGroupEntityFromRequest(req UpdateGroupRequest) entities.ExtensionGroup {
-	types := make([]entities.GroupType, 0, len(req.Type))
-	for _, t := range req.Type {
-		gt := entities.GroupType(t)
-		if gt.IsValid() {
-			types = append(types, gt)
-		}
-	}
-
-	return entities.ExtensionGroup{
-		ID:          req.ID,
-		Description: req.Description,
-		Owner: &entities.User{
-			ID: req.OwnerID,
-		},
-		// CourseRequest: entities.CourseRequest{
-		// 	ID: req.EndorsementID,
-		// },
-		Type:      types,
-		Objective: req.Objective,
-		Location:  req.Location,
-		Email:     req.Email,
-		Phone:     req.Phone,
-		Members:   groupMembersEntityFromRequest(req.Members),
-	}
 }
 
 // createGroupEntityFromRequest converts CreateGroupRequest to an ExtensionGroup entity.

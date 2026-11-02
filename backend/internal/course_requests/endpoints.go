@@ -10,15 +10,16 @@ import (
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/facultyscope"
 	"github.com/eaguilar88/deu/internal/httperrors"
+	"github.com/eaguilar88/deu/internal/jwt"
 	"github.com/eaguilar88/deu/internal/utils"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
 
 type Service interface {
-	ApproveCourseRequest(ctx context.Context, cr entities.CourseRequest, courseType entities.CourseType) error
-	RejectCourseRequest(ctx context.Context, reqID, reviewerID, comments string) error
-	RedirectCourseRequest(ctx context.Context, reqID, reviewerID string, faculty entities.Faculty, reason string) error
+	ApproveCourseRequest(ctx context.Context, cr entities.CourseRequest, courseType entities.CourseType, viewer entities.Viewer) error
+	RejectCourseRequest(ctx context.Context, reqID, reviewerID, comments string, viewer entities.Viewer) error
+	RedirectCourseRequest(ctx context.Context, reqID, reviewerID string, faculty entities.Faculty, reason string, viewer entities.Viewer) error
 	GetCourseRequestsByFaculty(ctx context.Context, faculty entities.Faculty, pageScope entities.PageScope) ([]entities.CourseRequest, entities.PageScope, error)
 	GetCourseRequestByID(ctx context.Context, reqID string) (entities.CourseRequest, error)
 	GetMyCourseRequests(ctx context.Context, userID string, pageScope entities.PageScope) ([]entities.CourseRequest, entities.PageScope, error)
@@ -84,14 +85,11 @@ func (h *Handler) ApproveCourseRequest(c echo.Context) error {
 	}
 	courseType := entities.FromStringCourseType(req.CourseType)
 
-	if err := h.svc.ApproveCourseRequest(ctx, request, courseType); err != nil {
-		if errors.Is(err, ErrCourseRequestNotFound) {
-			return httperrors.NewNotFound("course request not found")
-		}
-		return httperrors.NewInternal(err)
+	if err := h.svc.ApproveCourseRequest(ctx, request, courseType, jwt.ViewerFromContext(c)); err != nil {
+		return reviewCourseRequestError(err)
 	}
 
-	return c.NoContent(http.StatusAccepted)
+	return c.NoContent(http.StatusNoContent)
 }
 
 func (h *Handler) RejectCourseRequest(c echo.Context) error {
@@ -111,14 +109,11 @@ func (h *Handler) RejectCourseRequest(c echo.Context) error {
 		return httperrors.NewBadRequest("invalid request body")
 	}
 
-	if err := h.svc.RejectCourseRequest(ctx, reqID, userID, req.Comments); err != nil {
-		if errors.Is(err, ErrCourseRequestNotFound) {
-			return httperrors.NewNotFound("course request not found")
-		}
-		return httperrors.NewInternal(err)
+	if err := h.svc.RejectCourseRequest(ctx, reqID, userID, req.Comments, jwt.ViewerFromContext(c)); err != nil {
+		return reviewCourseRequestError(err)
 	}
 
-	return c.NoContent(http.StatusAccepted)
+	return c.NoContent(http.StatusNoContent)
 }
 
 func (h *Handler) RedirectCourseRequest(c echo.Context) error {
@@ -147,14 +142,25 @@ func (h *Handler) RedirectCourseRequest(c echo.Context) error {
 		return httperrors.NewBadRequest("invalid faculty")
 	}
 
-	if err := h.svc.RedirectCourseRequest(ctx, reqID, userID, faculty, req.Reason); err != nil {
-		if errors.Is(err, ErrCourseRequestNotFound) {
-			return httperrors.NewNotFound("course request not found")
-		}
-		return httperrors.NewInternal(err)
+	if err := h.svc.RedirectCourseRequest(ctx, reqID, userID, faculty, req.Reason, jwt.ViewerFromContext(c)); err != nil {
+		return reviewCourseRequestError(err)
 	}
 
-	return c.NoContent(http.StatusAccepted)
+	return c.NoContent(http.StatusNoContent)
+}
+
+// reviewCourseRequestError maps the errors of approving, rejecting or redirecting a request to HTTP errors.
+func reviewCourseRequestError(err error) error {
+	switch {
+	case errors.Is(err, ErrCourseRequestNotFound):
+		return httperrors.NewNotFound("course request not found")
+	case errors.Is(err, ErrCourseRequestForbidden):
+		return httperrors.NewForbidden(ErrCourseRequestForbidden.Error())
+	case errors.Is(err, ErrRequestIsProcessed):
+		return httperrors.NewConflict(ErrRequestIsProcessed.Error())
+	default:
+		return httperrors.NewInternal(err)
+	}
 }
 
 func (h *Handler) GetCourseRequestsByFaculty(c echo.Context) error {

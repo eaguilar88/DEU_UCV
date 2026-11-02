@@ -150,6 +150,14 @@ func TestHandler_ApproveCloseRequest(t *testing.T) {
 			wantErr: httperrors.NewNotFound("close request not found"),
 		},
 		{
+			name:   "error already processed",
+			userID: &userID,
+			prepare: func(ctx echo.Context, svc *mocks.MockService) {
+				svc.EXPECT().ApproveCloseRequest(ctx.Request().Context(), "1", userID).Return(ErrRequestIsProcessed)
+			},
+			wantErr: httperrors.NewConflict(ErrRequestIsProcessed.Error()),
+		},
+		{
 			name:    "error cannot find userID in context",
 			wantErr: httperrors.NewUnauthorized("authentication required"),
 		},
@@ -193,6 +201,14 @@ func TestHandler_RejectCloseRequest(t *testing.T) {
 			prepare: func(ctx echo.Context, svc *mocks.MockService) {
 				svc.EXPECT().RejectCloseRequest(ctx.Request().Context(), "1", userID, "").Return(nil)
 			},
+		},
+		{
+			name:   "error already processed",
+			userID: &userID,
+			prepare: func(ctx echo.Context, svc *mocks.MockService) {
+				svc.EXPECT().RejectCloseRequest(ctx.Request().Context(), "1", userID, "").Return(ErrRequestIsProcessed)
+			},
+			wantErr: httperrors.NewConflict(ErrRequestIsProcessed.Error()),
 		},
 		{
 			name:    "error cannot find userID in context",

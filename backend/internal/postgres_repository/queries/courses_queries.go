@@ -35,11 +35,22 @@ var courseQuerySelectCommon = []string{
 	"c.created_at",
 	"c.updated_at",
 	"c.deleted_at",
+	// The contract covering the course (see withCoveringContract).
+	"lc.id",
+	"lc.type",
+}
+
+// withCoveringContract joins the contract that covers the course c, as lc (NULLs if none).
+func withCoveringContract(q sq.SelectBuilder) sq.SelectBuilder {
+	return q.LeftJoin(fmt.Sprintf(
+		"LATERAL (SELECT pc.id, pc.type FROM %s AS pcc JOIN %s AS pc ON pc.id = pcc.contract_id"+
+			" WHERE pcc.course_id = c.id AND pc.deleted_at IS NULL ORDER BY pc.created_at DESC LIMIT 1) AS lc ON true",
+		providerContractCoursesTableName, providerContractsTableName))
 }
 
 func GetCourseByID(courseID string) sq.SelectBuilder {
-	return psql.Select(courseQuerySelectCommon...).
-		From(fmt.Sprintf("%s AS c", coursesTableName)).
+	return withCoveringContract(psql.Select(courseQuerySelectCommon...).
+		From(fmt.Sprintf("%s AS c", coursesTableName))).
 		Where(sq.Eq{"c.deleted_at": nil}).
 		Where(sq.Eq{"c.is_active": true}).
 		Where(sq.Eq{"c.id": courseID})
@@ -48,14 +59,14 @@ func GetCourseByID(courseID string) sq.SelectBuilder {
 // GetCourseByIDIncludingInactive also returns inactive and soft-deleted courses, e.g. to show the
 // course an issued certificate refers to.
 func GetCourseByIDIncludingInactive(courseID string) sq.SelectBuilder {
-	return psql.Select(courseQuerySelectCommon...).
-		From(fmt.Sprintf("%s AS c", coursesTableName)).
+	return withCoveringContract(psql.Select(courseQuerySelectCommon...).
+		From(fmt.Sprintf("%s AS c", coursesTableName))).
 		Where(sq.Eq{"c.id": courseID})
 }
 
 func GetCourses(filter entities.CourseFilter, limit, offset int) sq.SelectBuilder {
-	q := psql.Select(courseQuerySelectCommon...).
-		From(fmt.Sprintf("%s AS c", coursesTableName)).
+	q := withCoveringContract(psql.Select(courseQuerySelectCommon...).
+		From(fmt.Sprintf("%s AS c", coursesTableName))).
 		Where(sq.Eq{"c.deleted_at": nil}).
 		Where(sq.Eq{"c.is_active": true})
 
@@ -84,14 +95,17 @@ func GetCourses(filter entities.CourseFilter, limit, offset int) sq.SelectBuilde
 }
 
 // GetPublicCourses selects courses ready to be shown publicly: legally documented
-// (has_documentation) and with at least one period ever created (i.e. opened at some point).
+// (has_documentation) and with estado_gestion abierto or cerrado.
 func GetPublicCourses(limit, offset int) sq.SelectBuilder {
-	return psql.Select(courseQuerySelectCommon...).
-		From(fmt.Sprintf("%s AS c", coursesTableName)).
+	return withCoveringContract(psql.Select(courseQuerySelectCommon...).
+		From(fmt.Sprintf("%s AS c", coursesTableName))).
 		Where(sq.Eq{"c.deleted_at": nil}).
 		Where(sq.Eq{"c.is_active": true}).
 		Where(sq.Eq{"c.has_documentation": true}).
-		Where(fmt.Sprintf("EXISTS (SELECT 1 FROM %s cc WHERE cc.course_id = c.id AND cc.deleted_at IS NULL)", periodsTableName)).
+		Where(sq.Eq{"c.estado_gestion": []string{
+			string(entities.CourseManagementStatusOpen),
+			string(entities.CourseManagementStatusClosed),
+		}}).
 		Limit(uint64(limit)).
 		Offset(uint64(offset))
 }
