@@ -106,10 +106,10 @@ stop-backend:
 	docker compose down
 
 stop-prod:
-	docker compose -f docker-compose.prod.yml down -v
+	docker compose -f docker-compose.prod.yml down
 
 stop-db:
-	docker compose -f docker-compose.dev.yml down -v
+	docker compose -f docker-compose.dev.yml down
 
 generate-mocks:
 	docker pull vektra/mockery:latest && docker run --user 1000:1000 --rm -v ${PWD}/backend:/src -w /src vektra/mockery:latest --config .mockery.yaml
