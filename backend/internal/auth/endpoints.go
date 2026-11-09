@@ -3,7 +3,9 @@ package auth
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
+	"unicode/utf8"
 
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/httperrors"
@@ -15,6 +17,7 @@ type Service interface {
 	ChangePassword(ctx context.Context, userID, currentPassword, newPassword string) error
 	RequestPasswordReset(ctx context.Context, email string) error
 	ResetPassword(ctx context.Context, token, newPassword string) error
+	CheckPasswordResetToken(ctx context.Context, token string) error
 }
 
 // forgotPasswordMessage is returned whether or not the email is registered.
@@ -116,4 +119,51 @@ func (h *Handler) ResetPasswordHandleHTTP(c echo.Context) error {
 		return httperrors.NewInternal(err)
 	}
 	return c.NoContent(http.StatusNoContent)
+}
+
+// ResetPasswordPage serves the page the password reset email links to. The token is checked
+// first, so nobody types a new password into an expired link.
+func (h *Handler) ResetPasswordPage(c echo.Context) error {
+	token := c.QueryParam("token")
+	if token == "" {
+		return renderResetPage(c, http.StatusBadRequest, resetPasswordPage{Invalid: true})
+	}
+
+	if err := h.svc.CheckPasswordResetToken(c.Request().Context(), token); err != nil {
+		if errors.Is(err, ErrInvalidResetToken) {
+			return renderResetPage(c, http.StatusBadRequest, resetPasswordPage{Invalid: true})
+		}
+		return httperrors.NewInternal(err)
+	}
+	return renderResetPage(c, http.StatusOK, resetPasswordPage{Token: token})
+}
+
+// SubmitResetPasswordPage handles the form of the reset password page.
+func (h *Handler) SubmitResetPasswordPage(c echo.Context) error {
+	token := c.FormValue("token")
+	password := c.FormValue("password")
+	if token == "" {
+		return renderResetPage(c, http.StatusBadRequest, resetPasswordPage{Invalid: true})
+	}
+
+	if utf8.RuneCountInString(password) < minPasswordLength {
+		return renderResetPage(c, http.StatusBadRequest, resetPasswordPage{
+			Token: token,
+			Error: fmt.Sprintf("La contraseña debe tener al menos %d caracteres.", minPasswordLength),
+		})
+	}
+	if password != c.FormValue("confirmacion") {
+		return renderResetPage(c, http.StatusBadRequest, resetPasswordPage{
+			Token: token,
+			Error: "Las contraseñas no coinciden.",
+		})
+	}
+
+	if err := h.svc.ResetPassword(c.Request().Context(), token, password); err != nil {
+		if errors.Is(err, ErrInvalidResetToken) {
+			return renderResetPage(c, http.StatusBadRequest, resetPasswordPage{Invalid: true})
+		}
+		return httperrors.NewInternal(err)
+	}
+	return renderResetPage(c, http.StatusOK, resetPasswordPage{Done: true})
 }
