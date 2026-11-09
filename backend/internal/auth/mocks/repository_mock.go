@@ -313,6 +313,74 @@ func (_c *MockRepository_GetUserByUsername_Call) RunAndReturn(run func(ctx conte
 	return _c
 }
 
+// GetUserCredentialsByID provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetUserCredentialsByID(ctx context.Context, userID string) (*entities.User, error) {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetUserCredentialsByID")
+	}
+
+	var r0 *entities.User
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*entities.User, error)); ok {
+		return returnFunc(ctx, userID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *entities.User); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*entities.User)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetUserCredentialsByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserCredentialsByID'
+type MockRepository_GetUserCredentialsByID_Call struct {
+	*mock.Call
+}
+
+// GetUserCredentialsByID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID string
+func (_e *MockRepository_Expecter) GetUserCredentialsByID(ctx any, userID any) *MockRepository_GetUserCredentialsByID_Call {
+	return &MockRepository_GetUserCredentialsByID_Call{Call: _e.mock.On("GetUserCredentialsByID", ctx, userID)}
+}
+
+func (_c *MockRepository_GetUserCredentialsByID_Call) Run(run func(ctx context.Context, userID string)) *MockRepository_GetUserCredentialsByID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetUserCredentialsByID_Call) Return(user *entities.User, err error) *MockRepository_GetUserCredentialsByID_Call {
+	_c.Call.Return(user, err)
+	return _c
+}
+
+func (_c *MockRepository_GetUserCredentialsByID_Call) RunAndReturn(run func(ctx context.Context, userID string) (*entities.User, error)) *MockRepository_GetUserCredentialsByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetUserRoles provides a mock function for the type MockRepository
 func (_mock *MockRepository) GetUserRoles(ctx context.Context, userID string) ([]entities.UserRole, error) {
 	ret := _mock.Called(ctx, userID)
@@ -377,6 +445,69 @@ func (_c *MockRepository_GetUserRoles_Call) Return(userRoles []entities.UserRole
 }
 
 func (_c *MockRepository_GetUserRoles_Call) RunAndReturn(run func(ctx context.Context, userID string) ([]entities.UserRole, error)) *MockRepository_GetUserRoles_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateUserPassword provides a mock function for the type MockRepository
+func (_mock *MockRepository) UpdateUserPassword(ctx context.Context, userID string, passwordHash string) error {
+	ret := _mock.Called(ctx, userID, passwordHash)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateUserPassword")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = returnFunc(ctx, userID, passwordHash)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockRepository_UpdateUserPassword_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateUserPassword'
+type MockRepository_UpdateUserPassword_Call struct {
+	*mock.Call
+}
+
+// UpdateUserPassword is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID string
+//   - passwordHash string
+func (_e *MockRepository_Expecter) UpdateUserPassword(ctx any, userID any, passwordHash any) *MockRepository_UpdateUserPassword_Call {
+	return &MockRepository_UpdateUserPassword_Call{Call: _e.mock.On("UpdateUserPassword", ctx, userID, passwordHash)}
+}
+
+func (_c *MockRepository_UpdateUserPassword_Call) Run(run func(ctx context.Context, userID string, passwordHash string)) *MockRepository_UpdateUserPassword_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_UpdateUserPassword_Call) Return(err error) *MockRepository_UpdateUserPassword_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockRepository_UpdateUserPassword_Call) RunAndReturn(run func(ctx context.Context, userID string, passwordHash string) error) *MockRepository_UpdateUserPassword_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -55,6 +55,8 @@ func sampleData(name Template, value string) any {
 		return CoordinatorPendingReminderData{Faculty: value, MinDays: 3, CourseRequests: 2, GroupRequests: 1}
 	case TemplateGroupRenewalReminder:
 		return GroupRenewalReminderData{GroupName: value, DueDate: value}
+	case TemplatePasswordReset:
+		return PasswordResetData{Name: value, ResetURL: "https://example.com/restablecer-contrasena?token=abc"}
 	default:
 		return nil
 	}

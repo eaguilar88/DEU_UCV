@@ -135,3 +135,28 @@ func TestOptionalJWTMiddleware(t *testing.T) {
 		})
 	}
 }
+
+func TestJWTMiddleware_RejectsPasswordResetToken(t *testing.T) {
+	signer := NewJWTSigner("test-signing-key", 3600, zap.NewNop())
+	resetToken, err := signer.GeneratePasswordResetToken("42", "some-hash")
+	require.NoError(t, err)
+
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodPut, "/auth/password", nil)
+	req.Header.Set("Authorization", "Bearer "+resetToken)
+	c := e.NewContext(req, httptest.NewRecorder())
+
+	called := false
+	next := func(c echo.Context) error {
+		called = true
+		return c.NoContent(http.StatusOK)
+	}
+
+	err = JWTMiddleware(signer, zap.NewNop())(next)(c)
+
+	var httpErr *echo.HTTPError
+	require.ErrorAs(t, err, &httpErr)
+	assert.Equal(t, http.StatusUnauthorized, httpErr.Code)
+	assert.False(t, called)
+	assert.Nil(t, c.Get("userID"))
+}

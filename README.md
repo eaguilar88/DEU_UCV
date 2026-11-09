@@ -12,6 +12,9 @@ Sistema para la Dirección de Extensión Universitaria de la UCV
 
 ## Índice de documentación
 
+### Común a ambos frontends
+- [Cambio y restablecimiento de contraseña](docs/restablecer-contrasena.md): pantallas que necesita el frontend, flujo del enlace por correo y referencia de los endpoints `/auth/password`.
+
 ### [Integración con Grupos de Extensión Universitaria](https://github.com/Kristian333/gsu_ucv)
 - [Renovación anual de grupos de extensión](docs/renovacion-grupos.md): solicitud de renovación, aprobación y almacenamiento de archivos propuestos (owner `group_renewal`).
 - [Recordatorios por correo](docs/recordatorios.md): avisos de renovación a los grupos, desactivación de grupos vencidos y recordatorios a coordinadores de solicitudes de grupos pendientes.

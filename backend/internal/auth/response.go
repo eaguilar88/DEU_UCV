@@ -23,3 +23,7 @@ type LoginUserResponse struct {
 	Roles []string `json:"roles"`
 	Rol   string   `json:"rol"`
 }
+
+type ForgotPasswordResponse struct {
+	Message string `json:"mensaje"`
+}
