@@ -1,19 +1,21 @@
 # Cambio y restablecimiento de contraseña (guía para frontend)
 
-El backend tiene tres endpoints de contraseña en `auth`. Esta guía explica qué pantallas necesita el frontend y cómo usar cada endpoint.
+El backend tiene tres endpoints de contraseña en `auth` y sirve, además, la página a la que lleva el enlace de recuperación. Esta guía explica qué pantallas necesita cada frontend y cómo usar cada endpoint.
 
-| Necesidad del usuario | Pantalla del frontend | Endpoint |
+| Necesidad del usuario | Dónde se resuelve | Endpoint |
 |---|---|---|
-| Olvidó su contraseña y no puede entrar | **Olvidé mi contraseña** (enlazada desde el login) | `POST /auth/password/forgot` |
-| Abrió el enlace que le llegó por correo | **Restablecer contraseña** (la ruta configurada en `PASSWORD_RESET_URL`) | `POST /auth/password/reset` |
-| Tiene sesión y quiere cambiar su contraseña | **Cambiar contraseña** (dentro del perfil) | `PUT /auth/password` |
+| Olvidó su contraseña y no puede entrar | **Olvidé mi contraseña**, en cada frontend (enlazada desde el login) | `POST /auth/password/forgot` |
+| Abrió el enlace que le llegó por correo | **Restablecer contraseña**, servida por el backend en `https://extension.ucv.ve/restablecer-contrasena`. **No hay que construirla en el frontend.** | `GET` y `POST /restablecer-contrasena` |
+| Tiene sesión y quiere cambiar su contraseña | **Cambiar contraseña**, en cada frontend (dentro del perfil) | `PUT /auth/password` |
+
+Como la página del enlace la sirve el backend en el dominio de la DEU, la recuperación funciona igual para usuarios de grupos y de formación, y ningún sistema depende del otro.
 
 ## Flujo de recuperación
 
 ```mermaid
 sequenceDiagram
     actor U as Usuario
-    participant FE as Frontend
+    participant FE as Frontend (grupos o formación)
     participant API as Backend DEU
     participant M as Correo del usuario
 
@@ -21,21 +23,20 @@ sequenceDiagram
     FE->>API: POST /auth/password/forgot {email}
     API-->>FE: 200 {mensaje} (siempre, exista o no el correo)
     FE-->>U: Muestra el mensaje
-    API--)M: Si el correo existe: enlace PASSWORD_RESET_URL?token=...
-    U->>FE: Abre el enlace (vence en 30 min)
-    FE->>FE: Lee token de la URL y lo quita de la barra de direcciones
-    U->>FE: Nueva contraseña (x2)
-    FE->>API: POST /auth/password/reset {token, passwordNueva}
-    alt 204
-        API-->>FE: Contraseña cambiada
-        FE-->>U: Redirige al login con aviso de éxito
-    else 400 "enlace inválido o expirado"
-        API-->>FE: Error
-        FE-->>U: Ofrece pedir un enlace nuevo
+    API--)M: Si el correo existe: enlace a extension.ucv.ve/restablecer-contrasena?token=...
+    U->>API: Abre el enlace (vence en 30 min)
+    alt Enlace válido
+        API-->>U: Formulario: nueva contraseña (x2)
+        U->>API: Envía el formulario
+        API-->>U: "Contraseña actualizada"
+        U->>FE: Inicia sesión con la nueva contraseña
+    else Enlace vencido, usado o inválido
+        API-->>U: "Enlace inválido o expirado"
+        U->>FE: Vuelve a "Olvidé mi contraseña"
     end
 ```
 
-### 1. Pantalla "Olvidé mi contraseña"
+### Pantalla "Olvidé mi contraseña" (frontend)
 
 1. Pide el email y llama a `POST /auth/password/forgot`.
 2. Si la respuesta es **200**, muestra el campo `mensaje` tal como llega:
@@ -57,44 +58,22 @@ if (res.ok) {
 }
 ```
 
-### 2. Página "Restablecer contraseña"
+### Página "Restablecer contraseña" (backend)
 
-Es la página a la que apunta `PASSWORD_RESET_URL`. El correo trae el enlace `PASSWORD_RESET_URL?token=<token>`.
+No requiere trabajo en el frontend. Se documenta aquí para saber qué verá el usuario:
 
-1. **Lee `token` de la query string.** Si falta, muestra un error con un enlace a "Olvidé mi contraseña".
-2. **Quita el token de la URL** apenas lo leas, con `history.replaceState`. Así no queda en el historial, en capturas de pantalla ni en el header `Referer`.
-3. Pide la nueva contraseña **dos veces**. La confirmación solo se compara en el frontend; el backend recibe una sola.
-4. Valida en el cliente que tenga **al menos 8 caracteres**, la misma regla que aplica el backend.
-5. Llama a `POST /auth/password/reset`:
-   - **204:** la contraseña cambió. Redirige al login con un aviso de éxito. Este endpoint **no** inicia sesión.
-   - **400 `enlace inválido o expirado`:** el enlace venció, ya se usó o es inválido. Ofrece volver a "Olvidé mi contraseña" para pedir uno nuevo.
-   - **400 `validation failed`:** falta el token o la contraseña es muy corta.
+- **`GET /restablecer-contrasena?token=...`:** valida el enlace antes de mostrar nada.
+  - Si es válido, muestra un formulario con la nueva contraseña y su confirmación.
+  - Si no, muestra "Enlace inválido o expirado" y le indica que pida uno nuevo desde "Olvidé mi contraseña".
+- **`POST /restablecer-contrasena`:** procesa el formulario.
+  - Si las contraseñas no coinciden o tienen menos de 8 caracteres, vuelve a mostrar el formulario con el error.
+  - Si todo está bien, muestra "Contraseña actualizada" y le indica que inicie sesión en grupos o formación.
+- Es HTML sin JavaScript, con headers que evitan que el token quede en caché, se filtre en el `Referer` o se cargue dentro de un iframe.
+- **No inicia sesión.** Después de restablecer, el usuario entra por el login de su sistema.
 
-```js
-const params = new URLSearchParams(window.location.search);
-const token = params.get('token');
-window.history.replaceState(null, '', window.location.pathname);
+Si en el futuro un frontend quiere su propia pantalla de restablecimiento, puede usar el endpoint JSON `POST /auth/password/reset` (ver la referencia). En ese caso, `PASSWORD_RESET_URL` tendría que apuntar a esa pantalla.
 
-const res = await fetch(`${API_URL}/auth/password/reset`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ token, passwordNueva }),
-});
-if (res.status === 204) {
-  irAlLogin({ aviso: 'Tu contraseña fue actualizada. Ya puedes iniciar sesión.' });
-} else {
-  const { error } = await res.json();
-  mostrarError(error);
-}
-```
-
-**Qué no hacer con el token:**
-
-- No lo guardes en `localStorage`, `sessionStorage` ni en cookies. Solo vive en memoria mientras el usuario está en la página.
-- No lo envíes como `Authorization: Bearer`. No es un token de sesión y el backend lo rechaza.
-- No lo mandes a herramientas de analítica ni a logs del cliente.
-
-## Cambio de contraseña con sesión iniciada
+## Cambio de contraseña con sesión iniciada (frontend)
 
 En el perfil, pide la contraseña actual y la nueva (dos veces) y llama a `PUT /auth/password` con el token de sesión:
 
@@ -118,7 +97,7 @@ const res = await fetch(`${API_URL}/auth/password`, {
 
 ## Referencia de endpoints
 
-Todas las respuestas de error tienen la forma `{"error": "<mensaje>"}`. Un `500` siempre trae un mensaje genérico.
+Todas las respuestas de error de la API tienen la forma `{"error": "<mensaje>"}`. Un `500` siempre trae un mensaje genérico.
 
 ### `PUT /auth/password`
 
@@ -142,7 +121,9 @@ Todas las respuestas de error tienen la forma `{"error": "<mensaje>"}`. Un `500`
 | `200` | `{"mensaje": "Si el correo está registrado, recibirás un enlace para restablecer tu contraseña."}` |
 | `400` | `{"error": "validation failed"}` o `{"error": "invalid request body"}` |
 
-### `POST /auth/password/reset`
+### `POST /auth/password/reset` (opcional)
+
+La usa una pantalla de restablecimiento propia de un frontend. Con la página del backend no hace falta.
 
 - **Auth:** ninguna
 - **Body:** `{"token": "<token del enlace>", "passwordNueva": "claveNueva456"}`
@@ -162,10 +143,9 @@ Todas las respuestas de error tienen la forma `{"error": "<mensaje>"}`. Un `500`
 
 ## Configuración
 
-- **`PASSWORD_RESET_URL`** (backend): URL completa de la página "Restablecer contraseña", por ejemplo `https://formacion.extension.ucv.ve/restablecer-contrasena`. El backend le agrega `?token=...`.
-  - Es **una sola URL**. Aunque los dos frontends (grupos y formación) tengan la pantalla "Olvidé mi contraseña", el enlace del correo siempre lleva al frontend configurado. Ese frontend debe tener la página de restablecimiento.
-  - Si la URL ya tiene query string, el backend conserva sus parámetros y agrega `token`.
-- **`ALLOWED_ORIGINS`** (backend): el origen de cada frontend que llame a estos endpoints debe estar en la lista, o el navegador bloqueará las peticiones por CORS.
+- **`PASSWORD_RESET_URL`** (backend): URL de la página a la que lleva el correo. En producción es `https://extension.ucv.ve/restablecer-contrasena`. El backend le agrega `?token=...`.
+- **Traefik:** el router `backend-password-reset` de `docker-compose.prod.yml` envía `extension.ucv.ve/restablecer-contrasena` al backend. El resto de `extension.ucv.ve` sigue en la landing, igual que con `/certificados` y `/files`.
+- **`ALLOWED_ORIGINS`** (backend): el origen de cada frontend que llame a `/auth/password/forgot` o `/auth/password` debe estar en la lista, o el navegador bloqueará las peticiones por CORS. La página del backend no lo necesita, porque envía el formulario a su propia ruta.
 
 ## Probar con `curl`
 
@@ -175,10 +155,8 @@ curl -i -X POST "$API_URL/auth/password/forgot" \
   -H 'Content-Type: application/json' \
   -d '{"email": "ana.perez@example.com"}'
 
-# Restablecer con el token del correo
-curl -i -X POST "$API_URL/auth/password/reset" \
-  -H 'Content-Type: application/json' \
-  -d '{"token": "<token>", "passwordNueva": "claveNueva456"}'
+# Abrir la página sin token: debe mostrar "Enlace inválido o expirado" (400)
+curl -i "https://extension.ucv.ve/restablecer-contrasena"
 
 # Cambiar con sesión iniciada
 curl -i -X PUT "$API_URL/auth/password" \

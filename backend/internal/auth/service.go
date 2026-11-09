@@ -184,30 +184,47 @@ func (s *service) RequestPasswordReset(ctx context.Context, emailAddr string) er
 	return nil
 }
 
+// CheckPasswordResetToken reports whether a password reset link token can still be used. It
+// returns ErrInvalidResetToken when it can't.
+func (s *service) CheckPasswordResetToken(ctx context.Context, token string) error {
+	_, err := s.resolveResetToken(ctx, token)
+	return err
+}
+
 // ResetPassword sets a new password using the token from a password reset link. The token only
 // works while the password it was issued for is unchanged.
 func (s *service) ResetPassword(ctx context.Context, token, newPassword string) error {
+	user, err := s.resolveResetToken(ctx, token)
+	if err != nil {
+		return err
+	}
+	return s.updatePassword(ctx, user.ID, newPassword)
+}
+
+// resolveResetToken returns the user a password reset token was issued for. A bad, expired or
+// already used token, or one whose user no longer exists, is ErrInvalidResetToken.
+func (s *service) resolveResetToken(ctx context.Context, token string) (*entities.User, error) {
 	userID, fingerprint, err := s.signer.ValidatePasswordResetToken(token)
 	if err != nil {
 		s.logger.Info("invalid password reset token", zap.Error(err))
-		return ErrInvalidResetToken
+		return nil, ErrInvalidResetToken
 	}
 
 	user, err := s.repository.GetUserCredentialsByID(ctx, userID)
 	if err != nil {
 		if errors.Is(err, users.ErrUserNotFound) {
-			return ErrInvalidResetToken
+			return nil, ErrInvalidResetToken
 		}
 		s.logger.Error("failed to get user credentials", zap.Error(err), zap.String("user_id", userID))
-		return err
+		return nil, err
 	}
 
 	if jwt.PasswordFingerprint(user.Password) != fingerprint {
 		s.logger.Info("password reset token already used", zap.String("user_id", userID))
-		return ErrInvalidResetToken
+		return nil, ErrInvalidResetToken
 	}
 
-	return s.updatePassword(ctx, userID, newPassword)
+	return user, nil
 }
 
 func (s *service) updatePassword(ctx context.Context, userID, newPassword string) error {

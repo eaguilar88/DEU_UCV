@@ -290,6 +290,9 @@ func addAuthRoutes(e *echo.Echo, endpoints *auth.Handler, middlewares ...echo.Mi
 	e.POST("/auth/password/forgot", endpoints.ForgotPasswordHandleHTTP)
 	e.POST("/auth/password/reset", endpoints.ResetPasswordHandleHTTP)
 	e.PUT("/auth/password", endpoints.ChangePasswordHandleHTTP, middlewares...)
+	// Page the password reset email links to, reached at https://extension.ucv.ve through traefik.
+	e.GET(auth.ResetPasswordPagePath, endpoints.ResetPasswordPage)
+	e.POST(auth.ResetPasswordPagePath, endpoints.SubmitResetPasswordPage)
 }
 
 func addAdminRoutes(e *echo.Echo, middlewares []echo.MiddlewareFunc, handlers ...RegisterAdminEndpoints) {

@@ -119,6 +119,12 @@ services:
       - "traefik.http.routers.backend-certificates.tls.certresolver=letsencrypt"
       - "traefik.http.routers.backend-certificates.priority=100"
       - "traefik.http.routers.backend-certificates.service=backend"
+      # Página de restablecimiento de contraseña (enlace del correo de recuperación)
+      - "traefik.http.routers.backend-password-reset.rule=Host(`extension.ucv.ve`) && PathPrefix(`/restablecer-contrasena`)"
+      - "traefik.http.routers.backend-password-reset.entrypoints=websecure"
+      - "traefik.http.routers.backend-password-reset.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.backend-password-reset.priority=100"
+      - "traefik.http.routers.backend-password-reset.service=backend"
       - "traefik.http.services.backend.loadbalancer.server.port=8081" # Target container's port
     networks:
       - web
