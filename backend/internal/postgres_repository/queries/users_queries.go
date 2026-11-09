@@ -58,6 +58,14 @@ func GetUserByUsername(username string) sq.SelectBuilder {
 		Where(sq.Eq{"u.email": username})
 }
 
+// GetUserCredentialsByID selects the same columns as GetUserByUsername, including the password hash.
+func GetUserCredentialsByID(userID string) sq.SelectBuilder {
+	return psql.Select("u.id", "u.email", "u.first_name", "u.last_name", "u.password").
+		From(fmt.Sprintf("%s AS u", usersTableName)).
+		Where(sq.Eq{"u.deleted_at": nil}).
+		Where(sq.Eq{"u.id": userID})
+}
+
 func GetUserByID(userID string) sq.SelectBuilder {
 	return psql.Select(userQuerySelectCommon...).
 		From(fmt.Sprintf("%s AS u", usersTableName)).
@@ -143,7 +151,7 @@ func UpdateUsername(user entities.User, userID string) sq.UpdateBuilder {
 func UpdateUserPassword(userID string, password string) sq.UpdateBuilder {
 	return psql.Update(fmt.Sprintf("%s AS u", usersTableName)).
 		Set("password", password).
-		Set("u.updated_at", sq.Expr("NOW()")).
+		Set("updated_at", sq.Expr("NOW()")).
 		Where(sq.Eq{"u.deleted_at": nil}).
 		Where(sq.Eq{"u.id": userID})
 }

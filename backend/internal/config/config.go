@@ -36,6 +36,9 @@ type DeuConfig struct {
 	PublicBaseURL string `env:"PUBLIC_BASE_URL" envDefault:"http://localhost:8080"`
 	GotenbergURL  string `env:"GOTENBERG_URL" envDefault:"http://gotenberg:3000"`
 
+	// PasswordResetURL is the frontend page that receives the password reset token as ?token=...
+	PasswordResetURL string `env:"PASSWORD_RESET_URL" envDefault:"http://localhost:3000/restablecer-contrasena"`
+
 	// RenewalWindow is how long before its yearly renewal date a group may submit its renewal. It
 	// is the same window in which the notifier reminds the group to renew.
 	RenewalWindow time.Duration `env:"NOTIFIER_RENEWAL_WINDOW" envDefault:"720h"`

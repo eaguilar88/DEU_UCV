@@ -44,6 +44,7 @@ const (
 	TemplateGroupRenewalSubmittedFaculty  Template = "group_renewal_submitted_faculty"
 	TemplateGroupRenewalSubmittedDEU      Template = "group_renewal_submitted_deu"
 	TemplateGroupRenewalApproved          Template = "group_renewal_approved"
+	TemplatePasswordReset                 Template = "password_reset"
 )
 
 // allTemplates lists every template parsed at startup. A template missing from this list cannot be sent.
@@ -74,6 +75,7 @@ var allTemplates = []Template{
 	TemplateGroupRenewalSubmittedFaculty,
 	TemplateGroupRenewalSubmittedDEU,
 	TemplateGroupRenewalApproved,
+	TemplatePasswordReset,
 }
 
 // Data passed to each template. Templates without variables (user_welcome,
@@ -172,6 +174,11 @@ type GroupRenewalReminderData struct {
 	GroupName string
 	DueDate   string
 	Overdue   bool
+}
+
+type PasswordResetData struct {
+	Name     string
+	ResetURL string
 }
 
 // CertificateLink is a participant's name and the link to their certificate's verification page.

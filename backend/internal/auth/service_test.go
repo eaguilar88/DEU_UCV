@@ -2,16 +2,39 @@ package auth
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/eaguilar88/deu/internal/auth/mocks"
+	"github.com/eaguilar88/deu/internal/email"
 	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/eaguilar88/deu/internal/groups"
+	"github.com/eaguilar88/deu/internal/jwt"
 	jwtMock "github.com/eaguilar88/deu/internal/jwt/mocks"
 	"github.com/eaguilar88/deu/internal/providers"
+	"github.com/eaguilar88/deu/internal/users"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 )
+
+const (
+	testResetURL = "https://example.test/restablecer-contrasena"
+	// testPasswordHash is the bcrypt hash of "nolodire".
+	testPasswordHash = "$2a$10$rFfAKJJIvbGaQCay8zC9bulGQ/kOYDOwwVBGr0WyWA1sUTLZsuXpa"
+	testNewPassword  = "nuevaClave123"
+)
+
+// hashOf matches a bcrypt hash of password.
+func hashOf(password string) any {
+	return mock.MatchedBy(func(hash string) bool {
+		return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)) == nil
+	})
+}
 
 func TestAuthService_Login(t *testing.T) {
 	type testCase struct {
@@ -178,7 +201,7 @@ func TestAuthService_Login(t *testing.T) {
 			if tt.prepare != nil {
 				tt.prepare(ctx, &tt)
 			}
-			s := NewService(tt.repo, tt.signer, loggerMock)
+			s := NewService(tt.repo, tt.signer, mocks.NewMockMailClient(t), testResetURL, loggerMock)
 			got, got1, err := s.Login(ctx, tt.username, tt.password)
 			assert.Equal(t, tt.token, got)
 			assert.Equal(t, tt.user, got1)
@@ -186,5 +209,180 @@ func TestAuthService_Login(t *testing.T) {
 			tt.repo.AssertExpectations(t)
 			tt.signer.AssertExpectations(t)
 		})
+	}
+}
+
+func TestAuthService_ChangePassword(t *testing.T) {
+	dbErr := errors.New("db error")
+	tests := []struct {
+		name            string
+		currentPassword string
+		prepare         func(repo *mocks.MockRepository)
+		wantErr         error
+	}{
+		{
+			name:            "success",
+			currentPassword: "nolodire",
+			prepare: func(repo *mocks.MockRepository) {
+				repo.EXPECT().GetUserCredentialsByID(mock.Anything, "1").Return(&entities.User{ID: "1", Password: testPasswordHash}, nil)
+				repo.EXPECT().UpdateUserPassword(mock.Anything, "1", hashOf(testNewPassword)).Return(nil)
+			},
+		},
+		{
+			name:            "wrong current password",
+			currentPassword: "incorrecta",
+			prepare: func(repo *mocks.MockRepository) {
+				repo.EXPECT().GetUserCredentialsByID(mock.Anything, "1").Return(&entities.User{ID: "1", Password: testPasswordHash}, nil)
+			},
+			wantErr: ErrInvalidCurrentPassword,
+		},
+		{
+			name:            "error getting credentials",
+			currentPassword: "nolodire",
+			prepare: func(repo *mocks.MockRepository) {
+				repo.EXPECT().GetUserCredentialsByID(mock.Anything, "1").Return(nil, dbErr)
+			},
+			wantErr: dbErr,
+		},
+		{
+			name:            "error updating password",
+			currentPassword: "nolodire",
+			prepare: func(repo *mocks.MockRepository) {
+				repo.EXPECT().GetUserCredentialsByID(mock.Anything, "1").Return(&entities.User{ID: "1", Password: testPasswordHash}, nil)
+				repo.EXPECT().UpdateUserPassword(mock.Anything, "1", mock.Anything).Return(dbErr)
+			},
+			wantErr: dbErr,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := mocks.NewMockRepository(t)
+			tt.prepare(repo)
+			s := NewService(repo, jwtMock.NewMockSigner(t), mocks.NewMockMailClient(t), testResetURL, zap.NewNop())
+
+			err := s.ChangePassword(context.Background(), "1", tt.currentPassword, testNewPassword)
+			assert.ErrorIs(t, err, tt.wantErr)
+		})
+	}
+}
+
+func TestAuthService_RequestPasswordReset(t *testing.T) {
+	user := &entities.User{ID: "1", Email: "ana.perez@example.test", FirstName: "Ana", Password: testPasswordHash}
+	wantData := email.PasswordResetData{Name: "Ana", ResetURL: testResetURL + "?token=reset-token"}
+
+	t.Run("registered email sends the reset link", func(t *testing.T) {
+		repo := mocks.NewMockRepository(t)
+		signer := jwtMock.NewMockSigner(t)
+		mail := mocks.NewMockMailClient(t)
+		sent := make(chan struct{})
+		repo.EXPECT().GetUserByUsername(mock.Anything, user.Email).Return(user, nil)
+		signer.EXPECT().GeneratePasswordResetToken("1", testPasswordHash).Return("reset-token", nil)
+		mail.EXPECT().SendTemplate(mock.Anything, user.Email, email.TemplatePasswordReset, wantData).
+			Run(func(context.Context, string, email.Template, any) { close(sent) }).
+			Return(nil)
+
+		err := NewService(repo, signer, mail, testResetURL, zap.NewNop()).RequestPasswordReset(context.Background(), user.Email)
+		require.NoError(t, err)
+		waitFor(t, sent)
+	})
+
+	t.Run("unknown email sends nothing and succeeds", func(t *testing.T) {
+		repo := mocks.NewMockRepository(t)
+		repo.EXPECT().GetUserByUsername(mock.Anything, "nadie@example.test").
+			Return(nil, fmt.Errorf("%w: no rows", users.ErrUserNotFound))
+
+		err := NewService(repo, jwtMock.NewMockSigner(t), mocks.NewMockMailClient(t), testResetURL, zap.NewNop()).
+			RequestPasswordReset(context.Background(), "nadie@example.test")
+		assert.NoError(t, err)
+	})
+
+	t.Run("email send failure still succeeds", func(t *testing.T) {
+		repo := mocks.NewMockRepository(t)
+		signer := jwtMock.NewMockSigner(t)
+		mail := mocks.NewMockMailClient(t)
+		sent := make(chan struct{})
+		repo.EXPECT().GetUserByUsername(mock.Anything, user.Email).Return(user, nil)
+		signer.EXPECT().GeneratePasswordResetToken("1", testPasswordHash).Return("reset-token", nil)
+		mail.EXPECT().SendTemplate(mock.Anything, user.Email, email.TemplatePasswordReset, wantData).
+			Run(func(context.Context, string, email.Template, any) { close(sent) }).
+			Return(errors.New("smtp down"))
+
+		err := NewService(repo, signer, mail, testResetURL, zap.NewNop()).RequestPasswordReset(context.Background(), user.Email)
+		require.NoError(t, err)
+		waitFor(t, sent)
+	})
+
+	t.Run("database error is returned", func(t *testing.T) {
+		dbErr := errors.New("db error")
+		repo := mocks.NewMockRepository(t)
+		repo.EXPECT().GetUserByUsername(mock.Anything, user.Email).Return(nil, dbErr)
+
+		err := NewService(repo, jwtMock.NewMockSigner(t), mocks.NewMockMailClient(t), testResetURL, zap.NewNop()).
+			RequestPasswordReset(context.Background(), user.Email)
+		assert.ErrorIs(t, err, dbErr)
+	})
+}
+
+func TestAuthService_ResetPassword(t *testing.T) {
+	user := &entities.User{ID: "1", Password: testPasswordHash}
+	tests := []struct {
+		name    string
+		prepare func(repo *mocks.MockRepository, signer *jwtMock.MockSigner)
+		wantErr error
+	}{
+		{
+			name: "success",
+			prepare: func(repo *mocks.MockRepository, signer *jwtMock.MockSigner) {
+				signer.EXPECT().ValidatePasswordResetToken("reset-token").Return("1", jwt.PasswordFingerprint(testPasswordHash), nil)
+				repo.EXPECT().GetUserCredentialsByID(mock.Anything, "1").Return(user, nil)
+				repo.EXPECT().UpdateUserPassword(mock.Anything, "1", hashOf(testNewPassword)).Return(nil)
+			},
+		},
+		{
+			name: "invalid token",
+			prepare: func(_ *mocks.MockRepository, signer *jwtMock.MockSigner) {
+				signer.EXPECT().ValidatePasswordResetToken("reset-token").Return("", "", jwt.ErrInvalidPasswordResetToken)
+			},
+			wantErr: ErrInvalidResetToken,
+		},
+		{
+			name: "password already changed",
+			prepare: func(repo *mocks.MockRepository, signer *jwtMock.MockSigner) {
+				signer.EXPECT().ValidatePasswordResetToken("reset-token").Return("1", jwt.PasswordFingerprint("otro-hash"), nil)
+				repo.EXPECT().GetUserCredentialsByID(mock.Anything, "1").Return(user, nil)
+			},
+			wantErr: ErrInvalidResetToken,
+		},
+		{
+			name: "user no longer exists",
+			prepare: func(repo *mocks.MockRepository, signer *jwtMock.MockSigner) {
+				signer.EXPECT().ValidatePasswordResetToken("reset-token").Return("1", jwt.PasswordFingerprint(testPasswordHash), nil)
+				repo.EXPECT().GetUserCredentialsByID(mock.Anything, "1").Return(nil, users.ErrUserNotFound)
+			},
+			wantErr: ErrInvalidResetToken,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := mocks.NewMockRepository(t)
+			signer := jwtMock.NewMockSigner(t)
+			tt.prepare(repo, signer)
+			s := NewService(repo, signer, mocks.NewMockMailClient(t), testResetURL, zap.NewNop())
+
+			err := s.ResetPassword(context.Background(), "reset-token", testNewPassword)
+			assert.ErrorIs(t, err, tt.wantErr)
+		})
+	}
+}
+
+// waitFor fails the test if done isn't closed soon.
+func waitFor(t *testing.T, done <-chan struct{}) {
+	t.Helper()
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for the email to be sent")
 	}
 }

@@ -97,13 +97,13 @@ func main() {
 	}
 
 	repository := repository.NewRepository(postgres, config.FilePath, logger)
-	authService := auth.NewService(repository, signer, logger)
-	authEndpoints := auth.NewHandler(authService)
 	mailClient, err := email.NewSMTPClient(config.Email, logger)
 	if err != nil {
 		logger.Error("error creating smtp client", zap.Error(err))
 		os.Exit(1)
 	}
+	authService := auth.NewService(repository, signer, mailClient, config.PasswordResetURL, logger)
+	authEndpoints := auth.NewHandler(authService)
 	userSvc := users.NewService(repository, mailClient, bbClient, logger)
 	userEndpoints := users.NewHandler(userSvc, logger)
 
@@ -178,7 +178,7 @@ func main() {
 	addHealthRoute(e)
 	addVersionRoute(e, strings.TrimSpace(appVersion))
 	addFileRoutes(e, fileHandler)
-	addAuthRoutes(e, authEndpoints)
+	addAuthRoutes(e, authEndpoints, middlewares...)
 	addUserRoutes(e, userEndpoints, optionalAuth, middlewares...)
 	addProviderRoutes(e, providerEndpoints, middlewares...)
 	addCourseRoutes(e, courseEndpoints, optionalAuth, middlewares...)
@@ -285,8 +285,11 @@ func mustConnectToDB(conf config.DatabaseConfig) (*sql.DB, error) {
 	return db, nil
 }
 
-func addAuthRoutes(e *echo.Echo, endpoints *auth.Handler) {
+func addAuthRoutes(e *echo.Echo, endpoints *auth.Handler, middlewares ...echo.MiddlewareFunc) {
 	e.POST("/auth/login", endpoints.LoginHandleHTTP)
+	e.POST("/auth/password/forgot", endpoints.ForgotPasswordHandleHTTP)
+	e.POST("/auth/password/reset", endpoints.ResetPasswordHandleHTTP)
+	e.PUT("/auth/password", endpoints.ChangePasswordHandleHTTP, middlewares...)
 }
 
 func addAdminRoutes(e *echo.Echo, middlewares []echo.MiddlewareFunc, handlers ...RegisterAdminEndpoints) {

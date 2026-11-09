@@ -141,6 +141,138 @@ func (_c *MockSigner_GenerateJWT_Call) RunAndReturn(run func(userID string, role
 	return _c
 }
 
+// GeneratePasswordResetToken provides a mock function for the type MockSigner
+func (_mock *MockSigner) GeneratePasswordResetToken(userID string, passwordHash string) (string, error) {
+	ret := _mock.Called(userID, passwordHash)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GeneratePasswordResetToken")
+	}
+
+	var r0 string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(string, string) (string, error)); ok {
+		return returnFunc(userID, passwordHash)
+	}
+	if returnFunc, ok := ret.Get(0).(func(string, string) string); ok {
+		r0 = returnFunc(userID, passwordHash)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	if returnFunc, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = returnFunc(userID, passwordHash)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockSigner_GeneratePasswordResetToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GeneratePasswordResetToken'
+type MockSigner_GeneratePasswordResetToken_Call struct {
+	*mock.Call
+}
+
+// GeneratePasswordResetToken is a helper method to define mock.On call
+//   - userID string
+//   - passwordHash string
+func (_e *MockSigner_Expecter) GeneratePasswordResetToken(userID any, passwordHash any) *MockSigner_GeneratePasswordResetToken_Call {
+	return &MockSigner_GeneratePasswordResetToken_Call{Call: _e.mock.On("GeneratePasswordResetToken", userID, passwordHash)}
+}
+
+func (_c *MockSigner_GeneratePasswordResetToken_Call) Run(run func(userID string, passwordHash string)) *MockSigner_GeneratePasswordResetToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 string
+		if args[0] != nil {
+			arg0 = args[0].(string)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockSigner_GeneratePasswordResetToken_Call) Return(s string, err error) *MockSigner_GeneratePasswordResetToken_Call {
+	_c.Call.Return(s, err)
+	return _c
+}
+
+func (_c *MockSigner_GeneratePasswordResetToken_Call) RunAndReturn(run func(userID string, passwordHash string) (string, error)) *MockSigner_GeneratePasswordResetToken_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ValidatePasswordResetToken provides a mock function for the type MockSigner
+func (_mock *MockSigner) ValidatePasswordResetToken(tokenString string) (string, string, error) {
+	ret := _mock.Called(tokenString)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ValidatePasswordResetToken")
+	}
+
+	var r0 string
+	var r1 string
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(string) (string, string, error)); ok {
+		return returnFunc(tokenString)
+	}
+	if returnFunc, ok := ret.Get(0).(func(string) string); ok {
+		r0 = returnFunc(tokenString)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	if returnFunc, ok := ret.Get(1).(func(string) string); ok {
+		r1 = returnFunc(tokenString)
+	} else {
+		r1 = ret.Get(1).(string)
+	}
+	if returnFunc, ok := ret.Get(2).(func(string) error); ok {
+		r2 = returnFunc(tokenString)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// MockSigner_ValidatePasswordResetToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ValidatePasswordResetToken'
+type MockSigner_ValidatePasswordResetToken_Call struct {
+	*mock.Call
+}
+
+// ValidatePasswordResetToken is a helper method to define mock.On call
+//   - tokenString string
+func (_e *MockSigner_Expecter) ValidatePasswordResetToken(tokenString any) *MockSigner_ValidatePasswordResetToken_Call {
+	return &MockSigner_ValidatePasswordResetToken_Call{Call: _e.mock.On("ValidatePasswordResetToken", tokenString)}
+}
+
+func (_c *MockSigner_ValidatePasswordResetToken_Call) Run(run func(tokenString string)) *MockSigner_ValidatePasswordResetToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 string
+		if args[0] != nil {
+			arg0 = args[0].(string)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *MockSigner_ValidatePasswordResetToken_Call) Return(userID string, fingerprint string, err error) *MockSigner_ValidatePasswordResetToken_Call {
+	_c.Call.Return(userID, fingerprint, err)
+	return _c
+}
+
+func (_c *MockSigner_ValidatePasswordResetToken_Call) RunAndReturn(run func(tokenString string) (string, string, error)) *MockSigner_ValidatePasswordResetToken_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ValidateToken provides a mock function for the type MockSigner
 func (_mock *MockSigner) ValidateToken(tokenString string) (map[string]any, error) {
 	ret := _mock.Called(tokenString)

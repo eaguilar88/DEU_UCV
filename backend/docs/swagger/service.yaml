@@ -31,7 +31,7 @@ components:
     Error:
       type: object
       properties:
-        message:
+        error:
           type: string
 
     # ── Auth ──────────────────────────────────────────────────────────────────
@@ -44,6 +44,46 @@ components:
           type: string
         password:
           type: string
+
+    ChangePasswordRequest:
+      type: object
+      required: [passwordActual, passwordNueva]
+      properties:
+        passwordActual:
+          type: string
+          example: "claveActual123"
+        passwordNueva:
+          type: string
+          minLength: 8
+          example: "claveNueva456"
+
+    ForgotPasswordRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+          example: "ana.perez@example.com"
+
+    ForgotPasswordResponse:
+      type: object
+      properties:
+        mensaje:
+          type: string
+          example: "Si el correo está registrado, recibirás un enlace para restablecer tu contraseña."
+
+    ResetPasswordRequest:
+      type: object
+      required: [token, passwordNueva]
+      properties:
+        token:
+          type: string
+          description: Token recibido en el enlace del correo (?token=...). Vence a los 30 minutos y sirve una sola vez.
+        passwordNueva:
+          type: string
+          minLength: 8
+          example: "claveNueva456"
 
     LoginResponse:
       type: object
@@ -605,6 +645,81 @@ paths:
                 $ref: "#/components/schemas/LoginResponse"
         "401":
           description: Invalid credentials
+
+  /auth/password:
+    put:
+      summary: Change the authenticated user's password
+      tags: [Auth]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordRequest"
+      responses:
+        "204":
+          description: Password changed
+        "400":
+          description: Validation failed (the new password needs at least 8 characters)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Missing/invalid token, or wrong current password
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /auth/password/forgot:
+    post:
+      summary: Request a password reset link
+      description: >
+        Emails a password reset link to the address when it belongs to a user. The response is the
+        same whether or not the address is registered.
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForgotPasswordRequest"
+      responses:
+        "200":
+          description: Request accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForgotPasswordResponse"
+        "400":
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /auth/password/reset:
+    post:
+      summary: Set a new password with a reset link token
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordRequest"
+      responses:
+        "204":
+          description: Password changed
+        "400":
+          description: Validation failed, or the link is invalid, expired or already used
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
   # ── Users ─────────────────────────────────────────────────────────────────
 

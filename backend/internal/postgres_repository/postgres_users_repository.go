@@ -46,6 +46,62 @@ func (r *PostgresRepository) GetUserByUsername(ctx context.Context, username str
 	return newUserFromModel(user), nil
 }
 
+// GetUserCredentialsByID returns the user with its password hash.
+func (r *PostgresRepository) GetUserCredentialsByID(ctx context.Context, userID string) (*entities.User, error) {
+	query, args, err := queries.GetUserCredentialsByID(userID).ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrInvalidQuery, err)
+	}
+
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrInvalidQuery, err)
+	}
+	defer stmt.Close()
+
+	var user models.User
+	err = stmt.QueryRowContext(ctx, args...).Scan(
+		&user.ID,
+		&user.Email,
+		&user.FirstName,
+		&user.LastName,
+		&user.Password,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("%w: %w", users.ErrUserNotFound, err)
+		}
+		return nil, err
+	}
+
+	return newUserFromModel(user), nil
+}
+
+// UpdateUserPassword stores a new password hash for the user.
+func (r *PostgresRepository) UpdateUserPassword(ctx context.Context, userID, passwordHash string) error {
+	query, args, err := queries.UpdateUserPassword(userID, passwordHash).ToSql()
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrInvalidQuery, err)
+	}
+
+	stmt, err := r.db.PrepareContext(ctx, query)
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrInvalidQuery, err)
+	}
+	defer stmt.Close()
+
+	result, err := stmt.ExecContext(ctx, args...)
+	if err != nil {
+		return err
+	}
+
+	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
+		return fmt.Errorf("%w: %w", users.ErrUserNotFound, err)
+	}
+
+	return nil
+}
+
 func (r *PostgresRepository) GetUser(ctx context.Context, userID string) (*entities.User, error) {
 	query, args, err := queries.GetUserByID(userID).ToSql()
 	if err != nil {
