@@ -31,7 +31,7 @@ components:
     Error:
       type: object
       properties:
-        message:
+        error:
           type: string
 
     # ── Auth ──────────────────────────────────────────────────────────────────
