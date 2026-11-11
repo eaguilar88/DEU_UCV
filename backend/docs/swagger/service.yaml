@@ -680,13 +680,15 @@ paths:
         "204":
           description: Password changed
         "400":
-          description: Validation failed (the new password needs at least 8 characters)
+          description: >
+            Validation failed (the new password needs at least 8 characters), or wrong
+            current password ("contraseña actual incorrecta")
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
         "401":
-          description: Missing/invalid token, or wrong current password
+          description: Missing/invalid token
           content:
             application/json:
               schema:

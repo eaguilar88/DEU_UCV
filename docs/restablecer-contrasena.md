@@ -91,9 +91,9 @@ const res = await fetch(`${API_URL}/auth/password`, {
 | Respuesta | Qué significa | Qué hacer |
 |---|---|---|
 | `204` | La contraseña cambió. | Mostrar éxito. La sesión actual sigue siendo válida, así que no hace falta volver a iniciar sesión. |
-| `401` con `error: "contraseña actual incorrecta"` | La contraseña actual no coincide. | Marcar el campo "contraseña actual". |
-| `401` con otro `error` | La sesión venció o el token es inválido. | Mandar al login. |
-| `400` | Faltan campos o la nueva contraseña tiene menos de 8 caracteres. | Mostrar el error de validación. |
+| `400` con `error: "contraseña actual incorrecta"` | La contraseña actual no coincide. La sesión sigue siendo válida. | Marcar el campo "contraseña actual". |
+| `400` con otro `error` | Faltan campos o la nueva contraseña tiene menos de 8 caracteres. | Mostrar el error de validación. |
+| `401` | La sesión venció o el token es inválido. | Mandar al login. |
 
 ## Referencia de endpoints
 
@@ -108,7 +108,7 @@ Todas las respuestas de error de la API tienen la forma `{"error": "<mensaje>"}`
 |---|---|
 | `204` | (sin cuerpo) |
 | `400` | `validation failed` o `invalid request body` |
-| `401` | `contraseña actual incorrecta` |
+| `400` | `contraseña actual incorrecta` |
 | `401` | `invalid or expired authorization token` (sesión inválida o vencida) |
 
 ### `POST /auth/password/forgot`

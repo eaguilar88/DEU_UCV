@@ -202,7 +202,7 @@ func TestAuthEndpointsHandler_ChangePassword(t *testing.T) {
 			prepare: func(svc *mocks.MockService) {
 				svc.EXPECT().ChangePassword(mock.Anything, "1", "nolodire", "nuevaClave123").Return(ErrInvalidCurrentPassword)
 			},
-			wantErr: httperrors.NewUnauthorized("contraseña actual incorrecta"),
+			wantErr: httperrors.NewBadRequest("contraseña actual incorrecta"),
 		},
 		{
 			name:   "service error",

@@ -77,8 +77,9 @@ func (h *Handler) ChangePasswordHandleHTTP(c echo.Context) error {
 	}
 
 	if err := h.svc.ChangePassword(c.Request().Context(), userID, req.CurrentPassword, req.NewPassword); err != nil {
+		// 400, not 401: the session is valid, and clients log the user out on a 401.
 		if errors.Is(err, ErrInvalidCurrentPassword) {
-			return httperrors.NewUnauthorized("contraseña actual incorrecta")
+			return httperrors.NewBadRequest("contraseña actual incorrecta")
 		}
 		return httperrors.NewInternal(err)
 	}
