@@ -349,13 +349,57 @@
                         "method": "PUT",
                         "header": [],
                         "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"primer_nombre\": \"María Fernanda\",\n    \"apellido\": \"González Pérez\",\n    \"fecha_nacimiento\": \"14-07-1995\",\n    \"genero\": \"femenino\",\n    \"nivel_educacion\": \"universitaria_incompleta\",\n    \"direccion\": \"caracas\"\n}",
-                            "options": {
-                                "raw": {
-                                    "language": "json"
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "nombres",
+                                    "value": "María Fernanda",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "apellidos",
+                                    "value": "González Pérez",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "fecha_de_nacimiento",
+                                    "value": "14-07-1995",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "genero",
+                                    "value": "femenino",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "nivel_educativo",
+                                    "value": "universitaria_incompleta",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "direccion",
+                                    "value": "caracas",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "cedula",
+                                    "value": "26789123",
+                                    "type": "text",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "email",
+                                    "value": "maria.gonzalez@example.com",
+                                    "type": "text",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "profile_picture",
+                                    "type": "file",
+                                    "src": [],
+                                    "disabled": true
                                 }
-                            }
+                            ]
                         },
                         "url": {
                             "raw": "{{base_url}}/users/{{user_id}}",

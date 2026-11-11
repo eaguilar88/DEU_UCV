@@ -207,27 +207,43 @@ func (r *PostgresRepository) CreateUser(ctx context.Context, user entities.User)
 	return lastInsertedID, nil
 }
 
-func (r *PostgresRepository) UpdateUser(ctx context.Context, userID string, user entities.User) error {
-	query, args, err := queries.UpdateUserInfo(user, userID).ToSql()
-	if err != nil {
-		return fmt.Errorf("%w: %w", ErrInvalidQuery, err)
-	}
-
-	stmt, err := r.db.PrepareContext(ctx, query)
-	if err != nil {
-		return fmt.Errorf("%w: %w", ErrInvalidQuery, err)
-	}
-	defer stmt.Close()
-
-	result, err := stmt.ExecContext(ctx, args...)
+// UpdateUser applies the changed profile fields and, when profilePic is given, replaces the
+// user's live profile picture, in one transaction. A cédula or email already used by another
+// user returns users.ErrUserAlreadyExists.
+func (r *PostgresRepository) UpdateUser(ctx context.Context, userID string, changes entities.UserChanges, profilePic *entities.File) error {
+	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
+	defer tx.Rollback()
 
-	if affected, err := result.RowsAffected(); err != nil || affected == 0 {
-		return fmt.Errorf("%w: %w", users.ErrUserNotFound, err)
+	if !changes.IsEmpty() {
+		err := execExpectingRows(ctx, tx, queries.UpdateUserInfo(userID, changes), users.ErrUserNotFound)
+		if err != nil {
+			var pgErr *pq.Error
+			if errors.As(err, &pgErr) && pgErr.Code == pgErrorCodeUniqueViolation {
+				return fmt.Errorf("%w: %w", users.ErrUserAlreadyExists, err)
+			}
+			return err
+		}
 	}
 
+	if profilePic != nil {
+		replace := []sqlizer{
+			queries.SoftDeleteFiles(entities.OwnerTypeUser, []string{userID}, "profile_picture"),
+			queries.InsertFile([]models.File{newFileFromEntity(*profilePic)}),
+		}
+		for _, q := range replace {
+			if err := execBuilder(ctx, tx, q); err != nil {
+				return fmt.Errorf("failed to replace profile picture: %w", err)
+			}
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		r.logger.Error("error committing tx", zap.Error(err))
+		return err
+	}
 	return nil
 }
 

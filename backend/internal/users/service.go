@@ -16,7 +16,7 @@ type Repository interface {
 	GetUserByUsername(ctx context.Context, username string) (*entities.User, error)
 	GetUsers(ctx context.Context, pageScope entities.PageScope) ([]entities.User, entities.PageScope, error)
 	CreateUser(ctx context.Context, user entities.User) (int64, error)
-	UpdateUser(ctx context.Context, userID string, user entities.User) error
+	UpdateUser(ctx context.Context, userID string, changes entities.UserChanges, profilePic *entities.File) error
 	DeleteUser(ctx context.Context, userID string) error
 	AddRoleToUser(ctx context.Context, tx *sql.Tx, userID string, role int) error
 	GetUserRoles(ctx context.Context, userID string) ([]entities.UserRole, error)
@@ -30,6 +30,7 @@ type MailClient interface {
 
 type StorageClient interface {
 	UploadFile(ctx context.Context, files []*entities.File) error
+	DeleteFile(ctx context.Context, objectKey string) error
 	GetFileURL(ctx context.Context, objectKey string) (string, error)
 	GetPresignedFileURL(ctx context.Context, objectKey string) (string, error)
 }
@@ -147,19 +148,76 @@ func (s *service) CreateUser(ctx context.Context, user entities.User, profilePic
 	return id, nil
 }
 
-func (s *service) UpdateUser(ctx context.Context, userID string, user entities.User) error {
-	userFromDB, err := s.repo.GetUser(ctx, userID)
-	if err != nil {
-		return err
+// canEditUser reports whether the viewer may modify the user: the user themself, root or
+// deu_admin.
+func canEditUser(userID string, viewer entities.Viewer) bool {
+	if viewer.IsAnonymous() {
+		return false
 	}
-
-	user.CI = userFromDB.CI
-	user.Email = userFromDB.Email
-	user.Password = userFromDB.Password
-
-	return s.repo.UpdateUser(ctx, userID, user)
+	return viewer.UserID == userID || viewer.IsGlobalAdmin()
 }
 
-func (s *service) DeleteUser(ctx context.Context, userID string) error {
+// UpdateUser applies a partial update to the user's profile and, when profilePic is given,
+// replaces their profile picture. It returns the updated user as the viewer sees it.
+func (s *service) UpdateUser(
+	ctx context.Context,
+	userID string,
+	changes entities.UserChanges,
+	profilePic *entities.File,
+	viewer entities.Viewer,
+) (entities.User, error) {
+	if !canEditUser(userID, viewer) {
+		return entities.User{}, ErrUserForbidden
+	}
+	if changes.IsEmpty() && profilePic == nil {
+		return entities.User{}, fmt.Errorf("%w: no fields to update", ErrInvalidInput)
+	}
+
+	if _, err := s.repo.GetUser(ctx, userID); err != nil {
+		return entities.User{}, err
+	}
+
+	var oldPictures []*entities.File
+	if profilePic != nil {
+		files, err := s.repo.GetFilesByOwner(ctx, userID, entities.OwnerTypeUser)
+		if err != nil {
+			return entities.User{}, err
+		}
+		oldPictures = files.GetMultipleFiles("profile_picture")
+
+		profilePic.OwnerID = userID
+		profilePic.OwnerType = entities.OwnerTypeUser
+		profilePic.Key = fmt.Sprintf("users/%s/%s", userID, profilePic.Name)
+		profilePic.Public = false
+		profilePic.UploadedBy = viewer.UserID
+		if err := s.storage.UploadFile(ctx, []*entities.File{profilePic}); err != nil {
+			s.log.Error("failed to upload profile picture", zap.Error(err), zap.String("user_id", userID))
+			return entities.User{}, fmt.Errorf("error uploading profile picture: %w", err)
+		}
+	}
+
+	if err := s.repo.UpdateUser(ctx, userID, changes, profilePic); err != nil {
+		s.log.Error("failed to update user", zap.Error(err), zap.String("user_id", userID))
+		return entities.User{}, err
+	}
+
+	// A picture with another extension was stored under another key: remove the old object.
+	for _, old := range oldPictures {
+		if old.Key == profilePic.Key {
+			continue
+		}
+		if err := s.storage.DeleteFile(ctx, old.Key); err != nil {
+			s.log.Warn("failed to delete old profile picture", zap.Error(err), zap.String("key", old.Key))
+		}
+	}
+
+	return s.GetUser(ctx, userID, viewer)
+}
+
+// DeleteUser soft-deletes a user. Only root and deu_admin may do it.
+func (s *service) DeleteUser(ctx context.Context, userID string, viewer entities.Viewer) error {
+	if !viewer.IsGlobalAdmin() {
+		return ErrUserForbidden
+	}
 	return s.repo.DeleteUser(ctx, userID)
 }

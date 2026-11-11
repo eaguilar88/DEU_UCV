@@ -176,25 +176,43 @@ components:
     UpdateUserRequest:
       type: object
       description: >
-        All listed fields overwrite the stored values. cedula, email and password
-        cannot be changed through this endpoint.
-      required: [fecha_nacimiento]
+        Every field is optional; a field not sent keeps its stored value. nombres, apellidos,
+        email and cedula can't be empty; genero and direccion can be sent empty to clear them.
+        The password can't be changed through this endpoint (use PUT /auth/password).
       properties:
-        primer_nombre:
+        cedula:
           type: string
-        apellido:
+          description: Positive number, unique
+          example: "18765432"
+        email:
           type: string
-        fecha_nacimiento:
+          format: email
+          description: Login email, unique
+          example: "maria.gonzalez@example.com"
+        nombres:
+          type: string
+          example: "María Fernanda"
+        apellidos:
+          type: string
+          example: "González Pérez"
+        fecha_de_nacimiento:
           type: string
           description: DD-MM-YYYY
           pattern: '^\d{2}-\d{2}-\d{4}$'
           example: "14-07-1995"
         genero:
           type: string
-        nivel_educacion:
+          example: "femenino"
+        nivel_educativo:
           type: string
+          enum: [bachiller, universitaria_incompleta, universitaria_completa, posgrado]
         direccion:
           type: string
+          example: "Caracas"
+        profile_picture:
+          type: string
+          format: binary
+          description: Replaces the current profile picture
 
     # ── Providers ─────────────────────────────────────────────────────────────
 
@@ -801,6 +819,9 @@ paths:
           description: User not found
     put:
       summary: Update user
+      description: >
+        Partial update: only the fields sent are changed. Allowed for the user themself,
+        root and deu_admin. The password is changed through PUT /auth/password.
       tags: [Users]
       security:
         - BearerAuth: []
@@ -813,20 +834,32 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               $ref: "#/components/schemas/UpdateUserRequest"
       responses:
-        "202":
-          description: Updated
+        "200":
+          description: The updated user (full profile)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
         "400":
-          description: Invalid body or fecha_nacimiento missing / not in DD-MM-YYYY format
+          description: >
+            Invalid field (empty nombres/apellidos/email/cedula, invalid email, non-numeric
+            cedula, fecha_de_nacimiento not in DD-MM-YYYY, unknown nivel_educativo, invalid
+            profile_picture) or no field to update
         "401":
           description: Unauthorized
+        "403":
+          description: The caller is not the user, root or deu_admin
         "404":
           description: User not found
+        "409":
+          description: email or cedula already in use by another user
     delete:
       summary: Delete user
+      description: Soft-deletes the user. Allowed only for root and deu_admin.
       tags: [Users]
       security:
         - BearerAuth: []
@@ -841,6 +874,8 @@ paths:
           description: Deleted
         "401":
           description: Unauthorized
+        "403":
+          description: The caller is not root or deu_admin
         "404":
           description: User not found
 

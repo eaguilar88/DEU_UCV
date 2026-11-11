@@ -650,16 +650,16 @@ func (_c *MockRepository_SaveFilesToDB_Call) RunAndReturn(run func(ctx context.C
 }
 
 // UpdateUser provides a mock function for the type MockRepository
-func (_mock *MockRepository) UpdateUser(ctx context.Context, userID string, user entities.User) error {
-	ret := _mock.Called(ctx, userID, user)
+func (_mock *MockRepository) UpdateUser(ctx context.Context, userID string, changes entities.UserChanges, profilePic *entities.File) error {
+	ret := _mock.Called(ctx, userID, changes, profilePic)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateUser")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, entities.User) error); ok {
-		r0 = returnFunc(ctx, userID, user)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, entities.UserChanges, *entities.File) error); ok {
+		r0 = returnFunc(ctx, userID, changes, profilePic)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -674,12 +674,13 @@ type MockRepository_UpdateUser_Call struct {
 // UpdateUser is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID string
-//   - user entities.User
-func (_e *MockRepository_Expecter) UpdateUser(ctx any, userID any, user any) *MockRepository_UpdateUser_Call {
-	return &MockRepository_UpdateUser_Call{Call: _e.mock.On("UpdateUser", ctx, userID, user)}
+//   - changes entities.UserChanges
+//   - profilePic *entities.File
+func (_e *MockRepository_Expecter) UpdateUser(ctx any, userID any, changes any, profilePic any) *MockRepository_UpdateUser_Call {
+	return &MockRepository_UpdateUser_Call{Call: _e.mock.On("UpdateUser", ctx, userID, changes, profilePic)}
 }
 
-func (_c *MockRepository_UpdateUser_Call) Run(run func(ctx context.Context, userID string, user entities.User)) *MockRepository_UpdateUser_Call {
+func (_c *MockRepository_UpdateUser_Call) Run(run func(ctx context.Context, userID string, changes entities.UserChanges, profilePic *entities.File)) *MockRepository_UpdateUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -689,14 +690,19 @@ func (_c *MockRepository_UpdateUser_Call) Run(run func(ctx context.Context, user
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 entities.User
+		var arg2 entities.UserChanges
 		if args[2] != nil {
-			arg2 = args[2].(entities.User)
+			arg2 = args[2].(entities.UserChanges)
+		}
+		var arg3 *entities.File
+		if args[3] != nil {
+			arg3 = args[3].(*entities.File)
 		}
 		run(
 			arg0,
 			arg1,
 			arg2,
+			arg3,
 		)
 	})
 	return _c
@@ -707,7 +713,7 @@ func (_c *MockRepository_UpdateUser_Call) Return(err error) *MockRepository_Upda
 	return _c
 }
 
-func (_c *MockRepository_UpdateUser_Call) RunAndReturn(run func(ctx context.Context, userID string, user entities.User) error) *MockRepository_UpdateUser_Call {
+func (_c *MockRepository_UpdateUser_Call) RunAndReturn(run func(ctx context.Context, userID string, changes entities.UserChanges, profilePic *entities.File) error) *MockRepository_UpdateUser_Call {
 	_c.Call.Return(run)
 	return _c
 }
