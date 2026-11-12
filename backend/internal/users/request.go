@@ -26,14 +26,17 @@ type DeleteUserRequest struct {
 	ID string `param:"id"`
 }
 
+// UpdateUserRequest is a partial update read from multipart/form-data with the same field
+// names as CreateUserRequest. A nil field was not sent and is left as it is. The password
+// is changed through PUT /auth/password, not here.
 type UpdateUserRequest struct {
-	ID             string `param:"id" validate:"required"`
-	Document       string `json:"ci"`
-	FirstName      string `json:"primer_nombre"`
-	LastName       string `json:"apellido"`
-	DateOfBirth    string `json:"fecha_nacimiento"`
-	Gender         string `json:"genero"`
-	EducationLevel string `json:"nivel_educacion"`
-	Address        string `json:"direccion"`
-	Password       string `json:"password"`
+	ID             string
+	Document       *string
+	Email          *string
+	FirstName      *string
+	LastName       *string
+	DateOfBirth    *string
+	Gender         *string
+	EducationLevel *string
+	Address        *string
 }

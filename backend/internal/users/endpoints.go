@@ -18,8 +18,8 @@ type Service interface {
 	GetUser(ctx context.Context, userID string, viewer entities.Viewer) (entities.User, error)
 	GetUsers(ctx context.Context, pageScope entities.PageScope) ([]entities.User, entities.PageScope, error)
 	CreateUser(ctx context.Context, user entities.User, profilePic *entities.File) (int64, error)
-	UpdateUser(ctx context.Context, userID string, user entities.User) error
-	DeleteUser(ctx context.Context, userID string) error
+	UpdateUser(ctx context.Context, userID string, changes entities.UserChanges, profilePic *entities.File, viewer entities.Viewer) (entities.User, error)
+	DeleteUser(ctx context.Context, userID string, viewer entities.Viewer) error
 }
 
 type Handler struct {
@@ -113,30 +113,63 @@ func (h *Handler) CreateUser(c echo.Context) error {
 	})
 }
 
+// UpdateUser applies a partial update from a multipart/form-data body: only the fields sent
+// are changed, and a profile_picture file replaces the current one.
 func (h *Handler) UpdateUser(c echo.Context) error {
 	ctx := c.Request().Context()
-	var req UpdateUserRequest
-	if err := c.Bind(&req); err != nil {
+
+	// FormParams parses the body; PostForm then keeps only the body fields, without the
+	// query string.
+	if _, err := c.FormParams(); err != nil {
 		return httperrors.NewBadRequest("invalid request body")
 	}
-
-	if err := c.Validate(req); err != nil {
-		return httperrors.NewBadRequest("validation failed")
+	form := c.Request().PostForm
+	formValue := func(key string) *string {
+		values, ok := form[key]
+		if !ok || len(values) == 0 {
+			return nil
+		}
+		return &values[0]
+	}
+	req := UpdateUserRequest{
+		ID:             c.Param("id"),
+		Document:       formValue("cedula"),
+		Email:          formValue("email"),
+		FirstName:      formValue("nombres"),
+		LastName:       formValue("apellidos"),
+		DateOfBirth:    formValue("fecha_de_nacimiento"),
+		Gender:         formValue("genero"),
+		EducationLevel: formValue("nivel_educativo"),
+		Address:        formValue("direccion"),
 	}
 
-	newUser, err := toUserUpdateEntity(req)
+	changes, err := toUserChanges(req)
 	if err != nil {
 		return httperrors.NewBadRequest(err.Error())
 	}
-	err = h.svc.UpdateUser(ctx, req.ID, newUser)
+
+	profilePic, err := utils.GetFileFrom(c, "profile_picture")
+	if err != nil && !errors.Is(err, http.ErrMissingFile) {
+		return httperrors.NewBadRequest("invalid profile picture")
+	}
+
+	user, err := h.svc.UpdateUser(ctx, req.ID, changes, profilePic, jwt.ViewerFromContext(c))
 	if err != nil {
-		if errors.Is(err, ErrUserNotFound) {
+		switch {
+		case errors.Is(err, ErrInvalidInput):
+			return httperrors.NewBadRequest("no fields to update")
+		case errors.Is(err, ErrUserForbidden):
+			return httperrors.NewForbidden("not allowed to modify this user")
+		case errors.Is(err, ErrUserNotFound):
 			return httperrors.NewNotFound("user not found")
+		case errors.Is(err, ErrUserAlreadyExists):
+			return httperrors.NewConflict("email or cedula already in use")
 		}
+		h.log.Error("failed to update user", zap.Error(err), zap.String("user_id", req.ID))
 		return httperrors.NewInternal(err)
 	}
 
-	return c.JSON(http.StatusAccepted, nil)
+	return c.JSON(http.StatusOK, userToResponse(user))
 }
 
 func (h *Handler) DeleteUser(c echo.Context) error {
@@ -146,8 +179,11 @@ func (h *Handler) DeleteUser(c echo.Context) error {
 		return httperrors.NewBadRequest("invalid request body")
 	}
 
-	err := h.svc.DeleteUser(ctx, req.ID)
+	err := h.svc.DeleteUser(ctx, req.ID, jwt.ViewerFromContext(c))
 	if err != nil {
+		if errors.Is(err, ErrUserForbidden) {
+			return httperrors.NewForbidden("not allowed to delete this user")
+		}
 		if errors.Is(err, ErrUserNotFound) {
 			return httperrors.NewNotFound("user not found")
 		}

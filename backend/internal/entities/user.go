@@ -28,6 +28,25 @@ type User struct {
 	CourseProviderName string
 }
 
+// UserChanges is a partial update of a user's profile: a nil field is left as it is.
+// DateOfBirth is in storage format (YYYY-MM-DD). The password is not part of it.
+type UserChanges struct {
+	CI             *string
+	Email          *string
+	FirstName      *string
+	LastName       *string
+	DateOfBirth    *string
+	Gender         *string
+	EducationLevel *string
+	Address        *string
+}
+
+// IsEmpty reports whether the update changes no field.
+func (c UserChanges) IsEmpty() bool {
+	return c.CI == nil && c.Email == nil && c.FirstName == nil && c.LastName == nil &&
+		c.DateOfBirth == nil && c.Gender == nil && c.EducationLevel == nil && c.Address == nil
+}
+
 type UserRole struct {
 	Name       string
 	DomainType string

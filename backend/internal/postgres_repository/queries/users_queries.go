@@ -2,6 +2,7 @@ package queries
 
 import (
 	"fmt"
+	"strconv"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/eaguilar88/deu/internal/entities"
@@ -128,17 +129,49 @@ func AddRoleToUser(userID string, role int) sq.InsertBuilder {
 		Suffix("RETURNING id")
 }
 
-func UpdateUserInfo(user entities.User, userID string) sq.UpdateBuilder {
-	return psql.Update(usersTableName).
-		Set("first_name", user.FirstName).
-		Set("last_name", user.LastName).
-		Set("date_of_birth", user.DateOfBirth).
-		Set("gender", user.Gender).
-		Set("address", user.Address).
-		Set("education", user.EducationLevel).
+// UpdateUserInfo sets only the fields present in changes. An empty gender or address is
+// stored as NULL.
+func UpdateUserInfo(userID string, changes entities.UserChanges) sq.UpdateBuilder {
+	q := psql.Update(fmt.Sprintf("%s AS u", usersTableName))
+	if changes.CI != nil {
+		var ci any = *changes.CI
+		if n, err := strconv.Atoi(*changes.CI); err == nil {
+			ci = n
+		}
+		q = q.Set("ci", ci)
+	}
+	if changes.Email != nil {
+		q = q.Set("email", *changes.Email)
+	}
+	if changes.FirstName != nil {
+		q = q.Set("first_name", *changes.FirstName)
+	}
+	if changes.LastName != nil {
+		q = q.Set("last_name", *changes.LastName)
+	}
+	if changes.DateOfBirth != nil {
+		q = q.Set("date_of_birth", *changes.DateOfBirth)
+	}
+	if changes.Gender != nil {
+		q = q.Set("gender", nullIfEmpty(*changes.Gender))
+	}
+	if changes.EducationLevel != nil {
+		q = q.Set("education", *changes.EducationLevel)
+	}
+	if changes.Address != nil {
+		q = q.Set("address", nullIfEmpty(*changes.Address))
+	}
+	return q.
 		Set("updated_at", sq.Expr("NOW()")).
 		Where(sq.Eq{"u.deleted_at": nil}).
-		Where(sq.Eq{"id": userID})
+		Where(sq.Eq{"u.id": userID})
+}
+
+func nullIfEmpty(s string) any {
+	if s == "" {
+		return nil
+	}
+	return s
 }
 
 func UpdateUsername(user entities.User, userID string) sq.UpdateBuilder {

@@ -3,6 +3,7 @@ package users
 import (
 	"testing"
 
+	"github.com/eaguilar88/deu/internal/entities"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -67,49 +68,64 @@ func TestToUserEntity(t *testing.T) {
 	}
 }
 
-func TestToUserUpdateEntity(t *testing.T) {
+func TestToUserChanges(t *testing.T) {
+	str := func(s string) *string { return &s }
+
 	tests := []struct {
-		name        string
-		dateOfBirth string
-		wantDOB     string
-		wantErr     bool
+		name    string
+		req     UpdateUserRequest
+		want    entities.UserChanges
+		wantErr string
 	}{
 		{
-			name:        "valid date D-M-YYYY",
-			dateOfBirth: "15-03-1990",
-			wantDOB:     "1990-03-15",
+			name: "only the fields sent are set",
+			req:  UpdateUserRequest{ID: "1", FirstName: str("María"), Address: str("Caracas")},
+			want: entities.UserChanges{FirstName: str("María"), Address: str("Caracas")},
 		},
 		{
-			name:        "wrong order M-D-YYYY with impossible month",
-			dateOfBirth: "3-15-1990",
-			wantErr:     true,
+			name: "every field, date converted to storage format",
+			req: UpdateUserRequest{
+				ID: "1", Document: str(" 12345678 "), Email: str(" ana@example.com "),
+				FirstName: str("Ana"), LastName: str("Pérez"), DateOfBirth: str("15-03-1990"),
+				Gender: str("femenino"), EducationLevel: str("posgrado"), Address: str("Caracas"),
+			},
+			want: entities.UserChanges{
+				CI: str("12345678"), Email: str("ana@example.com"),
+				FirstName: str("Ana"), LastName: str("Pérez"), DateOfBirth: str("1990-03-15"),
+				Gender: str("femenino"), EducationLevel: str("posgrado"), Address: str("Caracas"),
+			},
 		},
 		{
-			name:        "empty string",
-			dateOfBirth: "",
-			wantErr:     true,
+			name: "genero and direccion can be cleared",
+			req:  UpdateUserRequest{ID: "1", Gender: str(""), Address: str("")},
+			want: entities.UserChanges{Gender: str(""), Address: str("")},
 		},
 		{
-			name:        "ISO format YYYY-MM-DD is rejected",
-			dateOfBirth: "1990-03-15",
-			wantErr:     true,
+			name: "nothing sent",
+			req:  UpdateUserRequest{ID: "1"},
+			want: entities.UserChanges{},
 		},
+		{name: "empty nombres", req: UpdateUserRequest{FirstName: str(" ")}, wantErr: "nombres no puede estar vacío"},
+		{name: "empty apellidos", req: UpdateUserRequest{LastName: str("")}, wantErr: "apellidos no puede estar vacío"},
+		{name: "empty email", req: UpdateUserRequest{Email: str("")}, wantErr: "email no puede estar vacío"},
+		{name: "empty cedula", req: UpdateUserRequest{Document: str("")}, wantErr: "cedula no puede estar vacío"},
+		{name: "invalid email", req: UpdateUserRequest{Email: str("not-an-email")}, wantErr: "email no es válido"},
+		{name: "non numeric cedula", req: UpdateUserRequest{Document: str("V-123")}, wantErr: "cedula debe ser un número positivo"},
+		{name: "negative cedula", req: UpdateUserRequest{Document: str("-5")}, wantErr: "cedula debe ser un número positivo"},
+		{name: "ISO date is rejected", req: UpdateUserRequest{DateOfBirth: str("1990-03-15")}, wantErr: "fecha"},
+		{name: "empty date is rejected", req: UpdateUserRequest{DateOfBirth: str("")}, wantErr: "fecha"},
+		{name: "unknown nivel_educativo", req: UpdateUserRequest{EducationLevel: str("doctorado")}, wantErr: "nivel_educativo debe ser uno de"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req := UpdateUserRequest{
-				ID:          "user-1",
-				DateOfBirth: tt.dateOfBirth,
-			}
-
-			user, err := toUserUpdateEntity(req)
-			if tt.wantErr {
-				assert.Error(t, err)
+			got, err := toUserChanges(tt.req)
+			if tt.wantErr != "" {
+				assert.ErrorContains(t, err, tt.wantErr)
 				return
 			}
 			assert.NoError(t, err)
-			assert.Equal(t, tt.wantDOB, user.DateOfBirth)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
