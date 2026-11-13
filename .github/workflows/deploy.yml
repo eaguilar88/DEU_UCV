@@ -80,8 +80,21 @@ jobs:
             git submodule update --init --recursive
             SERVICE="${{ inputs.service || 'all' }}"
             echo "$(date -u '+%Y-%m-%dT%H:%M:%SZ') | deployed by: ${{ github.actor }} | service: $SERVICE | ref: ${{ github.ref_name || github.sha }}" >> /root/DEU_UCV/deploy.log
-            if [ "$SERVICE" = "all" ]; then
-              make start-prod
-            else
-              docker compose -f docker-compose.prod.yml up -d --build $SERVICE
+            if [ "$SERVICE" = "landing" ]; then
+              make start-prod-landing
+              exit 0
             fi
+            COMPOSE="docker compose -f docker-compose.prod.yml"
+            # all: todo docker-compose.prod.yml (backend, notifier, diplomados, grupos + traefik, db, gotenberg).
+            # notifier usa la imagen del backend, así que se despliega con él.
+            case "$SERVICE" in
+              all)     TARGETS="" ;;
+              backend) TARGETS="backend notifier" ;;
+              *)       TARGETS="$SERVICE" ;;
+            esac
+            # Construir antes de migrar: si el build falla, la base no cambia y siguen las imágenes anteriores.
+            $COMPOSE build $TARGETS
+            if [ "$SERVICE" = "all" ] || [ "$SERVICE" = "backend" ]; then
+              make migrate-up-prod
+            fi
+            $COMPOSE up -d $TARGETS

@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: write
     steps:
       - uses: actions/checkout@v6
         with:
@@ -36,3 +37,10 @@ jobs:
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Una release creada con GITHUB_TOKEN no dispara el evento release de deploy.yml; workflow_dispatch sí.
+      - name: Trigger deployment
+        if: steps.version_check.outputs.changed == 'true'
+        run: gh workflow run deploy.yml --repo "${{ github.repository }}" --ref "${{ steps.version_check.outputs.version }}" -f service=all
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
