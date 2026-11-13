@@ -136,6 +136,10 @@ components:
           type: string
         codigo_proveedor:
           type: string
+        facultad:
+          type: string
+          description: Facultad del rol de coordinador (faculty_admin). Solo en el perfil completo.
+          example: "Ciencias"
         direccion:
           type: string
         creado_en:

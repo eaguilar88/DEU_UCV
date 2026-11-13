@@ -14,7 +14,8 @@ type GetUserResponse struct {
 	Gender            string `json:"genero,omitempty"`
 	EducationLevel    string `json:"nivel_educativo,omitempty"`
 	Code              string `json:"codigo_proveedor,omitempty"`
-	Address           string `json:"direccion,omitempty"`
+	Faculty           string `json:"facultad,omitempty"`
+	Address          string `json:"direccion,omitempty"`
 	CreatedAt         string `json:"creado_en,omitempty"`
 	ProfilePictureURL string `json:"foto_perfil,omitempty"`
 	// Rol and Roles use the UI role names (e.g. "proveedor"); only the full profile has them.
