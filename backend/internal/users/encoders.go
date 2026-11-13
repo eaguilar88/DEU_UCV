@@ -24,6 +24,7 @@ func userToResponse(user entities.User) GetUserResponse {
 		Gender:            user.Gender,
 		EducationLevel:    user.EducationLevel,
 		Code:              user.ProviderCode,
+		Faculty:           user.Faculty,
 		Address:           user.Address,
 		CreatedAt:         user.CreatedAt,
 		ProfilePictureURL: user.ProfilePictureURL,
