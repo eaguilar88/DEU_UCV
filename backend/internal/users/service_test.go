@@ -89,6 +89,25 @@ func TestService_GetUser(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name:   "success - faculty from the coordinator role",
+			userID: "user-1",
+			prepare: func(repo *mocks.MockRepository, _ *mocks.MockStorageClient) {
+				repo.EXPECT().GetUser(mock.Anything, "user-1").Return(newTestUser(), nil)
+				repo.EXPECT().GetFilesByOwner(mock.Anything, "user-1", entities.OwnerTypeUser).Return(entities.GroupedFiles{}, nil)
+				repo.EXPECT().GetUserRoles(mock.Anything, "user-1").Return([]entities.UserRole{
+					{Name: "visitante"},
+					{Name: "faculty_admin", Faculty: string(entities.FacultyCiencias)},
+				}, nil)
+			},
+			want: func() entities.User {
+				u := *newTestUser()
+				u.Roles = []string{"visitante", "faculty_admin"}
+				u.Faculty = string(entities.FacultyCiencias)
+				return u
+			}(),
+			wantErr: false,
+		},
+		{
 			name:   "error getting roles",
 			userID: "user-1",
 			prepare: func(repo *mocks.MockRepository, _ *mocks.MockStorageClient) {
