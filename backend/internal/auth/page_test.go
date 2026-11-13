@@ -20,6 +20,8 @@ const (
 	pageInvalidText = "Enlace inválido o expirado"
 	pageDoneText    = "Contraseña actualizada"
 	pageFormText    = `name="confirmacion"`
+	pageRedirect    = `<meta http-equiv="refresh" content="5;url=https://extension.ucv.ve/">`
+	pageHomeLink    = `<a href="https://extension.ucv.ve/">`
 )
 
 // assertResetPageHeaders checks the headers that keep the token out of caches, Referer and frames.
@@ -90,6 +92,7 @@ func TestAuthEndpointsHandler_ResetPasswordPage(t *testing.T) {
 			if tt.wantErr == nil {
 				assert.Equal(t, tt.wantStatus, rec.Code)
 				assert.Contains(t, rec.Body.String(), tt.wantText)
+				assert.NotContains(t, rec.Body.String(), `http-equiv="refresh"`)
 				assertResetPageHeaders(t, rec)
 			}
 		})
@@ -125,7 +128,7 @@ func TestAuthEndpointsHandler_SubmitResetPasswordPage(t *testing.T) {
 				svc.EXPECT().ResetPassword(mock.Anything, "reset-token", "nuevaClave123").Return(nil)
 			},
 			wantStatus: http.StatusOK,
-			wantText:   []string{pageDoneText},
+			wantText:   []string{pageDoneText, pageRedirect, pageHomeLink},
 		},
 		{
 			name:       "passwords don't match",
