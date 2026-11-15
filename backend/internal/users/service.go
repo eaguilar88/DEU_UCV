@@ -82,6 +82,9 @@ func (s *service) GetUser(ctx context.Context, userID string, viewer entities.Vi
 	user.Roles = make([]string, 0, len(roles))
 	for _, role := range roles {
 		user.Roles = append(user.Roles, role.Name)
+		if user.Faculty == "" && role.Faculty != "" {
+			user.Faculty = role.Faculty
+		}
 	}
 	return *user, nil
 }
