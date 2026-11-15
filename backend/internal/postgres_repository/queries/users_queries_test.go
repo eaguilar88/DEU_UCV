@@ -45,3 +45,11 @@ func TestUpdateUserInfo(t *testing.T) {
 		})
 	}
 }
+
+func TestGetUserByID_DateOfBirthFormat(t *testing.T) {
+	sql, args, err := GetUserByID("7").ToSql()
+	require.NoError(t, err)
+	// The date must come back as YYYY-MM-DD, not as the RFC3339 string lib/pq produces for DATE.
+	assert.Contains(t, sql, "TO_CHAR(u.date_of_birth, 'YYYY-MM-DD')")
+	assert.Equal(t, []any{entities.ProviderStatusActive, "7"}, args)
+}

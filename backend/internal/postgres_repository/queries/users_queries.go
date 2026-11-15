@@ -19,7 +19,8 @@ var userQuerySelectCommon = []string{
 	"u.email",
 	"u.first_name",
 	"u.last_name",
-	"u.date_of_birth",
+	// lib/pq returns DATE as time.Time, which scans into a string as RFC3339; ask for YYYY-MM-DD.
+	"TO_CHAR(u.date_of_birth, 'YYYY-MM-DD')",
 	"u.gender",
 	"u.education",
 	"u.address",
