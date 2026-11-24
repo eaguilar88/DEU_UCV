@@ -1,4 +1,4 @@
-.PHONY: loadenv start-prod-landing seed-landing start-landing stop-landing start-espacios stop-espacios start-deu stop-deu migrate-up migrate-down migrate-down-all migrate-version migrate-force migrate-create migrate-up-prod migrate-up-dev migrate-down-dev migrate-down-all-dev migrate-version-dev migrate-force-dev migrate-create-dev
+.PHONY: loadenv start-prod-landing seed-landing start-landing stop-landing start-espacios stop-espacios start-deu stop-deu migrate-up migrate-down migrate-down-all migrate-version migrate-force migrate-create migrate-up-prod migrate-up-dev migrate-down-dev migrate-down-all-dev migrate-version-dev migrate-force-dev migrate-create-dev backup-now backup-now-prod
 
 loadenv:
 	@set -a && . .env && set +a && env | grep -E '^HTTP_'
@@ -110,6 +110,13 @@ stop-prod:
 
 stop-db:
 	docker compose -f docker-compose.dev.yml down
+
+# Database backup to B2 right now (docs/respaldos.md)
+backup-now:
+	docker compose --profile tools run --rm --build backup -once
+
+backup-now-prod:
+	docker compose -f docker-compose.prod.yml run --rm backup -once
 
 generate-mocks:
 	docker pull vektra/mockery:latest && docker run --user 1000:1000 --rm -v ${PWD}/backend:/src -w /src vektra/mockery:latest --config .mockery.yaml

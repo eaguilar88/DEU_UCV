@@ -143,6 +143,25 @@ services:
         condition: service_healthy
     networks:
       - web
+  backup:
+    # Daily PostgreSQL backup (cmd/backup): pg_dump -Fc of the whole database uploaded to B2 under
+    # BACKUP_PREFIX, keeping BACKUP_RETENTION_DAYS. Same image as the backend, different entrypoint.
+    # Restore procedure: docs/respaldos.md
+    build:
+      context: "./backend"
+      dockerfile: "Dockerfile"
+    entrypoint: ["./backup"]
+    restart: unless-stopped
+    env_file:
+      - .env
+    secrets:
+      - b2_key_id
+      - b2_application_key
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - web
   gotenberg:
     # Renders certificate HTML to PDF for the backend (internal/gotenberg). Not published: only
     # reachable from the backend over the web network.

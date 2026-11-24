@@ -31,6 +31,21 @@ services:
         condition: service_healthy
     networks:
       - web
+  backup:
+    # Database backup to B2 (cmd/backup). Local runs are on demand only: make backup-now
+    build:
+      context: "./backend"
+      dockerfile: "Dockerfile"
+    entrypoint: ["./backup"]
+    profiles: ["tools"]
+    restart: "no"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - web
   gotenberg:
     # Renders certificate HTML to PDF for the backend (internal/gotenberg). Not published: only
     # reachable from the backend over the web network.

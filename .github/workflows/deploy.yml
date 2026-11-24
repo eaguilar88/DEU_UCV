@@ -85,11 +85,11 @@ jobs:
               exit 0
             fi
             COMPOSE="docker compose -f docker-compose.prod.yml"
-            # all: todo docker-compose.prod.yml (backend, notifier, diplomados, grupos + traefik, db, gotenberg).
-            # notifier usa la imagen del backend, así que se despliega con él.
+            # all: todo docker-compose.prod.yml (backend, notifier, backup, diplomados, grupos + traefik, db, gotenberg).
+            # notifier y backup usan la imagen del backend, así que se despliegan con él.
             case "$SERVICE" in
               all)     TARGETS="" ;;
-              backend) TARGETS="backend notifier" ;;
+              backend) TARGETS="backend notifier backup" ;;
               *)       TARGETS="$SERVICE" ;;
             esac
             # Construir antes de migrar: si el build falla, la base no cambia y siguen las imágenes anteriores.

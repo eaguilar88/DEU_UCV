@@ -16,16 +16,21 @@ COPY . .
 
 # Build the project
 RUN go build -o main cmd/deu/main.go && \
-    go build -o notifier ./cmd/notifier
+    go build -o notifier ./cmd/notifier && \
+    go build -o backup ./cmd/backup
 
 # Stage 2: Final Image
 FROM alpine:3.22
 
 WORKDIR /app
 
+# pg_dump for the backup service (cmd/backup); same major version as the db service (postgres:16)
+RUN apk add --no-cache postgresql16-client
+
 # Copy only the necessary files from the builder stage
 COPY --from=builder /app/main .
 COPY --from=builder /app/notifier .
+COPY --from=builder /app/backup .
 
 # Expose port 8081
 EXPOSE 8081

@@ -114,6 +114,31 @@ func (b *B2Client) PutObject(ctx context.Context, objectKey, contentType string,
 	return nil
 }
 
+// ListObjects returns every object whose key starts with prefix, following the paginated
+// ListObjectsV2 responses.
+func (b *B2Client) ListObjects(ctx context.Context, prefix string) ([]entities.StoredObject, error) {
+	var objects []entities.StoredObject
+	paginator := s3.NewListObjectsV2Paginator(b.client, &s3.ListObjectsV2Input{
+		Bucket: aws.String(b.bucketName),
+		Prefix: aws.String(prefix),
+	})
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			b.logger.Error("failed to list objects", zap.String("prefix", prefix), zap.Error(err))
+			return nil, fmt.Errorf("failed to list objects: %w", err)
+		}
+		for _, obj := range page.Contents {
+			objects = append(objects, entities.StoredObject{
+				Key:          aws.ToString(obj.Key),
+				Size:         aws.ToInt64(obj.Size),
+				LastModified: aws.ToTime(obj.LastModified),
+			})
+		}
+	}
+	return objects, nil
+}
+
 func (b *B2Client) DeleteFile(ctx context.Context, objectKey string) error {
 	_, err := b.client.DeleteObject(ctx, &s3.DeleteObjectInput{
 		Bucket: aws.String(b.bucketName),

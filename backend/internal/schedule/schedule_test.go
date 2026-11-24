@@ -1,4 +1,4 @@
-package main
+package schedule
 
 import (
 	"testing"
@@ -39,8 +39,22 @@ func TestNextRun(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := nextRun(tt.now, 8, 0, loc)
+			got := NextRun(tt.now, 8, 0, loc)
 			assert.True(t, tt.want.Equal(got), "got %s, want %s", got, tt.want)
 		})
 	}
+}
+
+func TestParseDaily(t *testing.T) {
+	hour, minute, loc, err := ParseDaily("03:30", "America/Caracas")
+	assert.NoError(t, err)
+	assert.Equal(t, 3, hour)
+	assert.Equal(t, 30, minute)
+	assert.Equal(t, "America/Caracas", loc.String())
+
+	_, _, _, err = ParseDaily("3pm", "America/Caracas")
+	assert.Error(t, err)
+
+	_, _, _, err = ParseDaily("03:00", "Nowhere/Nothing")
+	assert.Error(t, err)
 }

@@ -98,6 +98,39 @@ func ReadNotifier(logger *zap.Logger) (NotifierConfig, error) {
 	return config, nil
 }
 
+// BackupConfig is the configuration of the database backup service (cmd/backup), which needs the
+// database to dump and the B2 bucket to keep the dumps in.
+type BackupConfig struct {
+	Flavor       string             `env:"FLAVOR" envDefault:"dev"`
+	Database     DatabaseConfig     `envPrefix:"POSTGRES_"`
+	BlackBlazeB2 BlackBlazeB2Config `envPrefix:"BLACKBLAZE_B2_"`
+
+	// RunAt is the local time of day (HH:MM, in TimeZone) when the daily backup runs.
+	RunAt    string `env:"BACKUP_RUN_AT" envDefault:"03:00"`
+	TimeZone string `env:"BACKUP_TIMEZONE" envDefault:"America/Caracas"`
+	// RetentionDays is how many days a backup is kept in B2 before it is deleted.
+	RetentionDays int `env:"BACKUP_RETENTION_DAYS" envDefault:"30"`
+	// Prefix is the B2 key prefix ("folder") under which the dumps are stored.
+	Prefix string `env:"BACKUP_PREFIX" envDefault:"backups/postgres/"`
+	// Timeout bounds a single run (dump, upload and cleanup).
+	Timeout time.Duration `env:"BACKUP_TIMEOUT" envDefault:"1h"`
+}
+
+// ReadBackup reads the backup service config. In prod the B2 keys come from Docker secrets, as in
+// the API.
+func ReadBackup(logger *zap.Logger) (BackupConfig, error) {
+	var config BackupConfig
+	if err := env.Parse(&config); err != nil {
+		logger.Error("failed to parse configuration", zap.Error(err))
+		return config, err
+	}
+	if config.Flavor == string(FlavorProd) {
+		config.BlackBlazeB2.ApplicationKey = readSecret("/run/secrets/b2_application_key")
+		config.BlackBlazeB2.KeyID = readSecret("/run/secrets/b2_key_id")
+	}
+	return config, nil
+}
+
 func (cfg DatabaseConfig) String() string {
 	return fmt.Sprintf("{Hostname: %s Name: %s User: %s Password: {private} Port: %d}",
 		cfg.Hostname, cfg.Name, cfg.User, cfg.Port)

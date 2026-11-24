@@ -21,6 +21,7 @@ import (
 	"github.com/eaguilar88/deu/internal/email"
 	"github.com/eaguilar88/deu/internal/notifications"
 	repository "github.com/eaguilar88/deu/internal/postgres_repository"
+	"github.com/eaguilar88/deu/internal/schedule"
 	_ "github.com/lib/pq"
 	"go.uber.org/zap"
 )
@@ -46,13 +47,9 @@ func run(logger *zap.Logger, once bool) error {
 	if err != nil {
 		return fmt.Errorf("parsing configuration: %w", err)
 	}
-	loc, err := time.LoadLocation(cfg.TimeZone)
+	hour, minute, loc, err := schedule.ParseDaily(cfg.RunAt, cfg.TimeZone)
 	if err != nil {
-		return fmt.Errorf("loading time zone %q: %w", cfg.TimeZone, err)
-	}
-	runAt, err := time.Parse("15:04", cfg.RunAt)
-	if err != nil {
-		return fmt.Errorf("parsing NOTIFIER_RUN_AT %q: %w", cfg.RunAt, err)
+		return fmt.Errorf("parsing NOTIFIER_RUN_AT/NOTIFIER_TIMEZONE: %w", err)
 	}
 
 	db, err := connectToDB(cfg.Database)
@@ -90,7 +87,7 @@ func run(logger *zap.Logger, once bool) error {
 			logger.Error("notifier run finished with errors", zap.Error(err))
 		}
 
-		next := nextRun(time.Now(), runAt.Hour(), runAt.Minute(), loc)
+		next := schedule.NextRun(time.Now(), hour, minute, loc)
 		logger.Info("next notifier run", zap.Time("at", next))
 		timer := time.NewTimer(time.Until(next))
 		select {
@@ -101,16 +98,6 @@ func run(logger *zap.Logger, once bool) error {
 		case <-timer.C:
 		}
 	}
-}
-
-// nextRun returns the first time after now that is hour:minute in loc.
-func nextRun(now time.Time, hour, minute int, loc *time.Location) time.Time {
-	local := now.In(loc)
-	next := time.Date(local.Year(), local.Month(), local.Day(), hour, minute, 0, 0, loc)
-	if !next.After(local) {
-		next = next.AddDate(0, 0, 1)
-	}
-	return next
 }
 
 func connectToDB(conf config.DatabaseConfig) (*sql.DB, error) {
